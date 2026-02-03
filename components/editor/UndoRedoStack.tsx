@@ -51,7 +51,7 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
         return <Wand2 className="w-3 h-3" />;
       case 'mask':
         return <Paintbrush className="w-3 h-3" />;
-      case 'transformation':
+      case 'transform':
         return <Zap className="w-3 h-3" />;
       case 'color_change':
         return <Palette className="w-3 h-3" />;
@@ -70,7 +70,7 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
 
   const getHistoryLabel = (entry: typeof history[0]) => {
     if (entry.action) return entry.action;
-    
+
     switch (entry.type) {
       case 'upload':
         return 'Image uploaded';
@@ -78,7 +78,7 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
         return 'AI generation';
       case 'mask':
         return 'Mask applied';
-      case 'transformation':
+      case 'transform':
         return 'Transformation applied';
       case 'color_change':
         return 'Color changed';
@@ -105,7 +105,7 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
   // Navigate to specific history index
   const jumpToHistory = (index: number) => {
     if (index < 0 || index >= history.length) return;
-    
+
     // Simulate undo/redo to reach the target index
     const currentIndex = historyIndex;
     if (index < currentIndex) {
@@ -134,7 +134,7 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
             ({history.length} states)
           </span>
         </div>
-        
+
         <TooltipProvider delayDuration={0}>
           <div className="flex items-center gap-1">
             {/* Undo */}
@@ -225,8 +225,8 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
                       isCurrent
                         ? "bg-purple-500/20 border border-purple-500/40"
                         : isPast
-                        ? "opacity-50 hover:opacity-80 hover:bg-white/5"
-                        : "hover:bg-white/5"
+                          ? "opacity-50 hover:opacity-80 hover:bg-white/5"
+                          : "hover:bg-white/5"
                     )}
                   >
                     {/* Icon */}

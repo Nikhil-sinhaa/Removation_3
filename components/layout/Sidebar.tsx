@@ -4,7 +4,7 @@ import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { 
+import {
   LayoutDashboard,
   FolderKanban,
   ImagePlus,
@@ -30,7 +30,7 @@ import { Logo } from "@/components/shared/Logo"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { SimpleTooltip } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CreditBalance } from "@/components/payment/CreditBalance"
 
 interface SidebarProps {
@@ -118,15 +118,15 @@ export function Sidebar({ className }: SidebarProps) {
   const { signOut } = useClerk()
   const [isCollapsed, setIsCollapsed] = React.useState(false)
 
-  const NavItem = ({ 
-    item, 
-    isCollapsed 
-  }: { 
+  const NavItem = ({
+    item,
+    isCollapsed
+  }: {
     item: typeof mainNavItems[0] & { badge?: string; highlight?: boolean }
-    isCollapsed: boolean 
+    isCollapsed: boolean
   }) => {
     const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-    
+
     const content = (
       <Link
         href={item.href}
@@ -154,9 +154,14 @@ export function Sidebar({ className }: SidebarProps) {
 
     if (isCollapsed) {
       return (
-        <SimpleTooltip content={item.title} side="right">
-          {content}
-        </SimpleTooltip>
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            {content}
+          </TooltipTrigger>
+          <TooltipContent side="right">
+            {item.title}
+          </TooltipContent>
+        </Tooltip>
       )
     }
 
@@ -248,7 +253,7 @@ export function Sidebar({ className }: SidebarProps) {
         {bottomNavItems.map((item) => (
           <NavItem key={item.href} item={item} isCollapsed={isCollapsed} />
         ))}
-        
+
         {/* Sign Out */}
         <button
           onClick={() => signOut()}

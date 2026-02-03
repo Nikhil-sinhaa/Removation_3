@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
+import { getApiLimitCount } from "@/lib/api-limit";
 
 export async function GET() {
-    return NextResponse.json({ error: "Not implemented" }, { status: 501 });
-}
-
-export async function POST() {
-    return NextResponse.json({ error: "Not implemented" }, { status: 501 });
+    try {
+        const credits = await getApiLimitCount();
+        return NextResponse.json({ credits });
+    } catch (error) {
+        console.log("[CREDITS_GET]", error);
+        return new NextResponse("Internal Error", { status: 500 });
+    }
 }

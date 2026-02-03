@@ -26,8 +26,10 @@ import {
   Info,
 } from 'lucide-react';
 
+import { TransformationMode } from '@/types/editor';
+
 interface TransformMode {
-  id: string;
+  id: TransformationMode;
   name: string;
   description: string;
   icon: React.ReactNode;
@@ -57,7 +59,7 @@ const transformModes: TransformMode[] = [
     ],
   },
   {
-    id: 'fill',
+    id: 'fill-room',
     name: 'Fill Empty Room',
     description: 'Add furniture to empty spaces',
     icon: <Home className="w-5 h-5" />,
@@ -79,7 +81,7 @@ const transformModes: TransformMode[] = [
     ],
   },
   {
-    id: 'remove',
+    id: 'remove-object',
     name: 'Remove Object',
     description: 'Remove unwanted items seamlessly',
     icon: <Eraser className="w-5 h-5" />,
@@ -89,7 +91,7 @@ const transformModes: TransformMode[] = [
     ],
   },
   {
-    id: 'replace',
+    id: 'replace-object',
     name: 'Replace Furniture',
     description: 'Swap furniture with new pieces',
     icon: <Replace className="w-5 h-5" />,
@@ -128,14 +130,6 @@ const transformModes: TransformMode[] = [
     description: 'Transform gardens and patios',
     icon: <TreeDeciduous className="w-5 h-5" />,
     credits: 2,
-    isPro: true,
-  },
-  {
-    id: 'exterior',
-    name: 'Exterior Design',
-    description: 'Transform building exteriors',
-    icon: <Building2 className="w-5 h-5" />,
-    credits: 3,
     isPro: true,
   },
 ];

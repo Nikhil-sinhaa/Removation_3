@@ -796,7 +796,7 @@ export interface LayerEffect {
 // History Entry
 export interface HistoryEntry {
   id: string;
-  type: 'upload' | 'generate' | 'edit' | 'layer' | 'mask' | 'transform' | 'settings';
+  type: 'upload' | 'generate' | 'edit' | 'layer' | 'mask' | 'transform' | 'settings' | 'color_change' | 'material_change' | 'vastu_adjustment' | 'cost_update';
   action: string;
   description?: string;
   timestamp: Date;
