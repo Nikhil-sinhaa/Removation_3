@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { AnalyticsProvider } from './AnalyticsProvider';
+import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { CrispChat } from './CrispChat';
 import { PWAPrompt } from './PWAPrompt';
 import { AnimatePresence } from 'framer-motion';
@@ -48,7 +48,7 @@ export function Providers({ children }: ProvidersProps) {
           <AnimatePresence mode="wait">
             {children}
           </AnimatePresence>
-          
+
           {/* Global Components */}
           <Toaster />
           <CrispChat />
@@ -56,7 +56,7 @@ export function Providers({ children }: ProvidersProps) {
           <AnalyticsProvider />
         </TooltipProvider>
       </ThemeProvider>
-      
+
       {/* React Query DevTools - only in development */}
       {process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} position="bottom" />

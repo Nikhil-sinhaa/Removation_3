@@ -18,7 +18,7 @@ export function toUICostEstimate(
       amount: category.amount[currency],
       itemCount: category.items.length,
       items: category.items.map(
-        (item): UICostLineItem => ({
+        (item: CostLineItem): UICostLineItem => ({
           id: item.id,
           name: item.name,
           quantity: item.quantity,

@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "Removation.ai - AI Interior Design",
+  "short_name": "Removation.ai",
+  "version": "1.0.0",
+  "description": "Transform any room image instantly with AI. Right-click any image to redesign with 400+ styles + Vastu analysis.",
+  
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "Removation.ai"
+  },
+  
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": [],
+      "run_at": "document_idle"
+    }
+  ],
+  
+  "permissions": [
+    "storage",
+    "activeTab",
+    "contextMenus",
+    "notifications"
+  ],
+  
+  "host_permissions": [
+    "https://removation.ai/*",
+    "https://*.removation.ai/*"
+  ],
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+R",
+        "mac": "MacCtrl+Shift+R"
+      },
+      "description": "Open Removation.ai popup"
+    },
+    "quick-transform": {
+      "suggested_key": {
+        "default": "Alt+R",
+        "mac": "Alt+R"
+      },
+      "description": "Quick transform selected image"
+    }
+  },
+  
+  "options_page": "options.html",
+  
+  "chrome_url_overrides": {},
+  
+  "externally_connectable": {
+    "matches": [
+      "https://removation.ai/*",
+      "https://*.removation.ai/*",
+      "http://localhost:3000/*"
+    ]
+  }
+}

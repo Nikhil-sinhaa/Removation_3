@@ -50,7 +50,7 @@ const CITY_LIST = [
   { id: 'kolkata', name: 'Kolkata', nameHi: 'कोलकाता', tier: 'metro' as const },
   { id: 'pune', name: 'Pune', nameHi: 'पुणे', tier: 'metro' as const },
   { id: 'ahmedabad', name: 'Ahmedabad', nameHi: 'अहमदाबाद', tier: 'metro' as const },
-  
+
   // Tier 1 Cities
   { id: 'jaipur', name: 'Jaipur', nameHi: 'जयपुर', tier: 'tier1' as const },
   { id: 'lucknow', name: 'Lucknow', nameHi: 'लखनऊ', tier: 'tier1' as const },
@@ -60,7 +60,7 @@ const CITY_LIST = [
   { id: 'coimbatore', name: 'Coimbatore', nameHi: 'कोयंबटूर', tier: 'tier1' as const },
   { id: 'kochi', name: 'Kochi', nameHi: 'कोच्चि', tier: 'tier1' as const },
   { id: 'vadodara', name: 'Vadodara', nameHi: 'वडोदरा', tier: 'tier1' as const },
-  
+
   // Tier 2 Cities
   { id: 'nagpur', name: 'Nagpur', nameHi: 'नागपुर', tier: 'tier2' as const },
   { id: 'visakhapatnam', name: 'Visakhapatnam', nameHi: 'विशाखापट्टनम', tier: 'tier2' as const },
@@ -70,7 +70,7 @@ const CITY_LIST = [
   { id: 'nashik', name: 'Nashik', nameHi: 'नासिक', tier: 'tier2' as const },
   { id: 'vijayawada', name: 'Vijayawada', nameHi: 'विजयवाड़ा', tier: 'tier2' as const },
   { id: 'raipur', name: 'Raipur', nameHi: 'रायपुर', tier: 'tier2' as const },
-  
+
   // Tier 3 Cities
   { id: 'dehradun', name: 'Dehradun', nameHi: 'देहरादून', tier: 'tier3' as const },
   { id: 'mysore', name: 'Mysore', nameHi: 'मैसूर', tier: 'tier3' as const },
@@ -86,7 +86,7 @@ const CITY_LIST = [
    TYPES
 ----------------------------------------- */
 interface CostComparisonProps {
-  costData: { grandTotal: number };
+  costData: { grandTotal: number;[key: string]: any };
   currentCity: string;
   roomType: string;
   style: string;
@@ -111,26 +111,26 @@ interface ComparisonCity {
    HELPER FUNCTIONS
 ----------------------------------------- */
 const getCityMultiplier = (cityId: string): number => {
-  return CITY_LABOR_MULTIPLIERS[cityId as keyof typeof CITY_LABOR_MULTIPLIERS] || 
-         CITY_LABOR_MULTIPLIERS.default || 1.0;
+  return CITY_LABOR_MULTIPLIERS[cityId as keyof typeof CITY_LABOR_MULTIPLIERS] ||
+    CITY_LABOR_MULTIPLIERS.default || 1.0;
 };
 
 const getRoomTypeKey = (roomType: string): keyof typeof RENOVATION_COST_PER_SQFT => {
   const normalized = roomType.toLowerCase().replace(/ /g, '_').replace(/-/g, '_');
   const validKeys = Object.keys(RENOVATION_COST_PER_SQFT) as Array<keyof typeof RENOVATION_COST_PER_SQFT>;
-  
+
   // Try to find exact match
   if (validKeys.includes(normalized as any)) {
     return normalized as keyof typeof RENOVATION_COST_PER_SQFT;
   }
-  
+
   // Try to find partial match
   for (const key of validKeys) {
     if (normalized.includes(key) || key.includes(normalized)) {
       return key;
     }
   }
-  
+
   // Default to living room
   return 'living_room';
 };
@@ -185,14 +185,14 @@ const CostComparison: React.FC<CostComparisonProps> = ({
   const getBaseCostForCity = (cityId: string, quality: 'standard' = 'standard') => {
     const roomKey = getRoomTypeKey(roomType);
     const cityMultiplier = getCityMultiplier(cityId);
-    
+
     // Get base cost from RENOVATION_COST_PER_SQFT
     const roomCosts = RENOVATION_COST_PER_SQFT[roomKey];
     if (!roomCosts) {
       // Default cost if room type not found
       return 1500 * areaInSqFt * cityMultiplier;
     }
-    
+
     const costRange = roomCosts[quality];
     const avgCost = (costRange.min + costRange.max) / 2;
     return avgCost * areaInSqFt * cityMultiplier;
@@ -201,7 +201,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
   // Calculate comparison data for all cities
   const comparisonData = useMemo<ComparisonCity[]>(() => {
     const currentCityCost = costData.grandTotal;
-    
+
     return CITY_LIST
       .filter(city => city.id !== currentCity)
       .map(city => {
@@ -261,7 +261,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
     };
 
     const currentStyleMultiplier = styleMultipliers[style.toLowerCase()] || 1;
-    
+
     return Object.entries(styleMultipliers)
       .filter(([s]) => s.toLowerCase() !== style.toLowerCase())
       .map(([styleName, multiplier]) => ({
@@ -332,8 +332,8 @@ const CostComparison: React.FC<CostComparisonProps> = ({
             <div className="text-right">
               {currentCityData && (
                 <Badge className={getTierBadgeColor(currentCityData.tier)}>
-                  {currentCityData.tier === "metro" 
-                    ? "Metro" 
+                  {currentCityData.tier === "metro"
+                    ? "Metro"
                     : currentCityData.tier.charAt(0).toUpperCase() + currentCityData.tier.slice(1)}
                 </Badge>
               )}
@@ -499,9 +499,8 @@ const CostComparison: React.FC<CostComparisonProps> = ({
                           <p className="text-xs text-muted-foreground">
                             {t("Difference", "अंतर")}
                           </p>
-                          <p className={`text-sm font-medium ${
-                            compareCity.difference > 0 ? "text-red-500" : "text-green-500"
-                          }`}>
+                          <p className={`text-sm font-medium ${compareCity.difference > 0 ? "text-red-500" : "text-green-500"
+                            }`}>
                             {compareCity.difference > 0 ? "+" : ""}
                             {formatCurrency(compareCity.difference)}
                             <span className="text-xs ml-1">
@@ -513,8 +512,8 @@ const CostComparison: React.FC<CostComparisonProps> = ({
                       </div>
 
                       {onCityChange && (
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           className="w-full mt-2 gap-2"
                           onClick={() => onCityChange(compareCity.id)}
@@ -545,15 +544,15 @@ const CostComparison: React.FC<CostComparisonProps> = ({
                     <span className="text-sm font-medium truncate">
                       {language === "hi" ? city.nameHi : city.name}
                     </span>
-                    <Badge 
-                      variant="outline" 
+                    <Badge
+                      variant="outline"
                       className={`text-[10px] px-1.5 py-0 ${getTierBadgeColor(city.tier)}`}
                     >
                       {city.tier === "metro" ? "M" : city.tier.replace("tier", "T")}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 mt-1">
-                    <Progress 
+                    <Progress
                       value={Math.min((city.estimatedCost / (expensiveCity?.estimatedCost || 1)) * 100, 100)}
                       className="h-1.5 flex-1"
                     />
@@ -562,9 +561,8 @@ const CostComparison: React.FC<CostComparisonProps> = ({
                     </span>
                   </div>
                 </div>
-                <div className={`text-xs font-medium ${
-                  city.difference < 0 ? "text-green-500" : "text-red-500"
-                }`}>
+                <div className={`text-xs font-medium ${city.difference < 0 ? "text-green-500" : "text-red-500"
+                  }`}>
                   {city.difference < 0 ? (
                     <TrendingDown className="h-3 w-3 inline mr-1" />
                   ) : (
@@ -618,9 +616,8 @@ const CostComparison: React.FC<CostComparisonProps> = ({
               >
                 <p className="text-xs text-muted-foreground">{styleItem.name}</p>
                 <p className="text-sm font-medium">{formatCurrency(styleItem.cost)}</p>
-                <p className={`text-xs ${
-                  styleItem.difference < 0 ? "text-green-500" : "text-red-500"
-                }`}>
+                <p className={`text-xs ${styleItem.difference < 0 ? "text-green-500" : "text-red-500"
+                  }`}>
                   {styleItem.difference > 0 ? "+" : ""}
                   {styleItem.differencePercent.toFixed(0)}%
                 </p>

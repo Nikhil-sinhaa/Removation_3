@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, ReactNode } from 'react';
 
 export type Language = 'en' | 'hi';
 
@@ -50,7 +50,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Success',
     hi: 'सफल'
   },
-  
+
   // Style Picker
   'all_styles': {
     en: 'All Styles',
@@ -80,7 +80,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Select Style',
     hi: 'शैली चुनें'
   },
-  
+
   // Room Types
   'room': {
     en: 'room',
@@ -146,7 +146,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Outdoor',
     hi: 'बाहरी'
   },
-  
+
   // Project
   'project_name': {
     en: 'Project Name',
@@ -168,7 +168,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Budget',
     hi: 'बजट'
   },
-  
+
   // Vastu
   'vastu_score': {
     en: 'Vastu Score',
@@ -186,7 +186,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Fix Suggestions',
     hi: 'सुझाव सुधारें'
   },
-  
+
   // Actions
   'create': {
     en: 'Create',
@@ -212,7 +212,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Download',
     hi: 'डाउनलोड'
   },
-  
+
   // Status
   'draft': {
     en: 'Draft',
@@ -230,7 +230,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Failed',
     hi: 'विफल'
   },
-  
+
   // Settings
   'settings': {
     en: 'Settings',
@@ -248,7 +248,7 @@ const translations: Record<string, Record<Language, string>> = {
     en: 'Notifications',
     hi: 'सूचनाएं'
   },
-  
+
   // Months
   'january': {
     en: 'January',
@@ -300,193 +300,193 @@ const translations: Record<string, Record<Language, string>> = {
   },
   // Add these after the existing translations:
 
-// More common translations
-'submit': {
-  en: 'Submit',
-  hi: 'सबमिट करें'
-},
-'reset': {
-  en: 'Reset',
-  hi: 'रीसेट'
-},
-'close': {
-  en: 'Close',
-  hi: 'बंद करें'
-},
-'open': {
-  en: 'Open',
-  hi: 'खोलें'
-},
-'yes': {
-  en: 'Yes',
-  hi: 'हाँ'
-},
-'no': {
-  en: 'No',
-  hi: 'नहीं'
-},
-'confirm': {
-  en: 'Confirm',
-  hi: 'पुष्टि करें'
-},
-'back': {
-  en: 'Back',
-  hi: 'वापस'
-},
-'next': {
-  en: 'Next',
-  hi: 'अगला'
-},
-'previous': {
-  en: 'Previous',
-  hi: 'पिछला'
-},
-'continue': {
-  en: 'Continue',
-  hi: 'जारी रखें'
-},
-'finish': {
-  en: 'Finish',
-  hi: 'समाप्त करें'
-},
+  // More common translations
+  'submit': {
+    en: 'Submit',
+    hi: 'सबमिट करें'
+  },
+  'reset': {
+    en: 'Reset',
+    hi: 'रीसेट'
+  },
+  'close': {
+    en: 'Close',
+    hi: 'बंद करें'
+  },
+  'open': {
+    en: 'Open',
+    hi: 'खोलें'
+  },
+  'yes': {
+    en: 'Yes',
+    hi: 'हाँ'
+  },
+  'no': {
+    en: 'No',
+    hi: 'नहीं'
+  },
+  'confirm': {
+    en: 'Confirm',
+    hi: 'पुष्टि करें'
+  },
+  'back': {
+    en: 'Back',
+    hi: 'वापस'
+  },
+  'next': {
+    en: 'Next',
+    hi: 'अगला'
+  },
+  'previous': {
+    en: 'Previous',
+    hi: 'पिछला'
+  },
+  'continue': {
+    en: 'Continue',
+    hi: 'जारी रखें'
+  },
+  'finish': {
+    en: 'Finish',
+    hi: 'समाप्त करें'
+  },
 
-// Form labels
-'name': {
-  en: 'Name',
-  hi: 'नाम'
-},
-'email': {
-  en: 'Email',
-  hi: 'ईमेल'
-},
-'phone': {
-  en: 'Phone',
-  hi: 'फ़ोन'
-},
-'address': {
-  en: 'Address',
-  hi: 'पता'
-},
-'city': {
-  en: 'City',
-  hi: 'शहर'
-},
-'state': {
-  en: 'State',
-  hi: 'राज्य'
-},
-'country': {
-  en: 'Country',
-  hi: 'देश'
-},
-'zip_code': {
-  en: 'ZIP Code',
-  hi: 'ज़िप कोड'
-},
+  // Form labels
+  'name': {
+    en: 'Name',
+    hi: 'नाम'
+  },
+  'email': {
+    en: 'Email',
+    hi: 'ईमेल'
+  },
+  'phone': {
+    en: 'Phone',
+    hi: 'फ़ोन'
+  },
+  'address': {
+    en: 'Address',
+    hi: 'पता'
+  },
+  'city': {
+    en: 'City',
+    hi: 'शहर'
+  },
+  'state': {
+    en: 'State',
+    hi: 'राज्य'
+  },
+  'country': {
+    en: 'Country',
+    hi: 'देश'
+  },
+  'zip_code': {
+    en: 'ZIP Code',
+    hi: 'ज़िप कोड'
+  },
 
-// Project related
-'new_project': {
-  en: 'New Project',
-  hi: 'नया प्रोजेक्ट'
-},
-'my_projects': {
-  en: 'My Projects',
-  hi: 'मेरे प्रोजेक्ट'
-},
-'recent_projects': {
-  en: 'Recent Projects',
-  hi: 'हाल के प्रोजेक्ट'
-},
-'favorite_projects': {
-  en: 'Favorite Projects',
-  hi: 'पसंदीदा प्रोजेक्ट'
-},
-'archived_projects': {
-  en: 'Archived Projects',
-  hi: 'संग्रहित प्रोजेक्ट'
-},
+  // Project related
+  'new_project': {
+    en: 'New Project',
+    hi: 'नया प्रोजेक्ट'
+  },
+  'my_projects': {
+    en: 'My Projects',
+    hi: 'मेरे प्रोजेक्ट'
+  },
+  'recent_projects': {
+    en: 'Recent Projects',
+    hi: 'हाल के प्रोजेक्ट'
+  },
+  'favorite_projects': {
+    en: 'Favorite Projects',
+    hi: 'पसंदीदा प्रोजेक्ट'
+  },
+  'archived_projects': {
+    en: 'Archived Projects',
+    hi: 'संग्रहित प्रोजेक्ट'
+  },
 
-// Design related
-'design_style': {
-  en: 'Design Style',
-  hi: 'डिज़ाइन शैली'
-},
-'color_scheme': {
-  en: 'Color Scheme',
-  hi: 'रंग योजना'
-},
-'materials': {
-  en: 'Materials',
-  hi: 'सामग्री'
-},
-'furniture': {
-  en: 'Furniture',
-  hi: 'फर्नीचर'
-},
-'lighting': {
-  en: 'Lighting',
-  hi: 'प्रकाश व्यवस्था'
-},
-'decor': {
-  en: 'Decor',
-  hi: 'सजावट'
-},
+  // Design related
+  'design_style': {
+    en: 'Design Style',
+    hi: 'डिज़ाइन शैली'
+  },
+  'color_scheme': {
+    en: 'Color Scheme',
+    hi: 'रंग योजना'
+  },
+  'materials': {
+    en: 'Materials',
+    hi: 'सामग्री'
+  },
+  'furniture': {
+    en: 'Furniture',
+    hi: 'फर्नीचर'
+  },
+  'lighting': {
+    en: 'Lighting',
+    hi: 'प्रकाश व्यवस्था'
+  },
+  'decor': {
+    en: 'Decor',
+    hi: 'सजावट'
+  },
 
-// Vastu related
-'vastu_analysis': {
-  en: 'Vastu Analysis',
-  hi: 'वास्तु विश्लेषण'
-},
-'vastu_report': {
-  en: 'Vastu Report',
-  hi: 'वास्तु रिपोर्ट'
-},
-'vastu_suggestions': {
-  en: 'Vastu Suggestions',
-  hi: 'वास्तु सुझाव'
-},
-'vastu_fixes': {
-  en: 'Vastu Fixes',
-  hi: 'वास्तु सुधार'
-},
-'auto_fix': {
-  en: 'Auto Fix',
-  hi: 'स्वचालित सुधार'
-},
+  // Vastu related
+  'vastu_analysis': {
+    en: 'Vastu Analysis',
+    hi: 'वास्तु विश्लेषण'
+  },
+  'vastu_report': {
+    en: 'Vastu Report',
+    hi: 'वास्तु रिपोर्ट'
+  },
+  'vastu_suggestions': {
+    en: 'Vastu Suggestions',
+    hi: 'वास्तु सुझाव'
+  },
+  'vastu_fixes': {
+    en: 'Vastu Fixes',
+    hi: 'वास्तु सुधार'
+  },
+  'auto_fix': {
+    en: 'Auto Fix',
+    hi: 'स्वचालित सुधार'
+  },
 
-// Cost related
-'cost_calculator': {
-  en: 'Cost Calculator',
-  hi: 'लागत कैलकुलेटर'
-},
-'material_costs': {
-  en: 'Material Costs',
-  hi: 'सामग्री लागत'
-},
-'labor_costs': {
-  en: 'Labor Costs',
-  hi: 'श्रम लागत'
-},
-'total_cost': {
-  en: 'Total Cost',
-  hi: 'कुल लागत'
-},
-'cost_breakdown': {
-  en: 'Cost Breakdown',
-  hi: 'लागत विवरण'
-},
-'estimate': {
-  en: 'Estimate',
-  hi: 'अनुमान'
-},
-'actual': {
-  en: 'Actual',
-  hi: 'वास्तविक'
-},
-'budget_vs_actual': {
-  en: 'Budget vs Actual',
-  hi: 'बजट बनाम वास्तविक'
-},
+  // Cost related
+  'cost_calculator': {
+    en: 'Cost Calculator',
+    hi: 'लागत कैलकुलेटर'
+  },
+  'material_costs': {
+    en: 'Material Costs',
+    hi: 'सामग्री लागत'
+  },
+  'labor_costs': {
+    en: 'Labor Costs',
+    hi: 'श्रम लागत'
+  },
+  'total_cost': {
+    en: 'Total Cost',
+    hi: 'कुल लागत'
+  },
+  'cost_breakdown': {
+    en: 'Cost Breakdown',
+    hi: 'लागत विवरण'
+  },
+  'estimate': {
+    en: 'Estimate',
+    hi: 'अनुमान'
+  },
+  'actual': {
+    en: 'Actual',
+    hi: 'वास्तविक'
+  },
+  'budget_vs_actual': {
+    en: 'Budget vs Actual',
+    hi: 'बजट बनाम वास्तविक'
+  },
 
 };
 
@@ -520,14 +520,14 @@ export function useLanguage(): UseLanguageReturn {
 
   const t = useCallback((key: string, params?: Record<string, string>): string => {
     let translation = translations[key]?.[language] || key;
-    
+
     // Replace parameters
     if (params) {
       Object.entries(params).forEach(([param, value]) => {
         translation = translation.replace(`{{${param}}}`, value);
       });
     }
-    
+
     return translation;
   }, [language]);
 
@@ -554,7 +554,7 @@ export const formatNumber = (num: number, language: Language): string => {
     }
     return num.toString();
   }
-  
+
   // English/international numbering
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1)}M`;
@@ -579,7 +579,7 @@ export const formatCurrency = (
       maximumFractionDigits: 0,
     }
   );
-  
+
   return formatter.format(amount);
 };
 
@@ -593,6 +593,7 @@ export const formatDate = (date: Date, language: Language): string => {
       day: 'numeric',
     }
   );
-  
+
   return formatter.format(date);
 };
+

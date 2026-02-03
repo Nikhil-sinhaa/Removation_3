@@ -114,7 +114,7 @@ const DEFAULT_SETTINGS: UICostSettingsExtended = {
 // Helper function to convert UIEstimateDisplay to UICostEstimate
 const convertToUICostEstimate = (estimate: UIEstimateDisplay): UICostEstimate => {
   const subtotal = estimate.breakdown.materials.amount + estimate.breakdown.labor.amount + estimate.breakdown.other.amount;
-  
+
   return {
     subtotal,
     discount: 0,
@@ -172,7 +172,7 @@ export function CostPanel({
     unit: "feet",
     area: 120
   });
-  
+
   const [activeTab, setActiveTab] = useState("overview");
   const [isCalculating, setIsCalculating] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -185,7 +185,7 @@ export function CostPanel({
     setIsCalculating(true);
     try {
       const area = dimensions.area;
-      
+
       // Material multipliers based on grade
       const materialMultiplier = {
         budget: 0.7,
@@ -193,21 +193,21 @@ export function CostPanel({
         premium: 1.5,
         luxury: 2.0
       }[settings.materialGrade];
-      
+
       // Labor multipliers based on quality
       const laborMultiplier = {
         standard: 1.0,
         premium: 1.3,
         luxury: 1.6
       }[settings.laborQuality];
-      
+
       // Urgency multipliers
       const urgencyMultiplier = {
         low: 1.0,
         medium: 1.3,
         high: 1.6
       }[settings.urgency];
-      
+
       // Base cost per sq ft (INR)
       const baseCostPerSqFt: Record<MaterialGrade, number> = {
         budget: 800,
@@ -215,24 +215,24 @@ export function CostPanel({
         premium: 2000,
         luxury: 4000
       };
-      
+
       const selectedTier = settings.qualityTier;
       const baseCost = baseCostPerSqFt[selectedTier] * area;
-      
+
       // Apply multipliers
       const materialCost = baseCost * materialMultiplier;
       const laborCost = baseCost * 0.4 * laborMultiplier * urgencyMultiplier;
       const otherCost = baseCost * 0.2;
-      
+
       // Location adjustment
       const cityMultiplier = settings.location?.laborMultiplier || 1.0;
       const adjustedLaborCost = laborCost * cityMultiplier;
-      
+
       // Calculate totals
       const subtotal = materialCost + adjustedLaborCost + otherCost;
       const tax = settings.taxIncluded ? subtotal * 0.18 : 0;
       const totalCost = subtotal + tax;
-      
+
       const mockEstimate: UIEstimateDisplay = {
         totalCost: Math.round(totalCost),
         breakdown: {
@@ -245,7 +245,7 @@ export function CostPanel({
         trend: Math.random() > 0.5 ? 'up' : 'down',
         trendPercentage: Math.floor(Math.random() * 20) + 1
       };
-      
+
       setEstimate(mockEstimate);
       if (onCostCalculated) {
         onCostCalculated(mockEstimate);
@@ -274,8 +274,8 @@ export function CostPanel({
       setDimensions(prev => {
         const newUnit = value as "feet" | "meters";
         const conversionFactor = prev.unit === "feet" && newUnit === "meters" ? 0.3048 :
-                                prev.unit === "meters" && newUnit === "feet" ? 3.28084 : 1;
-        
+          prev.unit === "meters" && newUnit === "feet" ? 3.28084 : 1;
+
         return {
           ...prev,
           unit: newUnit,
@@ -595,13 +595,13 @@ export function CostPanel({
               {/* Cost Breakdown - Provide all required props */}
               {estimate && (
                 <CostBreakdown
-  estimate={convertToUICostEstimate(estimate)}
-  currency={settings.currency}
-  isLoading={isCalculating}
-  formatCurrency={formatCurrency}
-  includeGST={settings.taxIncluded}
-  onToggleGST={(include) => handleSettingChange("taxIncluded", include)}
-/>
+                  estimate={convertToUICostEstimate(estimate)}
+                  currency={settings.currency}
+                  isLoading={isCalculating}
+                  formatCurrency={formatCurrency}
+                  includeGST={settings.taxIncluded}
+                  onToggleGST={(include) => handleSettingChange("taxIncluded", include)}
+                />
               )}
             </TabsContent>
 
@@ -636,20 +636,21 @@ export function CostPanel({
             <TabsContent value="compare" className="mt-0">
               {estimate && (
                 <CostComparison
-  costData={{
-    currency: settings.currency,
-    materials: [],
-    materialTotal: estimate.breakdown.materials.amount,
-    laborTotal: estimate.breakdown.labor.amount,
-    tax: estimate.breakdown.tax.amount,
-    grandTotal: estimate.totalCost,
-    estimatedDays: estimate.estimatedDuration.totalDays,
-  }}
-  currentCity={settings.city}
-  roomType={roomType}
-  areaInSqFt={area.sqft}
-  currency={settings.currency}
-/>
+                  costData={{
+                    currency: settings.currency,
+                    materials: [],
+                    materialTotal: estimate.breakdown.materials.amount,
+                    laborTotal: estimate.breakdown.labor.amount,
+                    tax: estimate.breakdown.tax.amount,
+                    grandTotal: estimate.totalCost,
+                    estimatedDays: estimate.estimatedDuration.totalDays,
+                  }}
+                  currentCity={settings.city}
+                  roomType={roomType}
+                  areaInSqFt={area.sqft}
+                  currency={settings.currency}
+                  style={styleType}
+                />
               )}
             </TabsContent>
           </div>

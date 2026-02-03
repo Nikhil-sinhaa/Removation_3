@@ -4,7 +4,8 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editor-store';
-import type { MaskStroke } from '@/types/editor';
+import type { MaskStroke } from '@/stores/editor-store';
+import { v4 as uuidv4 } from 'uuid';
 
 interface MaskCanvasProps {
   className?: string;
@@ -20,8 +21,6 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
 
   const {
     mask,
-    brushSize,
-    brushHardness,
     brushSettings,
     setMask,
     currentTool,
@@ -39,7 +38,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
     ctx.clearRect(0, 0, width, height);
 
     // Draw existing mask if any
-    if (mask) {
+    if (mask && mask.dataUrl) {
       const image = new Image();
       image.onload = () => {
         ctx.drawImage(image, 0, 0, width, height);
@@ -57,15 +56,15 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
     if (!ctx) return;
 
     ctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over';
-    ctx.lineWidth = brushSize;
+    ctx.lineWidth = brushSettings.size;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
+
     // Set brush hardness (gradient)
-    if (brushHardness < 1) {
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, brushSize / 2);
+    if (brushSettings.hardness < 1) {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, brushSettings.size / 2);
       gradient.addColorStop(0, isEraser ? 'rgba(0,0,0,1)' : 'rgba(255,255,255,1)');
-      gradient.addColorStop(brushHardness, isEraser ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)');
+      gradient.addColorStop(brushSettings.hardness, isEraser ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)');
       gradient.addColorStop(1, isEraser ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,0)');
       ctx.strokeStyle = gradient;
     } else {
@@ -81,12 +80,12 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
       ctx.stroke();
     } else {
       ctx.beginPath();
-      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2);
+      ctx.arc(x, y, brushSettings.size / 2, 0, Math.PI * 2);
       ctx.fill();
     }
 
     setLastPoint({ x, y });
-  }, [brushSize, brushHardness, brushSettings, lastPoint]);
+  }, [brushSettings, lastPoint]);
 
   // Get canvas-relative coordinates
   const getCanvasCoordinates = useCallback((clientX: number, clientY: number) => {
@@ -106,7 +105,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
   // Handle mouse down
   const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (currentTool !== 'mask') return;
-    
+
     setIsDrawing(true);
     const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
     setLastPoint({ x, y });
@@ -116,7 +115,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
   // Handle mouse move
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing || currentTool !== 'mask') return;
-    
+
     const { x, y } = getCanvasCoordinates(e.clientX, e.clientY);
     draw(x, y, brushSettings.isEraser);
   }, [isDrawing, currentTool, getCanvasCoordinates, draw, brushSettings.isEraser]);
@@ -124,7 +123,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
   // Handle mouse up
   const handleMouseUp = useCallback(() => {
     if (!isDrawing) return;
-    
+
     setIsDrawing(false);
     setLastPoint(null);
 
@@ -133,34 +132,38 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
     if (!canvas) return;
 
     const maskDataUrl = canvas.toDataURL('image/png');
-    
+
     // Create new strokes array
     const newStrokes: MaskStroke[] = mask?.strokes ? [...mask.strokes] : [];
     newStrokes.push({
-      points: lastPoint ? [{ x: lastPoint.x, y: lastPoint.y }] : [],
-      brushSize,
-      brushHardness,
+      id: uuidv4(),
+      points: lastPoint ? [{ x: lastPoint.x, y: lastPoint.y, pressure: 1 }] : [],
+      brushSize: brushSettings.size,
+      brushHardness: brushSettings.hardness,
       isEraser: brushSettings.isEraser,
+      color: brushSettings.color,
     });
 
     // Update mask
     setMask({
+      id: mask?.id || uuidv4(),
       dataUrl: maskDataUrl,
       width,
       height,
       strokes: newStrokes,
+      coverage: 0, // Calculate if needed
     });
 
     // Notify parent
     if (onMaskChange) {
       onMaskChange(maskDataUrl);
     }
-  }, [isDrawing, mask, brushSize, brushHardness, brushSettings.isEraser, width, height, setMask, onMaskChange, lastPoint]);
+  }, [isDrawing, mask, brushSettings, width, height, setMask, onMaskChange, lastPoint]);
 
   // Handle touch events
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
     if (currentTool !== 'mask') return;
-    
+
     e.preventDefault();
     const touch = e.touches[0];
     const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
@@ -171,7 +174,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
 
   const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
     if (!isDrawing || currentTool !== 'mask') return;
-    
+
     e.preventDefault();
     const touch = e.touches[0];
     const { x, y } = getCanvasCoordinates(touch.clientX, touch.clientY);
@@ -223,7 +226,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: brushSettings.isEraser 
+          background: brushSettings.isEraser
             ? `linear-gradient(135deg, rgba(239, 68, 68, ${opacity}) 0%, rgba(185, 28, 28, ${opacity}) 100%)`
             : `linear-gradient(135deg, rgba(168, 85, 247, ${opacity}) 0%, rgba(147, 51, 234, ${opacity}) 100%)`,
           maskImage: `url(${mask.dataUrl})`,
@@ -267,8 +270,8 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
           style={{
             left: lastPoint ? `${(lastPoint.x / width) * 100}%` : '50%',
             top: lastPoint ? `${(lastPoint.y / height) * 100}%` : '50%',
-            width: brushSize,
-            height: brushSize,
+            width: brushSettings.size,
+            height: brushSettings.size,
             transform: 'translate(-50%, -50%)',
             borderRadius: '50%',
             border: `2px dashed ${brushSettings.isEraser ? '#ef4444' : '#a855f7'}`,
@@ -282,7 +285,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center p-4 bg-black/50 backdrop-blur-sm rounded-lg">
             <p className="text-white/70 text-sm">
-              {brushSettings.isEraser 
+              {brushSettings.isEraser
                 ? 'Click and drag to erase mask areas'
                 : 'Click and drag to paint mask areas'
               }
@@ -297,7 +300,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
       {/* Brush preview */}
       <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/80 backdrop-blur-sm rounded-full px-3 py-2">
         <div className="flex items-center gap-1">
-          <div 
+          <div
             className="w-2 h-2 rounded-full"
             style={{
               backgroundColor: brushSettings.isEraser ? '#ef4444' : '#a855f7'
@@ -309,7 +312,7 @@ export function MaskCanvas({ className, width, height, onMaskChange }: MaskCanva
         </div>
         <div className="w-px h-4 bg-white/20" />
         <span className="text-white/60 text-xs">
-          Size: {brushSize}px
+          Size: {brushSettings.size}px
         </span>
       </div>
     </motion.div>

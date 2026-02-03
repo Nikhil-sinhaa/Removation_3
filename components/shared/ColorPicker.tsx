@@ -60,7 +60,7 @@ export function ColorPicker({
   className,
   disabled = false,
 }: ColorPickerProps) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [localValue, setLocalValue] = useState(value);
   const [copied, setCopied] = useState(false);
   const gradientRef = useRef<HTMLDivElement>(null);
@@ -142,10 +142,10 @@ export function ColorPicker({
           <Tabs defaultValue="presets">
             <TabsList className="w-full grid grid-cols-2 mb-3">
               <TabsTrigger value="presets">
-                {t("Presets", "प्रीसेट")}
+                {language === "hi" ? "प्रीसेट" : "Presets"}
               </TabsTrigger>
               <TabsTrigger value="custom">
-                {t("Custom", "कस्टम")}
+                {language === "hi" ? "कस्टम" : "Custom"}
               </TabsTrigger>
             </TabsList>
 
@@ -258,7 +258,7 @@ export function ColorPicker({
                   className="w-8 h-8 rounded cursor-pointer"
                 />
                 <span className="text-sm text-gray-500">
-                  {t("System color picker", "सिस्टम कलर पिकर")}
+                  {language === "hi" ? "सिस्टम कलर पिकर" : "System color picker"}
                 </span>
               </div>
             </TabsContent>

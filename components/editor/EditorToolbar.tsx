@@ -57,14 +57,18 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
     setMode,
     currentImage,
     processedImage,
-    showOriginal,
-    setShowOriginal,
+    ui,
+    toggleCompareView,
     undo,
     redo,
     history,
     historyIndex,
-    resetEditor,
+    reset,
   } = useEditorStore();
+
+  const showOriginal = ui?.showCompareView || false;
+  const setShowOriginal = toggleCompareView;
+  const resetEditor = reset;
 
   // Check if we can undo/redo
   const canUndo = historyIndex > 0;
@@ -171,7 +175,7 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
       label: showOriginal ? 'Hide Original' : 'Show Original',
       shortcut: 'O',
       active: showOriginal,
-      action: () => setShowOriginal(!showOriginal),
+      action: () => setShowOriginal(),
       disabled: !currentImage || !processedImage,
     },
   ];
@@ -250,7 +254,7 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
 
   const handleExport = () => {
     if (!processedImage?.url) return;
-    
+
     const link = document.createElement('a');
     link.href = processedImage.url;
     link.download = `removation-ai-export-${Date.now()}.png`;
@@ -260,7 +264,7 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   };
 
   return (
-    <div 
+    <div
       className={cn(
         "flex items-center justify-between px-4 py-2",
         "bg-black/40 backdrop-blur-sm border-b border-white/5",
@@ -271,9 +275,9 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
       <div className="flex items-center gap-4">
         {/* Transformation Tools */}
         {renderToolGroup(transformationTools)}
-        
+
         <div className="w-px h-6 bg-white/10" />
-        
+
         {/* Enhancement Tools */}
         {renderToolGroup(enhancementTools)}
       </div>
@@ -281,14 +285,14 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
       <div className="flex items-center gap-4">
         {/* View Tools */}
         {renderToolGroup(viewTools)}
-        
+
         <div className="w-px h-6 bg-white/10" />
-        
+
         {/* History Tools */}
         {renderToolGroup(historyTools)}
-        
+
         <div className="w-px h-6 bg-white/10" />
-        
+
         {/* Export Button */}
         <Button
           size="sm"

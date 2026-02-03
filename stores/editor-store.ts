@@ -32,22 +32,22 @@
 //   setOriginalImage: (image: ImageData | null) => void;
 //   setCurrentImage: (image: ImageData | null) => void;
 //   setProcessedImage: (image: ImageData | null) => void;
-  
+
 //   // Actions - Mode & Style
 //   setMode: (mode: TransformationMode) => void;
 //   setStyle: (style: DesignStyle | null) => void;
 //   setRoomType: (roomType: RoomType | null) => void;
-  
+
 //   // Actions - Tool
 //   setCurrentTool: (tool: EditorTool) => void;
-  
+
 //   // Actions - Mask
 //   setMask: (mask: MaskData | null) => void;
 //   clearMask: () => void;
 //   setBrushSize: (size: number) => void;
 //   setBrushHardness: (hardness: number) => void;
 //   setBrushSettings: (settings: Partial<BrushSettings>) => void;
-  
+
 //   // Actions - Generation Settings
 //   setPrompt: (prompt: string) => void;
 //   setNegativePrompt: (negativePrompt: string) => void;
@@ -55,11 +55,11 @@
 //   setGuidanceScale: (scale: number) => void;
 //   setSeed: (seed: number | null) => void;
 //   setNumberOfOutputs: (num: 1 | 2 | 3 | 4) => void;
-  
+
 //   // Actions - Color & Material
 //   setSelectedColor: (color: string | null) => void;
 //   setSelectedMaterial: (material: string | null) => void;
-  
+
 //   // Actions - View
 //   setZoom: (zoom: number) => void;
 //   zoomIn: () => void;
@@ -70,18 +70,18 @@
 //   setShowOriginal: (show: boolean) => void;
 //   toggleShowOriginal: () => void;
 //   setCompareMode: (mode: 'slider' | 'side-by-side' | 'overlay') => void;
-  
+
 //   // Actions - Generation State
 //   setIsGenerating: (generating: boolean) => void;
 //   setGenerationProgress: (progress: number, status?: string) => void;
 //   setCurrentRender: (render: Render | null) => void;
-  
+
 //   // Actions - Render Queue
 //   addToQueue: (settings: RenderQueueItem['settings']) => string;
 //   updateQueueItem: (id: string, updates: Partial<RenderQueueItem>) => void;
 //   removeFromQueue: (id: string) => void;
 //   clearQueue: () => void;
-  
+
 //   // Actions - Layers
 //   addLayer: (layer: Omit<Layer, 'id' | 'order'>) => string;
 //   updateLayer: (id: string, updates: Partial<Layer>) => void;
@@ -89,7 +89,7 @@
 //   setActiveLayer: (id: string | null) => void;
 //   reorderLayers: (fromIndex: number, toIndex: number) => void;
 //   duplicateLayer: (id: string) => string | null;
-  
+
 //   // Actions - History
 //   addToHistory: (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => void;
 //   undo: () => void;
@@ -97,18 +97,18 @@
 //   canUndo: () => boolean;
 //   canRedo: () => boolean;
 //   clearHistory: () => void;
-  
+
 //   // Actions - Panels
 //   toggleVastuPanel: () => void;
 //   toggleCostPanel: () => void;
 //   toggleHistoryPanel: () => void;
 //   toggleLayersPanel: () => void;
 //   closeAllPanels: () => void;
-  
+
 //   // Actions - Analysis Results
 //   setVastuAnalysis: (analysis: VastuAnalysis | null) => void;
 //   setCostEstimate: (estimate: CostEstimate | null) => void;
-  
+
 //   // Actions - Reset
 //   reset: () => void;
 //   resetGenerationSettings: () => void;
@@ -502,18 +502,18 @@
 //             set((state) => {
 //               // Remove any redo history
 //               state.history = state.history.slice(0, state.historyIndex + 1);
-              
+
 //               state.history.push({
 //                 ...entry,
 //                 id: uuidv4(),
 //                 timestamp: new Date(),
 //               });
-              
+
 //               // Trim history if needed
 //               if (state.history.length > MAX_HISTORY) {
 //                 state.history = state.history.slice(-MAX_HISTORY);
 //               }
-              
+
 //               state.historyIndex = state.history.length - 1;
 //             }),
 
@@ -683,11 +683,28 @@ import { temporal } from 'zundo';
 import { shallow } from 'zustand/shallow';
 import { v4 as uuidv4 } from 'uuid';
 
+// Import types from centralized types file
+import type {
+  EditorTool,
+  BrushSettings as BaseBrushSettings,
+  TransformationMode,
+  DesignStyle,
+  RoomType,
+} from '@/types/editor';
+
+// Extend BrushSettings to include store-specific properties
+export interface BrushSettings extends BaseBrushSettings {
+  spacing?: number;
+  smoothing?: number;
+  pressureSensitivity?: boolean;
+  shape?: 'round' | 'square' | 'custom';
+}
+
 // ============================================
-// FIXED TYPE DEFINITIONS
+// STORE-SPECIFIC TYPE DEFINITIONS
 // ============================================
 
-// Image Types
+// Image Types (store-specific extended version)
 export interface ImageData {
   id: string;
   url: string;
@@ -703,7 +720,7 @@ export interface ImageData {
   };
 }
 
-// Mask Types
+// Mask Types (store-specific extended version)
 export interface MaskPoint {
   x: number;
   y: number;
@@ -726,70 +743,6 @@ export interface MaskData {
   width: number;
   height: number;
   coverage: number;
-}
-
-// Tool Types
-export type EditorTool =
-  | 'select'
-  | 'pan'
-  | 'brush'
-  | 'eraser'
-  | 'fill'
-  | 'eyedropper'
-  | 'rectangle'
-  | 'ellipse'
-  | 'lasso'
-  | 'magic-wand'
-  | 'crop';
-
-// Brush Settings
-export interface BrushSettings {
-  size: number;
-  hardness: number;
-  opacity: number;
-  flow: number;
-  spacing: number;
-  smoothing: number;
-  pressureSensitivity: boolean;
-  shape: 'round' | 'square' | 'custom';
-}
-
-// Transformation Modes
-export type TransformationMode =
-  | 'redesign'
-  | 'style-transfer'
-  | 'inpaint'
-  | 'remove-object'
-  | 'replace-object'
-  | 'fill-room'
-  | 'sketch-to-render'
-  | 'enhance'
-  | 'upscale'
-  | 'outdoor'
-  | 'color-change'
-  | 'material-change'
-  | 'lighting'
-  | 'staging';
-
-// Design Style
-export interface DesignStyle {
-  id: string;
-  name: string;
-  category: string;
-  thumbnail: string;
-  promptModifier: string;
-  negativePrompt?: string;
-  tags: string[];
-  premium: boolean;
-}
-
-// Room Type
-export interface RoomType {
-  id: string;
-  name: string;
-  icon: string;
-  promptModifier: string;
-  defaultStyles: string[];
 }
 
 // Layer Types
@@ -1105,6 +1058,8 @@ export const initialBrushSettings: BrushSettings = {
   smoothing: 0.5,
   pressureSensitivity: true,
   shape: 'round',
+  isEraser: false,
+  color: '#ffffff',
 };
 
 export const initialCanvasState: CanvasState = {
@@ -1296,14 +1251,14 @@ export interface EditorActions {
   // Initialization
   initialize: () => void;
   dispose: () => void;
-  
+
   // Project
   setProject: (project: Partial<ProjectState>) => void;
   createNewProject: () => void;
   saveProject: () => Promise<void>;
   loadProject: (id: string) => Promise<void>;
   markDirty: () => void;
-  
+
   // Image Management
   setOriginalImage: (image: ImageData | null) => void;
   setCurrentImage: (image: ImageData | null) => void;
@@ -1312,17 +1267,17 @@ export interface EditorActions {
   removeReferenceImage: (id: string) => void;
   clearReferenceImages: () => void;
   swapImages: () => void;
-  
+
   // Mode & Style
   setMode: (mode: TransformationMode) => void;
   setStyle: (style: DesignStyle | null) => void;
   setRoomType: (roomType: RoomType | null) => void;
-  
+
   // Tools
   setCurrentTool: (tool: EditorTool) => void;
   switchToPreviousTool: () => void;
   setTemporaryTool: (tool: EditorTool) => void;
-  
+
   // Brush Settings
   setBrushSettings: (settings: Partial<BrushSettings>) => void;
   setBrushSize: (size: number) => void;
@@ -1330,7 +1285,7 @@ export interface EditorActions {
   decreaseBrushSize: () => void;
   setBrushHardness: (hardness: number) => void;
   setBrushOpacity: (opacity: number) => void;
-  
+
   // Mask
   setMask: (mask: MaskData | null) => void;
   addMaskStroke: (stroke: MaskStroke) => void;
@@ -1342,7 +1297,7 @@ export interface EditorActions {
   undoMask: () => void;
   redoMask: () => void;
   saveMaskToHistory: () => void;
-  
+
   // Canvas
   setCanvasSize: (width: number, height: number) => void;
   setZoom: (zoom: number) => void;
@@ -1357,7 +1312,7 @@ export interface EditorActions {
   resetView: () => void;
   setCanvasRotation: (rotation: number) => void;
   rotateCanvas: (degrees: number) => void;
-  
+
   // Selection
   setSelection: (selection: Partial<SelectionState>) => void;
   selectAll: () => void;
@@ -1365,13 +1320,13 @@ export interface EditorActions {
   invertSelection: () => void;
   selectionToMask: () => void;
   maskToSelection: () => void;
-  
+
   // Crop
   startCrop: () => void;
   updateCrop: (crop: Partial<CropState>) => void;
   applyCrop: () => void;
   cancelCrop: () => void;
-  
+
   // Generation Settings
   setGenerationSettings: (settings: Partial<GenerationSettings>) => void;
   setPrompt: (prompt: string) => void;
@@ -1384,7 +1339,7 @@ export interface EditorActions {
   setNumberOfOutputs: (num: 1 | 2 | 3 | 4) => void;
   setQuality: (quality: GenerationSettings['quality']) => void;
   resetGenerationSettings: () => void;
-  
+
   // Generation
   startGeneration: () => void;
   cancelGeneration: () => void;
@@ -1393,7 +1348,7 @@ export interface EditorActions {
   setCurrentRender: (render: Render | null) => void;
   addToRenderHistory: (render: Render) => void;
   clearRenderHistory: () => void;
-  
+
   // Render Queue
   addToQueue: (item: Omit<RenderQueueItem, 'id' | 'addedAt' | 'retryCount'>) => string;
   updateQueueItem: (id: string, updates: Partial<RenderQueueItem>) => void;
@@ -1404,7 +1359,7 @@ export interface EditorActions {
   pauseQueue: () => void;
   resumeQueue: () => void;
   reorderQueue: (fromIndex: number, toIndex: number) => void;
-  
+
   // Layers
   addLayer: (layer: Partial<Layer>) => string;
   updateLayer: (id: string, updates: Partial<Layer>) => void;
@@ -1424,14 +1379,14 @@ export interface EditorActions {
   addLayerEffect: (layerId: string, effect: Omit<LayerEffect, 'id'>) => void;
   updateLayerEffect: (layerId: string, effectId: string, updates: Partial<LayerEffect>) => void;
   removeLayerEffect: (layerId: string, effectId: string) => void;
-  
+
   // Transform
   transformLayer: (id: string, transform: Partial<Layer['transform']>) => void;
   flipLayerHorizontal: (id: string) => void;
   flipLayerVertical: (id: string) => void;
   rotateLayer: (id: string, degrees: number) => void;
   resetLayerTransform: (id: string) => void;
-  
+
   // History
   addToHistory: (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => void;
   undo: () => void;
@@ -1443,20 +1398,20 @@ export interface EditorActions {
   canUndo: () => boolean;
   canRedo: () => boolean;
   getHistoryState: (index: number) => HistoryEntry | undefined;
-  
+
   // Vastu
   setVastuAnalysis: (analysis: VastuAnalysis | null) => void;
   setVastuLoading: (loading: boolean) => void;
   requestVastuAnalysis: () => Promise<void>;
   applyVastuSuggestion: (suggestionId: string) => void;
   dismissVastuIssue: (issueId: string) => void;
-  
+
   // Cost
   setCostEstimate: (estimate: CostEstimate | null) => void;
   setCostLoading: (loading: boolean) => void;
   requestCostEstimate: () => Promise<void>;
   updateCostSettings: (settings: Partial<{ city: string; squareFootage: number; quality: string }>) => void;
-  
+
   // Presets
   addPreset: (preset: Omit<Preset, 'id' | 'createdAt'>) => string;
   updatePreset: (id: string, updates: Partial<Preset>) => void;
@@ -1465,7 +1420,7 @@ export interface EditorActions {
   togglePresetFavorite: (id: string) => void;
   exportPreset: (id: string) => string;
   importPreset: (data: string) => string | null;
-  
+
   // UI
   setUIState: (state: Partial<UIState>) => void;
   togglePanel: (panel: keyof Pick<UIState, 'showVastuPanel' | 'showCostPanel' | 'showHistoryPanel' | 'showLayersPanel' | 'showStylesPanel' | 'showSettingsPanel'>) => void;
@@ -1482,25 +1437,25 @@ export interface EditorActions {
   setLanguage: (language: UIState['language']) => void;
   setSidebarWidth: (width: number) => void;
   setRightPanelWidth: (width: number) => void;
-  
+
   // Keyboard
   setKeyboardState: (state: Partial<KeyboardState>) => void;
-  
+
   // Errors
   addError: (error: Omit<EditorError, 'id' | 'timestamp' | 'dismissed'>) => void;
   dismissError: (id: string) => void;
   dismissAllErrors: () => void;
   clearErrors: () => void;
-  
+
   // Collaboration
   setCollaborators: (collaborators: Collaborator[]) => void;
   updateCollaborator: (id: string, updates: Partial<Collaborator>) => void;
   removeCollaborator: (id: string) => void;
   setIsCollaborating: (isCollaborating: boolean) => void;
-  
+
   // Loading
   setLoading: (loading: boolean, message?: string) => void;
-  
+
   // Reset
   reset: () => void;
   softReset: () => void;
@@ -1594,10 +1549,10 @@ const editorStoreCreator: StateCreator<
         state.isLoading = true;
         state.loadingMessage = 'Saving project...';
       });
-      
+
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       set((state) => {
         state.project.savedAt = new Date();
         state.project.isDirty = false;
@@ -1624,9 +1579,9 @@ const editorStoreCreator: StateCreator<
         state.isLoading = true;
         state.loadingMessage = 'Loading project...';
       });
-      
+
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       set((state) => {
         state.project.id = id;
         state.isLoading = false;
@@ -1659,11 +1614,11 @@ const editorStoreCreator: StateCreator<
       state.currentImage = image;
       state.processedImage = null;
       state.mask = null;
-      
+
       if (image) {
         state.canvas.width = image.width;
         state.canvas.height = image.height;
-        
+
         // Add base layer
         state.layers = [{
           id: uuidv4(),
@@ -1680,7 +1635,7 @@ const editorStoreCreator: StateCreator<
           parentId: null,
         }];
         state.activeLayerId = state.layers[0].id;
-        
+
         // Add to history
         state.history.push({
           id: uuidv4(),
@@ -1748,14 +1703,14 @@ const editorStoreCreator: StateCreator<
     set((state) => {
       const previousMode = state.mode;
       state.mode = mode;
-      
+
       const inpaintModes: TransformationMode[] = ['inpaint', 'remove-object', 'replace-object'];
       if (inpaintModes.includes(previousMode) && !inpaintModes.includes(mode)) {
         state.mask = null;
         state.maskHistory = [];
         state.maskHistoryIndex = -1;
       }
-      
+
       if (inpaintModes.includes(mode)) {
         state.currentTool = 'brush';
       }
@@ -2002,7 +1957,7 @@ const editorStoreCreator: StateCreator<
     set((state) => {
       const previousZoom = state.canvas.zoom;
       state.canvas.zoom = clamp(level, MIN_ZOOM, MAX_ZOOM);
-      
+
       if (centerX !== undefined && centerY !== undefined) {
         const zoomRatio = state.canvas.zoom / previousZoom;
         state.canvas.panX = centerX - (centerX - state.canvas.panX) * zoomRatio;
@@ -2261,14 +2216,14 @@ const editorStoreCreator: StateCreator<
   setCurrentRender: (render) => {
     set((state) => {
       state.currentRender = render;
-      
+
       if (render && render.status === 'completed' && render.outputImages.length > 0) {
         state.processedImage = render.outputImages[0];
         state.currentImage = render.outputImages[0];
         state.isGenerating = false;
         state.generationProgress = 100;
         state.generationStatus = 'Complete';
-        
+
         state.history.push({
           id: uuidv4(),
           type: 'generate',
@@ -2283,7 +2238,7 @@ const editorStoreCreator: StateCreator<
             strength: render.settings.strength,
           },
         });
-        
+
         if (state.history.length > MAX_HISTORY) {
           state.history = state.history.slice(-MAX_HISTORY);
         }
@@ -2448,13 +2403,13 @@ const editorStoreCreator: StateCreator<
         name: `${layer.name} (copy)`,
         order: layer.order + 1,
       };
-      
+
       state.layers.forEach((l: Layer) => {
         if (l.order > layer.order) {
           l.order += 1;
         }
       });
-      
+
       state.layers.push(newLayer);
       state.layers.sort((a: Layer, b: Layer) => a.order - b.order);
       state.activeLayerId = newId;
@@ -2571,7 +2526,7 @@ const editorStoreCreator: StateCreator<
       const layersToGroup = state.layers.filter((l: Layer) => layerIds.includes(l.id));
       if (layersToGroup.length > 1) {
         const minOrder = Math.min(...layersToGroup.map((l: Layer) => l.order));
-        
+
         const group: Layer = {
           id,
           name: 'Group',
@@ -2586,11 +2541,11 @@ const editorStoreCreator: StateCreator<
           parentId: null,
           children: layerIds,
         };
-        
+
         layersToGroup.forEach((l: Layer) => {
           l.parentId = id;
         });
-        
+
         state.layers.push(group);
         state.layers.sort((a: Layer, b: Layer) => a.order - b.order);
         state.activeLayerId = id;
@@ -2820,14 +2775,14 @@ const editorStoreCreator: StateCreator<
   requestVastuAnalysis: async () => {
     const state = get();
     if (!state.currentImage) return;
-    
+
     set((s) => {
       s.vastuLoading = true;
     });
-    
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      
+
       const analysis: VastuAnalysis = {
         score: 75,
         direction: 'North',
@@ -2836,7 +2791,7 @@ const editorStoreCreator: StateCreator<
         roomAnalysis: {},
         lastAnalyzedAt: new Date(),
       };
-      
+
       set((s) => {
         s.vastuAnalysis = analysis;
         s.vastuLoading = false;
@@ -2884,14 +2839,14 @@ const editorStoreCreator: StateCreator<
   requestCostEstimate: async () => {
     const state = get();
     if (!state.currentImage) return;
-    
+
     set((s) => {
       s.costLoading = true;
     });
-    
+
     try {
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      
+
       const estimate: CostEstimate = {
         totalCost: 500000,
         currency: 'INR',
@@ -2905,7 +2860,7 @@ const editorStoreCreator: StateCreator<
         city: 'Mumbai',
         squareFootage: 500,
       };
-      
+
       set((s) => {
         s.costEstimate = estimate;
         s.costLoading = false;

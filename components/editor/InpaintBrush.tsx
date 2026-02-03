@@ -23,14 +23,15 @@ interface InpaintBrushProps {
 
 export function InpaintBrush({ className }: InpaintBrushProps) {
   const {
-    brushSize,
     setBrushSize,
-    brushHardness,
     setBrushHardness,
     brushSettings,
     setBrushSettings,
     clearMask,
   } = useEditorStore();
+
+  const brushSize = brushSettings?.size || 20;
+  const brushHardness = brushSettings?.hardness || 0.8;
 
   const [isHovering, setIsHovering] = useState(false);
 
@@ -196,7 +197,7 @@ export function InpaintBrush({ className }: InpaintBrushProps) {
       </div>
 
       {/* Brush Preview */}
-      <div 
+      <div
         className="flex items-center justify-center py-4 bg-white/5 rounded-lg"
         onMouseEnter={() => setIsHovering(true)}
         onMouseLeave={() => setIsHovering(false)}
@@ -214,11 +215,10 @@ export function InpaintBrush({ className }: InpaintBrushProps) {
           )}
           style={{
             boxShadow: brushHardness < 0.5
-              ? `0 0 ${(1 - brushHardness) * 50}px ${(1 - brushHardness) * 25}px ${
-                  brushSettings.isEraser 
-                    ? 'rgba(239, 68, 68, 0.5)' 
-                    : 'rgba(168, 85, 247, 0.5)'
-                }`
+              ? `0 0 ${(1 - brushHardness) * 50}px ${(1 - brushHardness) * 25}px ${brushSettings.isEraser
+                ? 'rgba(239, 68, 68, 0.5)'
+                : 'rgba(168, 85, 247, 0.5)'
+              }`
               : 'none',
             maxWidth: '100px',
             maxHeight: '100px',
@@ -242,7 +242,7 @@ export function InpaintBrush({ className }: InpaintBrushProps) {
       {/* Tips */}
       <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
         <p className="text-blue-200/80 text-xs">
-          <strong>Tip:</strong> {brushSettings.isEraser 
+          <strong>Tip:</strong> {brushSettings.isEraser
             ? 'Use eraser to remove parts of the mask. The AI will preserve these areas.'
             : 'Paint over the areas you want to transform. The AI will only modify painted regions.'
           }

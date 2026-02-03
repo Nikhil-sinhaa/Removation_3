@@ -4,17 +4,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  User, 
-  Share2, 
-  Twitter, 
-  Facebook, 
-  Linkedin, 
-  Link2, 
-  ChevronLeft, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  User,
+  Share2,
+  Twitter,
+  Facebook,
+  Linkedin,
+  Link2,
+  ChevronLeft,
   ChevronRight,
   Heart,
   MessageCircle,
@@ -456,7 +456,7 @@ function getBlogPost(slug: string): BlogPost | undefined {
 function getRelatedPosts(currentSlug: string, category: string, limit: number = 3): BlogPost[] {
   return blogPosts
     .filter(post => post.slug !== currentSlug)
-    .filter(post => post.category === category || post.tags.some(tag => 
+    .filter(post => post.category === category || post.tags.some(tag =>
       blogPosts.find(p => p.slug === currentSlug)?.tags.includes(tag)
     ))
     .slice(0, limit);
@@ -479,13 +479,14 @@ export async function generateStaticParams() {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ 
-  params 
-}: { 
-  params: { slug: string } 
+export async function generateMetadata({
+  params
+}: {
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const post = getBlogPost(params.slug);
-  
+  const { slug } = await params;
+  const post = getBlogPost(slug);
+
   if (!post) {
     return {
       title: 'Post Not Found | Removation.ai Blog',
@@ -557,7 +558,7 @@ function renderContent(content: string) {
 
   lines.forEach((line, index) => {
     const trimmedLine = line.trim();
-    
+
     if (!trimmedLine) {
       flushList();
       return;
@@ -616,7 +617,7 @@ function renderContent(content: string) {
 
     // Regular paragraph
     flushList();
-    
+
     // Process inline formatting
     let processedLine = trimmedLine
       .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-gray-900 dark:text-white">$1</strong>')
@@ -624,8 +625,8 @@ function renderContent(content: string) {
       .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" class="text-purple-600 hover:text-purple-700 underline">$1</a>');
 
     elements.push(
-      <p 
-        key={index} 
+      <p
+        key={index}
         className="text-gray-600 dark:text-gray-300 leading-relaxed my-4"
         dangerouslySetInnerHTML={{ __html: processedLine }}
       />
@@ -637,11 +638,11 @@ function renderContent(content: string) {
 }
 
 // Share button component
-function ShareButton({ 
-  platform, 
-  url, 
-  title 
-}: { 
+function ShareButton({
+  platform,
+  url,
+  title
+}: {
   platform: 'twitter' | 'facebook' | 'linkedin' | 'copy';
   url: string;
   title: string;
@@ -724,9 +725,8 @@ function TableOfContents({ content }: { content: string }) {
             <a
               key={index}
               href={`#${heading.id}`}
-              className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ${
-                heading.level === 3 ? 'ml-4' : ''
-              }`}
+              className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ${heading.level === 3 ? 'ml-4' : ''
+                }`}
             >
               {heading.text}
             </a>
@@ -738,20 +738,21 @@ function TableOfContents({ content }: { content: string }) {
 }
 
 // Main Blog Post Page Component
-export default function BlogPostPage({ 
-  params 
-}: { 
-  params: { slug: string } 
+export default async function BlogPostPage({
+  params
+}: {
+  params: Promise<{ slug: string }>
 }) {
-  const post = getBlogPost(params.slug);
-  
+  const { slug } = await params;
+  const post = getBlogPost(slug);
+
   if (!post) {
     notFound();
   }
 
-  const relatedPosts = getRelatedPosts(params.slug, post.category);
-  const { prev, next } = getAdjacentPosts(params.slug);
-  const shareUrl = `https://removation.ai/blog/${params.slug}`;
+  const relatedPosts = getRelatedPosts(slug, post.category);
+  const { prev, next } = getAdjacentPosts(slug);
+  const shareUrl = `https://removation.ai/blog/${slug}`;
 
   return (
     <article className="min-h-screen bg-white dark:bg-gray-950">
@@ -880,7 +881,7 @@ export default function BlogPostPage({
                   className="h-10 w-10 rounded-full hover:bg-blue-50 hover:border-blue-300 hover:text-blue-500 dark:hover:bg-blue-950"
                   asChild
                 >
-                  <a 
+                  <a
                     href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(shareUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -894,7 +895,7 @@ export default function BlogPostPage({
                   className="h-10 w-10 rounded-full hover:bg-blue-50 hover:border-blue-600 hover:text-blue-600 dark:hover:bg-blue-950"
                   asChild
                 >
-                  <a 
+                  <a
                     href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -908,7 +909,7 @@ export default function BlogPostPage({
                   className="h-10 w-10 rounded-full hover:bg-blue-50 hover:border-blue-700 hover:text-blue-700 dark:hover:bg-blue-950"
                   asChild
                 >
-                  <a 
+                  <a
                     href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -953,8 +954,8 @@ export default function BlogPostPage({
                 <Tag className="h-4 w-4 text-gray-400" />
                 {post.tags.map(tag => (
                   <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`}>
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className="bg-gray-100 hover:bg-purple-100 dark:bg-gray-800 dark:hover:bg-purple-900/50 transition-colors cursor-pointer"
                     >
                       {tag}
@@ -1002,7 +1003,7 @@ export default function BlogPostPage({
                   <div className="flex gap-3">
                     {post.author.twitter && (
                       <Button variant="outline" size="sm" className="gap-2" asChild>
-                        <a 
+                        <a
                           href={`https://twitter.com/${post.author.twitter}`}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -1014,7 +1015,7 @@ export default function BlogPostPage({
                     )}
                     {post.author.linkedin && (
                       <Button variant="outline" size="sm" className="gap-2" asChild>
-                        <a 
+                        <a
                           href={`https://linkedin.com/in/${post.author.linkedin}`}
                           target="_blank"
                           rel="noopener noreferrer"

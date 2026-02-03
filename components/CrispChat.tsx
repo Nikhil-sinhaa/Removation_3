@@ -84,9 +84,3 @@ export function CrispChat({ crispWebsiteId }: CrispChatProps) {
   );
 }
 
-declare global {
-  interface Window {
-    $crisp?: any[];
-    CRISP_WEBSITE_ID?: string;
-  }
-}
