@@ -1,7 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { Render, ImageData, RoomTypeId } from './editor';
 import { VastuAnalysis } from './vastu';
-import { CostEstimate } from './cost';
+// import { CostEstimate } from './cost'; // Removed due to conflict with local definition
 
 // ============================================
 // PROJECT (UNIFIED VERSION)
@@ -12,58 +12,58 @@ export interface Project {
   _id: ObjectId | string;
   id: string;
   userId: string;
-  
+
   // Basic info
   name: string;
   description?: string;
   thumbnail?: string;
   originalImageUrl: string;
   originalImageKey: string;
-  
+
   // Room details
   roomType: string;
   roomTypeId?: RoomTypeId;
   style: string;
-  
+
   // Property details
   propertyDetails?: PropertyDetails;
-  
+
   // Rooms configuration
   rooms?: ProjectRoom[];
-  
+
   // Budget & Currency
   budget?: number;
   currency?: 'INR' | 'USD';
-  
+
   // Status
   status: ProjectStatus | 'draft' | 'processing' | 'completed' | 'failed';
-  
+
   // Analysis
   vastuScore?: number;
   overallVastuScore?: number;
   costEstimate?: CostEstimate;
   totalCostEstimate?: CostEstimate;
   estimatedCost?: number;
-  
+
   // Renders
   renders?: Render[];
   totalRenders?: number;
   renderCount: number;
   favoriteRenderId?: string;
-  
+
   // Collaboration
   collaborators?: Collaborator[];
   shareSettings?: ShareSettings;
-  
+
   // Visibility & Settings
   visibility: 'private' | 'public' | 'unlisted';
   settings?: ProjectSettings;
   isArchived: boolean;
-  
+
   // Metadata
   tags: string[];
   isFavorite: boolean;
-  
+
   // Timestamps
   lastOpenedAt: Date;
   createdAt: Date;
@@ -71,7 +71,7 @@ export interface Project {
   deletedAt?: Date;
 }
 
-export type ProjectStatus = 'draft' | 'in-progress' | 'completed' | 'archived';
+export type ProjectStatus = 'active' | 'draft' | 'in-progress' | 'completed' | 'archived' | 'processing' | 'failed';
 
 // ============================================
 // PROJECT SETTINGS
@@ -143,33 +143,33 @@ export interface AddressDetails {
 export interface ProjectRoom {
   id: string;
   projectId: string;
-  
+
   // Room info
   name: string;
   type: RoomTypeId;
   floor: number;
-  
+
   // Dimensions
   dimensions: RoomDimensions;
-  
+
   // Original images
   originalImages: ImageData[];
-  
+
   // Renders for this room
   renderIds: string[];
   selectedRenderId?: string;
-  
+
   // Analysis
   vastuAnalysis?: VastuAnalysis;
   costEstimate?: CostEstimate;
-  
+
   // Design preferences
   preferredStyle?: string;
   notes?: string;
-  
+
   // Status
   status: 'pending' | 'designed' | 'approved';
-  
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -322,25 +322,25 @@ export interface ProjectComment {
   projectId: string;
   roomId?: string;
   renderId?: string;
-  
+
   userId: string;
   userName: string;
   userAvatar?: string;
-  
+
   content: string;
-  
+
   // Position on image (if applicable)
   position?: { x: number; y: number };
-  
+
   // Replies
   parentId?: string;
   replies?: ProjectComment[];
-  
+
   // Status
   isResolved: boolean;
   resolvedBy?: string;
   resolvedAt?: Date;
-  
+
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -352,16 +352,16 @@ export interface ProjectComment {
 export interface ProjectActivity {
   id: string;
   projectId: string;
-  
+
   type: ProjectActivityType;
   description: string;
-  
+
   userId: string;
   userName: string;
   userAvatar?: string;
-  
+
   metadata?: Record<string, unknown>;
-  
+
   createdAt: Date;
 }
 
