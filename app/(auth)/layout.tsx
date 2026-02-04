@@ -2,7 +2,6 @@
 import { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -19,9 +18,9 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
           <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-pulse delay-1000" />
           <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-indigo-400/15 rounded-full blur-2xl animate-pulse delay-500" />
         </div>
-        
+
         {/* Grid Pattern Overlay */}
-        <div 
+        <div
           className="absolute inset-0 opacity-10"
           style={{
             backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
@@ -48,8 +47,8 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               Transform Your Space with AI-Powered Design
             </h1>
             <p className="text-lg text-white/80 mb-8">
-              Join 50,000+ homeowners and designers creating stunning interior 
-              transformations in seconds. Get Vastu-compliant designs with 
+              Join 50,000+ homeowners and designers creating stunning interior
+              transformations in seconds. Get Vastu-compliant designs with
               accurate renovation costs.
             </p>
 

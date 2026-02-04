@@ -28,7 +28,7 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
-import { CompareSlider } from "@/components/editor/CompareSlider";
+import { CompareSliderMini } from "@/components/editor/CompareSlider";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export interface Render {
@@ -92,7 +92,7 @@ export function RenderGrid({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       onDownload?.(render.id);
       toast({
         title: language === "hi" ? "डाउनलोड सफल" : "Download successful",
@@ -313,8 +313,8 @@ export function RenderGrid({
                         render.vastuScore >= 80
                           ? "bg-emerald-500"
                           : render.vastuScore >= 50
-                          ? "bg-amber-500"
-                          : "bg-red-500"
+                            ? "bg-amber-500"
+                            : "bg-red-500"
                       )}
                     >
                       Vastu {render.vastuScore}
@@ -369,11 +369,9 @@ export function RenderGrid({
         <DialogContent className="max-w-5xl w-full p-0 bg-black/95 border-none">
           {selectedRender && showCompare ? (
             <div className="relative aspect-video w-full">
-              <CompareSlider
+              <CompareSliderMini
                 beforeImage={selectedRender.originalImage}
                 afterImage={selectedRender.renderedImage}
-                beforeLabel={language === "hi" ? "पहले" : "Before"}
-                afterLabel={language === "hi" ? "बाद में" : "After"}
               />
             </div>
           ) : selectedRender ? (

@@ -83,32 +83,37 @@ import type { NextRequest } from "next/server";
  *   - Uncomment the full auth logic below
  */
 
-export default clerkMiddleware(async () => {
-  // === MVP BYPASS: Skip all auth checks ===
-  return NextResponse.next();
+export default clerkMiddleware(async (auth, req: NextRequest) => {
+  const { userId, redirectToSignIn } = await auth();
 
-  // === FULL AUTH LOGIC (uncomment when ready for production) ===
-  // const { userId, redirectToSignIn } = await auth();
-  //
-  // // Allow public routes (landing, marketing pages, etc.)
-  // if (req.nextUrl.pathname.startsWith('/generate') ||
-  //     req.nextUrl.pathname === '/' ||
-  //     req.nextUrl.pathname.startsWith('/about') ||
-  //     req.nextUrl.pathname.startsWith('/pricing')) {
-  //   return NextResponse.next();
-  // }
-  //
-  // // Protected routes require login
-  // if (!userId) {
-  //   return redirectToSignIn({ returnBackUrl: req.url });
-  // }
-  //
-  // // Admin routes require admin role (optional future enhancement)
-  // if (req.nextUrl.pathname.startsWith('/admin')) {
-  //   // Add role check here later
-  // }
-  //
-  // return NextResponse.next();
+  // Allow public routes (landing, marketing pages, auth pages, etc.)
+  if (req.nextUrl.pathname.startsWith('/generate') ||
+    req.nextUrl.pathname === '/' ||
+    req.nextUrl.pathname.startsWith('/about') ||
+    req.nextUrl.pathname.startsWith('/pricing') ||
+    req.nextUrl.pathname.startsWith('/sign-in') ||
+    req.nextUrl.pathname.startsWith('/sign-up') ||
+    req.nextUrl.pathname.startsWith('/features') ||
+    req.nextUrl.pathname.startsWith('/contact') ||
+    req.nextUrl.pathname.startsWith('/blog') ||
+    req.nextUrl.pathname.startsWith('/privacy') ||
+    req.nextUrl.pathname.startsWith('/terms') ||
+    req.nextUrl.pathname.startsWith('/api/webhook') ||
+    req.nextUrl.pathname.startsWith('/api/uploadthing')) {
+    return NextResponse.next();
+  }
+
+  // Protected routes require login
+  if (!userId) {
+    return redirectToSignIn({ returnBackUrl: req.url });
+  }
+
+  // Admin routes require admin role (optional future enhancement)
+  if (req.nextUrl.pathname.startsWith('/admin')) {
+    // Add role check here later
+  }
+
+  return NextResponse.next();
 });
 
 export const config = {

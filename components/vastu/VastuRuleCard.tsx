@@ -64,6 +64,7 @@ export function VastuRuleCard({
       mirrors: "bg-violet-500/10 text-violet-500 border-violet-500/20",
       water: "bg-sky-500/10 text-sky-500 border-sky-500/20",
       storage: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+      study: "bg-teal-500/10 text-teal-500 border-teal-500/20",
     };
     return colors[category] || "bg-gray-500/10 text-gray-500 border-gray-500/20";
   };
@@ -173,16 +174,16 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
               {rule.code}
             </Badge>
           </div>
-          
+
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
             {language === "hi" ? rule.descriptionHi : rule.description}
           </p>
-          
+
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="outline" className={cn("text-xs capitalize", getCategoryColor(rule.category))}>
               {rule.category}
             </Badge>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -247,7 +248,7 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                         )}
                         {condition.direction && (
                           <div className="text-xs text-muted-foreground">
-                            Direction: {Array.isArray(condition.direction) 
+                            Direction: {Array.isArray(condition.direction)
                               ? condition.direction.join(", ")
                               : condition.direction}
                           </div>
@@ -280,7 +281,7 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                       Copy Rule
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {rule.remedies.slice(0, 3).map((remedy, idx) => (
                       <div
@@ -303,11 +304,11 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                             </Button>
                           )}
                         </div>
-                        
+
                         <p className="text-sm text-muted-foreground mb-2">
                           {language === "hi" ? remedy.descriptionHi : remedy.description}
                         </p>
-                        
+
                         {/* Remedy Items */}
                         {remedy.items && remedy.items.length > 0 && (
                           <div className="mb-2">
@@ -348,8 +349,8 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                             {remedy.effectiveness === "high"
                               ? "High"
                               : remedy.effectiveness === "medium"
-                              ? "Medium"
-                              : "Low"}
+                                ? "Medium"
+                                : "Low"}
                           </Badge>
                         </div>
                       </div>

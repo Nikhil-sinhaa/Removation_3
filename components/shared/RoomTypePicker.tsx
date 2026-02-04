@@ -1,5 +1,5 @@
 ﻿import React, { useState, useMemo } from 'react';
-import { Search, Home, Building, Tree, Check, X, Filter, Sparkles, TrendingUp } from 'lucide-react';
+import { Search, Home, Building, Trees, Check, X, Filter, Sparkles, TrendingUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +39,7 @@ export function RoomTypePicker({
   const categories = [
     { id: 'all' as const, label: t('all_rooms'), icon: <Home className="w-4 h-4" /> },
     { id: 'indoor' as const, label: t('indoor_rooms'), icon: <Building className="w-4 h-4" /> },
-    { id: 'outdoor' as const, label: t('outdoor_rooms'), icon: <Tree className="w-4 h-4" /> },
+    { id: 'outdoor' as const, label: t('outdoor_rooms'), icon: <Trees className="w-4 h-4" /> },
     { id: 'high-vastu' as const, label: t('high_vastu'), icon: <Sparkles className="w-4 h-4" /> },
   ];
 
@@ -47,7 +47,7 @@ export function RoomTypePicker({
 
   const filteredRooms = useMemo(() => {
     let rooms = ROOM_TYPES;
-    
+
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -57,21 +57,21 @@ export function RoomTypePicker({
         room.description.toLowerCase().includes(query)
       );
     }
-    
+
     // Apply category filter
     if (selectedCategory === 'indoor') {
-      rooms = rooms.filter(room => 
-        ['living-room', 'bedroom', 'kitchen', 'bathroom', 'dining-room', 'home-office', 'pooja-room', 
-         'foyer', 'study-room', 'wardrobe', 'media-room', 'bar', 'laundry', 'kids-playroom'].includes(room.id)
+      rooms = rooms.filter(room =>
+        ['living-room', 'bedroom', 'kitchen', 'bathroom', 'dining-room', 'home-office', 'pooja-room',
+          'foyer', 'study-room', 'wardrobe', 'media-room', 'bar', 'laundry', 'kids-playroom'].includes(room.id)
       );
     } else if (selectedCategory === 'outdoor') {
-      rooms = rooms.filter(room => 
+      rooms = rooms.filter(room =>
         ['balcony', 'outdoor', 'patio', 'garden', 'terrace'].includes(room.id)
       );
     } else if (selectedCategory === 'high-vastu') {
       rooms = highVastuRooms;
     }
-    
+
     return rooms;
   }, [searchQuery, selectedCategory, highVastuRooms]);
 
@@ -142,7 +142,7 @@ export function RoomTypePicker({
                 </Badge>
                 <Badge variant={
                   selectedRoomData.vastuImportance === 'high' ? 'default' :
-                  selectedRoomData.vastuImportance === 'medium' ? 'secondary' : 'outline'
+                    selectedRoomData.vastuImportance === 'medium' ? 'secondary' : 'outline'
                 } className="text-xs">
                   {selectedRoomData.vastuImportance} {t('vastu_importance')}
                 </Badge>
@@ -184,7 +184,7 @@ export function RoomTypePicker({
       {hasFilters && (
         <div className="flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            {filteredRooms.length} {t('room', { count: filteredRooms.length })}
+            {filteredRooms.length} {t('room', { count: String(filteredRooms.length) })}
           </div>
           <Button
             variant="ghost"
@@ -229,7 +229,7 @@ export function RoomTypePicker({
           {filteredRooms.map((room) => {
             const isSelected = selectedRoomType === room.id;
             const isOutdoor = getRoomCategory(room.id) === 'outdoor';
-            
+
             return (
               <button
                 key={room.id}
@@ -243,7 +243,7 @@ export function RoomTypePicker({
               >
                 <div className={cn(
                   "relative w-16 h-16 rounded-full mb-3 flex items-center justify-center text-2xl",
-                  isOutdoor 
+                  isOutdoor
                     ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
                     : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                 )}>
@@ -306,7 +306,7 @@ export function RoomTypePicker({
             {['living-room', 'bedroom', 'kitchen', 'pooja-room'].map((roomId) => {
               const room = getRoomById(roomId);
               if (!room) return null;
-              
+
               return (
                 <button
                   key={room.id}

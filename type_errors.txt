@@ -1,0 +1,30 @@
+﻿
+> removation-ai@1.0.0 type-check
+> tsc --noEmit
+
+components/layout/Sidebar.tsx(185,17): error TS2322: Type '{ iconOnly: boolean; className: string; }' is not assignable to type 'IntrinsicAttributes & LogoProps'.
+  Property 'iconOnly' does not exist on type 'IntrinsicAttributes & LogoProps'.
+components/layout/Sidebar.tsx(247,26): error TS2322: Type '{ compact: true; }' is not assignable to type 'IntrinsicAttributes & CreditBalanceProps'.
+  Property 'compact' does not exist on type 'IntrinsicAttributes & CreditBalanceProps'.
+components/layout/TopBar.tsx(125,30): error TS2322: Type '{ minimal: true; }' is not assignable to type 'IntrinsicAttributes & CreditBalanceProps'.
+  Property 'minimal' does not exist on type 'IntrinsicAttributes & CreditBalanceProps'.
+components/project/NewProjectModal.tsx(359,19): error TS2322: Type '{ value: string | null; onChange: Dispatch<SetStateAction<string | null>>; className: string; accept: string; maxSize: number; }' is not assignable to type 'IntrinsicAttributes & ImageUploaderProps'.
+  Property 'value' does not exist on type 'IntrinsicAttributes & ImageUploaderProps'.
+components/project/ProjectGrid.tsx(377,11): error TS2322: Type '{ icon: ForwardRefExoticComponent<Omit<LucideProps, "ref"> & RefAttributes<SVGSVGElement>>; title: string; description: string; action: { ...; } | undefined; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'action' does not exist on type 'IntrinsicAttributes & EmptyStateProps'. Did you mean 'onAction'?
+components/project/ProjectSettings.tsx(108,9): error TS2322: Type '{ notifications: { email: boolean; push: boolean; aiSuggestions: boolean; }; enableVastu?: boolean | undefined; enableCostTracking?: boolean | undefined; defaultCurrency?: "INR" | "USD" | undefined; autoSave?: boolean | undefined; quality?: "standard" | ... 2 more ... | undefined; language?: "en" | ... 1 more ... | ...' is not assignable to type 'ProjectSettings'.
+  Types of property 'enableVastu' are incompatible.
+    Type 'boolean | undefined' is not assignable to type 'boolean'.
+      Type 'undefined' is not assignable to type 'boolean'.
+components/project/ProjectSettings.tsx(361,35): error TS2345: Argument of type '"team" | "private" | "public"' is not assignable to parameter of type 'SetStateAction<"private" | "public" | "unlisted">'.
+  Type '"team"' is not assignable to type 'SetStateAction<"private" | "public" | "unlisted">'.
+components/shared/LanguageToggle.tsx(97,26): error TS2345: Argument of type 'string' is not assignable to parameter of type 'Record<string, string>'.
+components/shared/RenderGrid.tsx(31,10): error TS2724: '"@/components/editor/CompareSlider"' has no exported member named 'CompareSlider'. Did you mean 'CompareSliderMini'?
+components/shared/RoomTypePicker.tsx(2,34): error TS2724: '"lucide-react"' has no exported member named 'Tree'. Did you mean 'Trees'?
+components/shared/RoomTypePicker.tsx(187,49): error TS2322: Type 'number' is not assignable to type 'string'.
+components/shared/StylePicker.tsx(52,9): error TS2322: Type '"indian"' is not assignable to type '"all" | StyleCategory | "popular"'.
+components/vastu/VastuAnalyzer.tsx(31,10): error TS2305: Module '"@/hooks/useVastu"' has no exported member 'useVastu'.
+components/vastu/VastuRuleCard.tsx(68,12): error TS7053: Element implicitly has an 'any' type because expression of type 'VastuCategory' can't be used to index type '{ entrance: string; bedroom: string; kitchen: string; bathroom: string; puja: string; living: string; direction: string; elements: string; colors: string; furniture: string; lighting: string; plants: string; mirrors: string; water: string; storage: string; }'.
+  Property 'study' does not exist on type '{ entrance: string; bedroom: string; kitchen: string; bathroom: string; puja: string; living: string; direction: string; elements: string; colors: string; furniture: string; lighting: string; plants: string; mirrors: string; water: string; storage: string; }'.
+hooks/useUpload.ts(101,77): error TS2345: Argument of type '"imageUploader" | "avatar" | "projectImage"' is not assignable to parameter of type 'EndpointArg<{ imageUploader: FileRoute<{ input: undefined; output: { url: string; key: string; name: string; size: number; }; errorShape: Json; }>; }, "imageUploader">'.
+  Type '"avatar"' is not assignable to type 'EndpointArg<{ imageUploader: FileRoute<{ input: undefined; output: { url: string; key: string; name: string; size: number; }; errorShape: Json; }>; }, "imageUploader">'.
