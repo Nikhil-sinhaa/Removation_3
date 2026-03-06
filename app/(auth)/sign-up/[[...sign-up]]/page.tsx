@@ -1,8 +1,10 @@
 // app/(auth)/sign-up/[[...sign-up]]/page.tsx
 import { SignUp } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Sign Up | Removation.ai",
@@ -14,7 +16,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SignUpPage() {
+export default async function SignUpPage() {
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect("/dashboard");
+  }
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding & Features */}
@@ -24,42 +31,42 @@ export default function SignUpPage() {
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1"/>
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#grid)" />
           </svg>
         </div>
-        
+
         {/* Floating Elements */}
         <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-300/20 rounded-full blur-3xl animate-pulse delay-1000" />
-        
+
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 mb-12">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-7 h-7 text-violet-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <span className="text-2xl font-bold text-white">Removation.ai</span>
           </Link>
-          
+
           {/* Headline */}
           <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-6">
             Transform any space
             <br />
             <span className="text-purple-200">with AI magic</span>
           </h1>
-          
+
           <p className="text-lg text-purple-100 mb-10 max-w-md">
             Join thousands of designers, architects, and homeowners using AI to visualize and renovate spaces instantly.
           </p>
-          
+
           {/* Features List */}
           <div className="space-y-5">
             {[
@@ -111,7 +118,7 @@ export default function SignUpPage() {
               </div>
             ))}
           </div>
-          
+
           {/* Stats */}
           <div className="flex items-center gap-8 mt-12 pt-8 border-t border-white/20">
             <div>
@@ -129,7 +136,7 @@ export default function SignUpPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Right Side - Sign Up Form */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 lg:px-12 bg-gray-50 dark:bg-gray-900">
         {/* Mobile Logo */}
@@ -137,15 +144,15 @@ export default function SignUpPage() {
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">Removation.ai</span>
           </Link>
         </div>
-        
+
         {/* Header */}
         <div className="w-full max-w-md text-center mb-8">
           <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -155,7 +162,7 @@ export default function SignUpPage() {
             Start your free trial with 5 AI renders
           </p>
         </div>
-        
+
         {/* Clerk SignUp Component */}
         <div className="w-full max-w-md">
           <SignUp
@@ -165,26 +172,26 @@ export default function SignUpPage() {
                 card: "bg-white dark:bg-gray-800 shadow-xl rounded-2xl border-0 p-6",
                 headerTitle: "hidden",
                 headerSubtitle: "hidden",
-                socialButtonsBlockButton: 
+                socialButtonsBlockButton:
                   "bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium py-3 rounded-xl transition-all duration-200",
                 socialButtonsBlockButtonText: "font-medium",
                 dividerLine: "bg-gray-200 dark:bg-gray-600",
                 dividerText: "text-gray-500 dark:text-gray-400",
-                formFieldLabel: 
+                formFieldLabel:
                   "text-gray-700 dark:text-gray-300 font-medium text-sm",
-                formFieldInput: 
+                formFieldInput:
                   "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 rounded-xl py-3 px-4 text-gray-900 dark:text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200",
-                formButtonPrimary: 
+                formButtonPrimary:
                   "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-violet-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/30",
-                footerActionLink: 
+                footerActionLink:
                   "text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium",
-                identityPreviewEditButton: 
+                identityPreviewEditButton:
                   "text-violet-600 dark:text-violet-400",
                 formFieldSuccessText: "text-green-600 dark:text-green-400",
                 formFieldErrorText: "text-red-500 dark:text-red-400",
-                otpCodeFieldInput: 
+                otpCodeFieldInput:
                   "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 rounded-xl",
-                formResendCodeLink: 
+                formResendCodeLink:
                   "text-violet-600 dark:text-violet-400 hover:text-violet-700",
                 alert: "rounded-xl",
                 alertText: "text-sm",
@@ -198,24 +205,24 @@ export default function SignUpPage() {
                 termsPageUrl: "/terms",
               },
             }}
-            redirectUrl="/dashboard"
+            fallbackRedirectUrl="/dashboard"
             signInUrl="/sign-in"
           />
         </div>
-        
+
         {/* Footer Links */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Already have an account?{" "}
-            <Link 
-              href="/sign-in" 
+            <Link
+              href="/sign-in"
               className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium transition-colors"
             >
               Sign in
             </Link>
           </p>
         </div>
-        
+
         {/* Trust Badges */}
         <div className="mt-8 flex items-center justify-center gap-6 text-gray-400 dark:text-gray-500">
           <div className="flex items-center gap-2 text-xs">
@@ -231,7 +238,7 @@ export default function SignUpPage() {
             <span>GDPR Compliant</span>
           </div>
         </div>
-        
+
         {/* Terms */}
         <p className="mt-6 text-xs text-center text-gray-500 dark:text-gray-400 max-w-sm">
           By signing up, you agree to our{" "}

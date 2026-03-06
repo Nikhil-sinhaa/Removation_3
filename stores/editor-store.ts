@@ -1,676 +1,4 @@
-// // stores/editor-store.ts
-// import { create } from 'zustand';
-// import { devtools, persist, subscribeWithSelector } from 'zustand/middleware';
-// import { immer } from 'zustand/middleware/immer';
-// import { v4 as uuidv4 } from 'uuid';
-// import {
-//   EditorState,
-//   EditorAction,
-//   TransformationMode,
-//   DesignStyle,
-//   RoomType,
-//   ImageData,
-//   MaskData,
-//   Render,
-//   Layer,
-//   HistoryEntry,
-//   RenderQueueItem,
-//   BrushSettings,
-//   EditorTool,
-//   initialEditorState,
-//   initialBrushSettings,
-// } from '@/types/editor';
-// import { VastuAnalysis } from '@/types/vastu';
-// import { CostEstimate } from '@/types/cost';
 
-// // ============================================
-// // STORE INTERFACE
-// // ============================================
-
-// interface EditorStore extends EditorState {
-//   // Actions - Image Management
-//   setOriginalImage: (image: ImageData | null) => void;
-//   setCurrentImage: (image: ImageData | null) => void;
-//   setProcessedImage: (image: ImageData | null) => void;
-
-//   // Actions - Mode & Style
-//   setMode: (mode: TransformationMode) => void;
-//   setStyle: (style: DesignStyle | null) => void;
-//   setRoomType: (roomType: RoomType | null) => void;
-
-//   // Actions - Tool
-//   setCurrentTool: (tool: EditorTool) => void;
-
-//   // Actions - Mask
-//   setMask: (mask: MaskData | null) => void;
-//   clearMask: () => void;
-//   setBrushSize: (size: number) => void;
-//   setBrushHardness: (hardness: number) => void;
-//   setBrushSettings: (settings: Partial<BrushSettings>) => void;
-
-//   // Actions - Generation Settings
-//   setPrompt: (prompt: string) => void;
-//   setNegativePrompt: (negativePrompt: string) => void;
-//   setStrength: (strength: number) => void;
-//   setGuidanceScale: (scale: number) => void;
-//   setSeed: (seed: number | null) => void;
-//   setNumberOfOutputs: (num: 1 | 2 | 3 | 4) => void;
-
-//   // Actions - Color & Material
-//   setSelectedColor: (color: string | null) => void;
-//   setSelectedMaterial: (material: string | null) => void;
-
-//   // Actions - View
-//   setZoom: (zoom: number) => void;
-//   zoomIn: () => void;
-//   zoomOut: () => void;
-//   resetZoom: () => void;
-//   fitToScreen: () => void;
-//   setPan: (x: number, y: number) => void;
-//   setShowOriginal: (show: boolean) => void;
-//   toggleShowOriginal: () => void;
-//   setCompareMode: (mode: 'slider' | 'side-by-side' | 'overlay') => void;
-
-//   // Actions - Generation State
-//   setIsGenerating: (generating: boolean) => void;
-//   setGenerationProgress: (progress: number, status?: string) => void;
-//   setCurrentRender: (render: Render | null) => void;
-
-//   // Actions - Render Queue
-//   addToQueue: (settings: RenderQueueItem['settings']) => string;
-//   updateQueueItem: (id: string, updates: Partial<RenderQueueItem>) => void;
-//   removeFromQueue: (id: string) => void;
-//   clearQueue: () => void;
-
-//   // Actions - Layers
-//   addLayer: (layer: Omit<Layer, 'id' | 'order'>) => string;
-//   updateLayer: (id: string, updates: Partial<Layer>) => void;
-//   removeLayer: (id: string) => void;
-//   setActiveLayer: (id: string | null) => void;
-//   reorderLayers: (fromIndex: number, toIndex: number) => void;
-//   duplicateLayer: (id: string) => string | null;
-
-//   // Actions - History
-//   addToHistory: (entry: Omit<HistoryEntry, 'id' | 'timestamp'>) => void;
-//   undo: () => void;
-//   redo: () => void;
-//   canUndo: () => boolean;
-//   canRedo: () => boolean;
-//   clearHistory: () => void;
-
-//   // Actions - Panels
-//   toggleVastuPanel: () => void;
-//   toggleCostPanel: () => void;
-//   toggleHistoryPanel: () => void;
-//   toggleLayersPanel: () => void;
-//   closeAllPanels: () => void;
-
-//   // Actions - Analysis Results
-//   setVastuAnalysis: (analysis: VastuAnalysis | null) => void;
-//   setCostEstimate: (estimate: CostEstimate | null) => void;
-
-//   // Actions - Reset
-//   reset: () => void;
-//   resetGenerationSettings: () => void;
-// }
-
-// // ============================================
-// // ZOOM LEVELS
-// // ============================================
-
-// const ZOOM_LEVELS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 3, 4];
-// const MAX_HISTORY = 50;
-
-// // ============================================
-// // STORE IMPLEMENTATION
-// // ============================================
-
-// export const useEditorStore = create<EditorStore>()(
-//   devtools(
-//     subscribeWithSelector(
-//       persist(
-//         immer((set, get) => ({
-//           // Initial State
-//           ...initialEditorState,
-
-//           // ============================================
-//           // IMAGE MANAGEMENT
-//           // ============================================
-
-//           setOriginalImage: (image) =>
-//             set((state) => {
-//               state.originalImage = image;
-//               state.currentImage = image;
-//               if (image) {
-//                 // Add to history
-//                 state.history.push({
-//                   id: uuidv4(),
-//                   type: 'upload',
-//                   action: 'Image uploaded',
-//                   timestamp: new Date(),
-//                   image,
-//                   settings: {},
-//                 });
-//                 state.historyIndex = state.history.length - 1;
-//               }
-//             }),
-
-//           setCurrentImage: (image) =>
-//             set((state) => {
-//               state.currentImage = image;
-//             }),
-
-//           setProcessedImage: (image) =>
-//             set((state) => {
-//               state.processedImage = image;
-//               if (image) {
-//                 state.currentImage = image;
-//               }
-//             }),
-
-//           // ============================================
-//           // MODE & STYLE
-//           // ============================================
-
-//           setMode: (mode) =>
-//             set((state) => {
-//               state.mode = mode;
-//               // Reset mask when changing modes
-//               if (!['inpaint', 'remove-object', 'replace-object'].includes(mode)) {
-//                 state.mask = null;
-//               }
-//             }),
-
-//           setStyle: (style) =>
-//             set((state) => {
-//               state.style = style;
-//             }),
-
-//           setRoomType: (roomType) =>
-//             set((state) => {
-//               state.roomType = roomType;
-//             }),
-
-//           // ============================================
-//           // TOOL
-//           // ============================================
-
-//           setCurrentTool: (tool) =>
-//             set((state) => {
-//               state.currentTool = tool;
-//             }),
-
-//           // ============================================
-//           // MASK
-//           // ============================================
-
-//           setMask: (mask) =>
-//             set((state) => {
-//               state.mask = mask;
-//             }),
-
-//           clearMask: () =>
-//             set((state) => {
-//               state.mask = null;
-//             }),
-
-//           setBrushSize: (size) =>
-//             set((state) => {
-//               state.brushSize = Math.max(1, Math.min(200, size));
-//               state.brushSettings.size = state.brushSize;
-//             }),
-
-//           setBrushHardness: (hardness) =>
-//             set((state) => {
-//               state.brushHardness = Math.max(0, Math.min(1, hardness));
-//               state.brushSettings.hardness = state.brushHardness;
-//             }),
-
-//           setBrushSettings: (settings) =>
-//             set((state) => {
-//               state.brushSettings = { ...state.brushSettings, ...settings };
-//               if (settings.size !== undefined) state.brushSize = settings.size;
-//               if (settings.hardness !== undefined) state.brushHardness = settings.hardness;
-//             }),
-
-//           // ============================================
-//           // GENERATION SETTINGS
-//           // ============================================
-
-//           setPrompt: (prompt) =>
-//             set((state) => {
-//               state.prompt = prompt;
-//             }),
-
-//           setNegativePrompt: (negativePrompt) =>
-//             set((state) => {
-//               state.negativePrompt = negativePrompt;
-//             }),
-
-//           setStrength: (strength) =>
-//             set((state) => {
-//               state.strength = Math.max(0, Math.min(1, strength));
-//             }),
-
-//           setGuidanceScale: (scale) =>
-//             set((state) => {
-//               state.guidanceScale = Math.max(1, Math.min(20, scale));
-//             }),
-
-//           setSeed: (seed) =>
-//             set((state) => {
-//               state.seed = seed;
-//             }),
-
-//           setNumberOfOutputs: (num) =>
-//             set((state) => {
-//               state.numberOfOutputs = num;
-//             }),
-
-//           // ============================================
-//           // COLOR & MATERIAL
-//           // ============================================
-
-//           setSelectedColor: (color) =>
-//             set((state) => {
-//               state.selectedColor = color;
-//             }),
-
-//           setSelectedMaterial: (material) =>
-//             set((state) => {
-//               state.selectedMaterial = material;
-//             }),
-
-//           // ============================================
-//           // VIEW
-//           // ============================================
-
-//           setZoom: (zoom) =>
-//             set((state) => {
-//               state.zoom = Math.max(0.1, Math.min(10, zoom));
-//             }),
-
-//           zoomIn: () =>
-//             set((state) => {
-//               const currentIndex = ZOOM_LEVELS.findIndex((z: number) => z >= state.zoom);
-//               const nextIndex = Math.min(currentIndex + 1, ZOOM_LEVELS.length - 1);
-//               state.zoom = ZOOM_LEVELS[nextIndex];
-//             }),
-
-//           zoomOut: () =>
-//             set((state) => {
-//               const currentIndex = ZOOM_LEVELS.findIndex((z: number) => z >= state.zoom);
-//               const prevIndex = Math.max(currentIndex - 1, 0);
-//               state.zoom = ZOOM_LEVELS[prevIndex];
-//             }),
-
-//           resetZoom: () =>
-//             set((state) => {
-//               state.zoom = 1;
-//               state.panX = 0;
-//               state.panY = 0;
-//             }),
-
-//           fitToScreen: () =>
-//             set((state) => {
-//               // This would need container dimensions - simplified for now
-//               state.zoom = 1;
-//               state.panX = 0;
-//               state.panY = 0;
-//             }),
-
-//           setPan: (x, y) =>
-//             set((state) => {
-//               state.panX = x;
-//               state.panY = y;
-//             }),
-
-//           setShowOriginal: (show) =>
-//             set((state) => {
-//               state.showOriginal = show;
-//             }),
-
-//           toggleShowOriginal: () =>
-//             set((state) => {
-//               state.showOriginal = !state.showOriginal;
-//             }),
-
-//           setCompareMode: (mode) =>
-//             set((state) => {
-//               state.compareMode = mode;
-//             }),
-
-//           // ============================================
-//           // GENERATION STATE
-//           // ============================================
-
-//           setIsGenerating: (generating) =>
-//             set((state) => {
-//               state.isGenerating = generating;
-//               if (!generating) {
-//                 state.generationProgress = 0;
-//                 state.generationStatus = '';
-//               }
-//             }),
-
-//           setGenerationProgress: (progress, status) =>
-//             set((state) => {
-//               state.generationProgress = Math.max(0, Math.min(100, progress));
-//               if (status) state.generationStatus = status;
-//             }),
-
-//           setCurrentRender: (render) =>
-//             set((state) => {
-//               state.currentRender = render;
-//               if (render && render.outputImages.length > 0) {
-//                 state.processedImage = render.outputImages[0];
-//                 state.currentImage = render.outputImages[0];
-//                 // Add to history
-//                 state.history.push({
-//                   id: uuidv4(),
-//                   type: 'generate',
-//                   action: `Generated with ${render.settings.styleId} style`,
-//                   timestamp: new Date(),
-//                   image: render.outputImages[0],
-//                   settings: {
-//                     mode: state.mode,
-//                     style: state.style,
-//                     prompt: state.prompt,
-//                   },
-//                 });
-//                 // Trim history if needed
-//                 if (state.history.length > MAX_HISTORY) {
-//                   state.history = state.history.slice(-MAX_HISTORY);
-//                 }
-//                 state.historyIndex = state.history.length - 1;
-//               }
-//             }),
-
-//           // ============================================
-//           // RENDER QUEUE
-//           // ============================================
-
-//           addToQueue: (settings) => {
-//             const id = uuidv4();
-//             set((state) => {
-//               state.renderQueue.push({
-//                 id,
-//                 status: 'pending',
-//                 settings,
-//                 addedAt: new Date(),
-//               });
-//             });
-//             return id;
-//           },
-
-//           updateQueueItem: (id, updates) =>
-//             set((state) => {
-//               const index = state.renderQueue.findIndex((item: RenderQueueItem) => item.id === id);
-//               if (index !== -1) {
-//                 state.renderQueue[index] = { ...state.renderQueue[index], ...updates };
-//               }
-//             }),
-
-//           removeFromQueue: (id) =>
-//             set((state) => {
-//               state.renderQueue = state.renderQueue.filter((item: RenderQueueItem) => item.id !== id);
-//             }),
-
-//           clearQueue: () =>
-//             set((state) => {
-//               state.renderQueue = [];
-//             }),
-
-//           // ============================================
-//           // LAYERS
-//           // ============================================
-
-//           addLayer: (layerData) => {
-//             const id = uuidv4();
-//             set((state) => {
-//               const newLayer: Layer = {
-//                 ...layerData,
-//                 id,
-//                 order: state.layers.length,
-//               };
-//               state.layers.push(newLayer);
-//               state.activeLayerId = id;
-//             });
-//             return id;
-//           },
-
-//           updateLayer: (id, updates) =>
-//             set((state) => {
-//               const index = state.layers.findIndex((l: Layer) => l.id === id);
-//               if (index !== -1) {
-//                 state.layers[index] = { ...state.layers[index], ...updates };
-//               }
-//             }),
-
-//           removeLayer: (id) =>
-//             set((state) => {
-//               state.layers = state.layers.filter((l: Layer) => l.id !== id);
-//               // Update order
-//               state.layers.forEach((l: Layer, i: number) => {
-//                 l.order = i;
-//               });
-//               // Update active layer
-//               if (state.activeLayerId === id) {
-//                 state.activeLayerId = state.layers.length > 0 ? state.layers[0].id : null;
-//               }
-//             }),
-
-//           setActiveLayer: (id) =>
-//             set((state) => {
-//               state.activeLayerId = id;
-//             }),
-
-//           reorderLayers: (fromIndex, toIndex) =>
-//             set((state) => {
-//               const [removed] = state.layers.splice(fromIndex, 1);
-//               state.layers.splice(toIndex, 0, removed);
-//               // Update order
-//               state.layers.forEach((l: Layer, i: number) => {
-//                 l.order = i;
-//               });
-//             }),
-
-//           duplicateLayer: (id) => {
-//             const state = get();
-//             const layer = state.layers.find((l: Layer) => l.id === id);
-//             if (!layer) return null;
-
-//             const newId = uuidv4();
-//             set((state) => {
-//               const newLayer: Layer = {
-//                 ...layer,
-//                 id: newId,
-//                 name: `${layer.name} (copy)`,
-//                 order: state.layers.length,
-//               };
-//               state.layers.push(newLayer);
-//               state.activeLayerId = newId;
-//             });
-//             return newId;
-//           },
-
-//           // ============================================
-//           // HISTORY
-//           // ============================================
-
-//           addToHistory: (entry) =>
-//             set((state) => {
-//               // Remove any redo history
-//               state.history = state.history.slice(0, state.historyIndex + 1);
-
-//               state.history.push({
-//                 ...entry,
-//                 id: uuidv4(),
-//                 timestamp: new Date(),
-//               });
-
-//               // Trim history if needed
-//               if (state.history.length > MAX_HISTORY) {
-//                 state.history = state.history.slice(-MAX_HISTORY);
-//               }
-
-//               state.historyIndex = state.history.length - 1;
-//             }),
-
-//           undo: () =>
-//             set((state) => {
-//               if (state.historyIndex > 0) {
-//                 state.historyIndex -= 1;
-//                 const entry = state.history[state.historyIndex];
-//                 if (entry) {
-//                   state.currentImage = entry.image;
-//                   // Restore settings if available
-//                   if (entry.settings.mode) state.mode = entry.settings.mode as TransformationMode;
-//                   if (entry.settings.style) state.style = entry.settings.style as DesignStyle;
-//                   if (entry.settings.prompt) state.prompt = entry.settings.prompt as string;
-//                 }
-//               }
-//             }),
-
-//           redo: () =>
-//             set((state) => {
-//               if (state.historyIndex < state.history.length - 1) {
-//                 state.historyIndex += 1;
-//                 const entry = state.history[state.historyIndex];
-//                 if (entry) {
-//                   state.currentImage = entry.image;
-//                   if (entry.settings.mode) state.mode = entry.settings.mode as TransformationMode;
-//                   if (entry.settings.style) state.style = entry.settings.style as DesignStyle;
-//                   if (entry.settings.prompt) state.prompt = entry.settings.prompt as string;
-//                 }
-//               }
-//             }),
-
-//           canUndo: () => get().historyIndex > 0,
-
-//           canRedo: () => get().historyIndex < get().history.length - 1,
-
-//           clearHistory: () =>
-//             set((state) => {
-//               state.history = [];
-//               state.historyIndex = -1;
-//             }),
-
-//           // ============================================
-//           // PANELS
-//           // ============================================
-
-//           toggleVastuPanel: () =>
-//             set((state) => {
-//               state.showVastuPanel = !state.showVastuPanel;
-//               if (state.showVastuPanel) {
-//                 state.showCostPanel = false;
-//               }
-//             }),
-
-//           toggleCostPanel: () =>
-//             set((state) => {
-//               state.showCostPanel = !state.showCostPanel;
-//               if (state.showCostPanel) {
-//                 state.showVastuPanel = false;
-//               }
-//             }),
-
-//           toggleHistoryPanel: () =>
-//             set((state) => {
-//               state.showHistoryPanel = !state.showHistoryPanel;
-//             }),
-
-//           toggleLayersPanel: () =>
-//             set((state) => {
-//               state.showLayersPanel = !state.showLayersPanel;
-//             }),
-
-//           closeAllPanels: () =>
-//             set((state) => {
-//               state.showVastuPanel = false;
-//               state.showCostPanel = false;
-//               state.showHistoryPanel = false;
-//               state.showLayersPanel = false;
-//             }),
-
-//           // ============================================
-//           // ANALYSIS RESULTS
-//           // ============================================
-
-//           setVastuAnalysis: (analysis) =>
-//             set((state) => {
-//               state.vastuAnalysis = analysis;
-//             }),
-
-//           setCostEstimate: (estimate) =>
-//             set((state) => {
-//               state.costEstimate = estimate;
-//             }),
-
-//           // ============================================
-//           // RESET
-//           // ============================================
-
-//           reset: () =>
-//             set((state) => {
-//               Object.assign(state, initialEditorState);
-//             }),
-
-//           resetGenerationSettings: () =>
-//             set((state) => {
-//               state.prompt = '';
-//               state.negativePrompt = '';
-//               state.strength = 0.75;
-//               state.guidanceScale = 7.5;
-//               state.seed = null;
-//               state.numberOfOutputs = 1;
-//               state.selectedColor = null;
-//               state.selectedMaterial = null;
-//             }),
-//         })),
-//         {
-//           name: 'removation-editor',
-//           partialize: (state) => ({
-//             // Only persist user preferences, not images or renders
-//             mode: state.mode,
-//             brushSize: state.brushSize,
-//             brushHardness: state.brushHardness,
-//             brushSettings: state.brushSettings,
-//             compareMode: state.compareMode,
-//             showVastuPanel: state.showVastuPanel,
-//             showCostPanel: state.showCostPanel,
-//           }),
-//         }
-//       )
-//     ),
-//     { name: 'EditorStore' }
-//   )
-// );
-
-// // ============================================
-// // SELECTORS
-// // ============================================
-
-// export const selectCurrentImage = (state: EditorStore) => state.currentImage;
-// export const selectOriginalImage = (state: EditorStore) => state.originalImage;
-// export const selectProcessedImage = (state: EditorStore) => state.processedImage;
-// export const selectMode = (state: EditorStore) => state.mode;
-// export const selectStyle = (state: EditorStore) => state.style;
-// export const selectRoomType = (state: EditorStore) => state.roomType;
-// export const selectIsGenerating = (state: EditorStore) => state.isGenerating;
-// export const selectGenerationProgress = (state: EditorStore) => state.generationProgress;
-// export const selectCurrentRender = (state: EditorStore) => state.currentRender;
-// export const selectVastuAnalysis = (state: EditorStore) => state.vastuAnalysis;
-// export const selectCostEstimate = (state: EditorStore) => state.costEstimate;
-// export const selectLayers = (state: EditorStore) => state.layers;
-// export const selectActiveLayer = (state: EditorStore) => 
-//   state.layers.find((l: Layer) => l.id === state.activeLayerId);
-// export const selectHistory = (state: EditorStore) => state.history;
-// export const selectRenderQueue = (state: EditorStore) => state.renderQueue;
-
-// export default useEditorStore;
-// stores/editor-store.ts
 import { create, StateCreator } from 'zustand';
 import {
   devtools,
@@ -1544,25 +872,44 @@ const editorStoreCreator: StateCreator<
   },
 
   saveProject: async () => {
+    const state = get();
+    if (!state.project.id) return; // Nothing to save yet
+
     try {
-      set((state) => {
-        state.isLoading = true;
-        state.loadingMessage = 'Saving project...';
+      set((s) => {
+        s.isLoading = true;
+        s.loadingMessage = 'Saving project...';
       });
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch(`/api/projects/${state.project.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: state.project.name,
+          description: state.project.description,
+          roomType: state.roomType?.id,
+          style: state.style?.id,
+          mode: state.mode,
+          settings: state.generationSettings,
+          updatedAt: new Date(),
+        }),
+      });
 
-      set((state) => {
-        state.project.savedAt = new Date();
-        state.project.isDirty = false;
-        state.isLoading = false;
-        state.loadingMessage = '';
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Save failed (${response.status})`);
+      }
+
+      set((s) => {
+        s.project.savedAt = new Date();
+        s.project.isDirty = false;
+        s.isLoading = false;
+        s.loadingMessage = '';
       });
     } catch (error) {
-      set((state) => {
-        state.isLoading = false;
-        state.loadingMessage = '';
+      set((s) => {
+        s.isLoading = false;
+        s.loadingMessage = '';
       });
       get().addError({
         type: 'error',
@@ -1575,22 +922,35 @@ const editorStoreCreator: StateCreator<
 
   loadProject: async (id: string) => {
     try {
-      set((state) => {
-        state.isLoading = true;
-        state.loadingMessage = 'Loading project...';
+      set((s) => {
+        s.isLoading = true;
+        s.loadingMessage = 'Loading project...';
       });
 
-      await new Promise(resolve => setTimeout(resolve, 500));
+      const response = await fetch(`/api/projects/${id}`);
 
-      set((state) => {
-        state.project.id = id;
-        state.isLoading = false;
-        state.loadingMessage = '';
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `Project not found (${response.status})`);
+      }
+
+      const project = await response.json();
+
+      set((s) => {
+        s.project.id = project._id || id;
+        s.project.name = project.name || s.project.name;
+        s.project.description = project.description || '';
+        s.project.isDirty = false;
+        s.project.savedAt = project.updatedAt ? new Date(project.updatedAt) : null;
+        // Restore mode/roomType if stored in project
+        if (project.mode) s.mode = project.mode;
+        s.isLoading = false;
+        s.loadingMessage = '';
       });
     } catch (error) {
-      set((state) => {
-        state.isLoading = false;
-        state.loadingMessage = '';
+      set((s) => {
+        s.isLoading = false;
+        s.loadingMessage = '';
       });
       get().addError({
         type: 'error',
@@ -1852,27 +1212,138 @@ const editorStoreCreator: StateCreator<
   },
 
   featherMask: (amount: number) => {
-    set((state) => {
-      if (state.mask) {
-        state.project.isDirty = true;
-      }
-    });
+    const { mask } = get();
+    if (!mask?.dataUrl) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Apply Gaussian blur to soften mask edges
+      ctx.filter = `blur(${Math.max(1, amount)}px)`;
+      ctx.drawImage(img, 0, 0);
+      ctx.filter = 'none';
+
+      const newDataUrl = canvas.toDataURL('image/png');
+      set((state) => {
+        if (state.mask) {
+          state.mask.dataUrl = newDataUrl;
+          state.project.isDirty = true;
+        }
+      });
+    };
+    img.src = mask.dataUrl;
   },
 
   expandMask: (pixels: number) => {
-    set((state) => {
-      if (state.mask) {
-        state.project.isDirty = true;
+    const { mask } = get();
+    if (!mask?.dataUrl) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const src = document.createElement('canvas');
+      src.width = img.width;
+      src.height = img.height;
+      const srcCtx = src.getContext('2d')!;
+      srcCtx.drawImage(img, 0, 0);
+
+      const srcData = srcCtx.getImageData(0, 0, src.width, src.height);
+      const dst = srcCtx.createImageData(src.width, src.height);
+      const r = Math.max(1, Math.round(pixels));
+      const w = src.width;
+      const h = src.height;
+
+      // Morphological dilation: for each pixel take max alpha in r-radius neighborhood
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          let maxAlpha = 0;
+          for (let dy = -r; dy <= r; dy++) {
+            for (let dx = -r; dx <= r; dx++) {
+              if (dx * dx + dy * dy > r * r) continue; // circle
+              const nx = x + dx;
+              const ny = y + dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+              const alpha = srcData.data[(ny * w + nx) * 4 + 3];
+              if (alpha > maxAlpha) maxAlpha = alpha;
+            }
+          }
+          const i = (y * w + x) * 4;
+          dst.data[i] = 255;
+          dst.data[i + 1] = 255;
+          dst.data[i + 2] = 255;
+          dst.data[i + 3] = maxAlpha;
+        }
       }
-    });
+
+      srcCtx.putImageData(dst, 0, 0);
+      const newDataUrl = src.toDataURL('image/png');
+      set((state) => {
+        if (state.mask) {
+          state.mask.dataUrl = newDataUrl;
+          state.project.isDirty = true;
+        }
+      });
+    };
+    img.src = mask.dataUrl;
   },
 
   contractMask: (pixels: number) => {
-    set((state) => {
-      if (state.mask) {
-        state.project.isDirty = true;
+    const { mask } = get();
+    if (!mask?.dataUrl) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const src = document.createElement('canvas');
+      src.width = img.width;
+      src.height = img.height;
+      const srcCtx = src.getContext('2d')!;
+      srcCtx.drawImage(img, 0, 0);
+
+      const srcData = srcCtx.getImageData(0, 0, src.width, src.height);
+      const dst = srcCtx.createImageData(src.width, src.height);
+      const r = Math.max(1, Math.round(pixels));
+      const w = src.width;
+      const h = src.height;
+
+      // Morphological erosion: for each pixel take min alpha in r-radius neighborhood
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          let minAlpha = 255;
+          for (let dy = -r; dy <= r; dy++) {
+            for (let dx = -r; dx <= r; dx++) {
+              if (dx * dx + dy * dy > r * r) continue; // circle
+              const nx = x + dx;
+              const ny = y + dy;
+              if (nx < 0 || ny < 0 || nx >= w || ny >= h) {
+                minAlpha = 0; // treat out-of-bounds as transparent
+                continue;
+              }
+              const alpha = srcData.data[(ny * w + nx) * 4 + 3];
+              if (alpha < minAlpha) minAlpha = alpha;
+            }
+          }
+          const i = (y * w + x) * 4;
+          dst.data[i] = 255;
+          dst.data[i + 1] = 255;
+          dst.data[i + 2] = 255;
+          dst.data[i + 3] = minAlpha;
+        }
       }
-    });
+
+      srcCtx.putImageData(dst, 0, 0);
+      const newDataUrl = src.toDataURL('image/png');
+      set((state) => {
+        if (state.mask) {
+          state.mask.dataUrl = newDataUrl;
+          state.project.isDirty = true;
+        }
+      });
+    };
+    img.src = mask.dataUrl;
   },
 
   saveMaskToHistory: () => {
@@ -2776,19 +2247,46 @@ const editorStoreCreator: StateCreator<
     const state = get();
     if (!state.currentImage) return;
 
-    set((s) => {
-      s.vastuLoading = true;
-    });
+    set((s) => { s.vastuLoading = true; });
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch('/api/vastu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyze',
+          imageUrl: state.currentImage.url,
+          roomType: state.roomType?.id || 'living_room',
+          language: 'en',
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Vastu analysis failed');
+      }
+
+      const data = await response.json();
+      const a = data.analysis;
 
       const analysis: VastuAnalysis = {
-        score: 75,
-        direction: 'North',
-        issues: [],
-        suggestions: [],
-        roomAnalysis: {},
+        score: a.score ?? 75,
+        direction: a.directionalAnalysis ? Object.keys(a.directionalAnalysis)[0] : 'North',
+        issues: (a.violations || []).map((v: any) => ({
+          id: v.id || String(Math.random()),
+          title: v.rule || v.title || 'Issue',
+          description: v.description || '',
+          severity: v.severity || 'medium',
+          dismissed: false,
+        })),
+        suggestions: (data.suggestions || []).map((s: any) => ({
+          id: s.id || String(Math.random()),
+          title: s.title || s.suggestion || '',
+          description: s.description || '',
+          priority: s.priority || 'medium',
+          applied: false,
+        })),
+        roomAnalysis: a.directionalAnalysis || {},
         lastAnalyzedAt: new Date(),
       };
 
@@ -2797,13 +2295,11 @@ const editorStoreCreator: StateCreator<
         s.vastuLoading = false;
       });
     } catch (error) {
-      set((s) => {
-        s.vastuLoading = false;
-      });
+      set((s) => { s.vastuLoading = false; });
       get().addError({
         type: 'error',
         code: 'VASTU_ANALYSIS_FAILED',
-        message: 'Failed to analyze Vastu',
+        message: error instanceof Error ? error.message : 'Failed to analyze Vastu',
       });
     }
   },
@@ -2840,25 +2336,53 @@ const editorStoreCreator: StateCreator<
     const state = get();
     if (!state.currentImage) return;
 
-    set((s) => {
-      s.costLoading = true;
-    });
+    set((s) => { s.costLoading = true; });
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await fetch('/api/cost', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'calculate',
+          roomType: state.roomType?.id || 'living_room',
+          area: { value: 500, unit: 'sqft' },
+          city: 'mumbai',
+          renovationType: 'standard',
+          includeLabor: true,
+          includeTax: true,
+          currency: 'INR',
+          timeline: 'standard',
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Cost estimation failed');
+      }
+
+      const data = await response.json();
+      const e = data.estimate;
 
       const estimate: CostEstimate = {
-        totalCost: 500000,
-        currency: 'INR',
-        breakdown: [],
-        laborCost: 100000,
-        materialCost: 350000,
-        taxAmount: 50000,
-        contingency: 50000,
-        timeline: { minDays: 30, maxDays: 45 },
+        totalCost: e.totalCost ?? 0,
+        currency: e.currency || 'INR',
+        breakdown: (e.breakdown || []).map((item: any) => ({
+          category: item.category || item.label || '',
+          label: item.label || item.category || '',
+          amount: item.cost ?? item.amount ?? 0,
+          percentage: item.percentage ?? 0,
+        })),
+        laborCost: e.laborCost ?? 0,
+        materialCost: e.materialCost ?? 0,
+        taxAmount: e.taxAmount ?? 0,
+        contingency: e.contingency ?? 0,
+        timeline: {
+          minDays: e.estimatedDays?.min ?? 30,
+          maxDays: e.estimatedDays?.max ?? 45,
+        },
         lastCalculatedAt: new Date(),
-        city: 'Mumbai',
-        squareFootage: 500,
+        city: data.metadata?.city || 'Mumbai',
+        squareFootage: data.metadata?.area?.value ?? 500,
       };
 
       set((s) => {
@@ -2866,13 +2390,11 @@ const editorStoreCreator: StateCreator<
         s.costLoading = false;
       });
     } catch (error) {
-      set((s) => {
-        s.costLoading = false;
-      });
+      set((s) => { s.costLoading = false; });
       get().addError({
         type: 'error',
         code: 'COST_ESTIMATE_FAILED',
-        message: 'Failed to calculate cost estimate',
+        message: error instanceof Error ? error.message : 'Failed to calculate cost estimate',
       });
     }
   },

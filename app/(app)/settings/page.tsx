@@ -148,11 +148,11 @@ export default function SettingsPage() {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
   const { language, setLanguage, t } = useLanguage();
-  
+
   const [activeSection, setActiveSection] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
-  
+
   // Profile state
   const [profile, setProfile] = useState({
     firstName: "",
@@ -163,7 +163,7 @@ export default function SettingsPage() {
     city: "",
     country: "India",
   });
-  
+
   // Preferences state
   const [preferences, setPreferences] = useState({
     theme: "system",
@@ -173,7 +173,7 @@ export default function SettingsPage() {
     autoVastu: true,
     autoCost: true,
   });
-  
+
   // Notification settings
   const [notifications, setNotifications] = useState({
     emailRenders: true,
@@ -183,21 +183,21 @@ export default function SettingsPage() {
     pushUpdates: false,
     smsAlerts: false,
   });
-  
-  // Subscription info (mock data - would come from API)
+
+  // Subscription info — loaded from /api/user
   const [subscription, setSubscription] = useState({
-    plan: "pro",
+    plan: "free",
     status: "active",
-    credits: 67,
-    creditsTotal: 100,
-    renewalDate: "2025-02-15",
+    credits: 0,
+    creditsTotal: 10,
+    renewalDate: "",
     billingCycle: "monthly",
   });
-  
-  // API Key (mock)
-  const [apiKey, setApiKey] = useState("rmvt_sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-  
-  // Load user data
+
+  // API Key — loaded from server (after regenerate), initially empty
+  const [apiKey, setApiKey] = useState("");
+
+  // Load user data and real subscription from DB
   useEffect(() => {
     if (user) {
       setProfile({
@@ -209,9 +209,40 @@ export default function SettingsPage() {
         city: (user.publicMetadata?.city as string) || "",
         country: (user.publicMetadata?.country as string) || "India",
       });
+
+      // Load saved preferences from Clerk public metadata
+      const savedPrefs = user.publicMetadata?.preferences as any;
+      if (savedPrefs) {
+        setPreferences((prev) => ({ ...prev, ...savedPrefs }));
+        if (savedPrefs.notifications) {
+          setNotifications((prev) => ({ ...prev, ...savedPrefs.notifications }));
+        }
+      }
     }
+
+    // Fetch real subscription data
+    fetch("/api/user")
+      .then((r) => r.json())
+      .then((data) => {
+        const sub = data.subscription;
+        if (sub) {
+          setSubscription({
+            plan: sub.plan || "free",
+            status: sub.status || "active",
+            credits: sub.credits ?? data.credits ?? 0,
+            creditsTotal: sub.plan === "pro" ? 100 : sub.plan === "team" ? 500 : 10,
+            renewalDate: sub.currentPeriodEnd
+              ? new Date(sub.currentPeriodEnd).toISOString().split("T")[0]
+              : "",
+            billingCycle: "monthly",
+          });
+        }
+      })
+      .catch(() => {
+        // Non-fatal — keep default state
+      });
   }, [user]);
-  
+
   // Handle profile update
   const handleProfileUpdate = async () => {
     setIsSaving(true);
@@ -220,7 +251,7 @@ export default function SettingsPage() {
         firstName: profile.firstName,
         lastName: profile.lastName,
       });
-      
+
       // Update public metadata
       // await user?.update({
       //   publicMetadata: {
@@ -229,10 +260,10 @@ export default function SettingsPage() {
       //     country: profile.country,
       //   },
       // });
-      
+
       toast({
         title: language === "hi" ? "प्रोफ़ाइल अपडेट हो गई" : "Profile Updated",
-        description: language === "hi" 
+        description: language === "hi"
           ? "आपकी प्रोफ़ाइल सफलतापूर्वक अपडेट हो गई है।"
           : "Your profile has been updated successfully.",
       });
@@ -248,14 +279,19 @@ export default function SettingsPage() {
       setIsSaving(false);
     }
   };
-  
+
   // Handle preferences save
   const handlePreferencesSave = async () => {
     setIsSaving(true);
     try {
-      // Save to user metadata or API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+      const response = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...preferences, notifications }),
+      });
+
+      if (!response.ok) throw new Error("Failed to save preferences");
+
       toast({
         title: language === "hi" ? "प्राथमिकताएं सहेजी गईं" : "Preferences Saved",
         description: language === "hi"
@@ -265,32 +301,40 @@ export default function SettingsPage() {
     } catch (error) {
       toast({
         title: language === "hi" ? "त्रुटि" : "Error",
+        description: language === "hi" ? "सहेजने में विफल।" : "Failed to save preferences.",
         variant: "destructive",
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
-  // Regenerate API key
+
+  // Regenerate API key (server-side)
   const handleRegenerateApiKey = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const newKey = `rmvt_sk_live_${Math.random().toString(36).substring(2, 34)}`;
-      setApiKey(newKey);
-      
+      const response = await fetch("/api/user/api-key", { method: "POST" });
+      if (!response.ok) throw new Error("Failed to generate key");
+      const data = await response.json();
+      setApiKey(data.key);
+
       toast({
         title: language === "hi" ? "नई API कुंजी" : "New API Key Generated",
         description: language === "hi"
           ? "आपकी नई API कुंजी तैयार है। पुरानी कुंजी अब काम नहीं करेगी।"
           : "Your new API key is ready. The old key will no longer work.",
       });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to regenerate API key.",
+        variant: "destructive",
+      });
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   // Copy API key
   const handleCopyApiKey = () => {
     navigator.clipboard.writeText(apiKey);
@@ -299,24 +343,41 @@ export default function SettingsPage() {
       description: language === "hi" ? "API कुंजी कॉपी हो गई।" : "API key copied to clipboard.",
     });
   };
-  
-  // Export data
+
+  // Export data — triggers a real JSON download
   const handleExportData = async () => {
     setIsSaving(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      
+      const response = await fetch("/api/user/export", { method: "POST" });
+      if (!response.ok) throw new Error("Export failed");
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `removation-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
       toast({
-        title: language === "hi" ? "डेटा निर्यात" : "Data Export",
+        title: language === "hi" ? "डेटा निर्यात" : "Data Exported",
         description: language === "hi"
-          ? "आपका डेटा ईमेल पर भेजा जाएगा।"
-          : "Your data will be sent to your email.",
+          ? "आपका डेटा डाउनलोड हो रहा है।"
+          : "Your data download has started.",
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to export data. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   // Handle delete account
   const handleDeleteAccount = async () => {
     // This would trigger account deletion
@@ -328,7 +389,7 @@ export default function SettingsPage() {
       variant: "destructive",
     });
   };
-  
+
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -336,7 +397,7 @@ export default function SettingsPage() {
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -348,7 +409,7 @@ export default function SettingsPage() {
                 {language === "hi" ? "सेटिंग्स" : "Settings"}
               </h1>
               <p className="text-muted-foreground mt-1">
-                {language === "hi" 
+                {language === "hi"
                   ? "अपने खाते और प्राथमिकताओं को प्रबंधित करें"
                   : "Manage your account and preferences"}
               </p>
@@ -357,7 +418,7 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
@@ -383,9 +444,9 @@ export default function SettingsPage() {
                   )}
                 </button>
               ))}
-              
+
               <Separator className="my-4" />
-              
+
               {/* Sign Out Button */}
               <button
                 onClick={() => signOut()}
@@ -398,7 +459,7 @@ export default function SettingsPage() {
               </button>
             </nav>
           </aside>
-          
+
           {/* Main Content */}
           <main className="flex-1 max-w-3xl">
             <AnimatePresence mode="wait">
@@ -444,9 +505,9 @@ export default function SettingsPage() {
                           </p>
                         </div>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* Form Fields */}
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div className="space-y-2">
@@ -474,7 +535,7 @@ export default function SettingsPage() {
                           />
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="email">
                           <Mail className="h-4 w-4 inline mr-2" />
@@ -493,7 +554,7 @@ export default function SettingsPage() {
                             : "Contact support to change your email."}
                         </p>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="phone">
                           <Phone className="h-4 w-4 inline mr-2" />
@@ -509,7 +570,7 @@ export default function SettingsPage() {
                           placeholder="+91 98765 43210"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label htmlFor="company">
                           <Building className="h-4 w-4 inline mr-2" />
@@ -524,7 +585,7 @@ export default function SettingsPage() {
                           placeholder={language === "hi" ? "वैकल्पिक" : "Optional"}
                         />
                       </div>
-                      
+
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="city">
@@ -577,7 +638,7 @@ export default function SettingsPage() {
                     </CardFooter>
                   </Card>
                 )}
-                
+
                 {/* Notifications Section */}
                 {activeSection === "notifications" && (
                   <Card>
@@ -655,9 +716,9 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* Push Notifications */}
                       <div>
                         <h3 className="font-semibold mb-4">
@@ -702,9 +763,9 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* SMS Notifications */}
                       <div>
                         <h3 className="font-semibold mb-4">
@@ -742,7 +803,7 @@ export default function SettingsPage() {
                     </CardFooter>
                   </Card>
                 )}
-                
+
                 {/* Appearance Section */}
                 {activeSection === "appearance" && (
                   <Card>
@@ -793,9 +854,9 @@ export default function SettingsPage() {
                           ))}
                         </RadioGroup>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* Default Style */}
                       <div className="space-y-2">
                         <Label>
@@ -820,7 +881,7 @@ export default function SettingsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       {/* Auto Vastu */}
                       <div className="flex items-center justify-between">
                         <div>
@@ -840,7 +901,7 @@ export default function SettingsPage() {
                           }
                         />
                       </div>
-                      
+
                       {/* Auto Cost */}
                       <div className="flex items-center justify-between">
                         <div>
@@ -873,7 +934,7 @@ export default function SettingsPage() {
                     </CardFooter>
                   </Card>
                 )}
-                
+
                 {/* Language & Region Section */}
                 {activeSection === "language" && (
                   <Card>
@@ -939,9 +1000,9 @@ export default function SettingsPage() {
                           </button>
                         </div>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* Currency */}
                       <div className="space-y-2">
                         <Label>{language === "hi" ? "मुद्रा" : "Currency"}</Label>
@@ -972,7 +1033,7 @@ export default function SettingsPage() {
                           ))}
                         </RadioGroup>
                       </div>
-                      
+
                       {/* Measurement Unit */}
                       <div className="space-y-2">
                         <Label>
@@ -1006,7 +1067,7 @@ export default function SettingsPage() {
                     </CardFooter>
                   </Card>
                 )}
-                
+
                 {/* Billing Section */}
                 {activeSection === "billing" && (
                   <div className="space-y-6">
@@ -1044,7 +1105,7 @@ export default function SettingsPage() {
                             {language === "hi" ? "प्लान बदलें" : "Change Plan"}
                           </Button>
                         </div>
-                        
+
                         {/* Credits Usage */}
                         <div>
                           <div className="flex items-center justify-between mb-2">
@@ -1065,7 +1126,7 @@ export default function SettingsPage() {
                               : `Renews on ${new Date(subscription.renewalDate).toLocaleDateString()}`}
                           </p>
                         </div>
-                        
+
                         <div className="flex gap-3">
                           <Button variant="outline">
                             <Zap className="h-4 w-4 mr-2" />
@@ -1077,7 +1138,7 @@ export default function SettingsPage() {
                         </div>
                       </CardContent>
                     </Card>
-                    
+
                     {/* Payment Methods */}
                     <Card>
                       <CardHeader>
@@ -1100,7 +1161,7 @@ export default function SettingsPage() {
                           </div>
                           <Badge>{language === "hi" ? "डिफ़ॉल्ट" : "Default"}</Badge>
                         </div>
-                        
+
                         <Button variant="outline" className="w-full">
                           {language === "hi" ? "+ नई विधि जोड़ें" : "+ Add Payment Method"}
                         </Button>
@@ -1108,7 +1169,7 @@ export default function SettingsPage() {
                     </Card>
                   </div>
                 )}
-                
+
                 {/* Security Section */}
                 {activeSection === "security" && (
                   <Card>
@@ -1140,9 +1201,9 @@ export default function SettingsPage() {
                           {language === "hi" ? "बदलें" : "Change"}
                         </Button>
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* Two Factor */}
                       <div className="flex items-center justify-between">
                         <div>
@@ -1157,9 +1218,9 @@ export default function SettingsPage() {
                         </div>
                         <Switch />
                       </div>
-                      
+
                       <Separator />
-                      
+
                       {/* Active Sessions */}
                       <div>
                         <div className="flex items-center justify-between mb-4">
@@ -1190,7 +1251,7 @@ export default function SettingsPage() {
                     </CardContent>
                   </Card>
                 )}
-                
+
                 {/* API Access Section */}
                 {activeSection === "api" && (
                   <Card>
@@ -1221,7 +1282,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label>{language === "hi" ? "आपकी API कुंजी" : "Your API Key"}</Label>
                         <div className="flex gap-2">
@@ -1248,7 +1309,7 @@ export default function SettingsPage() {
                           </Button>
                         </div>
                       </div>
-                      
+
                       <div className="flex gap-3">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -1278,7 +1339,7 @@ export default function SettingsPage() {
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>
-                        
+
                         <Button variant="ghost" asChild>
                           <a
                             href="https://docs.removation.ai"
@@ -1293,7 +1354,7 @@ export default function SettingsPage() {
                     </CardContent>
                   </Card>
                 )}
-                
+
                 {/* Data & Privacy Section */}
                 {activeSection === "data" && (
                   <div className="space-y-6">
@@ -1325,7 +1386,7 @@ export default function SettingsPage() {
                         </Button>
                       </CardContent>
                     </Card>
-                    
+
                     {/* Danger Zone */}
                     <Card className="border-red-200 dark:border-red-900">
                       <CardHeader>

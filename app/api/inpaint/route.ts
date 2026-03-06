@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { Render } from "@/lib/db/models/Render";
 import { runReplicateModel } from "@/lib/ai/replicate";
+import { isReplicateConfigured } from "@/lib/env";
 import { z } from "zod";
 
 const inpaintSchema = z.object({
@@ -23,8 +24,15 @@ const inpaintSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isReplicateConfigured()) {
+      return NextResponse.json(
+        { error: "AI service not configured", message: "Inpainting service is not available." },
+        { status: 503 }
+      );
+    }
+
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -38,7 +46,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findOne({ clerkId: userId });
-    
+
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
@@ -49,11 +57,11 @@ export async function POST(req: NextRequest) {
     // Inpainting costs 1 credit
     if (user.credits < 1) {
       return NextResponse.json(
-        { 
+        {
           error: "Insufficient credits",
           message: "Inpainting requires 1 credit",
           creditsRequired: 1,
-          creditsAvailable: user.credits 
+          creditsAvailable: user.credits
         },
         { status: 402 }
       );
@@ -62,6 +70,7 @@ export async function POST(req: NextRequest) {
     // Create render record
     const render = await Render.create({
       userId: user._id,
+      clerkId: userId,
       projectId: validatedData.projectId,
       inputImage: validatedData.imageUrl,
       maskImage: validatedData.maskUrl,
@@ -74,7 +83,7 @@ export async function POST(req: NextRequest) {
     // Deduct credit
     await User.findByIdAndUpdate(user._id, {
       $inc: { credits: -1 },
-      $push: { 
+      $push: {
         creditHistory: {
           amount: -1,
           type: 'inpaint',
@@ -119,7 +128,7 @@ export async function POST(req: NextRequest) {
       // Refund credit on failure
       await User.findByIdAndUpdate(user._id, {
         $inc: { credits: 1 },
-        $push: { 
+        $push: {
           creditHistory: {
             amount: 1,
             type: 'refund',
@@ -141,7 +150,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("Inpaint API error:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },

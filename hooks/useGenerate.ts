@@ -6,7 +6,7 @@ import { useEditorStore } from '@/stores/editor-store';
 // Comment out or remove these if they don't exist yet
 // import { useProjectStore } from '@/stores/project-store';
 // import { useUserStore } from '@/stores/user-store';
-import { 
+import {
   TransformationMode,
   GenerationSettings,
   Render,
@@ -27,7 +27,7 @@ interface UseGenerateReturn {
   generationStatus: string;
   currentRender: Render | null;
   renderQueue: any[];
-  
+
   // Generation methods
   generate: (settings: GenerationSettings) => Promise<Render | null>;
   generateFromImage: (imageUrl: string, mode: TransformationMode) => Promise<Render | null>;
@@ -37,23 +37,23 @@ interface UseGenerateReturn {
   generateMaterialChange: (imageUrl: string, maskUrl: string, materialId: string) => Promise<Render | null>;
   generateColorChange: (imageUrl: string, maskUrl: string, colorHex: string) => Promise<Render | null>;
   generateStyleTransfer: (imageUrl: string, styleId: string) => Promise<Render | null>;
-  
+
   // Queue management
   addToQueue: (settings: GenerationSettings) => string;
   removeFromQueue: (id: string) => void;
   clearQueue: () => void;
   processQueue: () => Promise<void>;
-  
+
   // History
   getHistory: () => Render[];
   getRenderById: (id: string) => Render | null;
   deleteRender: (id: string) => Promise<void>;
   favoriteRender: (id: string) => Promise<void>;
-  
+
   // Export
   exportRender: (renderId: string, format: 'png' | 'jpg' | 'webp', quality?: number) => Promise<string | null>;
   exportWithWatermark: (renderId: string) => Promise<string | null>;
-  
+
   // Utility
   cancelGeneration: () => void;
   retryGeneration: (renderId: string) => Promise<Render | null>;
@@ -61,30 +61,16 @@ interface UseGenerateReturn {
   estimateTime: (mode: TransformationMode) => number;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-// Create a simple toast function
-const showToast = (title: string, description: string, variant: 'default' | 'destructive' = 'default') => {
-  if (typeof window !== 'undefined') {
-    // Use sonner or native alert
-    if ((window as any).sonner) {
-      variant === 'destructive' 
-        ? (window as any).sonner.error(title, { description })
-        : (window as any).sonner.success(title, { description });
-    } else {
-      console.log(`${title}: ${description}`);
-    }
-  }
-};
 
 export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn {
   const { projectId, autoSave = true } = options;
-  
+
   // Stores - use optional chaining or fallbacks
   const editorStore = useEditorStore();
   // const projectStore = useProjectStore?.();
   // const userStore = useUserStore?.();
-  
+
   // State
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
@@ -92,102 +78,158 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
   const [currentRender, setCurrentRender] = useState<Render | null>(null);
   const [renderQueue, setRenderQueue] = useState<any[]>([]);
   const [renderHistory, setRenderHistory] = useState<Render[]>([]);
-  
+
   // Refs
   const abortControllerRef = useRef<AbortController | null>(null);
-  
+
   // Generate function
   const generate = useCallback(async (settings: GenerationSettings): Promise<Render | null> => {
     try {
       setIsGenerating(true);
       setGenerationProgress(0);
       setGenerationStatus('Preparing generation...');
-      
+
       // Create abort controller for cancellation
       abortControllerRef.current = new AbortController();
-      
-      // In a real app, you'd get the token from Clerk
-      // const { getToken } = useAuth();
-      // const token = await getToken();
-      
+
       // Prepare request body
       const requestBody = {
         ...settings,
         projectId,
-        // userId: userId from Clerk
       };
-      
-      setGenerationStatus('Sending request to server...');
+
+      setGenerationStatus('Sending request to AI...');
       setGenerationProgress(10);
-      
+
       // Make API call
-      const response = await fetch(`${API_BASE_URL}/generate`, {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(requestBody),
         signal: abortControllerRef.current.signal
       });
-      
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`Generation failed: ${response.statusText}`);
+        // Handle specific error codes
+        if (response.status === 401) {
+          toast.error('Please sign in to generate images');
+          return null;
+        }
+        if (response.status === 402) {
+          toast.error('Insufficient credits', { description: data.message || `You need ${data.creditsRequired} credits` });
+          return null;
+        }
+        if (response.status === 503) {
+          toast.error('AI service unavailable', { description: data.message || 'Please try again later' });
+          return null;
+        }
+        throw new Error(data.message || data.error || `Generation failed: ${response.statusText}`);
       }
-      
-      setGenerationStatus('Processing image...');
+
+      setGenerationStatus('AI is processing your image...');
       setGenerationProgress(30);
-      
-      // For now, simulate a response
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate a successful render
-      const mockRender: Render = {
-        id: crypto.randomUUID(),
-        projectId: projectId || 'mock-project',
-        userId: 'mock-user',
+
+      // Poll for render completion
+      const renderIds: string[] = data.renderIds || [];
+      const firstRenderId = renderIds[0];
+
+      if (!firstRenderId) {
+        throw new Error('No render ID returned from server');
+      }
+
+      // Poll for status updates
+      let render: any = null;
+      let attempts = 0;
+      const maxAttempts = 60; // 3 minutes max (60 * 3 seconds)
+
+      while (attempts < maxAttempts) {
+        if (abortControllerRef.current?.signal.aborted) {
+          throw new DOMException('Aborted', 'AbortError');
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        attempts++;
+
+        try {
+          const statusResponse = await fetch(`/api/generate?renderId=${firstRenderId}`, {
+            signal: abortControllerRef.current?.signal,
+          });
+
+          if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            render = statusData.render;
+
+            if (render?.status === 'completed') {
+              setGenerationProgress(100);
+              setGenerationStatus('Generation complete!');
+              break;
+            } else if (render?.status === 'failed') {
+              throw new Error(render.error || 'AI generation failed');
+            }
+          }
+        } catch (pollError: any) {
+          if (pollError.name === 'AbortError') throw pollError;
+          console.warn('Poll error (retrying):', pollError.message);
+        }
+
+        // Update progress (30-90% range during processing)
+        const progressPercent = Math.min(30 + (attempts / maxAttempts) * 60, 90);
+        setGenerationProgress(progressPercent);
+      }
+
+      if (!render || render.status !== 'completed') {
+        throw new Error('Generation timed out. Check your renders page for results.');
+      }
+
+      // Build the Render object from API response
+      const completedRender: Render = {
+        id: render._id || firstRenderId,
+        projectId: projectId || '',
+        userId: render.userId || '',
         sourceImage: {
           url: settings.sourceImageUrl,
           width: 800,
           height: 600
         },
         outputImages: [{
-          url: settings.sourceImageUrl, // In real app, this would be the generated image
+          url: render.outputImage || render.resultUrl || '',
           width: 800,
           height: 600
         }],
         settings,
         provider: 'replicate',
-        modelId: 'stability-ai/sdxl',
-        predictionId: 'mock-prediction-id',
+        modelId: render.mode || 'stability-ai/sdxl',
+        predictionId: render.predictionId || '',
         status: 'succeeded',
-        creditsUsed: 5,
-        generationTime: 2000,
+        creditsUsed: data.creditsUsed || 1,
+        generationTime: render.processingTime || 0,
         isFavorite: false,
         isPublic: false,
-        createdAt: new Date(),
-        completedAt: new Date()
+        createdAt: new Date(render.createdAt || Date.now()),
+        completedAt: new Date(render.completedAt || Date.now())
       };
-      
-      setCurrentRender(mockRender);
-      setRenderHistory(prev => [...prev, mockRender]);
-      setGenerationProgress(100);
-      setGenerationStatus('Generation complete!');
-      
+
+      setCurrentRender(completedRender);
+      setRenderHistory(prev => [...prev, completedRender]);
+
       // Update editor store if it has setRender method
       if (editorStore && typeof (editorStore as any).setRender === 'function') {
-        (editorStore as any).setRender(mockRender);
+        (editorStore as any).setRender(completedRender);
       }
-      
-      showToast('Generation Complete', 'Your image has been generated successfully.');
-      
-      return mockRender;
+
+      toast.success('Generation Complete', { description: 'Your image has been generated successfully.' });
+
+      return completedRender;
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        showToast('Generation Cancelled', 'The generation was cancelled by the user.');
+        toast.info('Generation cancelled');
       } else {
         console.error('Generation error:', error);
-        showToast('Generation Failed', error.message || 'Failed to generate image. Please try again.', 'destructive');
+        toast.error('Generation Failed', { description: error.message || 'Failed to generate image. Please try again.' });
       }
       return null;
     } finally {
@@ -197,7 +239,7 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       abortControllerRef.current = null;
     }
   }, [projectId, editorStore]);
-  
+
   // Generate from image
   const generateFromImage = useCallback(async (imageUrl: string, mode: TransformationMode): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -213,10 +255,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       numberOfOutputs: editorState.numberOfOutputs || 1,
       sourceImageUrl: imageUrl
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Generate inpainting
   const generateInpaint = useCallback(async (imageUrl: string, maskUrl: string, prompt: string): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -233,10 +275,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       sourceImageUrl: imageUrl,
       maskUrl
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Generate object removal
   const generateObjectRemoval = useCallback(async (imageUrl: string, maskUrl: string): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -253,10 +295,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       sourceImageUrl: imageUrl,
       maskUrl
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Generate object replacement
   const generateObjectReplacement = useCallback(async (imageUrl: string, maskUrl: string, replacementPrompt: string): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -273,10 +315,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       sourceImageUrl: imageUrl,
       maskUrl
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Generate material change
   const generateMaterialChange = useCallback(async (imageUrl: string, maskUrl: string, materialId: string): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -294,10 +336,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       maskUrl,
       materialId
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Generate color change
   const generateColorChange = useCallback(async (imageUrl: string, maskUrl: string, colorHex: string): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -315,10 +357,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       maskUrl,
       colorHex
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Generate style transfer
   const generateStyleTransfer = useCallback(async (imageUrl: string, styleId: string): Promise<Render | null> => {
     const editorState = editorStore as any;
@@ -334,10 +376,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       numberOfOutputs: editorState.numberOfOutputs || 1,
       sourceImageUrl: imageUrl
     };
-    
+
     return generate(settings);
   }, [editorStore, generate]);
-  
+
   // Queue management
   const addToQueue = useCallback((settings: GenerationSettings): string => {
     const id = crypto.randomUUID();
@@ -347,45 +389,45 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       status: 'pending',
       addedAt: new Date()
     };
-    
+
     setRenderQueue(prev => [...prev, queueItem]);
     return id;
   }, []);
-  
+
   const removeFromQueue = useCallback((id: string) => {
     setRenderQueue(prev => prev.filter(item => item.id !== id));
   }, []);
-  
+
   const clearQueue = useCallback(() => {
     setRenderQueue([]);
   }, []);
-  
+
   const processQueue = useCallback(async () => {
     const pendingItems = renderQueue.filter(item => item.status === 'pending');
-    
+
     for (const item of pendingItems) {
       try {
         // Update status to processing
-        setRenderQueue(prev => 
+        setRenderQueue(prev =>
           prev.map(q => q.id === item.id ? { ...q, status: 'processing' } : q)
         );
-        
+
         // Process the item
         const result = await generate(item.settings);
-        
+
         // Update status based on result
-        setRenderQueue(prev => 
-          prev.map(q => q.id === item.id ? { 
-            ...q, 
+        setRenderQueue(prev =>
+          prev.map(q => q.id === item.id ? {
+            ...q,
             status: result ? 'completed' : 'failed',
             result,
             completedAt: new Date()
           } : q)
         );
       } catch (error) {
-        setRenderQueue(prev => 
-          prev.map(q => q.id === item.id ? { 
-            ...q, 
+        setRenderQueue(prev =>
+          prev.map(q => q.id === item.id ? {
+            ...q,
             status: 'failed',
             error: error instanceof Error ? error.message : 'Unknown error',
             completedAt: new Date()
@@ -394,7 +436,7 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       }
     }
   }, [renderQueue, generate]);
-  
+
   // Cancel generation
   const cancelGeneration = useCallback(() => {
     if (abortControllerRef.current) {
@@ -404,16 +446,16 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       setGenerationStatus('Cancelled');
     }
   }, []);
-  
+
   // Retry generation
   const retryGeneration = useCallback(async (renderId: string): Promise<Render | null> => {
     const render = renderHistory.find(r => r.id === renderId);
     if (!render) return null;
-    
+
     // Retry with the same settings
     return generate(render.settings);
   }, [renderHistory, generate]);
-  
+
   // Estimate credits
   const estimateCredits = useCallback((mode: TransformationMode): number => {
     const creditMap: Record<TransformationMode, number> = {
@@ -434,10 +476,10 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       'style-transfer': 4,
       'floor-plan-3d': 8
     };
-    
+
     return creditMap[mode] || 3;
   }, []);
-  
+
   // Estimate time
   const estimateTime = useCallback((mode: TransformationMode): number => {
     const timeMap: Record<TransformationMode, number> = {
@@ -458,43 +500,43 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
       'style-transfer': 35,
       'floor-plan-3d': 90
     };
-    
+
     return timeMap[mode] || 30;
   }, []);
-  
+
   // Other methods
   const getHistory = useCallback((): Render[] => {
     return renderHistory;
   }, [renderHistory]);
-  
+
   const getRenderById = useCallback((id: string): Render | null => {
     return renderHistory.find(render => render.id === id) || null;
   }, [renderHistory]);
-  
+
   const deleteRender = useCallback(async (id: string): Promise<void> => {
     setRenderHistory(prev => prev.filter(render => render.id !== id));
   }, []);
-  
+
   const favoriteRender = useCallback(async (id: string): Promise<void> => {
-    setRenderHistory(prev => 
-      prev.map(render => 
+    setRenderHistory(prev =>
+      prev.map(render =>
         render.id === id ? { ...render, isFavorite: !render.isFavorite } : render
       )
     );
   }, []);
-  
+
   const exportRender = useCallback(async (renderId: string, format: 'png' | 'jpg' | 'webp', quality?: number): Promise<string | null> => {
     const render = getRenderById(renderId);
     if (!render || !render.outputImages[0]) return null;
-    
+
     // In a real app, you would generate an export
     return render.outputImages[0].url;
   }, [getRenderById]);
-  
+
   const exportWithWatermark = useCallback(async (renderId: string): Promise<string | null> => {
     return exportRender(renderId, 'png');
   }, [exportRender]);
-  
+
   return {
     // State
     isGenerating,
@@ -502,7 +544,7 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
     generationStatus,
     currentRender,
     renderQueue,
-    
+
     // Generation methods
     generate,
     generateFromImage,
@@ -512,23 +554,23 @@ export function useGenerate(options: UseGenerateOptions = {}): UseGenerateReturn
     generateMaterialChange,
     generateColorChange,
     generateStyleTransfer,
-    
+
     // Queue management
     addToQueue,
     removeFromQueue,
     clearQueue,
     processQueue,
-    
+
     // History
     getHistory,
     getRenderById,
     deleteRender,
     favoriteRender,
-    
+
     // Export
     exportRender,
     exportWithWatermark,
-    
+
     // Utility
     cancelGeneration,
     retryGeneration,

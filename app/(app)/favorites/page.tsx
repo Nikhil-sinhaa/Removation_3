@@ -81,7 +81,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/use-toast";
-import  CompareSlider  from "@/components/editor/CompareSlider";
+import CompareSlider from "@/components/editor/CompareSlider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
@@ -384,8 +384,8 @@ function FavoriteCard({
                 item.vastuScore >= 80
                   ? "border-green-500 text-green-600"
                   : item.vastuScore >= 60
-                  ? "border-yellow-500 text-yellow-600"
-                  : "border-red-500 text-red-600"
+                    ? "border-yellow-500 text-yellow-600"
+                    : "border-red-500 text-red-600"
               )}
             >
               {item.vastuScore}
@@ -534,8 +534,8 @@ function FavoriteCard({
                 item.vastuScore >= 80
                   ? "bg-green-500"
                   : item.vastuScore >= 60
-                  ? "bg-yellow-500"
-                  : "bg-red-500"
+                    ? "bg-yellow-500"
+                    : "bg-red-500"
               )}
             >
               <Compass className="h-3 w-3 mr-1" />
@@ -717,7 +717,7 @@ export default function FavoritesPage() {
   const [newCollectionDialog, setNewCollectionDialog] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [deleteCollectionConfirm, setDeleteCollectionConfirm] = useState<string | null>(null);
-  
+
   // New collection form
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newCollectionColor, setNewCollectionColor] = useState("bg-blue-500");
@@ -726,7 +726,6 @@ export default function FavoritesPage() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       setFavorites(mockFavorites);
       setCollections(mockCollections);
       setIsLoading(false);
@@ -945,8 +944,7 @@ export default function FavoritesPage() {
                     {filteredFavorites.length}{" "}
                     {language === "hi" ? "आइटम" : "items"}
                     {selectedFavorites.length > 0 &&
-                      ` • ${selectedFavorites.length} ${
-                        language === "hi" ? "चुने गए" : "selected"
+                      ` • ${selectedFavorites.length} ${language === "hi" ? "चुने गए" : "selected"
                       }`}
                   </p>
                 </div>
@@ -1182,8 +1180,8 @@ export default function FavoritesPage() {
                       ? "कोई फेवरेट नहीं मिला"
                       : "No favorites found"
                     : language === "hi"
-                    ? "अभी तक कोई फेवरेट नहीं"
-                    : "No favorites yet"}
+                      ? "अभी तक कोई फेवरेट नहीं"
+                      : "No favorites yet"}
                 </h2>
                 <p className="text-muted-foreground mb-6 max-w-md">
                   {searchQuery
@@ -1191,8 +1189,8 @@ export default function FavoritesPage() {
                       ? "अपनी खोज बदलकर देखें।"
                       : "Try adjusting your search."
                     : language === "hi"
-                    ? "अपने पसंदीदा डिज़ाइन को स्टार करें।"
-                    : "Star your favorite designs to see them here."}
+                      ? "अपने पसंदीदा डिज़ाइन को स्टार करें।"
+                      : "Star your favorite designs to see them here."}
                 </p>
                 {!searchQuery && (
                   <Button onClick={() => router.push("/projects")}>
@@ -1262,8 +1260,8 @@ export default function FavoritesPage() {
                         viewingItem.vastuScore >= 80
                           ? "border-green-500 text-green-600"
                           : viewingItem.vastuScore >= 60
-                          ? "border-yellow-500 text-yellow-600"
-                          : "border-red-500 text-red-600"
+                            ? "border-yellow-500 text-yellow-600"
+                            : "border-red-500 text-red-600"
                       )}
                     >
                       <Compass className="h-4 w-4 mr-1" />
@@ -1319,8 +1317,8 @@ export default function FavoritesPage() {
                   ? "कलेक्शन एडिट करें"
                   : "Edit Collection"
                 : language === "hi"
-                ? "नया कलेक्शन"
-                : "New Collection"}
+                  ? "नया कलेक्शन"
+                  : "New Collection"}
             </DialogTitle>
             <DialogDescription>
               {language === "hi"
@@ -1376,8 +1374,8 @@ export default function FavoritesPage() {
                   ? "अपडेट करें"
                   : "Update"
                 : language === "hi"
-                ? "बनाएं"
-                : "Create"}
+                  ? "बनाएं"
+                  : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>

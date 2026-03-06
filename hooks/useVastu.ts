@@ -5,7 +5,7 @@
 // COMPASS DIRECTIONS
 // ============================================
 
-export type CompassDirection = 
+export type CompassDirection =
   | 'NORTH'
   | 'NORTHEAST'
   | 'EAST'
@@ -24,32 +24,32 @@ export interface VastuAnalysis {
   renderId: string;
   projectId?: string;
   roomId?: string;
-  
+
   // Overall score
   overallScore: VastuScore;
-  
+
   // Category-wise analysis
   categories: VastuCategoryAnalysis[];
-  
+
   // Individual rule evaluations
   ruleEvaluations: VastuRuleEvaluation[];
-  
+
   // Detected elements
   detectedElements: DetectedElement[];
-  
+
   // Suggestions
   suggestions: VastuSuggestion[];
   autoFixAvailable: boolean;
-  
+
   // Room details
   roomDirection: CompassDirection | null;
   roomType: string;
-  
+
   // Metadata
   analysisVersion: string;
   confidence: number;
   processingTime: number;
-  
+
   createdAt: Date;
 }
 
@@ -105,28 +105,28 @@ export type VastuStatus = 'compliant' | 'partial' | 'non-compliant' | 'not-appli
 export interface VastuRule {
   id: string;
   code: string; // e.g., "VR-001"
-  
+
   // Rule details
   title: string;
   titleHi: string;
   description: string;
   descriptionHi: string;
-  
+
   // Category & priority
   category: VastuCategory;
   priority: VastuPriority;
   weight: number; // Impact on overall score (1-10)
-  
+
   // Application
   applicableRoomTypes: string[];
   applicablePropertyTypes: string[];
-  
+
   // Conditions
   conditions: VastuCondition[];
-  
+
   // Remedies
   remedies: VastuRemedy[];
-  
+
   // Reference
   source: string; // Vastu text reference
   isTraditional: boolean;
@@ -169,17 +169,17 @@ export interface VastuRuleEvaluation {
   ruleCode: string;
   ruleTitle: string;
   ruleTitleHi: string;
-  
+
   status: 'passed' | 'failed' | 'warning' | 'not-applicable';
   score: number;
   maxScore: number;
-  
+
   details: string;
   detailsHi: string;
-  
+
   affectedElements: string[];
   suggestedRemedyIds: string[];
-  
+
   confidence: number;
 }
 
@@ -192,7 +192,7 @@ export interface DetectedElement {
   type: VastuElementType;
   name: string;
   nameHi: string;
-  
+
   // Position in image
   boundingBox: {
     x: number;
@@ -200,18 +200,18 @@ export interface DetectedElement {
     width: number;
     height: number;
   };
-  
+
   // Vastu properties
   position: VastuPosition;
   direction?: CompassDirection;
   color?: string;
   material?: string;
-  
+
   // Analysis
   vastuCompliance: VastuStatus;
   issues: string[];
   issuesHi: string[];
-  
+
   confidence: number;
 }
 
@@ -254,31 +254,31 @@ export interface VastuSuggestion {
   id: string;
   type: VastuSuggestionType;
   priority: VastuPriority;
-  
+
   title: string;
   titleHi: string;
   description: string;
   descriptionHi: string;
-  
+
   // What needs to change
   affectedElement?: string;
   currentState: string;
   suggestedState: string;
-  
+
   // Impact
   scoreImpact: number; // How many points this fix adds
-  
+
   // Implementation
   difficulty: 'easy' | 'moderate' | 'difficult';
   estimatedCost?: {
     INR: { min: number; max: number };
     USD: { min: number; max: number };
   };
-  
+
   // AI Auto-fix
   canAutoFix: boolean;
   autoFixPrompt?: string;
-  
+
   // Reference
   relatedRuleIds: string[];
 }
@@ -303,31 +303,31 @@ export interface VastuRemedy {
   nameHi: string;
   description: string;
   descriptionHi: string;
-  
+
   type: VastuRemedyType;
   category: VastuCategory;
-  
+
   // Where to apply
   placement: VastuPosition[];
   direction?: CompassDirection[];
-  
+
   // What it fixes
   fixesIssues: string[];
-  
+
   // Implementation
   items: VastuRemedyItem[];
   instructions: string[];
   instructionsHi: string[];
-  
+
   // Cost
   estimatedCost: {
     INR: { min: number; max: number };
     USD: { min: number; max: number };
   };
-  
+
   // Effectiveness
   effectiveness: 'high' | 'medium' | 'low';
-  
+
   isTraditional: boolean;
   isModernAlternative: boolean;
 }
@@ -386,12 +386,12 @@ export type VastuElement = 'earth' | 'water' | 'fire' | 'air' | 'space';
 export interface VastuReport {
   id: string;
   projectId: string;
-  
+
   // Summary
   title: string;
   generatedAt: Date;
   overallScore: VastuScore;
-  
+
   // Room-wise analysis
   roomAnalyses: {
     roomId: string;
@@ -399,17 +399,51 @@ export interface VastuReport {
     roomType: string;
     analysis: VastuAnalysis;
   }[];
-  
+
   // Top issues
   topIssues: VastuRuleEvaluation[];
-  
+
   // Priority suggestions
   prioritySuggestions: VastuSuggestion[];
-  
+
   // Compass analysis
   compass: VastuCompass;
-  
+
   // Export info
   format: 'pdf' | 'html';
   downloadUrl?: string;
+}
+
+
+
+import { useState, useCallback } from 'react';
+import { analyzeVastu, type VastuAnalysisResult } from '@/lib/vastu-engine';
+
+export function useVastu(initialParams?: any) {
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState<VastuAnalysisResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const analyze = useCallback((params?: any) => {
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+      // Simulate delay
+      setTimeout(() => {
+        const result = analyzeVastu(params || initialParams);
+        setAnalysis(result);
+        setIsAnalyzing(false);
+      }, 500);
+    } catch (err: any) {
+      setError(err.message || 'Analysis failed');
+      setIsAnalyzing(false);
+    }
+  }, [initialParams]);
+
+  return {
+    analyze,
+    analysis,
+    isAnalyzing,
+    error
+  };
 }

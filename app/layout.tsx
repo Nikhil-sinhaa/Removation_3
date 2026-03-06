@@ -214,10 +214,6 @@ export default function RootLayout({
           },
         },
       }}
-      afterSignInUrl="/dashboard"
-      afterSignUpUrl="/dashboard"
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
     >
       <html
         lang="en"
@@ -234,12 +230,12 @@ export default function RootLayout({
           />
           <link rel="preconnect" href="https://api.replicate.com" />
           <link rel="preconnect" href="https://api.groq.com" />
-          
+
           {/* DNS prefetch for third-party services */}
           <link rel="dns-prefetch" href="https://client.crisp.chat" />
           <link rel="dns-prefetch" href="https://app.posthog.com" />
           <link rel="dns-prefetch" href="https://uploadthing.com" />
-          
+
           {/* PWA meta tags */}
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -247,7 +243,7 @@ export default function RootLayout({
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="msapplication-TileColor" content="#7c3aed" />
           <meta name="msapplication-tap-highlight" content="no" />
-          
+
           {/* JSON-LD Structured Data */}
           <script
             type="application/ld+json"
@@ -267,22 +263,22 @@ export default function RootLayout({
           <Providers>
             {/* Analytics tracking */}
             <AnalyticsProvider />
-            
+
             {/* Main content */}
             <main id="main-content" className="relative">
               {children}
             </main>
-            
+
             {/* Toast notifications */}
             <Toaster />
-            
+
             {/* Crisp Chat widget - bottom right */}
             <CrispChat />
-            
+
             {/* PWA install prompt */}
             <PWAPrompt />
           </Providers>
-          
+
           {/* Skip to content link for accessibility */}
           <a
             href="#main-content"

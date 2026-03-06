@@ -5,6 +5,7 @@ import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { Render } from "@/lib/db/models/Render";
 import { runReplicateModel } from "@/lib/ai/replicate";
+import { isReplicateConfigured } from "@/lib/env";
 import { z } from "zod";
 
 const replaceSchema = z.object({
@@ -23,8 +24,15 @@ const replaceSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isReplicateConfigured()) {
+      return NextResponse.json(
+        { error: "AI service not configured", message: "Object replacement service is not available." },
+        { status: 503 }
+      );
+    }
+
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -38,7 +46,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findOne({ clerkId: userId });
-    
+
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
@@ -49,11 +57,11 @@ export async function POST(req: NextRequest) {
     // Object replacement costs 2 credits (more complex operation)
     if (user.credits < 2) {
       return NextResponse.json(
-        { 
+        {
           error: "Insufficient credits",
           message: "Object replacement requires 2 credits",
           creditsRequired: 2,
-          creditsAvailable: user.credits 
+          creditsAvailable: user.credits
         },
         { status: 402 }
       );
@@ -62,6 +70,7 @@ export async function POST(req: NextRequest) {
     // Create render record
     const render = await Render.create({
       userId: user._id,
+      clerkId: userId,
       projectId: validatedData.projectId,
       inputImage: validatedData.imageUrl,
       maskImage: validatedData.maskUrl,
@@ -74,7 +83,7 @@ export async function POST(req: NextRequest) {
     // Deduct credits
     await User.findByIdAndUpdate(user._id, {
       $inc: { credits: -2 },
-      $push: { 
+      $push: {
         creditHistory: {
           amount: -2,
           type: 'replace',
@@ -124,7 +133,7 @@ export async function POST(req: NextRequest) {
       // Refund credits on failure
       await User.findByIdAndUpdate(user._id, {
         $inc: { credits: 2 },
-        $push: { 
+        $push: {
           creditHistory: {
             amount: 2,
             type: 'refund',
@@ -145,7 +154,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("Replace API error:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },
@@ -170,20 +179,20 @@ function buildReplacementPrompt(
   }
 ): string {
   let prompt = `Replace the ${objectToReplace} with ${replacement}`;
-  
+
   if (settings?.matchStyle) {
     prompt += ", maintaining the same interior design style";
   }
-  
+
   if (settings?.preserveLighting) {
     prompt += ", preserving the original lighting and shadows";
   }
-  
+
   if (settings?.preservePerspective) {
     prompt += ", keeping the same perspective and scale";
   }
-  
+
   prompt += ", photorealistic, high quality, seamless integration";
-  
+
   return prompt;
 }

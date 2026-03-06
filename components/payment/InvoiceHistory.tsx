@@ -364,9 +364,10 @@ const translations = {
 export function InvoiceHistory({ className, compact = false, limit }: InvoiceHistoryProps) {
   const { language } = useLanguage();
   const t = translations[language];
-  
+
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -380,10 +381,29 @@ export function InvoiceHistory({ className, compact = false, limit }: InvoiceHis
 
   const fetchInvoices = async () => {
     setLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    setInvoices(mockInvoices);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await fetch('/api/invoices');
+      if (!res.ok) throw new Error(`Failed to load invoices (${res.status})`);
+      const data = await res.json();
+      // Deserialize date strings back to Date objects
+      const parsed: Invoice[] = (data.invoices ?? []).map((inv: any) => ({
+        ...inv,
+        date: new Date(inv.date),
+        dueDate: new Date(inv.dueDate),
+        paidAt: inv.paidAt ? new Date(inv.paidAt) : undefined,
+        billingPeriod: {
+          start: new Date(inv.billingPeriod.start),
+          end: new Date(inv.billingPeriod.end),
+        },
+      }));
+      setInvoices(parsed);
+    } catch (err: any) {
+      console.error('[InvoiceHistory]', err);
+      setError(err.message ?? 'Failed to load invoices');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleRefresh = async () => {
@@ -394,7 +414,7 @@ export function InvoiceHistory({ className, compact = false, limit }: InvoiceHis
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          invoice.plan.toLowerCase().includes(searchQuery.toLowerCase());
+      invoice.plan.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -491,19 +511,29 @@ export function InvoiceHistory({ className, compact = false, limit }: InvoiceHis
   };
 
   const handleDownload = (invoice: Invoice) => {
-    // Implement PDF download
-    console.log('Downloading invoice:', invoice.id);
-    window.open(invoice.downloadUrl, '_blank');
+    // Open Stripe hosted invoice PDF, or the download URL
+    const url = invoice.downloadUrl !== '#' ? invoice.downloadUrl : invoice.receiptUrl;
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  const handleEmailInvoice = (invoice: Invoice) => {
-    // Implement email functionality
-    console.log('Emailing invoice:', invoice.id);
+  const handleEmailInvoice = async (invoice: Invoice) => {
+    try {
+      // Stripe: POST /api/invoices/:id/email triggers stripe.invoices.sendInvoice
+      const res = await fetch(`/api/invoices/${invoice.id}/email`, { method: 'POST' });
+      if (!res.ok) throw new Error('Failed to send invoice email');
+    } catch (err) {
+      console.error('[InvoiceHistory] email error:', err);
+    }
   };
 
   const handlePrint = (invoice: Invoice) => {
-    // Implement print functionality
-    window.print();
+    // Open receipt URL in new tab which has browser print support,
+    // or fall back to scoped window.print() wrapped in an iframe
+    if (invoice.receiptUrl && invoice.receiptUrl !== '#') {
+      window.open(invoice.receiptUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      window.print();
+    }
   };
 
   if (loading) {
@@ -527,6 +557,21 @@ export function InvoiceHistory({ className, compact = false, limit }: InvoiceHis
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className={cn('bg-card/50 backdrop-blur-sm border-border/50', className)}>
+        <CardContent className="flex flex-col items-center justify-center py-16 gap-4 text-muted-foreground">
+          <AlertCircle className="w-12 h-12 text-destructive opacity-60" />
+          <p className="text-sm">{error}</p>
+          <Button size="sm" variant="outline" onClick={() => fetchInvoices()}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );
@@ -571,7 +616,7 @@ export function InvoiceHistory({ className, compact = false, limit }: InvoiceHis
                   <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
                     <Receipt className="w-5 h-5 text-primary" />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <p className="font-medium truncate">{invoice.invoiceNumber}</p>
                     <p className="text-sm text-muted-foreground">{formatDate(invoice.date)}</p>
@@ -779,7 +824,7 @@ export function InvoiceHistory({ className, compact = false, limit }: InvoiceHis
                           </div>
                         </TableCell>
                       </TableRow>
-                      
+
                       {/* Expanded Row */}
                       <AnimatePresence>
                         {expandedRows.has(invoice.id) && (

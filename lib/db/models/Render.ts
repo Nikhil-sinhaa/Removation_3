@@ -37,7 +37,7 @@ export interface IRender {
 
 const RenderSchema = new Schema<IRender>({
     userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    clerkId: { type: String, required: true, index: true },
+    clerkId: { type: String, required: false, index: true },
     projectId: { type: String, index: true },
 
     inputImage: { type: String, required: true },

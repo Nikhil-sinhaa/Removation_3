@@ -537,21 +537,13 @@ export default function ProjectEditorPage() {
       return;
     }
 
-    if (userCredits < numberOfVariations) {
-      toast({
-        title: 'Insufficient credits',
-        description: 'Please upgrade your plan or purchase more credits',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     setIsGenerating(true);
     setGenerationProgress(0);
 
     const progressInterval = setInterval(() => {
-      setGenerationProgress((prev) => Math.min(prev + Math.random() * 15, 90));
-    }, 500);
+      setGenerationProgress((prev) => Math.min(prev + Math.random() * 8, 85));
+    }, 1000);
 
     try {
       const response = await fetch('/api/generate', {
@@ -563,32 +555,83 @@ export default function ProjectEditorPage() {
           style: selectedStyle,
           roomType: selectedRoomType,
           mode: selectedMode,
-          preserveStructure,
-          creativity: creativityLevel[0],
-          colorPreference,
-          additionalPrompt,
+          settings: {
+            creativity: creativityLevel[0],
+            preserveLayout: preserveStructure,
+            enhanceQuality: true,
+            colorScheme: colorPreference || undefined,
+          },
+          customPrompt: additionalPrompt || undefined,
           numberOfVariations,
-          maskData: activeTool === 'brush' ? maskData : null,
         }),
       });
 
-      if (!response.ok) throw new Error('Generation failed');
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Generation failed');
+      }
+
+      // API returns renderIds — poll for completion
+      const renderIds: string[] = data.renderIds || [];
+      if (renderIds.length === 0) {
+        throw new Error('No render IDs returned from server');
+      }
+
+      // Poll for render results
+      const completedRenders: any[] = [];
+      const maxAttempts = 40; // 2 minutes max (40 * 3s)
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        let allDone = true;
+        for (const renderId of renderIds) {
+          if (completedRenders.find(r => r._id === renderId)) continue;
+
+          try {
+            const statusRes = await fetch(`/api/generate?renderId=${renderId}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              const render = statusData.render;
+
+              if (render?.status === 'completed') {
+                completedRenders.push(render);
+              } else if (render?.status === 'failed') {
+                console.error(`Render ${renderId} failed:`, render.error);
+              } else {
+                allDone = false;
+              }
+            }
+          } catch (pollErr) {
+            console.warn('Poll error:', pollErr);
+            allDone = false;
+          }
+        }
+
+        const progress = Math.min(30 + (completedRenders.length / renderIds.length) * 60, 95);
+        setGenerationProgress(progress);
+
+        if (allDone) break;
+      }
 
       clearInterval(progressInterval);
       setGenerationProgress(100);
 
-      const newRenders: Render[] = data.images.map((img: any, index: number) => ({
-        id: `render-${Date.now()}-${index}`,
+      if (completedRenders.length === 0) {
+        throw new Error('Generation timed out. Please check your renders page.');
+      }
+
+      const newRenders: Render[] = completedRenders.map((render: any, index: number) => ({
+        id: render._id || `render-${Date.now()}-${index}`,
         originalImage,
-        generatedImage: img.url,
+        generatedImage: render.outputImage || render.resultUrl || '',
         style: selectedStyle,
         roomType: selectedRoomType,
         mode: selectedMode,
-        vastuScore: img.vastuScore,
-        estimatedCost: img.estimatedCost,
-        createdAt: new Date(),
+        vastuScore: render.vastuScore,
+        estimatedCost: render.estimatedCost,
+        createdAt: new Date(render.createdAt || Date.now()),
         isFavorite: false,
         version: (project?.renders.length || 0) + index + 1,
       }));
@@ -600,7 +643,7 @@ export default function ProjectEditorPage() {
       } : null);
 
       setSelectedRender(newRenders[0]);
-      setUserCredits((prev) => prev - numberOfVariations);
+      setUserCredits((prev) => prev - (data.creditsUsed || numberOfVariations));
       setHasUnsavedChanges(true);
 
       // Add to history
@@ -609,18 +652,19 @@ export default function ProjectEditorPage() {
         action: 'Generated design',
         timestamp: new Date(),
         user: user?.firstName || 'You',
-        details: `${numberOfVariations} variations in ${DESIGN_STYLES.find((s) => s.id === selectedStyle)?.name} style`,
+        details: `${completedRenders.length} variation(s) in ${DESIGN_STYLES.find((s) => s.id === selectedStyle)?.name} style`,
       }, ...prev]);
 
       toast({
         title: 'Generation complete!',
-        description: `${numberOfVariations} variations created`,
+        description: `${completedRenders.length} variation(s) created`,
       });
-    } catch (error) {
+    } catch (error: any) {
       clearInterval(progressInterval);
+      console.error('Generation error:', error);
       toast({
         title: 'Generation failed',
-        description: 'Please try again',
+        description: error.message || 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -1554,8 +1598,8 @@ export default function ProjectEditorPage() {
                           vastuScore >= 80
                             ? 'default'
                             : vastuScore >= 50
-                            ? 'secondary'
-                            : 'destructive'
+                              ? 'secondary'
+                              : 'destructive'
                         }
                         className="ml-1"
                       >
@@ -2023,8 +2067,8 @@ export default function ProjectEditorPage() {
                             vastuScore >= 80
                               ? 'text-green-500'
                               : vastuScore >= 50
-                              ? 'text-yellow-500'
-                              : 'text-red-500'
+                                ? 'text-yellow-500'
+                                : 'text-red-500'
                           )}
                         />
                       </svg>
@@ -2048,8 +2092,8 @@ export default function ProjectEditorPage() {
                             issue.severity === 'critical'
                               ? 'border-l-red-500'
                               : issue.severity === 'warning'
-                              ? 'border-l-yellow-500'
-                              : 'border-l-blue-500'
+                                ? 'border-l-yellow-500'
+                                : 'border-l-blue-500'
                           )}
                         >
                           <CardContent className="p-3">
@@ -2060,8 +2104,8 @@ export default function ProjectEditorPage() {
                                   issue.severity === 'critical'
                                     ? 'text-red-500'
                                     : issue.severity === 'warning'
-                                    ? 'text-yellow-500'
-                                    : 'text-blue-500'
+                                      ? 'text-yellow-500'
+                                      : 'text-blue-500'
                                 )}
                               />
                               <div>

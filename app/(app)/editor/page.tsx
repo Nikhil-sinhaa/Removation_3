@@ -1,8 +1,9 @@
 // app/(app)/editor/page.tsx
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ImageUploader } from '@/components/shared/ImageUploader';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
@@ -159,12 +160,59 @@ interface CostBreakdown {
   total: number;
 }
 
+// Helper Component for Style Cards
+function StyleCard({
+  style,
+  isSelected,
+  onSelect
+}: {
+  style: any;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const [imgSrc, setImgSrc] = useState(style.thumbnail || '/images/styles/placeholder.jpg');
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={onSelect}
+      className={cn(
+        'relative aspect-square rounded-lg overflow-hidden border-2 transition-all',
+        isSelected
+          ? 'border-primary ring-2 ring-primary/20'
+          : 'border-transparent hover:border-muted-foreground/20'
+      )}
+    >
+      <Image
+        src={imgSrc}
+        alt={style.name}
+        fill
+        className="object-cover"
+        onError={() => setImgSrc('/images/styles/placeholder.jpg')}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent" />
+      <div className="absolute bottom-0 left-0 right-0 p-2">
+        <p className="text-xs text-white font-medium truncate">
+          {style.name}
+        </p>
+      </div>
+      {isSelected && (
+        <div className="absolute top-2 right-2">
+          <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+            <Check className="h-3 w-3 text-primary-foreground" />
+          </div>
+        </div>
+      )}
+    </motion.button>
+  );
+}
+
 export default function EditorPage() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // State Management
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -172,8 +220,6 @@ export default function EditorPage() {
   const [selectedGenerated, setSelectedGenerated] = useState<GeneratedImage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationProgress, setGenerationProgress] = useState(0);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
 
   // Editor Settings
   const [selectedStyle, setSelectedStyle] = useState<string>('modern-minimalist');
@@ -211,62 +257,32 @@ export default function EditorPage() {
   const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Credits
-  const [userCredits, setUserCredits] = useState(50);
+  const [userCredits, setUserCredits] = useState(0);
 
-  // Upload handling
-  const { startUpload, isUploading: uploadingFile } = useUploadThing('imageUploader', {
-    onClientUploadComplete: (res) => {
-      if (res && res[0]) {
-        setOriginalImage(res[0].url);
-        setIsUploading(false);
-        setUploadProgress(100);
-        toast({
-          title: 'Image uploaded successfully',
-          description: 'Your image is ready for transformation',
-        });
-      }
-    },
-    onUploadProgress: (progress) => {
-      setUploadProgress(progress);
-    },
-    onUploadError: (error) => {
-      setIsUploading(false);
-      toast({
-        title: 'Upload failed',
-        description: error.message,
-        variant: 'destructive',
+  // Fetch real credits from the backend on mount
+  useEffect(() => {
+    fetch('/api/user/credits')
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.credits === 'number') {
+          setUserCredits(data.credits);
+        }
+      })
+      .catch(() => {
+        // Silently fail — credits display will show 0 until resolved
       });
-    },
-  });
-
-  // Handle file drop
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const files = Array.from(e.dataTransfer.files);
-      if (files.length > 0 && files[0].type.startsWith('image/')) {
-        setIsUploading(true);
-        startUpload(files);
-      }
-    },
-    [startUpload]
-  );
-
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
   }, []);
 
-  // Handle file select
-  const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = e.target.files;
-      if (files && files.length > 0) {
-        setIsUploading(true);
-        startUpload(Array.from(files));
-      }
-    },
-    [startUpload]
-  );
+  // Upload handlers — delegated to ImageUploader component
+  const handleImageUploaded = (url: string) => {
+    setOriginalImage(url);
+  };
+
+  const handleImageRemoved = () => {
+    setOriginalImage(null);
+    setGeneratedImages([]);
+    setSelectedGenerated(null);
+  };
 
   // Generate design
   const handleGenerate = async () => {
@@ -279,22 +295,14 @@ export default function EditorPage() {
       return;
     }
 
-    if (userCredits < numberOfVariations) {
-      toast({
-        title: 'Insufficient credits',
-        description: 'Please upgrade your plan or purchase more credits',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     setIsGenerating(true);
     setGenerationProgress(0);
 
     // Simulate progress
     const progressInterval = setInterval(() => {
-      setGenerationProgress((prev) => Math.min(prev + Math.random() * 15, 90));
-    }, 500);
+      setGenerationProgress((prev) => Math.min(prev + Math.random() * 8, 85));
+    }, 1000);
 
     try {
       const response = await fetch('/api/generate', {
@@ -305,37 +313,91 @@ export default function EditorPage() {
           style: selectedStyle,
           roomType: selectedRoomType,
           mode: selectedMode,
-          preserveStructure,
-          creativity: creativityLevel[0],
-          colorPreference,
-          additionalPrompt,
+          settings: {
+            creativity: creativityLevel[0],
+            preserveLayout: preserveStructure,
+            enhanceQuality: true,
+            colorScheme: colorPreference || undefined,
+          },
+          customPrompt: additionalPrompt || undefined,
           numberOfVariations,
-          maskData: isInpaintMode ? maskCanvas : null,
         }),
       });
 
-      if (!response.ok) throw new Error('Generation failed');
-
       const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || data.error || 'Generation failed');
+      }
+
+      // API returns renderIds — poll for completion
+      const renderIds: string[] = data.renderIds || [];
+      if (renderIds.length === 0) {
+        throw new Error('No render IDs returned from server');
+      }
+
+      // Poll for render results
+      const completedRenders: any[] = [];
+      const maxAttempts = 40; // 2 minutes max (40 * 3s)
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        let allDone = true;
+        for (const renderId of renderIds) {
+          // Skip already completed renders
+          if (completedRenders.find(r => r._id === renderId)) continue;
+
+          try {
+            const statusRes = await fetch(`/api/generate?renderId=${renderId}`);
+            if (statusRes.ok) {
+              const statusData = await statusRes.json();
+              const render = statusData.render;
+
+              if (render?.status === 'completed') {
+                completedRenders.push(render);
+              } else if (render?.status === 'failed') {
+                console.error(`Render ${renderId} failed:`, render.error);
+                // Don't block other renders
+              } else {
+                allDone = false;
+              }
+            }
+          } catch (pollErr) {
+            console.warn('Poll error:', pollErr);
+            allDone = false;
+          }
+        }
+
+        // Update progress
+        const progress = Math.min(30 + (completedRenders.length / renderIds.length) * 60, 95);
+        setGenerationProgress(progress);
+
+        if (allDone) break;
+      }
 
       clearInterval(progressInterval);
       setGenerationProgress(100);
 
-      const newImages: GeneratedImage[] = data.images.map((img: any, index: number) => ({
-        id: `gen-${Date.now()}-${index}`,
-        url: img.url,
+      if (completedRenders.length === 0) {
+        throw new Error('Generation timed out. Please check your renders page.');
+      }
+
+      const newImages: GeneratedImage[] = completedRenders.map((render: any, index: number) => ({
+        id: render._id || `gen-${Date.now()}-${index}`,
+        url: render.outputImage || render.resultUrl || '',
         style: selectedStyle,
         roomType: selectedRoomType,
         mode: selectedMode,
-        createdAt: new Date(),
+        createdAt: new Date(render.createdAt || Date.now()),
         isFavorite: false,
-        vastuScore: img.vastuScore,
-        estimatedCost: img.estimatedCost,
+        vastuScore: render.vastuScore,
+        estimatedCost: render.estimatedCost,
       }));
 
       setGeneratedImages((prev) => [...newImages, ...prev]);
       setSelectedGenerated(newImages[0]);
-      setUserCredits((prev) => prev - numberOfVariations);
+      setUserCredits((prev) => prev - (data.creditsUsed || numberOfVariations));
 
       // Add to history
       const historyItem: HistoryItem = {
@@ -349,13 +411,14 @@ export default function EditorPage() {
 
       toast({
         title: 'Generation complete!',
-        description: `${numberOfVariations} variations created successfully`,
+        description: `${completedRenders.length} variation(s) created successfully`,
       });
-    } catch (error) {
+    } catch (error: any) {
       clearInterval(progressInterval);
+      console.error('Generation error:', error);
       toast({
         title: 'Generation failed',
-        description: 'Please try again',
+        description: error.message || 'Please try again',
         variant: 'destructive',
       });
     } finally {
@@ -635,38 +698,12 @@ export default function EditorPage() {
                 <ScrollArea className="h-[400px] pr-2">
                   <div className="grid grid-cols-2 gap-2">
                     {DESIGN_STYLES.slice(0, 24).map((style) => (
-                      <motion.button
+                      <StyleCard
                         key={style.id}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => setSelectedStyle(style.id)}
-                        className={cn(
-                          'relative aspect-square rounded-lg overflow-hidden border-2 transition-all',
-                          selectedStyle === style.id
-                            ? 'border-primary ring-2 ring-primary/20'
-                            : 'border-transparent hover:border-muted-foreground/20'
-                        )}
-                      >
-                        <Image
-                          src={style.thumbnail || '/images/styles/placeholder.jpg'}
-                          alt={style.name}
-                          fill
-                          className="object-cover"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent" />
-                        <div className="absolute bottom-0 left-0 right-0 p-2">
-                          <p className="text-xs text-white font-medium truncate">
-                            {style.name}
-                          </p>
-                        </div>
-                        {selectedStyle === style.id && (
-                          <div className="absolute top-2 right-2">
-                            <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                              <Check className="h-3 w-3 text-primary-foreground" />
-                            </div>
-                          </div>
-                        )}
-                      </motion.button>
+                        style={style}
+                        isSelected={selectedStyle === style.id}
+                        onSelect={() => setSelectedStyle(style.id)}
+                      />
                     ))}
                   </div>
                 </ScrollArea>
@@ -894,8 +931,8 @@ export default function EditorPage() {
                           vastuScore >= 80
                             ? 'default'
                             : vastuScore >= 50
-                            ? 'secondary'
-                            : 'destructive'
+                              ? 'secondary'
+                              : 'destructive'
                         }
                       >
                         {vastuScore}/100
@@ -979,58 +1016,28 @@ export default function EditorPage() {
           {/* Canvas Area */}
           <div className="flex-1 relative overflow-hidden bg-muted/30">
             {!originalImage ? (
-              /* Upload Zone */
+              /* Upload Zone — uses the shared ImageUploader component */
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute inset-8 flex items-center justify-center"
               >
-                <div
-                  onDrop={handleDrop}
-                  onDragOver={handleDragOver}
-                  onClick={() => fileInputRef.current?.click()}
-                  className={cn(
-                    'w-full max-w-2xl aspect-video rounded-2xl border-2 border-dashed',
-                    'flex flex-col items-center justify-center gap-4 cursor-pointer',
-                    'transition-all duration-300 hover:border-primary hover:bg-primary/5',
-                    isUploading ? 'border-primary bg-primary/5' : 'border-muted-foreground/25'
-                  )}
-                >
-                  {isUploading ? (
-                    <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                      <div className="text-center">
-                        <p className="font-medium">Uploading...</p>
-                        <p className="text-sm text-muted-foreground">{uploadProgress}%</p>
-                      </div>
-                      <Progress value={uploadProgress} className="w-48" />
-                    </div>
-                  ) : (
-                    <>
-                      <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center">
-                        <Upload className="h-10 w-10 text-primary" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-lg font-semibold">Drop your image here</p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          or click to browse • Supports JPG, PNG, WebP
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span>Max 10MB</span>
-                        <span>•</span>
-                        <span>Up to 4096×4096</span>
-                      </div>
-                    </>
-                  )}
+                <div className="w-full max-w-2xl">
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold mb-2">Upload your room photo</h2>
+                    <p className="text-muted-foreground text-sm">
+                      Upload a clear photo of your room to generate AI-powered redesigns
+                    </p>
+                  </div>
+                  <ImageUploader
+                    onUpload={handleImageUploaded}
+                    onRemove={handleImageRemoved}
+                    maxSize={8}
+                    aspectRatio="video"
+                    showUrlInput
+                    showCameraButton
+                  />
                 </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
               </motion.div>
             ) : (
               /* Image Display */
@@ -1248,7 +1255,7 @@ export default function EditorPage() {
           {/* Bottom Thumbnails */}
           {generatedImages.length > 0 && (
             <div className="h-24 border-t bg-card px-4 py-2">
-           <ScrollArea className="w-full overflow-x-auto">
+              <ScrollArea className="w-full overflow-x-auto">
                 <div className="flex gap-2">
                   {/* Original Thumbnail */}
                   <button
@@ -1354,8 +1361,8 @@ export default function EditorPage() {
                             vastuScore >= 80
                               ? 'text-green-500'
                               : vastuScore >= 50
-                              ? 'text-yellow-500'
-                              : 'text-red-500'
+                                ? 'text-yellow-500'
+                                : 'text-red-500'
                           )}
                         />
                       </svg>
@@ -1368,8 +1375,8 @@ export default function EditorPage() {
                       {vastuScore >= 80
                         ? 'Excellent Vastu compliance'
                         : vastuScore >= 50
-                        ? 'Good with some improvements needed'
-                        : 'Needs significant improvements'}
+                          ? 'Good with some improvements needed'
+                          : 'Needs significant improvements'}
                     </p>
                   </div>
                 )}
@@ -1385,8 +1392,8 @@ export default function EditorPage() {
                         issue.severity === 'critical'
                           ? 'border-l-red-500'
                           : issue.severity === 'warning'
-                          ? 'border-l-yellow-500'
-                          : 'border-l-blue-500'
+                            ? 'border-l-yellow-500'
+                            : 'border-l-blue-500'
                       )}
                     >
                       <CardContent className="p-3">
@@ -1397,8 +1404,8 @@ export default function EditorPage() {
                               issue.severity === 'critical'
                                 ? 'text-red-500'
                                 : issue.severity === 'warning'
-                                ? 'text-yellow-500'
-                                : 'text-blue-500'
+                                  ? 'text-yellow-500'
+                                  : 'text-blue-500'
                             )}
                           />
                           <div>

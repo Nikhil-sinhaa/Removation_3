@@ -53,6 +53,10 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VastuPanel } from "./VastuPanel";
+import { CostPanel } from "./CostPanel";
+import { useAIGeneration } from "@/hooks/useAIGeneration";
+import { Loader2 } from "lucide-react";
 
 interface StyleOption {
   id: string;
@@ -89,6 +93,9 @@ interface EditorSidebarProps {
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
   className?: string;
+  currentImageUrl?: string;
+  projectId?: string;
+  onGenerateComplete?: (results: any[]) => void;
 }
 
 const roomTypes: RoomType[] = [
@@ -148,10 +155,24 @@ export default function EditorSidebar({
   isCollapsed = false,
   onToggleCollapse,
   className,
+  currentImageUrl,
+  projectId,
+  onGenerateComplete
 }: EditorSidebarProps) {
   const [activeTab, setActiveTab] = useState("style");
+
+  // Switch to Vastu tab when enabled
+  React.useEffect(() => {
+    if (showVastu) {
+      setActiveTab("vastu");
+    } else if (showCost) {
+      setActiveTab("cost");
+    }
+  }, [showVastu, showCost]);
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedCategories, setExpandedCategories] = useState<string[]>(["Modern"]);
+
+  const { generateDesign, isGenerating } = useAIGeneration();
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) =>
@@ -159,6 +180,33 @@ export default function EditorSidebar({
         ? prev.filter((c) => c !== category)
         : [...prev, category]
     );
+  };
+
+  const handleGenerate = async () => {
+    if (!selectedStyle || !selectedRoomType) return;
+
+    // Find the full style object
+    const styleObj = sampleStyles.find(s => s.id === selectedStyle);
+
+    const renderIds = await generateDesign({
+      imageUrl: currentImageUrl || "",
+      mode: "redesign", // Default mode, can be enhanced to be dynamic
+      style: styleObj?.name || "Modern",
+      roomType: selectedRoomType,
+      settings: {
+        creativity: settings.creativityLevel,
+        preserveStructure: settings.preserveStructure,
+        enhanceDetails: settings.enhanceDetails,
+        colorIntensity: settings.colorIntensity,
+        lightingMode: settings.lightingMode
+      },
+      projectId: projectId
+    });
+
+    if (renderIds && onGenerateComplete) {
+      // In a real app we'd start polling or pass callbacks
+      onGenerateComplete(renderIds);
+    }
   };
 
   const filteredStyles = sampleStyles.filter(
@@ -307,6 +355,18 @@ export default function EditorSidebar({
             <SlidersHorizontal className="w-3 h-3" />
             Settings
           </TabsTrigger>
+          {showVastu && (
+            <TabsTrigger value="vastu" className="gap-1 text-xs text-orange-600 data-[state=active]:bg-orange-50 data-[state=active]:text-orange-700">
+              <Compass className="w-3 h-3" />
+              Vastu
+            </TabsTrigger>
+          )}
+          {showCost && (
+            <TabsTrigger value="cost" className="gap-1 text-xs text-green-600 data-[state=active]:bg-green-50 data-[state=active]:text-green-700">
+              <IndianRupee className="w-3 h-3" />
+              Cost
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <ScrollArea className="flex-1">
@@ -530,11 +590,41 @@ export default function EditorSidebar({
         </ScrollArea>
       </Tabs>
 
+      {/* Vastu Panel Content (Rendered outside TabsContent to avoid unmounting if we want persistence, 
+          but for now inside Tabs structure is fine or we can use a conditional render) */}
+      {showVastu && activeTab === 'vastu' && (
+        <VastuPanel
+          roomType={selectedRoomType || 'living-room'}
+          className="flex-1 overflow-hidden"
+        />
+      )}
+
+      {/* Cost Panel Content */}
+      {showCost && activeTab === 'cost' && (
+        <CostPanel
+          roomType={selectedRoomType || 'living-room'}
+          className="flex-1 overflow-hidden"
+        />
+      )}
+
       {/* Footer */}
       <div className="p-3 border-t">
-        <Button className="w-full gap-2">
-          <Sparkles className="w-4 h-4" />
-          Generate Design
+        <Button
+          className="w-full gap-2 bg-violet-600 hover:bg-violet-700"
+          onClick={handleGenerate}
+          disabled={isGenerating || !selectedStyle || !selectedRoomType || !currentImageUrl}
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generating...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              Generate Design
+            </>
+          )}
         </Button>
       </div>
     </div>

@@ -89,11 +89,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar  } from "@/components/ui/calendar";
+import { Calendar } from "@/components/ui/calendar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "@/components/ui/use-toast";
-import  CompareSlider  from "@/components/editor/CompareSlider";
+import CompareSlider from "@/components/editor/CompareSlider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 import { format, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
@@ -387,8 +387,8 @@ function RenderCard({
                 render.vastuScore >= 80
                   ? "border-green-500 text-green-600"
                   : render.vastuScore >= 60
-                  ? "border-yellow-500 text-yellow-600"
-                  : "border-red-500 text-red-600"
+                    ? "border-yellow-500 text-yellow-600"
+                    : "border-red-500 text-red-600"
               )}
             >
               <Compass className="h-3 w-3 mr-1" />
@@ -531,8 +531,8 @@ function RenderCard({
                 render.vastuScore >= 80
                   ? "bg-green-500"
                   : render.vastuScore >= 60
-                  ? "bg-yellow-500"
-                  : "bg-red-500"
+                    ? "bg-yellow-500"
+                    : "bg-red-500"
               )}
             >
               <Compass className="h-3 w-3 mr-1" />
@@ -630,8 +630,6 @@ export default function HistoryPage() {
   useEffect(() => {
     const loadRenders = async () => {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       setRenders(mockRenders);
       setIsLoading(false);
     };
@@ -867,7 +865,7 @@ export default function HistoryPage() {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" className="gap-2">
-               <CalendarIcon className="h-4 w-4" /> 
+                <CalendarIcon className="h-4 w-4" />
                 {dateRange.from ? (
                   dateRange.to ? (
                     `${format(dateRange.from, "MMM d")} - ${format(dateRange.to, "MMM d")}`
@@ -876,7 +874,7 @@ export default function HistoryPage() {
                   )
                 ) : selectedPreset >= 0 ? (
                   datePresets.find((p) => p.days === selectedPreset)?.[
-                    language === "hi" ? "labelHi" : "label"
+                  language === "hi" ? "labelHi" : "label"
                   ]
                 ) : (
                   language === "hi" ? "तारीख" : "Date"
@@ -901,15 +899,15 @@ export default function HistoryPage() {
                   ))}
                 </div>
               </div>
-                <Calendar
+              <Calendar
                 mode="range"
                 selected={{ from: dateRange.from, to: dateRange.to }}
                 onSelect={(range) => {
-                    setDateRange({ from: range?.from, to: range?.to });
-                    setSelectedPreset(-1);
+                  setDateRange({ from: range?.from, to: range?.to });
+                  setSelectedPreset(-1);
                 }}
                 numberOfMonths={2}
-                />
+              />
             </PopoverContent>
           </Popover>
 
@@ -1011,8 +1009,8 @@ export default function HistoryPage() {
                   ? "कोई रेंडर नहीं मिला"
                   : "No renders found"
                 : language === "hi"
-                ? "अभी तक कोई रेंडर नहीं"
-                : "No renders yet"}
+                  ? "अभी तक कोई रेंडर नहीं"
+                  : "No renders yet"}
             </h2>
             <p className="text-muted-foreground mb-6 max-w-md">
               {hasActiveFilters
@@ -1020,8 +1018,8 @@ export default function HistoryPage() {
                   ? "अपने फ़िल्टर बदलकर देखें।"
                   : "Try adjusting your filters."
                 : language === "hi"
-                ? "अपना पहला डिज़ाइन बनाएं और यहां देखें।"
-                : "Create your first design to see it here."}
+                  ? "अपना पहला डिज़ाइन बनाएं और यहां देखें।"
+                  : "Create your first design to see it here."}
             </p>
             {hasActiveFilters ? (
               <Button variant="outline" onClick={clearFilters}>
@@ -1090,8 +1088,8 @@ export default function HistoryPage() {
                         viewingRender.vastuScore >= 80
                           ? "border-green-500 text-green-600"
                           : viewingRender.vastuScore >= 60
-                          ? "border-yellow-500 text-yellow-600"
-                          : "border-red-500 text-red-600"
+                            ? "border-yellow-500 text-yellow-600"
+                            : "border-red-500 text-red-600"
                       )}
                     >
                       <Compass className="h-4 w-4 mr-1" />

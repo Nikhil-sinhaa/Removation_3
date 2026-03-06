@@ -247,9 +247,9 @@ const BarChartSimple = ({ data, maxValue, color = "bg-violet-500" }: { data: Cha
 const DonutChart = ({ data }: { data: ChartData[] }) => {
   const colors = ["bg-violet-500", "bg-blue-500", "bg-cyan-500", "bg-emerald-500", "bg-amber-500", "bg-rose-500", "bg-pink-500"];
   const total = data.reduce((acc, item) => acc + item.value, 0);
-  
+
   let cumulativePercentage = 0;
-  
+
   return (
     <div className="flex items-center gap-8">
       <div className="relative w-40 h-40">
@@ -259,7 +259,7 @@ const DonutChart = ({ data }: { data: ChartData[] }) => {
             const strokeDasharray = `${percentage} ${100 - percentage}`;
             const strokeDashoffset = -cumulativePercentage;
             cumulativePercentage += percentage;
-            
+
             return (
               <motion.circle
                 key={item.label}
@@ -392,7 +392,7 @@ const GeoTable = ({ data }: { data: GeoData[] }) => {
       {data.map((item, index) => {
         const totalUsers = data.reduce((acc, d) => acc + d.users, 0);
         const share = ((item.users / totalUsers) * 100).toFixed(1);
-        
+
         return (
           <motion.div
             key={item.country}
@@ -429,7 +429,9 @@ export default function AdminAnalyticsPage() {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Re-fetch analytics data when real API is available
+    // For now, briefly show spinner to acknowledge user action
+    await new Promise((r) => setTimeout(r, 300));
     setIsRefreshing(false);
   };
 

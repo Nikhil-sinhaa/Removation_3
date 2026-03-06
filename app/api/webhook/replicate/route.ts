@@ -78,6 +78,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ received: true, found: false });
         }
 
+        // Idempotency check: skip if render is already in a terminal state
+        if (render.status === 'completed' || render.status === 'failed' || render.status === 'canceled') {
+            console.log(`Render ${render._id} already in terminal state: ${render.status}, skipping webhook`);
+            return NextResponse.json({ received: true, skipped: true, status: render.status });
+        }
+
         switch (payload.status) {
             case 'starting': {
                 await Render.findByIdAndUpdate(render._id, {
@@ -108,7 +114,8 @@ export async function POST(req: NextRequest) {
 
                 await Render.findByIdAndUpdate(render._id, {
                     status: 'completed',
-                    resultUrl: outputUrl,
+                    outputImage: outputUrl, // Primary field used by frontend
+                    resultUrl: outputUrl, // Keep for backward compatibility
                     outputUrls: Array.isArray(payload.output) ? payload.output : [payload.output],
                     completedAt: payload.completed_at ? new Date(payload.completed_at) : new Date(),
                     processingTime: payload.metrics?.total_time || 0,
@@ -116,14 +123,18 @@ export async function POST(req: NextRequest) {
                     updatedAt: new Date(),
                 });
 
-                // Update user's credits used
-                await User.findOneAndUpdate(
-                    { clerkId: render.clerkId },
-                    {
-                        $inc: { 'subscription.creditsUsed': 1 },
-                        $set: { lastRenderAt: new Date() },
-                    }
-                );
+                // Update user's credits used (guard for missing clerkId)
+                if (render.clerkId) {
+                    await User.findOneAndUpdate(
+                        { clerkId: render.clerkId },
+                        {
+                            $inc: { 'subscription.creditsUsed': 1 },
+                            $set: { lastRenderAt: new Date() },
+                        }
+                    );
+                } else {
+                    console.warn(`Render ${render._id} has no clerkId, skipping credit update`);
+                }
 
                 console.log(`Render completed: ${render._id}, output: ${outputUrl}`);
                 break;
@@ -138,13 +149,17 @@ export async function POST(req: NextRequest) {
                     updatedAt: new Date(),
                 });
 
-                // Refund the credit if it failed
-                await User.findOneAndUpdate(
-                    { clerkId: render.clerkId },
-                    {
-                        $inc: { 'subscription.credits': 1 },
-                    }
-                );
+                // Refund the credit if it failed (guard for missing clerkId)
+                if (render.clerkId) {
+                    await User.findOneAndUpdate(
+                        { clerkId: render.clerkId },
+                        {
+                            $inc: { 'subscription.credits': 1 },
+                        }
+                    );
+                } else {
+                    console.warn(`Render ${render._id} has no clerkId, skipping credit refund`);
+                }
 
                 console.error(`Render failed: ${render._id}, error: ${payload.error}`);
                 break;
@@ -157,13 +172,17 @@ export async function POST(req: NextRequest) {
                     updatedAt: new Date(),
                 });
 
-                // Refund the credit if canceled
-                await User.findOneAndUpdate(
-                    { clerkId: render.clerkId },
-                    {
-                        $inc: { 'subscription.credits': 1 },
-                    }
-                );
+                // Refund the credit if canceled (guard for missing clerkId)
+                if (render.clerkId) {
+                    await User.findOneAndUpdate(
+                        { clerkId: render.clerkId },
+                        {
+                            $inc: { 'subscription.credits': 1 },
+                        }
+                    );
+                } else {
+                    console.warn(`Render ${render._id} has no clerkId, skipping credit refund`);
+                }
 
                 console.log(`Render canceled: ${render._id}`);
                 break;

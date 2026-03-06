@@ -48,8 +48,23 @@ export const ourFileRouter = {
       };
     }),
 
-  // You can add more endpoints later, e.g.:
-  // avatarUploader: f({ ... }),
+  // Endpoint for project cover images
+  projectImage: f({
+    image: { maxFileSize: "4MB", maxFileCount: 1 }
+  }).middleware(async () => {
+    return { userId: "user" };
+  }).onUploadComplete(async ({ file }) => {
+    return { url: file.url, key: file.key };
+  }),
+
+  // Endpoint for user avatars
+  avatar: f({
+    image: { maxFileSize: "2MB", maxFileCount: 1 }
+  }).middleware(async () => {
+    return { userId: "user" };
+  }).onUploadComplete(async ({ file }) => {
+    return { url: file.url, key: file.key };
+  }),
 
 } satisfies FileRouter;
 

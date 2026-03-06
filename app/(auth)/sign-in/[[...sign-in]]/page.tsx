@@ -1,7 +1,9 @@
 // app/(auth)/sign-in/[[...sign-in]]/page.tsx
 import { SignIn } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
 import { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
   title: "Sign In | Removation.ai",
@@ -13,7 +15,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect("/dashboard");
+  }
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding & Showcase */}
@@ -23,32 +30,32 @@ export default function SignInPage() {
           <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <pattern id="diagonal" width="20" height="20" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <line x1="0" y1="0" x2="0" y2="20" stroke="white" strokeWidth="2"/>
+                <line x1="0" y1="0" x2="0" y2="20" stroke="white" strokeWidth="2" />
               </pattern>
             </defs>
             <rect width="100%" height="100%" fill="url(#diagonal)" />
           </svg>
         </div>
-        
+
         {/* Floating Orbs */}
         <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-300/20 rounded-full blur-3xl animate-pulse delay-700" />
         <div className="absolute top-1/2 right-1/3 w-48 h-48 bg-purple-400/15 rounded-full blur-2xl animate-pulse delay-1000" />
-        
+
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-20 w-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 mb-16">
             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-white/20">
               <svg className="w-7 h-7 text-violet-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <span className="text-2xl font-bold text-white">Removation.ai</span>
           </Link>
-          
+
           {/* Welcome Back Message */}
           <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-4">
             Welcome back!
@@ -56,7 +63,7 @@ export default function SignInPage() {
           <p className="text-xl text-violet-100 mb-12 max-w-md">
             Your AI-powered design studio awaits. Continue creating stunning spaces.
           </p>
-          
+
           {/* Before/After Showcase */}
           <div className="relative max-w-lg">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
@@ -68,7 +75,7 @@ export default function SignInPage() {
                 </div>
                 <span className="text-white/80 text-sm">+2,847 designers online now</span>
               </div>
-              
+
               {/* Mock Before/After */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative aspect-[4/3] rounded-xl bg-gradient-to-br from-gray-400 to-gray-500 overflow-hidden">
@@ -101,7 +108,7 @@ export default function SignInPage() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Quick Stats */}
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
                 <div className="flex items-center gap-2 text-white/70 text-sm">
@@ -119,7 +126,7 @@ export default function SignInPage() {
               </div>
             </div>
           </div>
-          
+
           {/* Recent Activity Ticker */}
           <div className="mt-12 flex items-center gap-3 text-white/60 text-sm">
             <div className="flex items-center gap-2 animate-pulse">
@@ -129,7 +136,7 @@ export default function SignInPage() {
           </div>
         </div>
       </div>
-      
+
       {/* Right Side - Sign In Form */}
       <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 lg:px-12 bg-white dark:bg-gray-900">
         {/* Mobile Logo */}
@@ -137,15 +144,15 @@ export default function SignInPage() {
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
               <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <span className="text-xl font-bold text-gray-900 dark:text-white">Removation.ai</span>
           </Link>
         </div>
-        
+
         {/* Header */}
         <div className="w-full max-w-md text-center mb-8">
           <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -155,7 +162,7 @@ export default function SignInPage() {
             Welcome back! Please enter your details.
           </p>
         </div>
-        
+
         {/* Clerk SignIn Component */}
         <div className="w-full max-w-md">
           <SignIn
@@ -165,37 +172,37 @@ export default function SignInPage() {
                 card: "bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-100 dark:border-gray-700 p-6",
                 headerTitle: "hidden",
                 headerSubtitle: "hidden",
-                socialButtonsBlockButton: 
+                socialButtonsBlockButton:
                   "bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-700 dark:text-gray-200 font-medium py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow",
                 socialButtonsBlockButtonText: "font-medium",
                 socialButtonsBlockButtonArrow: "text-gray-400",
                 dividerLine: "bg-gray-200 dark:bg-gray-600",
                 dividerText: "text-gray-500 dark:text-gray-400 text-sm",
-                formFieldLabel: 
+                formFieldLabel:
                   "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
-                formFieldInput: 
+                formFieldInput:
                   "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 rounded-xl py-3 px-4 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all duration-200",
-                formFieldInputShowPasswordButton: 
+                formFieldInputShowPasswordButton:
                   "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300",
-                formButtonPrimary: 
+                formButtonPrimary:
                   "bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-semibold py-3 rounded-xl shadow-lg shadow-violet-500/25 transition-all duration-200 hover:shadow-xl hover:shadow-violet-500/30 hover:-translate-y-0.5",
-                footerActionLink: 
+                footerActionLink:
                   "text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-medium transition-colors",
-                identityPreviewEditButton: 
+                identityPreviewEditButton:
                   "text-violet-600 dark:text-violet-400 hover:text-violet-700",
                 identityPreviewText: "text-gray-700 dark:text-gray-300",
                 formFieldSuccessText: "text-green-600 dark:text-green-400",
                 formFieldErrorText: "text-red-500 dark:text-red-400 text-sm",
                 formFieldWarningText: "text-amber-500 dark:text-amber-400",
-                otpCodeFieldInput: 
+                otpCodeFieldInput:
                   "bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 rounded-xl text-center text-lg font-semibold",
-                formResendCodeLink: 
+                formResendCodeLink:
                   "text-violet-600 dark:text-violet-400 hover:text-violet-700 font-medium",
                 alert: "rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800",
                 alertText: "text-sm text-red-600 dark:text-red-400",
                 logoBox: "hidden",
                 footer: "hidden",
-                alternativeMethodsBlockButton: 
+                alternativeMethodsBlockButton:
                   "border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors",
                 backLink: "text-violet-600 dark:text-violet-400 hover:text-violet-700",
               },
@@ -206,24 +213,24 @@ export default function SignInPage() {
                 termsPageUrl: "/terms",
               },
             }}
-            redirectUrl="/dashboard"
+            fallbackRedirectUrl="/dashboard"
             signUpUrl="/sign-up"
           />
         </div>
-        
+
         {/* Footer Links */}
         <div className="mt-8 text-center">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Don&apos;t have an account?{" "}
-            <Link 
-              href="/sign-up" 
+            <Link
+              href="/sign-up"
               className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 font-semibold transition-colors"
             >
               Sign up for free
             </Link>
           </p>
         </div>
-        
+
         {/* Help Section */}
         <div className="mt-8 w-full max-w-md">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-4 border border-gray-100 dark:border-gray-700">
@@ -240,8 +247,8 @@ export default function SignInPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
                   Contact our support team for assistance with your account.
                 </p>
-                <a 
-                  href="mailto:support@removation.ai" 
+                <a
+                  href="mailto:support@removation.ai"
                   className="text-xs text-violet-600 dark:text-violet-400 hover:text-violet-700 font-medium inline-flex items-center gap-1 transition-colors"
                 >
                   support@removation.ai
@@ -253,7 +260,7 @@ export default function SignInPage() {
             </div>
           </div>
         </div>
-        
+
         {/* Trust Badges */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-gray-400 dark:text-gray-500">
           <div className="flex items-center gap-2 text-xs">
@@ -275,7 +282,7 @@ export default function SignInPage() {
             <span>GDPR Ready</span>
           </div>
         </div>
-        
+
         {/* Language Toggle */}
         <div className="mt-6 flex items-center justify-center gap-2">
           <button className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -286,7 +293,7 @@ export default function SignInPage() {
             हिंदी
           </button>
         </div>
-        
+
         {/* Terms */}
         <p className="mt-4 text-xs text-center text-gray-500 dark:text-gray-400 max-w-sm">
           By continuing, you agree to our{" "}

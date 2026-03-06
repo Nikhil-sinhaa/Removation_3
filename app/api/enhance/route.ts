@@ -2,9 +2,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
-import  User  from "@/lib/db/models/User";
-import  Render  from "@/lib/db/models/Render";
-import  runReplicateModel  from "@/lib/ai/replicate";
+import { User } from "@/lib/db/models/User";
+import { Render } from "@/lib/db/models/Render";
+import { runReplicateModel } from "@/lib/ai/replicate";
+import { isReplicateConfigured } from "@/lib/env";
 import { z } from "zod";
 
 const enhanceSchema = z.object({
@@ -29,8 +30,15 @@ const enhanceSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isReplicateConfigured()) {
+      return NextResponse.json(
+        { error: "AI service not configured", message: "Image enhancement service is not available." },
+        { status: 503 }
+      );
+    }
+
     const { userId } = await auth();
-    
+
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -44,7 +52,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findOne({ clerkId: userId });
-    
+
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
@@ -54,14 +62,14 @@ export async function POST(req: NextRequest) {
 
     // Enhancement costs 1 credit for 2x, 2 credits for 4x
     const creditsRequired = validatedData.settings?.scale === '4x' ? 2 : 1;
-    
+
     if (user.credits < creditsRequired) {
       return NextResponse.json(
-        { 
+        {
           error: "Insufficient credits",
           message: `Enhancement requires ${creditsRequired} credit(s)`,
           creditsRequired,
-          creditsAvailable: user.credits 
+          creditsAvailable: user.credits
         },
         { status: 402 }
       );
@@ -70,6 +78,7 @@ export async function POST(req: NextRequest) {
     // Create render record
     const render = await Render.create({
       userId: user._id,
+      clerkId: userId,
       projectId: validatedData.projectId,
       inputImage: validatedData.imageUrl,
       mode: 'enhance',
@@ -83,7 +92,7 @@ export async function POST(req: NextRequest) {
     // Deduct credits
     await User.findByIdAndUpdate(user._id, {
       $inc: { credits: -creditsRequired },
-      $push: { 
+      $push: {
         creditHistory: {
           amount: -creditsRequired,
           type: 'enhance',
@@ -96,7 +105,7 @@ export async function POST(req: NextRequest) {
     try {
       // Use Real-ESRGAN for upscaling
       const scale = validatedData.settings?.scale === '4x' ? 4 : 2;
-      
+
       const result = await runReplicateModel({
         model: "nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa",
         input: {
@@ -108,7 +117,7 @@ export async function POST(req: NextRequest) {
 
       // If color correction is enabled, apply additional processing
       let finalOutput = result.output;
-      
+
       if (validatedData.settings?.colorEnhancement && validatedData.enhanceType !== 'upscale') {
         // Could add additional color correction step here
       }
@@ -137,7 +146,7 @@ export async function POST(req: NextRequest) {
       // Refund credits on failure
       await User.findByIdAndUpdate(user._id, {
         $inc: { credits: creditsRequired },
-        $push: { 
+        $push: {
           creditHistory: {
             amount: creditsRequired,
             type: 'refund',
@@ -158,7 +167,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("Enhance API error:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },

@@ -1,4 +1,13 @@
 // lib/ai/prompts.ts
+// Purpose: Builds Replicate prompt strings for the AI generate pipeline.
+// Connects to: app/api/generate/route.ts, lib/vastu-engine.ts
+
+/** Vastu guidelines extracted from vastu-engine.getVastuGuidelines() */
+export interface VastuPromptModifiers {
+    colors?: string[];      // e.g. ["Light blue", "Green", "Pink"]
+    elements?: string[];    // e.g. ["Earth", "Water"]
+    tips?: string[];        // e.g. ["Place bed in southwest", "Avoid mirrors facing bed"]
+}
 
 interface PromptOptions {
     mode: string;
@@ -7,22 +16,24 @@ interface PromptOptions {
     settings?: Record<string, any>;
     customPrompt?: string;
     imageAnalysis?: any;
+    /** Optional: Vastu guidelines to inject for Vastu-compliant generation */
+    vastuModifiers?: VastuPromptModifiers;
 }
 
 export function generatePrompt(options: PromptOptions): string {
-    const { mode, style, roomType, settings, customPrompt, imageAnalysis } = options;
+    const { mode, style, roomType, settings, customPrompt, imageAnalysis, vastuModifiers } = options;
 
     let prompt = '';
 
-    // Start with custom prompt if provided
+    // 1. Custom prompt first (user override)
     if (customPrompt) {
         prompt = customPrompt + ', ';
     }
 
-    // Add room type and style
+    // 2. Core: room type + style
     prompt += `${style} style ${roomType}, `;
 
-    // Add mode-specific details
+    // 3. Mode-specific intent
     switch (mode) {
         case 'redesign':
             prompt += 'complete interior redesign, ';
@@ -45,9 +56,18 @@ export function generatePrompt(options: PromptOptions): string {
         case 'sketch':
             prompt += 'photorealistic render from sketch, ';
             break;
+        case 'enhance':
+            prompt += 'upscaled and enhanced quality, ';
+            break;
+        case 'inpaint':
+            prompt += 'seamlessly inpainted region, ';
+            break;
+        case 'remove':
+            prompt += 'object removed cleanly, ';
+            break;
     }
 
-    // Add settings
+    // 4. Generation settings
     if (settings) {
         if (settings.colorScheme) {
             prompt += `${settings.colorScheme} color scheme, `;
@@ -63,11 +83,40 @@ export function generatePrompt(options: PromptOptions): string {
         }
     }
 
-    // Add quality modifiers
+    // 5. ✨ VASTU SHASTRA MODIFIERS
+    // Injected when the API has Vastu guidelines for the room type.
+    // Colors and elements are woven into the prompt to influence the AI model.
+    if (vastuModifiers) {
+        if (vastuModifiers.colors && vastuModifiers.colors.length > 0) {
+            // Only inject Vastu color if user hasn't specified a colorScheme override
+            if (!settings?.colorScheme) {
+                const vastuColors = vastuModifiers.colors.slice(0, 3).join(', ');
+                prompt += `Vastu-compliant color palette: ${vastuColors}, `;
+            }
+        }
+        if (vastuModifiers.elements && vastuModifiers.elements.length > 0) {
+            const vastuElements = vastuModifiers.elements.join(' and ');
+            prompt += `balanced ${vastuElements} elements, `;
+        }
+        // Inject up to 2 Vastu spatial tips as subtle guidance
+        if (vastuModifiers.tips && vastuModifiers.tips.length > 0) {
+            const topTips = vastuModifiers.tips.slice(0, 2).join('; ');
+            prompt += `${topTips}, `;
+        }
+    }
+
+    // 6. Image analysis context (from Groq vision pre-scan)
+    if (imageAnalysis?.description) {
+        prompt += `existing features: ${imageAnalysis.description}, `;
+    }
+
+    // 7. Final quality tail
     prompt += 'professional interior design, high quality, photorealistic, detailed, 8k';
 
     return prompt;
 }
+
+// ─── Other prompt generators (unchanged) ──────────────────────────────────────
 
 interface FurnishingOptions {
     roomType: string;

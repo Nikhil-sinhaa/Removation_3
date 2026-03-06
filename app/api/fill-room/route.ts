@@ -2,9 +2,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
-import User from "@/lib/db/models/User";
-import Render from "@/lib/db/models/Render";
-import runReplicateModel from "@/lib/ai/replicate";
+import { User } from "@/lib/db/models/User";
+import { Render } from "@/lib/db/models/Render";
+import { runReplicateModel } from "@/lib/ai/replicate";
+import { isReplicateConfigured } from "@/lib/env";
 import { generateFurnishingPrompt } from "@/lib/ai/prompts";
 import { z } from "zod";
 
@@ -27,6 +28,13 @@ const fillRoomSchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
+        if (!isReplicateConfigured()) {
+            return NextResponse.json(
+                { error: "AI service not configured", message: "Virtual staging service is not available." },
+                { status: 503 }
+            );
+        }
+
         const { userId } = await auth();
 
         if (!userId) {
@@ -74,6 +82,7 @@ export async function POST(req: NextRequest) {
         // Create render record
         const render = await Render.create({
             userId: user._id,
+            clerkId: userId,
             projectId: validatedData.projectId,
             inputImage: validatedData.imageUrl,
             mode: 'fill_room',

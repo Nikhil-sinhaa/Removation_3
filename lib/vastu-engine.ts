@@ -12,7 +12,9 @@ interface VastuAnalysisParams {
     imageUrl?: string;
 }
 
-interface VastuRecommendation {
+const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+export interface VastuRecommendation {
     category: string;
     severity: 'critical' | 'moderate' | 'minor';
     issue: string;
@@ -30,21 +32,22 @@ interface VastuScore {
     };
 }
 
-interface VastuViolation {
+export interface VastuViolation {
     type: string;
     severity: 'critical' | 'moderate' | 'minor';
     description: string;
     impact: string;
     remedy: string;
+    id?: string;
 }
 
-interface VastuCompliance {
+export interface VastuCompliance {
     aspect: string;
     status: 'excellent' | 'good' | 'acceptable';
     description: string;
 }
 
-interface ElementBalance {
+export interface ElementBalance {
     fire: number;
     water: number;
     earth: number;
@@ -52,7 +55,7 @@ interface ElementBalance {
     space: number;
 }
 
-interface DirectionalAnalysis {
+export interface DirectionalAnalysis {
     north: { score: number; notes: string };
     south: { score: number; notes: string };
     east: { score: number; notes: string };
@@ -63,15 +66,31 @@ interface DirectionalAnalysis {
     southwest: { score: number; notes: string };
 }
 
-interface VastuAnalysisResult {
-    score: number;
-    rating: 'excellent' | 'good' | 'fair' | 'poor';
+export interface VastuAnalysisResult {
+    overallScore: {
+        value: number;
+        grade: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+        label: string;
+        labelHi: string;
+        description: string;
+        descriptionHi: string;
+    };
     violations: VastuViolation[];
     compliances: VastuCompliance[];
     elementBalance: ElementBalance;
     directionalAnalysis: DirectionalAnalysis;
     recommendations: VastuRecommendation[];
     detailedReport: string;
+    categories: any[];
+    roomDirection: string;
+    confidence: number;
+    processingTime: number;
+    suggestions: any[];
+    ruleEvaluations: any[];
+    positiveAspects: any[];
+    autoFixAvailable: boolean;
+    detectedElements: any[];
+    compass?: any;
 }
 
 export function analyzeVastu(params: any): VastuAnalysisResult {
@@ -109,7 +128,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
             description: `${roomType} is in ${direction} direction`,
             impact: 'May affect energy flow and harmony',
             remedy: `Ideal directions for ${roomType} are: ${ideal.join(', ')}. Use appropriate colors and elements to balance the energy.`,
-            id: `viol-${Date.now()}-dir`
+            id: generateId('viol')
         } as any);
         recommendations.push({
             category: 'Direction',
@@ -117,7 +136,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
             issue: `${roomType} is in ${direction} direction`,
             recommendation: `Ideal directions for ${roomType} are: ${ideal.join(', ')}`,
             priority: 1,
-            id: `rec-${Date.now()}-dir`
+            id: generateId('rec')
         } as any);
     }
 
@@ -152,7 +171,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
     );
 
     // Determine rating
-    let rating: 'excellent' | 'good' | 'fair' | 'poor';
+    let rating: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
     if (overall >= 85) rating = 'excellent';
     else if (overall >= 70) rating = 'good';
     else if (overall >= 50) rating = 'fair';
@@ -208,14 +227,29 @@ ${recommendations.length > 0 ? recommendations.map(r => `- ${r.recommendation}`)
     `.trim();
 
     return {
-        score: overall,
-        rating,
+        overallScore: {
+            value: overall,
+            grade: rating,
+            label: rating.charAt(0).toUpperCase() + rating.slice(1),
+            labelHi: rating === 'excellent' ? 'उत्कृष्ट' : rating === 'good' ? 'अच्छा' : 'सामान्य',
+            description: `Based on Vastu principles for ${roomType}`,
+            descriptionHi: `${roomType} के लिए वास्तु सिद्धांतों पर आधारित`,
+        },
         violations,
         compliances,
         elementBalance,
         directionalAnalysis,
         recommendations: recommendations.sort((a, b) => a.priority - b.priority),
         detailedReport,
+        categories: [],
+        roomDirection: direction || 'Unknown',
+        confidence: 85,
+        processingTime: 0.5,
+        suggestions: [],
+        ruleEvaluations: [],
+        positiveAspects: [],
+        autoFixAvailable: false,
+        detectedElements: []
     };
 }
 

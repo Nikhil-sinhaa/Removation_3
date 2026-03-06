@@ -411,322 +411,322 @@ export function VastuPanel({
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
-          />
-
-          {/* Panel */}
-          <motion.div
-            variants={panelVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className={cn(
-              "fixed right-0 top-0 h-full w-full sm:w-[420px] lg:w-[480px]",
-              "bg-background border-l border-border shadow-2xl z-50",
-              "flex flex-col"
-            )}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-orange-500/10 to-amber-500/10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
-                  <Compass className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h2 className="font-semibold text-lg">{t.title}</h2>
-                  <p className="text-xs text-muted-foreground">{t.subtitle}</p>
-                </div>
+        <motion.div
+          key="backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+        />
+      )}
+      {isOpen && (
+        /* Panel */
+        <motion.div
+          key="panel"
+          variants={panelVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
+          className={cn(
+            "fixed right-0 top-0 h-full w-full sm:w-[420px] lg:w-[480px]",
+            "bg-background border-l border-border shadow-2xl z-50",
+            "flex flex-col"
+          )}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-orange-500/10 to-amber-500/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center">
+                <Compass className="w-5 h-5 text-white" />
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 mr-2">
-                  <Label htmlFor="hindi-toggle" className="text-xs text-muted-foreground">
-                    हिं
-                  </Label>
-                  <Switch
-                    id="hindi-toggle"
-                    checked={showHindi}
-                    onCheckedChange={setShowHindi}
-                  />
-                </div>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="w-5 h-5" />
-                </Button>
+              <div>
+                <h2 className="font-semibold text-lg">{t.title}</h2>
+                <p className="text-xs text-muted-foreground">{t.subtitle}</p>
               </div>
             </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mr-2">
+                <Label htmlFor="hindi-toggle" className="text-xs text-muted-foreground">
+                  हिं
+                </Label>
+                <Switch
+                  id="hindi-toggle"
+                  checked={showHindi}
+                  onCheckedChange={setShowHindi}
+                />
+              </div>
+              <Button variant="ghost" size="icon" onClick={onClose}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
 
-            {/* Content */}
-            <ScrollArea className="flex-1">
-              {!imageUrl ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center p-6">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Compass className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <p className="text-muted-foreground">{t.noImage}</p>
+          {/* Content */}
+          <ScrollArea className="flex-1">
+            {!imageUrl ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Compass className="w-8 h-8 text-muted-foreground" />
                 </div>
-              ) : isAnalyzing ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center p-6">
-                  <div className="relative">
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/20 animate-pulse" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
-                    </div>
-                  </div>
-                  <p className="mt-4 text-muted-foreground">{t.analyzing}</p>
-                  <div className="flex gap-1 mt-2">
-                    {[0, 1, 2].map((i) => (
-                      <motion.div
-                        key={i}
-                        className="w-2 h-2 rounded-full bg-orange-500"
-                        animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          delay: i * 0.2,
-                        }}
-                      />
-                    ))}
+                <p className="text-muted-foreground">{t.noImage}</p>
+              </div>
+            ) : isAnalyzing ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/20 animate-pulse" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
                   </div>
                 </div>
-              ) : error ? (
-                <div className="flex flex-col items-center justify-center h-64 text-center p-6">
-                  <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
-                    <AlertTriangle className="w-8 h-8 text-red-500" />
-                  </div>
-                  <p className="text-red-500 font-medium">Analysis Failed</p>
-                  <p className="text-sm text-muted-foreground mt-1">{error}</p>
-                  <Button onClick={handleAnalyze} className="mt-4" variant="outline">
-                    Try Again
-                  </Button>
+                <p className="mt-4 text-muted-foreground">{t.analyzing}</p>
+                <div className="flex gap-1 mt-2">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="w-2 h-2 rounded-full bg-orange-500"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
+                    />
+                  ))}
                 </div>
-              ) : analysis ? (
-                <div className="p-4 space-y-6">
-                  {/* Score Card */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={cn(
-                      "p-4 rounded-2xl border-2",
-                      getScoreBg(analysis.overallScore.value)
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-muted-foreground">{t.score}</p>
-                        <div className="flex items-baseline gap-2 mt-1">
-                          <span className={cn("text-4xl font-bold", getScoreColor(analysis.overallScore.value))}>
-                            {analysis.overallScore.value}
-                          </span>
-                          <span className="text-muted-foreground">/100</span>
-                        </div>
-                      </div>
-                      <Badge className={cn(
-                        analysis.overallScore.grade === "excellent" && "bg-green-500",
-                        analysis.overallScore.grade === "good" && "bg-green-400",
-                        analysis.overallScore.grade === "average" && "bg-yellow-500",
-                        analysis.overallScore.grade === "poor" && "bg-orange-500",
-                        analysis.overallScore.grade === "critical" && "bg-red-500",
-                      )}>
-                        {language === "hi" ? analysis.overallScore.labelHi : analysis.overallScore.label}
-                      </Badge>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="grid grid-cols-3 gap-2 mt-4">
-                      <div className="text-center p-2 rounded-lg bg-background/50">
-                        <div className="flex items-center justify-center gap-1 text-red-500">
-                          <AlertTriangle className="w-3 h-3" />
-                          <span className="text-sm font-medium">
-                            {analysis.ruleEvaluations.filter((r: { status: string }) => r.status === "failed").length}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{t.violations}</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-background/50">
-                        <div className="flex items-center justify-center gap-1 text-yellow-500">
-                          <Info className="w-3 h-3" />
-                          <span className="text-sm font-medium">{analysis.suggestions.length}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{t.suggestions}</p>
-                      </div>
-                      <div className="text-center p-2 rounded-lg bg-background/50">
-                        <div className="flex items-center justify-center gap-1 text-green-500">
-                          <CheckCircle className="w-3 h-3" />
-                          <span className="text-sm font-medium">{analysis.positiveAspects?.length || 0}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1">{t.positive}</p>
+              </div>
+            ) : error ? (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+                <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
+                  <AlertTriangle className="w-8 h-8 text-red-500" />
+                </div>
+                <p className="text-red-500 font-medium">Analysis Failed</p>
+                <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                <Button onClick={handleAnalyze} className="mt-4" variant="outline">
+                  Try Again
+                </Button>
+              </div>
+            ) : analysis ? (
+              <div className="p-4 space-y-6">
+                {/* Score Card */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={cn(
+                    "p-4 rounded-2xl border-2",
+                    getScoreBg(analysis.overallScore.value)
+                  )}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">{t.score}</p>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className={cn("text-4xl font-bold", getScoreColor(analysis.overallScore.value))}>
+                          {analysis.overallScore.value}
+                        </span>
+                        <span className="text-muted-foreground">/100</span>
                       </div>
                     </div>
+                    <Badge className={cn(
+                      analysis.overallScore.grade === "excellent" && "bg-green-500",
+                      analysis.overallScore.grade === "good" && "bg-green-400",
+                      analysis.overallScore.grade === "average" && "bg-yellow-500",
+                      analysis.overallScore.grade === "poor" && "bg-orange-500",
+                      analysis.overallScore.grade === "critical" && "bg-red-500",
+                    )}>
+                      {language === "hi" ? analysis.overallScore.labelHi : analysis.overallScore.label}
+                    </Badge>
+                  </div>
 
-                    <p className="text-sm text-muted-foreground mt-3">
-                      {language === "hi" ? analysis.overallScore.descriptionHi : analysis.overallScore.description}
-                    </p>
-                  </motion.div>
+                  {/* Quick Stats */}
+                  <div className="grid grid-cols-3 gap-2 mt-4">
+                    <div className="text-center p-2 rounded-lg bg-background/50">
+                      <div className="flex items-center justify-center gap-1 text-red-500">
+                        <AlertTriangle className="w-3 h-3" />
+                        <span className="text-sm font-medium">
+                          {analysis.ruleEvaluations.filter((r: { status: string }) => r.status === "failed").length}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{t.violations}</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-background/50">
+                      <div className="flex items-center justify-center gap-1 text-yellow-500">
+                        <Info className="w-3 h-3" />
+                        <span className="text-sm font-medium">{analysis.suggestions.length}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{t.suggestions}</p>
+                    </div>
+                    <div className="text-center p-2 rounded-lg bg-background/50">
+                      <div className="flex items-center justify-center gap-1 text-green-500">
+                        <CheckCircle className="w-3 h-3" />
+                        <span className="text-sm font-medium">{analysis.positiveAspects?.length || 0}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">{t.positive}</p>
+                    </div>
+                  </div>
 
-                  {/* Tabs */}
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="w-full grid grid-cols-4">
-                      <TabsTrigger value="overview" className="text-xs">
-                        {t.overview}
-                      </TabsTrigger>
-                      <TabsTrigger value="suggestions" className="text-xs">
-                        {t.suggestions}
-                      </TabsTrigger>
-                      <TabsTrigger value="grid" className="text-xs">
-                        {t.grid}
-                      </TabsTrigger>
-                      <TabsTrigger value="compass" className="text-xs">
-                        {t.compass}
-                      </TabsTrigger>
-                    </TabsList>
+                  <p className="text-sm text-muted-foreground mt-3">
+                    {language === "hi" ? analysis.overallScore.descriptionHi : analysis.overallScore.description}
+                  </p>
+                </motion.div>
 
-                    <TabsContent value="overview" className="mt-4 space-y-4">
-                      {/* Direction */}
-                      <div className="p-4 rounded-xl bg-muted/50">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-muted-foreground">{t.direction}</p>
-                            <p className="font-semibold capitalize mt-1">
-                              {analysis.roomDirection || "Not detected"}
-                            </p>
-                          </div>
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                            <Compass className="w-6 h-6 text-blue-500" />
-                          </div>
+                {/* Tabs */}
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="w-full grid grid-cols-4">
+                    <TabsTrigger value="overview" className="text-xs">
+                      {t.overview}
+                    </TabsTrigger>
+                    <TabsTrigger value="suggestions" className="text-xs">
+                      {t.suggestions}
+                    </TabsTrigger>
+                    <TabsTrigger value="grid" className="text-xs">
+                      {t.grid}
+                    </TabsTrigger>
+                    <TabsTrigger value="compass" className="text-xs">
+                      {t.compass}
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="overview" className="mt-4 space-y-4">
+                    {/* Direction */}
+                    <div className="p-4 rounded-xl bg-muted/50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-muted-foreground">{t.direction}</p>
+                          <p className="font-semibold capitalize mt-1">
+                            {analysis.roomDirection || "Not detected"}
+                          </p>
+                        </div>
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
+                          <Compass className="w-6 h-6 text-blue-500" />
                         </div>
                       </div>
+                    </div>
 
-                      {/* Categories */}
-                      <div className="p-4 rounded-xl bg-muted/50">
-                        <p className="text-sm text-muted-foreground mb-3">{t.categories}</p>
-                        <div className="space-y-3">
-                          {analysis.categories.map((category, idx) => (
-                            <div key={category.category} className="space-y-1">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", categoryColors[category.category])}>
-                                    {categoryIcons[category.category]}
-                                  </div>
-                                  <div>
-                                    <div className="font-medium text-sm capitalize">{category.category}</div>
-                                    <Badge
-                                      variant="outline"
-                                      className={cn(
-                                        "text-xs",
-                                        category.status === "compliant" && "border-green-500/50 text-green-600",
-                                        category.status === "partial" && "border-yellow-500/50 text-yellow-600",
-                                        category.status === "non-compliant" && "border-red-500/50 text-red-600",
-                                      )}
-                                    >
-                                      {category.status}
-                                    </Badge>
-                                  </div>
+                    {/* Categories */}
+                    <div className="p-4 rounded-xl bg-muted/50">
+                      <p className="text-sm text-muted-foreground mb-3">{t.categories}</p>
+                      <div className="space-y-3">
+                        {analysis.categories.map((category, idx) => (
+                          <div key={category.category} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", categoryColors[category.category])}>
+                                  {categoryIcons[category.category]}
                                 </div>
-                                <div className="text-right">
-                                  <div className={cn("text-xl font-bold", getScoreColor(category.score))}>
-                                    {category.score}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">/100</div>
+                                <div>
+                                  <div className="font-medium text-sm capitalize">{category.category}</div>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "text-xs",
+                                      category.status === "compliant" && "border-green-500/50 text-green-600",
+                                      category.status === "partial" && "border-yellow-500/50 text-yellow-600",
+                                      category.status === "non-compliant" && "border-red-500/50 text-red-600",
+                                    )}
+                                  >
+                                    {category.status}
+                                  </Badge>
                                 </div>
                               </div>
-                              <Progress value={category.percentage} className="h-2" />
+                              <div className="text-right">
+                                <div className={cn("text-xl font-bold", getScoreColor(category.score))}>
+                                  {category.score}
+                                </div>
+                                <div className="text-xs text-muted-foreground">/100</div>
+                              </div>
                             </div>
-                          ))}
-                        </div>
+                            <Progress value={category.percentage} className="h-2" />
+                          </div>
+                        ))}
                       </div>
+                    </div>
 
-                      {/* Confidence */}
-                      <div className="p-4 rounded-xl bg-muted/50">
-                        <div className="flex items-center justify-between mb-3">
-                          <p className="text-sm text-muted-foreground">{t.confidence}</p>
-                          <Badge variant="outline">
-                            {analysis.confidence}%
-                          </Badge>
-                        </div>
-                        <Progress value={analysis.confidence} className="h-2" />
-                        <p className="text-xs text-muted-foreground mt-2">
-                          Analysis processed in {analysis.processingTime}s
-                        </p>
+                    {/* Confidence */}
+                    <div className="p-4 rounded-xl bg-muted/50">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm text-muted-foreground">{t.confidence}</p>
+                        <Badge variant="outline">
+                          {analysis.confidence}%
+                        </Badge>
                       </div>
-                    </TabsContent>
+                      <Progress value={analysis.confidence} className="h-2" />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Analysis processed in {analysis.processingTime}s
+                      </p>
+                    </div>
+                  </TabsContent>
 
-                    <TabsContent value="suggestions" className="mt-4">
-                      <VastuSuggestions
-                        analysis={analysis}
-                        language={language}
-                        onApply={onApplySuggestion}
-                      />
-                    </TabsContent>
+                  <TabsContent value="suggestions" className="mt-4">
+                    <VastuSuggestions
+                      analysis={analysis}
+                      language={language}
+                      onApply={onApplySuggestion}
+                    />
+                  </TabsContent>
 
-                    <TabsContent value="grid" className="mt-4">
-                      {/* VastuGrid component would go here */}
-                      <div className="flex items-center justify-center h-64 text-center">
-                        <div className="text-muted-foreground">
-                          <Compass className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                          <p>Vastu Grid Visualization</p>
-                        </div>
+                  <TabsContent value="grid" className="mt-4">
+                    {/* VastuGrid component would go here */}
+                    <div className="flex items-center justify-center h-64 text-center">
+                      <div className="text-muted-foreground">
+                        <Compass className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                        <p>Vastu Grid Visualization</p>
                       </div>
-                    </TabsContent>
+                    </div>
+                  </TabsContent>
 
-                    <TabsContent value="compass" className="mt-4">
-                      {/* VastuCompass component would go here */}
-                      <div className="flex items-center justify-center h-64 text-center">
-                        <div className="text-muted-foreground">
-                          <Compass className="w-12 h-12 mx-auto mb-2 animate-spin" />
-                          <p>Compass Directions</p>
-                        </div>
+                  <TabsContent value="compass" className="mt-4">
+                    {/* VastuCompass component would go here */}
+                    <div className="flex items-center justify-center h-64 text-center">
+                      <div className="text-muted-foreground">
+                        <Compass className="w-12 h-12 mx-auto mb-2 animate-spin" />
+                        <p>Compass Directions</p>
                       </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-              ) : null}
-            </ScrollArea>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            ) : null}
+          </ScrollArea>
 
-            {/* Footer Actions */}
-            {analysis && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="p-4 border-t border-border bg-muted/30 space-y-3"
+          {/* Footer Actions */}
+          {analysis && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 border-t border-border bg-muted/30 space-y-3"
+            >
+              <Button
+                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                onClick={handleApplyAutoFix}
+                disabled={!analysis.autoFixAvailable}
               >
+                <Sparkles className="w-4 h-4 mr-2" />
+                {t.autoFix}
+                <Badge variant="secondary" className="ml-2">
+                  {analysis.suggestions.filter(s => s.canAutoFix).length}
+                </Badge>
+              </Button>
+              <div className="flex gap-2">
                 <Button
-                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
-                  onClick={handleApplyAutoFix}
-                  disabled={!analysis.autoFixAvailable}
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleExport("pdf")}
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {t.autoFix}
-                  <Badge variant="secondary" className="ml-2">
-                    {analysis.suggestions.filter(s => s.canAutoFix).length}
-                  </Badge>
+                  <Download className="w-4 h-4 mr-2" />
+                  {t.exportReport}
                 </Button>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => handleExport("pdf")}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    {t.exportReport}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleExport("image")}
-                  >
-                    <Share2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
-        </>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => handleExport("image")}
+                >
+                  <Share2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
       )}
     </AnimatePresence>
   );

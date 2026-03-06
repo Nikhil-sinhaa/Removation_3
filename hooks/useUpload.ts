@@ -39,26 +39,26 @@ interface UseUploadReturn {
   progress: UploadProgress;
   error: string | null;
   isDragging: boolean;
-  
+
   // Input ref for file input
   inputRef: React.RefObject<HTMLInputElement>;
-  
+
   // Actions
   upload: (files?: File[]) => Promise<UploadedFile[]>;
   addFiles: (files: File[]) => void;
   removeFile: (index: number) => void;
   clearFiles: () => void;
   openFileDialog: () => void;
-  
+
   // Drag & drop handlers
   handleDragEnter: (e: React.DragEvent) => void;
   handleDragLeave: (e: React.DragEvent) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent) => void;
-  
+
   // File input handler
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  
+
   // Utility
   validateFile: (file: File) => { valid: boolean; error?: string };
   getFilePreview: (file: File) => string | null;
@@ -108,14 +108,14 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         type: file.type || 'image/jpeg',
         uploadedAt: new Date(),
       }));
-      
+
       setUploadedFiles(prev => [...prev, ...uploaded]);
       setFiles([]);
       setIsUploading(false);
       setProgress({ loaded: 0, total: 0, percentage: 100 });
-      
+
       onUploadComplete?.(uploaded);
-      
+
       toast({
         title: 'Upload Complete',
         description: `${uploaded.length} file(s) uploaded successfully.`,
@@ -125,9 +125,9 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
       const errorMessage = err.message || 'Upload failed';
       setError(errorMessage);
       setIsUploading(false);
-      
+
       onUploadError?.(err);
-      
+
       toast({
         title: 'Upload Failed',
         description: errorMessage,
@@ -154,7 +154,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         error: `File type "${file.type}" is not supported. Accepted types: ${acceptedTypes.join(', ')}`,
       };
     }
-    
+
     // Check file size
     if (file.size > maxSize) {
       return {
@@ -162,17 +162,17 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         error: `File size (${formatFileSize(file.size)}) exceeds maximum allowed (${formatFileSize(maxSize)})`,
       };
     }
-    
+
     return { valid: true };
   }, [acceptedTypes, maxSize]);
 
   // Add files
   const addFiles = useCallback((newFiles: File[]) => {
     setError(null);
-    
+
     const validFiles: File[] = [];
     const errors: string[] = [];
-    
+
     for (const file of newFiles) {
       const validation = validateFile(file);
       if (validation.valid) {
@@ -181,7 +181,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         errors.push(`${file.name}: ${validation.error}`);
       }
     }
-    
+
     if (errors.length > 0) {
       toast({
         title: 'Some files were rejected',
@@ -189,7 +189,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
         variant: 'destructive',
       });
     }
-    
+
     // Check max files limit
     const totalFiles = files.length + validFiles.length;
     if (totalFiles > maxFiles) {
@@ -202,7 +202,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
     } else {
       setFiles(prev => [...prev, ...validFiles]);
     }
-    
+
     // Auto-upload if enabled
     if (autoUpload && validFiles.length > 0) {
       setTimeout(() => upload(validFiles), 100);
@@ -223,7 +223,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   // Upload files
   const upload = useCallback(async (filesToUpload?: File[]): Promise<UploadedFile[]> => {
     const uploadFiles = filesToUpload || files;
-    
+
     if (uploadFiles.length === 0) {
       toast({
         title: 'No files to upload',
@@ -232,7 +232,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
       });
       return [];
     }
-    
+
     setIsUploading(true);
     setError(null);
     setProgress({
@@ -240,14 +240,14 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
       total: uploadFiles.reduce((sum, f) => sum + f.size, 0),
       percentage: 0,
     });
-    
+
     try {
       const result = await startUpload(uploadFiles);
-      
+
       if (!result) {
         throw new Error('Upload failed - no response');
       }
-      
+
       return result.map(file => ({
         id: file.key,
         name: file.name,
@@ -283,7 +283,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current++;
-    
+
     if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
       setIsDragging(true);
     }
@@ -293,7 +293,7 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
     e.preventDefault();
     e.stopPropagation();
     dragCounterRef.current--;
-    
+
     if (dragCounterRef.current === 0) {
       setIsDragging(false);
     }
@@ -307,10 +307,10 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsDragging(false);
     dragCounterRef.current = 0;
-    
+
     const droppedFiles = Array.from(e.dataTransfer.files);
     if (droppedFiles.length > 0) {
       addFiles(droppedFiles);
@@ -328,11 +328,11 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
   // Format file size
   const formatFileSize = useCallback((bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }, []);
 
@@ -355,26 +355,26 @@ export function useUpload(options: UseUploadOptions = {}): UseUploadReturn {
     progress,
     error,
     isDragging,
-    
+
     // Ref
     inputRef,
-    
+
     // Actions
     upload,
     addFiles,
     removeFile,
     clearFiles,
     openFileDialog,
-    
+
     // Drag & drop handlers
     handleDragEnter,
     handleDragLeave,
     handleDragOver,
     handleDrop,
-    
+
     // File input handler
     handleFileChange,
-    
+
     // Utility
     validateFile,
     getFilePreview,

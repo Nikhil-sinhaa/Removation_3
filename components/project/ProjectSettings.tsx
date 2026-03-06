@@ -80,7 +80,7 @@ export function ProjectSettings({
   const [roomType, setRoomType] = useState(project.roomType || "");
   const [tags, setTags] = useState<string[]>(project.tags || []);
   const [newTag, setNewTag] = useState("");
-  
+
   // Fix: Use the correct notification structure from Project type
   const [notifications, setNotifications] = useState({
     email: project.settings?.notifications?.email ?? true,
@@ -106,7 +106,12 @@ export function ProjectSettings({
         roomType,
         tags,
         settings: {
-          ...project.settings,
+          enableVastu: project.settings?.enableVastu ?? false,
+          enableCostTracking: project.settings?.enableCostTracking ?? false,
+          autoSave: project.settings?.autoSave ?? true,
+          defaultCurrency: project.settings?.defaultCurrency ?? 'INR',
+          quality: project.settings?.quality ?? 'standard',
+          language: project.settings?.language ?? 'en',
           notifications,
         },
       });
@@ -160,11 +165,60 @@ export function ProjectSettings({
   };
 
   const handleExport = async () => {
+    if (!project.id) {
+      toast({ title: "Save your project first before exporting.", variant: "destructive" });
+      return;
+    }
+
     toast({
-      title: "Export started",
-      description: "Your project data is being prepared for download.",
+      title: "Preparing export…",
+      description: "Your project data is being assembled.",
     });
-    // TODO: Implement actual export
+
+    try {
+      const response = await fetch(`/api/projects/${project.id}`);
+      if (!response.ok) throw new Error("Failed to fetch project data");
+
+      const data = await response.json();
+      const exportData = {
+        exportedAt: new Date().toISOString(),
+        project: {
+          id: data._id,
+          name: data.name,
+          description: data.description,
+          roomType: data.roomType,
+          style: data.style,
+          tags: data.tags,
+          visibility: data.visibility,
+          createdAt: data.createdAt,
+          updatedAt: data.updatedAt,
+        },
+        renders: (data.renders || []).map((r: any) => ({
+          id: r._id,
+          status: r.status,
+          outputImage: r.outputImage,
+          createdAt: r.createdAt,
+        })),
+      };
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${project.name.replace(/\s+/g, "-")}-export.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({ title: "Export downloaded", description: `${project.name} exported successfully.` });
+    } catch (error) {
+      toast({
+        title: "Export failed",
+        description: error instanceof Error ? error.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCopyShareLink = async () => {
@@ -351,7 +405,7 @@ export function ProjectSettings({
             <div className="grid grid-cols-3 gap-3">
               {[
                 { value: "private" as const, icon: Lock, label: "Private", desc: "Only you" },
-                { value: "team" as const, icon: Users, label: "Team", desc: "Your team" },
+                { value: "unlisted" as const, icon: Users, label: "Unlisted", desc: "Link only" },
                 { value: "public" as const, icon: Globe, label: "Public", desc: "Anyone" },
               ].map((option) => (
                 <button

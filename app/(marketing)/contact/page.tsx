@@ -280,11 +280,26 @@ const ContactForm = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-    setIsSubmitting(false);
-    setIsSubmitted(true);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to send message");
+      }
+
+      setIsSubmitting(false);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("[ContactForm]", error);
+      setIsSubmitting(false);
+      // Keep form visible so user can retry
+      alert(error instanceof Error ? error.message : "Failed to send message. Please try again.");
+    }
   };
 
   const handleChange = (field: string, value: string) => {
@@ -600,7 +615,7 @@ export default function ContactPage() {
               </span>
             </h1>
             <p className="text-lg text-neutral-400 mb-8">
-              Have questions about Removation.ai? Want to partner with us? 
+              Have questions about Removation.ai? Want to partner with us?
               Our team is here to help you transform your interior design workflow.
             </p>
 
@@ -885,7 +900,7 @@ export default function ContactPage() {
                   Ready to Transform Your Space?
                 </h2>
                 <p className="text-neutral-400 mb-8 max-w-xl mx-auto">
-                  Join thousands of designers, architects, and homeowners who are already using 
+                  Join thousands of designers, architects, and homeowners who are already using
                   Removation.ai to bring their visions to life.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

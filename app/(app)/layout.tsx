@@ -28,6 +28,7 @@ import {
   Zap,
   IndianRupee,
   Compass,
+  Palette,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -41,6 +42,8 @@ const sidebarNavigation = [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Projects', href: '/projects', icon: FolderOpen },
       { name: 'Editor', href: '/editor', icon: Wand2 },
+      { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
+      { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
     ],
   },
   {
@@ -60,9 +63,9 @@ const sidebarNavigation = [
 ];
 
 const quickActions = [
-  { name: 'New Design', icon: Sparkles, color: 'violet' },
+  { name: 'Dream Room', icon: Sparkles, color: 'violet' },
   { name: 'Vastu Check', icon: Compass, color: 'orange' },
-  { name: 'Cost Estimate', icon: IndianRupee, color: 'green' },
+  { name: 'Visualize Color', icon: Palette, color: 'green' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
