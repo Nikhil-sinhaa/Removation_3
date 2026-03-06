@@ -1,21 +1,12 @@
-// lib/ai/fal-adapter.ts
-// Uses Pollinations.ai (free, no API key) with Unsplash fallback
-// Drop-in replacement for the Replicate interface used by app/api/generate/route.ts
+// lib/ai/fal-adapter.ts — fal.ai branch
+import { fal } from "@fal-ai/client";
 
-const FALLBACK_IMAGES: Record<string, string> = {
-    redesign:  "https://images.unsplash.com/photo-1600210492486-724fe5c67eb0?auto=format&fit=crop&w=1024&q=80",
-    beautify:  "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1024&q=80",
-    creative:  "https://images.unsplash.com/photo-1616046229478-9901c5536a45?auto=format&fit=crop&w=1024&q=80",
-    furnish:   "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1024&q=80",
-    empty:     "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=1024&q=80",
-    outdoor:   "https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1024&q=80",
-    sketch:    "https://images.unsplash.com/photo-1631048035498-9d04a28b59a3?auto=format&fit=crop&w=1024&q=80",
-    enhance:   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1024&q=80",
-    default:   "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1024&q=80",
-};
+if (process.env.FAL_KEY) {
+    fal.config({ credentials: process.env.FAL_KEY });
+}
 
 export function isFalConfigured(): boolean {
-    return true; // Pollinations needs no API key
+    return !!process.env.FAL_KEY;
 }
 
 export async function runFalPredictionSync({
@@ -27,26 +18,20 @@ export async function runFalPredictionSync({
     imageUrl: string;
     prompt: string;
 }): Promise<{ outputUrl: string; predictionId: string }> {
+    if (!isFalConfigured()) throw new Error("FAL_KEY is not configured");
 
-    let generatedUrl: string | null = null;
-
-    try {
-        const seed = Math.floor(Math.random() * 9999999);
-        const encodedPrompt = encodeURIComponent(prompt);
-        const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=768&nologo=true&model=flux&seed=${seed}`;
-
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 20000);
-        const response = await fetch(url, { signal: controller.signal });
-        clearTimeout(timeout);
-
-        if (response.ok) generatedUrl = url;
-    } catch {
-        // Fall through to fallback
+    let result: any;
+    if (mode === "empty" || mode === "remove") {
+        result = await fal.subscribe("fal-ai/object-removal", { input: { image_url: imageUrl, prompt } });
+    } else {
+        result = await fal.subscribe("fal-ai/flux-2-lora-gallery/apartment-staging", {
+            input: { image_urls: [imageUrl], prompt: `A high-end ${prompt} with realistic lighting and professional decor.`, lora_scale: 1.2, guidance_scale: 3.5, num_inference_steps: 30, image_size: "square_hd" },
+        });
     }
 
-    const outputUrl = generatedUrl ?? FALLBACK_IMAGES[mode] ?? FALLBACK_IMAGES.default;
-    const predictionId = `gen-${Date.now()}`;
+    const data = result.data || result;
+    const outputUrl = data?.images?.[0]?.url;
+    if (!outputUrl) throw new Error("fal.ai did not return an image URL");
 
-    return { outputUrl, predictionId };
+    return { outputUrl, predictionId: `fal-${Date.now()}` };
 }
