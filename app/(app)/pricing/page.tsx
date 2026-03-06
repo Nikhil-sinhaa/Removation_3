@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser, useAuth
 import Link from 'next/link';
 import Image from 'next/image';
 import {
@@ -388,7 +389,8 @@ const TESTIMONIALS = [
 
 export default function PricingPage() {
   const router = useRouter();
-  const { user, isLoaded, isSignedIn } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const { toast } = useToast();
 
   // State

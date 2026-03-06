@@ -1,11 +1,10 @@
 // app/api/sketch-to-render/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { Render } from "@/lib/db/models/Render";
 import { runReplicateModel } from "@/lib/ai/replicate";
-import { isReplicateConfigured } from "@/lib/env";
 import { generateSketchPrompt } from "@/lib/ai/prompts";
 import { z } from "zod";
 
@@ -27,15 +26,9 @@ const sketchToRenderSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    if (!isReplicateConfigured()) {
-      return NextResponse.json(
-        { error: "AI service not configured", message: "Sketch-to-render service is not available." },
-        { status: 503 }
-      );
-    }
-
-    const { userId } = await auth();
-
+    const authUser = await getCurrentUser();
+  const userId = authUser?.id;
+    
     if (!userId) {
       return NextResponse.json(
         { error: "Unauthorized" },
@@ -49,7 +42,7 @@ export async function POST(req: NextRequest) {
     await connectToDatabase();
 
     const user = await User.findOne({ clerkId: userId });
-
+    
     if (!user) {
       return NextResponse.json(
         { error: "User not found" },
@@ -60,11 +53,11 @@ export async function POST(req: NextRequest) {
     // Sketch to render costs 3 credits (complex operation)
     if (user.credits < 3) {
       return NextResponse.json(
-        {
+        { 
           error: "Insufficient credits",
           message: "Sketch to render requires 3 credits",
           creditsRequired: 3,
-          creditsAvailable: user.credits
+          creditsAvailable: user.credits 
         },
         { status: 402 }
       );
@@ -81,7 +74,6 @@ export async function POST(req: NextRequest) {
     // Create render record
     const render = await Render.create({
       userId: user._id,
-      clerkId: userId,
       projectId: validatedData.projectId,
       inputImage: validatedData.sketchUrl,
       mode: 'sketch_to_render',
@@ -95,7 +87,7 @@ export async function POST(req: NextRequest) {
     // Deduct credits
     await User.findByIdAndUpdate(user._id, {
       $inc: { credits: -3 },
-      $push: {
+      $push: { 
         creditHistory: {
           amount: -3,
           type: 'sketch_to_render',
@@ -125,7 +117,7 @@ export async function POST(req: NextRequest) {
 
       // Optionally enhance the result for photorealism
       let finalOutput = result.output;
-
+      
       if (validatedData.settings?.detailLevel === 'photorealistic') {
         // Could add an upscaling/enhancement step here
       }
@@ -155,7 +147,7 @@ export async function POST(req: NextRequest) {
       // Refund credits on failure
       await User.findByIdAndUpdate(user._id, {
         $inc: { credits: 3 },
-        $push: {
+        $push: { 
           creditHistory: {
             amount: 3,
             type: 'refund',
@@ -176,7 +168,7 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error("Sketch to render API error:", error);
-
+    
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },

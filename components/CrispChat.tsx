@@ -2,7 +2,8 @@
 
 import React, { useEffect } from "react";
 import Script from "next/script";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser
 import { usePathname } from "next/navigation";
 
 interface CrispChatProps {
@@ -10,7 +11,8 @@ interface CrispChatProps {
 }
 
 export function CrispChat({ crispWebsiteId }: CrispChatProps) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const pathname = usePathname();
 
   useEffect(() => {

@@ -1,11 +1,10 @@
 // app/api/outdoor/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { Render } from "@/lib/db/models/Render";
 import { runReplicateModel } from "@/lib/ai/replicate";
-import { isReplicateConfigured } from "@/lib/env";
 import { generateOutdoorPrompt } from "@/lib/ai/prompts";
 import { z } from "zod";
 
@@ -41,14 +40,8 @@ const outdoorSchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
-        if (!isReplicateConfigured()) {
-            return NextResponse.json(
-                { error: "AI service not configured", message: "Outdoor rendering service is not available." },
-                { status: 503 }
-            );
-        }
-
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(
@@ -94,7 +87,6 @@ export async function POST(req: NextRequest) {
         // Create render record
         const render = await Render.create({
             userId: user._id,
-            clerkId: userId,
             projectId: validatedData.projectId,
             inputImage: validatedData.imageUrl,
             mode: 'outdoor',

@@ -4,7 +4,7 @@ import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
 // Optional: import Clerk auth later when you need protected uploads
-// import { auth } from "@clerk/nextjs/server";
+// import { getCurrentUser } from '@/lib/auth/jwt';
 
 const f = createUploadthing();
 
@@ -23,7 +23,8 @@ export const ourFileRouter = {
       // You can use 'req' for headers/cookies if needed
 
       // Optional: Clerk auth integration (uncomment when ready)
-      // const { userId } = auth();
+      // const authUser = await getCurrentUser();
+  const userId = authUser?.id;
       // if (!userId) throw new UploadThingError("Unauthorized");
 
       // Metadata that will be available in onUploadComplete

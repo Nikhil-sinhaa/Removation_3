@@ -4,7 +4,8 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -271,7 +272,8 @@ export default function ProjectEditorPage() {
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);

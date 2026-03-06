@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser
 import {
   Plus,
   Upload,
@@ -371,7 +372,8 @@ function ProjectCardSkeleton() {
 
 // Main Component
 export default function DashboardPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const [greeting, setGreeting] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -1116,9 +1118,9 @@ export default function DashboardPage() {
                     'Priority support',
                     'Advanced Vastu',
                     'Cost estimates',
-                  ].map((feature) => (
+                  ].map((feature, idx) => (
                     <div
-                      key={feature}
+                      key={`${feature}-${idx}`}
                       className="flex items-center gap-2 text-white/90 text-sm"
                     >
                       <CheckCircle2 className="w-4 h-4 text-green-300" />

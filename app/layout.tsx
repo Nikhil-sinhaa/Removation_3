@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
-import { ClerkProvider } from '@clerk/nextjs'
+import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/Providers'
 import { CrispChat } from '@/components/CrispChat'
@@ -166,55 +166,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider
-      appearance={{
-        baseTheme: undefined,
-        variables: {
-          colorPrimary: '#7c3aed',
-          colorBackground: '#ffffff',
-          colorText: '#0a0a0a',
-          colorInputBackground: '#f5f5f5',
-          colorInputText: '#0a0a0a',
-          borderRadius: '0.75rem',
-          fontFamily: 'var(--font-inter)',
-        },
-        elements: {
-          formButtonPrimary:
-            'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white font-medium shadow-lg shadow-violet-500/25 transition-all duration-200',
-          card: 'shadow-2xl shadow-black/10 border border-gray-200/50',
-          headerTitle: 'font-plus-jakarta font-bold',
-          headerSubtitle: 'text-gray-500',
-          socialButtonsBlockButton:
-            'border-gray-200 hover:bg-gray-50 transition-colors',
-          socialButtonsBlockButtonText: 'font-medium text-gray-700',
-          formFieldInput:
-            'border-gray-200 focus:border-violet-500 focus:ring-violet-500/20',
-          footerActionLink: 'text-violet-600 hover:text-violet-700',
-          identityPreviewEditButton: 'text-violet-600 hover:text-violet-700',
-          formFieldLabel: 'text-gray-700 font-medium',
-          dividerLine: 'bg-gray-200',
-          dividerText: 'text-gray-400',
-        },
-      }}
-      localization={{
-        socialButtonsBlockButton: 'Continue with {{provider}}',
-        formFieldLabel__emailAddress: 'Email address',
-        formFieldLabel__password: 'Password',
-        formButtonPrimary: 'Continue',
-        signIn: {
-          start: {
-            title: 'Welcome back',
-            subtitle: 'Sign in to continue designing',
-          },
-        },
-        signUp: {
-          start: {
-            title: 'Create your account',
-            subtitle: 'Start transforming spaces with AI',
-          },
-        },
-      }}
-    >
+    <AuthProvider>
       <html
         lang="en"
         suppressHydrationWarning
@@ -230,12 +182,12 @@ export default function RootLayout({
           />
           <link rel="preconnect" href="https://api.replicate.com" />
           <link rel="preconnect" href="https://api.groq.com" />
-
+          
           {/* DNS prefetch for third-party services */}
           <link rel="dns-prefetch" href="https://client.crisp.chat" />
           <link rel="dns-prefetch" href="https://app.posthog.com" />
           <link rel="dns-prefetch" href="https://uploadthing.com" />
-
+          
           {/* PWA meta tags */}
           <meta name="apple-mobile-web-app-capable" content="yes" />
           <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -243,7 +195,7 @@ export default function RootLayout({
           <meta name="mobile-web-app-capable" content="yes" />
           <meta name="msapplication-TileColor" content="#7c3aed" />
           <meta name="msapplication-tap-highlight" content="no" />
-
+          
           {/* JSON-LD Structured Data */}
           <script
             type="application/ld+json"
@@ -263,22 +215,22 @@ export default function RootLayout({
           <Providers>
             {/* Analytics tracking */}
             <AnalyticsProvider />
-
+            
             {/* Main content */}
             <main id="main-content" className="relative">
               {children}
             </main>
-
+            
             {/* Toast notifications */}
             <Toaster />
-
+            
             {/* Crisp Chat widget - bottom right */}
             <CrispChat />
-
+            
             {/* PWA install prompt */}
             <PWAPrompt />
           </Providers>
-
+          
           {/* Skip to content link for accessibility */}
           <a
             href="#main-content"
@@ -288,6 +240,6 @@ export default function RootLayout({
           </a>
         </body>
       </html>
-    </ClerkProvider>
+    </AuthProvider>
   )
 }

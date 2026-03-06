@@ -1,10 +1,10 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
-import { useUser, useClerk } from "@clerk/nextjs"
+import { useAuth } from '@/hooks/useAuth';
 import {
-  User,
+  User as UserIcon,
   Settings,
   CreditCard,
   HelpCircle,
@@ -39,23 +39,20 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ className }: UserMenuProps) {
-  const { user, isLoaded } = useUser()
-  const { signOut } = useClerk()
+  const { user, isLoading, logout } = useAuth()
   const { theme, setTheme } = useTheme()
 
-  if (!isLoaded || !user) {
+  if (isLoading || !user) {
     return (
       <div className={cn("h-9 w-9 rounded-full bg-muted animate-pulse", className)} />
     )
   }
 
-  const initials = user.fullName
-    ? user.fullName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-    : user.emailAddresses[0]?.emailAddress?.charAt(0).toUpperCase() || "U"
+  const initials = user.firstName && user.lastName
+    ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+    : user.email?.charAt(0).toUpperCase() || "U"
+
+  const fullName = user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User'
 
   return (
     <DropdownMenu>
@@ -65,33 +62,36 @@ export function UserMenu({ className }: UserMenuProps) {
           className={cn("relative h-9 w-9 rounded-full", className)}
         >
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.imageUrl} alt={user.fullName || "User"} />
+            <AvatarImage src={user.imageUrl} alt={fullName} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
-          {/* Pro Badge Indicator */}
-          <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500">
-            <Crown className="h-2 w-2 text-white" />
-          </span>
+          {user.subscription?.plan !== 'free' && (
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-orange-500">
+              <Crown className="h-2 w-2 text-white" />
+            </span>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarImage src={user.imageUrl} alt={user.fullName || "User"} />
+              <AvatarImage src={user.imageUrl} alt={fullName} />
               <AvatarFallback>{initials}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">
-                {user.fullName || "User"}
+                {fullName}
               </p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {user.emailAddresses[0]?.emailAddress}
+              <p className="text-xs leading-none text-muted-foreground truncate w-[160px]">
+                {user.email}
               </p>
-              <Badge variant="premium" className="w-fit mt-1 text-xs">
-                <Crown className="h-3 w-3 mr-1" />
-                Pro Plan
-              </Badge>
+              {user.subscription?.plan !== 'free' && (
+                <Badge variant="premium" className="w-fit mt-1 text-xs">
+                  <Crown className="h-3 w-3 mr-1" />
+                  Pro Plan
+                </Badge>
+              )}
             </div>
           </div>
         </DropdownMenuLabel>
@@ -105,7 +105,7 @@ export function UserMenu({ className }: UserMenuProps) {
               <Sparkles className="h-4 w-4 text-violet-500" />
               <span className="text-sm font-medium">Credits</span>
             </div>
-            <span className="text-sm font-bold">47 left</span>
+            <span className="text-sm font-bold">{user.credits || 0}</span>
           </div>
         </div>
 
@@ -114,7 +114,7 @@ export function UserMenu({ className }: UserMenuProps) {
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
             <Link href="/settings">
-              <User className="mr-2 h-4 w-4" />
+              <UserIcon className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </Link>
           </DropdownMenuItem>
@@ -170,8 +170,8 @@ export function UserMenu({ className }: UserMenuProps) {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          className="text-destructive focus:text-destructive"
-          onClick={() => signOut()}
+          className="text-destructive focus:text-destructive cursor-pointer"
+          onClick={() => logout()}
         >
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>

@@ -2,12 +2,18 @@
 import mongoose, { Schema, Model } from 'mongoose';
 
 export interface IUser {
-    clerkId: string;
+    clerkId?: string;
     email: string;
+    password?: string;
     firstName?: string;
     lastName?: string;
     imageUrl?: string;
     credits: number;
+    otp?: string;
+    otpExpiry?: Date;
+    isVerified?: boolean;
+    lockoutUntil?: Date;
+    failedLoginAttempts?: number;
 
     // Subscription info
     subscription: {
@@ -56,8 +62,14 @@ export interface IUser {
 }
 
 const UserSchema = new Schema<IUser>({
-    clerkId: { type: String, required: true, unique: true, index: true },
+    clerkId: { type: String, index: true },
     email: { type: String, required: true, unique: true },
+    password: { type: String },
+    otp: { type: String },
+    otpExpiry: { type: Date },
+    isVerified: { type: Boolean, default: false },
+    lockoutUntil: { type: Date },
+    failedLoginAttempts: { type: Number, default: 0 },
     firstName: String,
     lastName: String,
     imageUrl: String,

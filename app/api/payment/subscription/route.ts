@@ -1,7 +1,7 @@
 // app/api/payment/subscription/route.ts
 // Updated & Fixed Version (December 2025 best practices)
 
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
@@ -67,7 +67,8 @@ async function getCurrentSubscription(userId: string) {
 // GET - Fetch subscription details
 export async function GET(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -110,7 +111,8 @@ export async function GET(req: NextRequest) {
 // PUT - Upgrade/Downgrade plan (Stripe only example)
 export async function PUT(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -178,7 +180,8 @@ export async function PUT(req: NextRequest) {
 // DELETE - Cancel subscription
 export async function DELETE(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

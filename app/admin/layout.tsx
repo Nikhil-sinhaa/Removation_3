@@ -4,7 +4,8 @@ import { useState, useEffect, createContext, useContext, useCallback } from 'rea
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser, useAuth
 import {
   LayoutDashboard,
   Users,
@@ -918,7 +919,8 @@ function Header({
   sidebarCollapsed: boolean;
   onMenuClick: () => void;
 }) {
-  const { user } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const { signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -1494,7 +1496,8 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

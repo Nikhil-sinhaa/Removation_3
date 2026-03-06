@@ -1,6 +1,6 @@
 // app/api/vastu/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { analyzeVastu, getVastuSuggestions, generateVastuReport } from "@/lib/vastu-engine";
@@ -42,7 +42,8 @@ const vastuSuggestionsSchema = z.object({
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(

@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "removation-mongodb": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-mongodb",
+        "mongodb+srv://username:password@cluster.xxxxx.mongodb.net/removation"
+      ]
+    },
+    "removation-filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/home/nikhil/Documents/Remo2/Removation_3"
+      ]
+    }
+  }
+}

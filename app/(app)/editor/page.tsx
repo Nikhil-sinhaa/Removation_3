@@ -5,7 +5,8 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUploader } from '@/components/shared/ImageUploader';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser
 import Image from 'next/image';
 import {
   Upload,
@@ -210,7 +211,8 @@ function StyleCard({
 
 export default function EditorPage() {
   const router = useRouter();
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 

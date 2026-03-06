@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -16,7 +16,8 @@ import {
   Mail,
   BookOpen
 } from "lucide-react"
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs"
+import { useAuth } from '@/hooks/useAuth'
+import { UserMenu } from '@/components/layout/UserMenu'
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -83,6 +84,8 @@ export function Navbar() {
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = React.useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false)
+  const { user } = useAuth()
+  const isSignedIn = !!user
 
   React.useEffect(() => {
     const handleScroll = () => {
@@ -200,34 +203,29 @@ export function Navbar() {
           <div className="flex items-center gap-3">
             <LanguageToggle />
             
-            <SignedOut>
-              <Link href="/sign-in" className="hidden sm:block">
-                <Button variant="ghost" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button variant="gradient" size="sm">
-                  Get Started Free
-                </Button>
-              </Link>
-            </SignedOut>
-
-            <SignedIn>
-              <Link href="/dashboard">
-                <Button variant="gradient" size="sm">
-                  Dashboard
-                </Button>
-              </Link>
-              <UserButton 
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: "h-8 w-8"
-                  }
-                }}
-              />
-            </SignedIn>
+            {!isSignedIn ? (
+              <>
+                <Link href="/sign-in" className="hidden sm:block">
+                  <Button variant="ghost" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/sign-up">
+                  <Button variant="gradient" size="sm">
+                    Get Started Free
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/dashboard">
+                  <Button variant="gradient" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+                <UserMenu />
+              </>
+            )}
 
             {/* Mobile Menu Button */}
             <Button
@@ -301,7 +299,7 @@ export function Navbar() {
               </Link>
 
               {/* Auth Buttons for Mobile */}
-              <SignedOut>
+              {!isSignedIn && (
                 <div className="flex flex-col gap-2 pt-4 border-t">
                   <Link href="/sign-in">
                     <Button variant="outline" className="w-full">
@@ -314,7 +312,7 @@ export function Navbar() {
                     </Button>
                   </Link>
                 </div>
-              </SignedOut>
+              )}
             </div>
           </motion.div>
         )}

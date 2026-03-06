@@ -1,5 +1,5 @@
 // app/api/payment/create-checkout/route.ts
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
@@ -97,7 +97,8 @@ type PlanType = 'pro_monthly' | 'pro_yearly' | 'team_monthly' | 'team_yearly' | 
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { connectToDatabase } from "@/lib/db/mongodb";
 import Render from "@/lib/db/models/Render";
 import Project from "@/lib/db/models/Project";
@@ -9,7 +9,8 @@ export async function GET(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
         const { id } = await params;
 
         if (!userId) {
@@ -36,7 +37,8 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
         const { id } = await params;
 
         if (!userId) {

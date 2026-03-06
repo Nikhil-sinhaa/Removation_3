@@ -261,9 +261,9 @@ export function ProjectGrid({
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>Room Type</DropdownMenuLabel>
-                    {roomTypes.map((type) => (
+                    {roomTypes.map((type, idx) => (
                       <DropdownMenuCheckboxItem
-                        key={type}
+                        key={type || idx}
                         checked={selectedRoomTypes.includes(type)}
                         onCheckedChange={() => toggleRoomType(type)}
                       >

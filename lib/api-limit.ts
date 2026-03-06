@@ -1,9 +1,10 @@
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from '@/lib/auth/jwt';
 import connectToDatabase from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 
 export const checkApiLimit = async () => {
-    const { userId } = await auth();
+    const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
     if (!userId) {
         return false;
@@ -21,7 +22,8 @@ export const checkApiLimit = async () => {
 };
 
 export const getApiLimitCount = async () => {
-    const { userId } = await auth();
+    const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
     if (!userId) {
         return 0;
@@ -39,7 +41,8 @@ export const getApiLimitCount = async () => {
 };
 
 export const checkSubscription = async () => {
-    const { userId } = await auth();
+    const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
     if (!userId) {
         return false;
@@ -63,7 +66,8 @@ export const checkSubscription = async () => {
 };
 
 export const checkAndDeductCredits = async (amount: number = 1) => {
-    const { userId } = await auth();
+    const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
     if (!userId) {
         return false;

@@ -4,7 +4,8 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { useUser, UserButton } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+import { UserMenu } from '@/components/layout/UserMenu';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -72,7 +73,8 @@ const quickActions = [
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState(3);
@@ -428,14 +430,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       </p>
                       <p className="text-xs text-gray-500">Free Plan</p>
                     </div>
-                    <UserButton
-                      appearance={{
-                        elements: {
-                          avatarBox: 'w-9 h-9',
-                        },
-                      }}
-                      afterSignOutUrl="/"
-                    />
+                    <UserMenu />
                   </>
                 )}
               </div>

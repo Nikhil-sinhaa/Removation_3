@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useAuth
 import {
   ArrowRight,
   Check,
@@ -1986,8 +1987,8 @@ function PricingSection() {
               </div>
 
               <ul className="space-y-4 mb-8">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-3">
+                {plan.features.map((feature, idx) => (
+                  <li key={`${feature}-${idx}`} className="flex items-start gap-3">
                     <div className={cn(
                       "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
                       plan.popular ? "bg-purple-500/20" : "bg-white/10"

@@ -1,5 +1,5 @@
 // app/api/payment/verify/route.ts
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
@@ -27,7 +27,8 @@ const PLAN_CREDITS: Record<string, number> = {
 
 export async function POST(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(
@@ -326,7 +327,8 @@ async function verifyRazorpayPayment(
 // Get payment status
 export async function GET(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(

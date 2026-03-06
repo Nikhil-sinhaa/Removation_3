@@ -22,7 +22,8 @@ import {
   LogOut,
   Crown
 } from "lucide-react"
-import { useUser, useClerk } from "@clerk/nextjs"
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser, useClerk
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"

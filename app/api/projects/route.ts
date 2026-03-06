@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 import Project from "@/lib/db/models/Project";
 
 export async function POST(req: Request) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
         const body = await req.json();
         const { name, description, roomType, style } = body;
 
@@ -44,7 +45,8 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });

@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -10,7 +10,7 @@ import {
   Command,
   Plus
 } from "lucide-react"
-import { UserButton } from "@clerk/nextjs"
+import { UserMenu } from '@/components/layout/UserMenu'
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -122,21 +122,14 @@ export function TopBar({ onMenuClick, showMenuButton = false }: TopBarProps) {
 
             {/* Credits */}
             <div className="hidden lg:block">
-              <CreditBalance minimal />
+              <CreditBalance />
             </div>
 
             {/* Notifications */}
             <NotificationBell />
 
             {/* User Menu */}
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "h-9 w-9",
-                },
-              }}
-            />
+            <UserMenu />
           </div>
         </div>
       </header>

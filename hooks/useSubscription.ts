@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/use-toast";
 
 export type PlanType = "free" | "pro" | "teams";
@@ -119,7 +119,7 @@ const PLANS: SubscriptionPlan[] = [
 ];
 
 export function useSubscription() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
   const { toast } = useToast();
   
   const [subscription, setSubscription] = useState<Subscription | null>(null);

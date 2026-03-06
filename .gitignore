@@ -66,3 +66,5 @@ pids
 
 # Chrome extension build
 /chrome-extension/dist
+# clerk configuration (can include secrets)
+/.clerk/

@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser, useClerk } from "@clerk/nextjs";
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser, useClerk
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -145,7 +146,8 @@ const plans = [
 ];
 
 export default function SettingsPage() {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const { signOut } = useClerk();
   const { language, setLanguage, t } = useLanguage();
 

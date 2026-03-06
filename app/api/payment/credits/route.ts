@@ -1,5 +1,5 @@
 // app/api/payment/credits/route.ts
-import { auth } from '@clerk/nextjs/server';
+import { getCurrentUser } from '@/lib/auth/jwt';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
@@ -29,7 +29,8 @@ type PackageType = keyof typeof CREDIT_PACKAGES;
 // GET - Get user's current credits
 export async function GET(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(
@@ -71,7 +72,8 @@ export async function GET(req: NextRequest) {
 // POST - Purchase credits
 export async function POST(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(
@@ -217,7 +219,8 @@ export async function POST(req: NextRequest) {
 // PUT - Use credits (internal API for deducting credits)
 export async function PUT(req: NextRequest) {
     try {
-        const { userId } = await auth();
+        const authUser = await getCurrentUser();
+  const userId = authUser?.id;
 
         if (!userId) {
             return NextResponse.json(

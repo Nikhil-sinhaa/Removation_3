@@ -5,7 +5,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
+// TODO: Remnant Clerk imports: useUser
 import {
   Plus,
   Search,
@@ -814,7 +815,8 @@ function ProjectListItem({
 
 // Main Component
 export default function ProjectsPage() {
-  const { user } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
+  const isSignedIn = !!user;
   const { toast } = useToast();
   const searchInputRef = useRef<HTMLInputElement>(null);
 

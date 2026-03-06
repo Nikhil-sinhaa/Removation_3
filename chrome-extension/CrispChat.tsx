@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
 
 
@@ -12,7 +12,7 @@ interface CrispChatProps {
 }
 
 export function CrispChat({ websiteId }: CrispChatProps) {
-  const { user, isLoaded } = useUser();
+  const { user, isLoading: isLoaded } = useAuth();
   const { language } = useLanguage();
 
   useEffect(() => {
@@ -51,8 +51,10 @@ export function CrispChat({ websiteId }: CrispChatProps) {
     if (isLoaded && user && window.$crisp) {
       // Set user data when authenticated
       try {
-        window.$crisp.push(['set', 'user:email', [user.emailAddresses[0]?.emailAddress]]);
-        window.$crisp.push(['set', 'user:nickname', [user.fullName || user.firstName || 'User']]);
+        if (user.email) {
+          window.$crisp.push(['set', 'user:email', [user.email]]);
+        }
+        window.$crisp.push(['set', 'user:nickname', [user.firstName || 'User']]);
 
         if (user.imageUrl) {
           window.$crisp.push(['set', 'user:avatar', [user.imageUrl]]);
@@ -60,10 +62,10 @@ export function CrispChat({ websiteId }: CrispChatProps) {
 
         // Set user segments/data
         window.$crisp.push(['set', 'session:data', [
-          ['user_id', user.id],
+          ['user_id', user.id || user._id?.toString()],
           ['plan', 'free'], // TODO: Get from subscription
           ['language', language],
-          ['signed_up', user.createdAt?.toISOString()],
+          ['signed_up', user.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString()],
         ]]);
       } catch (error) {
         console.error('Error setting Crisp user data:', error);
