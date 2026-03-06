@@ -1,12 +1,12 @@
-// lib/ai/fal-adapter.ts — fal.ai branch
-import { fal } from "@fal-ai/client";
+// lib/ai/fal-adapter.ts — Replicate branch
+// On this branch, we revert the fal adapter back to calling Replicate
+// so the generate route still works with Replicate
 
-if (process.env.FAL_KEY) {
-    fal.config({ credentials: process.env.FAL_KEY });
-}
+import { runReplicatePredictionSync, isReplicateConfigured } from "@/lib/ai/replicate";
 
 export function isFalConfigured(): boolean {
-    return !!process.env.FAL_KEY;
+    // On the replicate branch, we check Replicate instead
+    return isReplicateConfigured();
 }
 
 export async function runFalPredictionSync({
@@ -18,20 +18,27 @@ export async function runFalPredictionSync({
     imageUrl: string;
     prompt: string;
 }): Promise<{ outputUrl: string; predictionId: string }> {
-    if (!isFalConfigured()) throw new Error("FAL_KEY is not configured");
+    
+    // Map mode back to replicate input
+    const replicateInput = {
+        image: imageUrl,
+        prompt,
+        negative_prompt: "blurry, distorted, low quality, watermark, text, unrealistic, cartoon, anime, illustration, oversaturated",
+        num_inference_steps: mode === 'enhance' ? 50 : 30,
+        guidance_scale: 7.5,
+        seed: Math.floor(Math.random() * 2147483647),
+        strength: 0.85,
+    };
 
-    let result: any;
-    if (mode === "empty" || mode === "remove") {
-        result = await fal.subscribe("fal-ai/object-removal", { input: { image_url: imageUrl, prompt } });
-    } else {
-        result = await fal.subscribe("fal-ai/flux-2-lora-gallery/apartment-staging", {
-            input: { image_urls: [imageUrl], prompt: `A high-end ${prompt} with realistic lighting and professional decor.`, lora_scale: 1.2, guidance_scale: 3.5, num_inference_steps: 30, image_size: "square_hd" },
-        });
-    }
+    // Use the existing Replicate models map
+    const models: Record<string, string> = {
+        redesign: 'stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b',
+        furnish: 'jagilley/controlnet-hough:854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56e49c0d9d',
+        empty: 'stability-ai/sdxl-inpainting:95b7223104132402a9ae91cc677285bc5eb997834bd2349fa486f53910fd68b3',
+        sketch: 'jagilley/controlnet-scribble:435061a1b5a4c1e26740464bf786efdfa9cb3a3ac488595a2de23e143fdb0117',
+        enhance: 'nightmareai/real-esrgan:f121d640bd286e1fdc67f9799164c1d5be36ff74576ee11c803ae5b665dd46aa',
+    };
+    const model = models[mode] || models.redesign;
 
-    const data = result.data || result;
-    const outputUrl = data?.images?.[0]?.url;
-    if (!outputUrl) throw new Error("fal.ai did not return an image URL");
-
-    return { outputUrl, predictionId: `fal-${Date.now()}` };
+    return runReplicatePredictionSync({ model, input: replicateInput });
 }
