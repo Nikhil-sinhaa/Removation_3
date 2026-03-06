@@ -1,46 +1,46 @@
 import { NextResponse } from "next/server";
-import { fal } from "@fal-ai/client";
 
-if (process.env.FAL_KEY) {
-    fal.config({ credentials: process.env.FAL_KEY });
-}
+// ── REPLICATE BRANCH ─────────────────────────────────────────────────────────
+// Requires: REPLICATE_API_TOKEN with credits at replicate.com
 
 export async function POST(request: Request) {
     try {
-        if (!process.env.FAL_KEY) {
-            return NextResponse.json({ imageUrl: "", error: "FAL_KEY is not set in .env.local" }, { status: 500 });
+        if (!process.env.REPLICATE_API_TOKEN) {
+            return NextResponse.json({ imageUrl: "", error: "REPLICATE_API_TOKEN is not set" }, { status: 500 });
         }
 
         const { imageUrl, area, color } = await request.json();
-
         if (!imageUrl || !area || !color) {
             return NextResponse.json({ imageUrl: "", error: "imageUrl, area, and color are required" }, { status: 400 });
         }
 
-        const prompt = `Recolor ONLY the ${area} to ${color}. Do NOT change any furniture, decor, objects, room style, lighting, shadows, or layout. Keep everything exactly the same except the ${area} color which should be ${color}.`;
+        const prompt = `A room with the ${area} painted ${color}. Photorealistic interior design.`;
 
-        const result: any = await fal.subscribe("fal-ai/flux-2-lora-gallery/apartment-staging", {
-            input: {
-                image_urls: [imageUrl],
-                prompt,
-                lora_scale: 0.8,
-                guidance_scale: 4.5,
-                num_inference_steps: 30,
-                image_size: "square_hd",
-            },
+        const startResponse = await fetch("https://api.replicate.com/v1/predictions", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Token " + process.env.REPLICATE_API_TOKEN },
+            body: JSON.stringify({
+                version: "854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56472a247b",
+                input: { image: imageUrl, prompt, a_prompt: "best quality, photorealistic", n_prompt: "blurry, low quality" },
+            }),
         });
 
-        const data = result.data || result;
-        const outputUrl = data?.images?.[0]?.url;
-
-        if (!outputUrl) {
-            return NextResponse.json({ imageUrl: "", error: "fal.ai did not return an image" }, { status: 500 });
+        if (!startResponse.ok) {
+            return NextResponse.json({ imageUrl: "", error: "Failed to start Replicate generation" }, { status: 500 });
         }
 
-        return NextResponse.json({ imageUrl: outputUrl });
+        const { urls } = await startResponse.json();
+        let resultImage: string | null = null;
+        for (let i = 0; i < 60; i++) {
+            const poll = await fetch(urls.get, { headers: { Authorization: "Token " + process.env.REPLICATE_API_TOKEN } });
+            const json = await poll.json();
+            if (json.status === "succeeded") { resultImage = json.output; break; }
+            if (json.status === "failed") break;
+            await new Promise(r => setTimeout(r, 1000));
+        }
 
+        return NextResponse.json({ imageUrl: resultImage ?? "" });
     } catch (error: any) {
-        console.error("Color Visualizer (fal.ai) Error:", error?.message || error);
-        return NextResponse.json({ imageUrl: "", error: error?.message || "Failed to generate" }, { status: 500 });
+        return NextResponse.json({ imageUrl: "", error: error?.message }, { status: 500 });
     }
 }

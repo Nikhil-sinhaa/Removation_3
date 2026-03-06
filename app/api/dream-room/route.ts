@@ -1,48 +1,64 @@
 import { NextResponse } from "next/server";
-import { fal } from "@fal-ai/client";
 
-if (process.env.FAL_KEY) {
-    fal.config({ credentials: process.env.FAL_KEY });
-}
+// ── REPLICATE BRANCH ─────────────────────────────────────────────────────────
+// Requires: REPLICATE_API_TOKEN in .env.local
+// Sign up & add credits at: https://replicate.com/account/billing
 
 export async function POST(request: Request) {
     try {
-        if (!process.env.FAL_KEY) {
-            return NextResponse.json({ imageUrl: "", error: "FAL_KEY is not set in .env.local" }, { status: 500 });
+        if (!process.env.REPLICATE_API_TOKEN) {
+            return NextResponse.json({ imageUrl: "", error: "REPLICATE_API_TOKEN is not set" }, { status: 500 });
         }
 
         const { imageUrl, theme, room } = await request.json();
-
         if (!imageUrl || !theme || !room) {
             return NextResponse.json({ imageUrl: "", error: "imageUrl, theme, and room are required" }, { status: 400 });
         }
 
         const prompt = room === "Gaming Room"
-            ? `A high-end gaming room setup with RGB lighting, gaming monitors, gaming chairs, and high-end gaming equipment. Maintain the same room layout and perspective.`
-            : `A high-end ${theme.toLowerCase()} style ${room.toLowerCase()} with appropriate furniture, realistic lighting, and professional decor. Ultra-realistic, award-winning interior photo.`;
+            ? "a room for gaming with gaming computers, gaming consoles, and gaming chairs"
+            : `a ${theme.toLowerCase()} ${room.toLowerCase()}`;
 
-        const result: any = await fal.subscribe("fal-ai/flux-2-lora-gallery/apartment-staging", {
-            input: {
-                image_urls: [imageUrl],
-                prompt,
-                lora_scale: 1.2,
-                guidance_scale: 3.5,
-                num_inference_steps: 30,
-                image_size: "square_hd",
+        const startResponse = await fetch("https://api.replicate.com/v1/predictions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: "Token " + process.env.REPLICATE_API_TOKEN,
             },
+            body: JSON.stringify({
+                version: "854e8727697a057c525cdb45ab037f64ecca770a1769cc52287c2e56472a247b",
+                input: {
+                    image: imageUrl,
+                    prompt,
+                    a_prompt: "best quality, extremely detailed, photo from Pinterest, interior, cinematic photo, ultra-detailed, ultra-realistic, award-winning",
+                    n_prompt: "longbody, lowres, bad anatomy, bad hands, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality",
+                },
+            }),
         });
 
-        const data = result.data || result;
-        const outputUrl = data?.images?.[0]?.url;
-
-        if (!outputUrl) {
-            return NextResponse.json({ imageUrl: "", error: "fal.ai did not return an image" }, { status: 500 });
+        if (!startResponse.ok) {
+            const err = await startResponse.text();
+            console.error("Replicate start error:", err);
+            return NextResponse.json({ imageUrl: "", error: "Failed to start Replicate generation" }, { status: 500 });
         }
 
-        return NextResponse.json({ imageUrl: outputUrl });
+        const { urls } = await startResponse.json();
+
+        let restoredImage: string | null = null;
+        for (let i = 0; i < 60; i++) {
+            const poll = await fetch(urls.get, {
+                headers: { Authorization: "Token " + process.env.REPLICATE_API_TOKEN },
+            });
+            const json = await poll.json();
+            if (json.status === "succeeded") { restoredImage = json.output; break; }
+            if (json.status === "failed") break;
+            await new Promise(r => setTimeout(r, 1000));
+        }
+
+        return NextResponse.json({ imageUrl: restoredImage ?? "" });
 
     } catch (error: any) {
-        console.error("Dream Room (fal.ai) Error:", error?.message || error);
-        return NextResponse.json({ imageUrl: "", error: error?.message || "Internal Server Error" }, { status: 500 });
+        console.error("Dream Room (Replicate) Error:", error?.message);
+        return NextResponse.json({ imageUrl: "", error: error?.message }, { status: 500 });
     }
 }
