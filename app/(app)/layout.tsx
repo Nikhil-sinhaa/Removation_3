@@ -29,6 +29,7 @@ import {
   IndianRupee,
   Compass,
   Palette,
+  Eraser,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -44,6 +45,7 @@ const sidebarNavigation = [
       { name: 'Editor', href: '/editor', icon: Wand2 },
       { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
       { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
+      { name: 'Object Removal', href: '/remove-object', icon: Eraser },
     ],
   },
   {
@@ -64,8 +66,8 @@ const sidebarNavigation = [
 
 const quickActions = [
   { name: 'Dream Room', icon: Sparkles, color: 'violet' },
-  { name: 'Vastu Check', icon: Compass, color: 'orange' },
   { name: 'Visualize Color', icon: Palette, color: 'green' },
+  { name: 'Object Removal', icon: Eraser, color: 'orange' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {

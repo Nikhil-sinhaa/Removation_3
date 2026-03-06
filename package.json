@@ -97,6 +97,7 @@
     "react-konva": "^18.2.10",
     "react-number-format": "^5.4.2",
     "react-resizable-panels": "^2.1.4",
+    "react-sketch-canvas": "^6.2.0",
     "react-zoom-pan-pinch": "^3.6.1",
     "recharts": "^2.12.7",
     "replicate": "^0.34.0",
