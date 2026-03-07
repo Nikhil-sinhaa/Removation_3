@@ -124,6 +124,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <AnimatePresence>
               {sidebarOpen && (
                 <motion.span
+                  key="sidebar-logo-text"
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
@@ -150,6 +151,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <AnimatePresence>
           {sidebarOpen && (
             <motion.div
+              key="sidebar-quick-actions"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -184,6 +186,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <AnimatePresence>
                 {sidebarOpen && (
                   <motion.h3
+                    key={`section-title-${section.title}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -216,6 +219,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       <AnimatePresence>
                         {sidebarOpen && (
                           <motion.span
+                            key={`nav-item-${item.name}`}
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
@@ -245,6 +249,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <AnimatePresence>
             {sidebarOpen ? (
               <motion.div
+                key="sidebar-upgrade-expanded"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -267,6 +272,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </motion.div>
             ) : (
               <motion.button
+                key="sidebar-upgrade-collapsed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
