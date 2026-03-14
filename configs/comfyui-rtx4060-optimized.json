@@ -1,0 +1,150 @@
+{
+  "last_node_id": 9,
+  "last_link_id": 8,
+  "last_group_id": 4,
+  "nodes": {
+    "1": {
+      "inputs": {
+        "ckpt_name": "sd_xl_base_1.0.safetensors"
+      },
+      "class_type": "CheckpointLoaderSimple"
+    },
+    "2": {
+      "inputs": {
+        "text": "high quality interior design, empty room, professional lighting",
+        "clip": ["1", 1],
+        "text_g": "blurry, low quality, distorted, ugly, bad anatomy",
+        "clip_g": ["1", 1]
+      },
+      "class_type": "CLIPTextEncode"
+    },
+    "3": {
+      "inputs": {
+        "text": "",
+        "clip": ["1", 1],
+        "text_g": "",
+        "clip_g": ["1", 1]
+      },
+      "class_type": "CLIPTextEncode"
+    },
+    "4": {
+      "inputs": {
+        "width": 1024,
+        "height": 1024,
+        "batch_size": 1,
+        "steps": 20,
+        "cfg": 7.0,
+        "sampler_name": "dpmpp_2m",
+        "scheduler": "karras",
+        "denoise": 1.0,
+        "model": ["1", 0],
+        "positive": ["2", 0],
+        "negative": ["3", 0],
+        "vae_name": "sdxl_vae.safetensors",
+        "fp8_e4m3fn": true,
+        "fp8_e4m3fn_fast": true,
+        "fp8_e5m2": false,
+        "fp16": false,
+        "bf16": false,
+        "tf32": false
+      },
+      "class_type": "KSampler"
+    },
+    "5": {
+      "inputs": {
+        "filename_prefix": "removation_optimized",
+        "images": ["4", 0]
+      },
+      "class_type": "SaveImage"
+    },
+    "6": {
+      "inputs": {
+        "image": "",
+        "upload": "image"
+      },
+      "class_type": "LoadImage"
+    },
+    "7": {
+      "inputs": {
+        "pixels": ["6", 0],
+        "vae": ["1", 2],
+        "fp8_e4m3fn": true,
+        "tiling": {
+          "enabled": true,
+          "tile_size": 512,
+          "tile_overlap": 64,
+          "condition_on_size": ">=1024"
+        }
+      },
+      "class_type": "VAEEncodeTiled"
+    },
+    "8": {
+      "inputs": {
+        "pixels": ["7", 0],
+        "vae": ["1", 2],
+        "fp8_e4m3fn": true
+      },
+      "class_type": "VAEDecode"
+    },
+    "9": {
+      "inputs": {
+        "enabled": true,
+        "after_execution": true,
+        "target_nodes": ["1", "2", "3", "4", "5", "6", "7", "8"]
+      },
+      "class_type": "GarbageCollector"
+    }
+  },
+  "node_defs": {
+    "VAEEncodeTiled": {
+      "display_name": "VAE Encode (Tiled)",
+      "description": "VAE encode with tiling for images >=1024px to save VRAM on RTX 4060 8GB",
+      "category": "vae",
+      "output": {
+        "latent": ["LATENT", { "tile_size": 512, "tile_overlap": 64 }]
+      },
+      "input": {
+        "required": ["pixels", "vae"],
+        "optional": {
+          "fp8_e4m3fn": ["BOOLEAN", { "default": true }],
+          "tiling": ["TILING", { 
+            "default": {
+              "enabled": true,
+              "tile_size": 512,
+              "tile_overlap": 64,
+              "condition_on_size": ">=1024"
+            }
+          }]
+        }
+      }
+    },
+    "GarbageCollector": {
+      "display_name": "Garbage Collector",
+      "description": "Automatically clears VRAM after execution to prevent memory leaks on 8GB RTX 4060",
+      "category": "utils",
+      "output": {},
+      "input": {
+        "required": [],
+        "optional": {
+          "enabled": ["BOOLEAN", { "default": true }],
+          "after_execution": ["BOOLEAN", { "default": true }],
+          "target_nodes": ["STRING", { "default": "1,2,3,4,5,6,7,8", "multiline": true }]
+        }
+      }
+    }
+  },
+  "extra": {
+    "ds": {
+      "scale": 1.0,
+      "aesthetic_score": 6.0,
+      "sampling_steps": 20
+    }
+  },
+  "extra_pnginfo": {
+    "workflow": "Removation.ai RTX 4060 Optimized",
+    "software": "ComfyUI",
+    "version": "0.2.0",
+    "hardware": "RTX 4060 8GB",
+    "optimizations": "FP8_E4M3FN + VAE_Tiling + GarbageCollection"
+  }
+}

@@ -1,0 +1,61 @@
+{
+  "timestamp": "2026-03-14T17:47:47.065Z",
+  "summary": {
+    "total": 7,
+    "passed": 5,
+    "warnings": 1,
+    "skipped": 1,
+    "failed": 0
+  },
+  "results": [
+    {
+      "test": "Dependencies",
+      "passed": true,
+      "message": "All required packages installed",
+      "type": "NORMAL",
+      "timestamp": "2026-03-14T17:47:45.016Z"
+    },
+    {
+      "test": "GPU Status",
+      "passed": true,
+      "message": "Status: unknown, VRAM: 0GB, Busy: false",
+      "type": "NORMAL",
+      "timestamp": "2026-03-14T17:47:45.861Z"
+    },
+    {
+      "test": "Mock Image Upload",
+      "passed": true,
+      "message": "Test image created successfully",
+      "type": "NORMAL",
+      "timestamp": "2026-03-14T17:47:45.861Z"
+    },
+    {
+      "test": "Object Selection",
+      "passed": true,
+      "message": "Segmentation successful, confidence: 0.95",
+      "type": "NORMAL",
+      "timestamp": "2026-03-14T17:47:46.960Z"
+    },
+    {
+      "test": "Object Removal",
+      "passed": false,
+      "message": "GPU offline - expected if ComfyUI not running",
+      "type": "WARNING",
+      "timestamp": "2026-03-14T17:47:47.041Z"
+    },
+    {
+      "test": "File System Verification",
+      "passed": false,
+      "message": "No generated image to verify",
+      "type": "SKIPPED",
+      "timestamp": "2026-03-14T17:47:47.042Z"
+    },
+    {
+      "test": "Error Handling",
+      "passed": true,
+      "message": "Invalid request properly rejected",
+      "type": "NORMAL",
+      "timestamp": "2026-03-14T17:47:47.065Z"
+    }
+  ]
+}

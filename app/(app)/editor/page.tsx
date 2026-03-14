@@ -4,6 +4,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUploader } from '@/components/shared/ImageUploader';
+import { ObjectRemovalSidebar } from '@/components/ai/ObjectRemovalSidebar';
+import { LiveFeedbackSidebar } from '@/components/ai/LiveFeedbackSidebar';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 // TODO: Remnant Clerk imports: useUser
@@ -56,6 +58,7 @@ import {
   SlidersHorizontal,
   RefreshCw,
   Clock,
+  Activity,
   Compass,
   IndianRupee,
   DollarSign,
@@ -226,6 +229,8 @@ export default function EditorPage() {
   // Editor Settings
   const [selectedStyle, setSelectedStyle] = useState<string>('modern-minimalist');
   const [selectedRoomType, setSelectedRoomType] = useState<string>('living-room');
+  const [showObjectRemoval, setShowObjectRemoval] = useState(false);
+  const [showLiveFeedback, setShowLiveFeedback] = useState(false);
   const [selectedMode, setSelectedMode] = useState<string>('redesign');
   const [preserveStructure, setPreserveStructure] = useState(true);
   const [creativityLevel, setCreativityLevel] = useState([50]);
@@ -947,6 +952,44 @@ export default function EditorPage() {
                 </TooltipContent>
               </Tooltip>
 
+              {/* Object Removal Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showObjectRemoval ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowObjectRemoval(!showObjectRemoval)}
+                    disabled={!selectedGenerated}
+                    className="gap-2"
+                  >
+                    <Wand2 className="h-4 w-4" />
+                    Object Removal
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Remove unwanted objects from image</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Live Feedback Button */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={showLiveFeedback ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setShowLiveFeedback(!showLiveFeedback)}
+                    disabled={!selectedGenerated}
+                    className="gap-2"
+                  >
+                    <Activity className="h-4 w-4" />
+                    Live Status
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Real-time AI processing status</p>
+                </TooltipContent>
+              </Tooltip>
+
               {/* Cost Button */}
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -1564,6 +1607,57 @@ export default function EditorPage() {
                   </>
                 )}
               </ScrollArea>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Object Removal Sidebar */}
+        <AnimatePresence>
+          {showObjectRemoval && selectedGenerated && (
+            <motion.aside
+              initial={{ x: 350, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 350, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="w-80 border-l bg-card flex flex-col"
+            >
+              <ObjectRemovalSidebar
+                imageUrl={selectedGenerated.url}
+                onImageUpdate={(newImageUrl) => {
+                  // Update the selected generated image with the new one
+                  setSelectedGenerated(prev => prev ? { ...prev, url: newImageUrl } : null);
+                }}
+              />
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Live Feedback Sidebar */}
+        <AnimatePresence>
+          {showLiveFeedback && selectedGenerated && (
+            <motion.aside
+              initial={{ x: 350, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 350, opacity: 0 }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
+              className="w-80 border-l bg-card flex flex-col"
+            >
+              <LiveFeedbackSidebar
+                projectId={selectedGenerated.id}
+                onImageUpdate={(newImageUrl) => {
+                  // Update the selected generated image with the new one
+                  setSelectedGenerated(prev => prev ? { ...prev, url: newImageUrl } : null);
+                }}
+                onProcessStart={() => {
+                  setIsGenerating(true);
+                  setGenerationProgress(0);
+                }}
+                onProcessComplete={(result) => {
+                  setIsGenerating(false);
+                  setGenerationProgress(100);
+                  console.log('✅ Processing completed:', result);
+                }}
+              />
             </motion.aside>
           )}
         </AnimatePresence>
