@@ -35,7 +35,7 @@ export default function ResizablePanel({
             className={`relative w-full overflow-hidden ${className}`}
             transition={{ type: "tween", duration: 0.5, ease: "easeInOut" }}
         >
-            <AnimatePresence mode="wait" initial={false}>
+            <AnimatePresence mode="sync" initial={false}>
                 <motion.div
                     key={typeof children === "string" ? children : undefined}
                     layout

@@ -538,7 +538,7 @@ function renderContent(content: string) {
         elements.push(
           <ol key={`ol-${elements.length}`} className="list-decimal list-inside space-y-2 my-4 ml-4">
             {currentList.map((item, i) => (
-              <li key={i} className="text-gray-600 dark:text-gray-300">{item}</li>
+              <li key={`ol-item-${i}`} className="text-gray-600 dark:text-gray-300">{item}</li>
             ))}
           </ol>
         );
@@ -546,7 +546,7 @@ function renderContent(content: string) {
         elements.push(
           <ul key={`ul-${elements.length}`} className="list-disc list-inside space-y-2 my-4 ml-4">
             {currentList.map((item, i) => (
-              <li key={i} className="text-gray-600 dark:text-gray-300">{item}</li>
+              <li key={`ul-item-${i}`} className="text-gray-600 dark:text-gray-300">{item}</li>
             ))}
           </ul>
         );
@@ -568,7 +568,7 @@ function renderContent(content: string) {
     if (trimmedLine.startsWith('# ')) {
       flushList();
       elements.push(
-        <h1 key={index} className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+        <h1 key={`h1-${index}`} className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
           {trimmedLine.slice(2)}
         </h1>
       );
@@ -578,7 +578,7 @@ function renderContent(content: string) {
     if (trimmedLine.startsWith('## ')) {
       flushList();
       elements.push(
-        <h2 key={index} className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
+        <h2 key={`h2-${index}`} className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mt-8 mb-4">
           {trimmedLine.slice(3)}
         </h2>
       );
@@ -588,7 +588,7 @@ function renderContent(content: string) {
     if (trimmedLine.startsWith('### ')) {
       flushList();
       elements.push(
-        <h3 key={index} className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mt-6 mb-3">
+        <h3 key={`h3-${index}`} className="text-xl md:text-2xl font-semibold text-gray-900 dark:text-white mt-6 mb-3">
           {trimmedLine.slice(4)}
         </h3>
       );
@@ -626,7 +626,7 @@ function renderContent(content: string) {
 
     elements.push(
       <p
-        key={index}
+        key={`p-${index}`}
         className="text-gray-600 dark:text-gray-300 leading-relaxed my-4"
         dangerouslySetInnerHTML={{ __html: processedLine }}
       />
@@ -723,7 +723,7 @@ function TableOfContents({ content }: { content: string }) {
         <nav className="space-y-2">
           {headings.map((heading, index) => (
             <a
-              key={index}
+              key={`heading-${heading.level}-${index}`}
               href={`#${heading.id}`}
               className={`block text-sm text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors ${heading.level === 3 ? 'ml-4' : ''
                 }`}
@@ -953,7 +953,7 @@ export default async function BlogPostPage({
               <div className="flex items-center gap-2 flex-wrap">
                 <Tag className="h-4 w-4 text-gray-400" />
                 {post.tags.map(tag => (
-                  <Link key={tag} href={`/blog?tag=${encodeURIComponent(tag)}`}>
+                  <Link key={`tag-${tag}`} href={`/blog?tag=${encodeURIComponent(tag)}`}>
                     <Badge
                       variant="secondary"
                       className="bg-gray-100 hover:bg-purple-100 dark:bg-gray-800 dark:hover:bg-purple-900/50 transition-colors cursor-pointer"

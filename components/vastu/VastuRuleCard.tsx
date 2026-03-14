@@ -241,7 +241,7 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                   <p className="text-xs font-medium mb-2 text-muted-foreground">Conditions:</p>
                   <div className="space-y-2">
                     {rule.conditions.map((condition, idx) => (
-                      <div key={idx} className="text-sm bg-muted/50 p-2 rounded">
+                      <div key={`condition-${idx}`} className="text-sm bg-muted/50 p-2 rounded">
                         <div className="font-medium capitalize">{condition.type}</div>
                         {condition.element && (
                           <div className="text-xs text-muted-foreground">Element: {condition.element}</div>
@@ -373,7 +373,7 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                   <p className="text-xs font-medium text-muted-foreground mb-2">Applicable Rooms:</p>
                   <div className="flex flex-wrap gap-1">
                     {rule.applicableRoomTypes.map((room, idx) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={`room-${idx}`} variant="secondary" className="text-xs">
                         {room}
                       </Badge>
                     ))}
@@ -387,7 +387,7 @@ ${rule.isTraditional ? "Traditional Vastu Rule" : "Modern Adaptation"}
                   <p className="text-xs font-medium text-muted-foreground mb-2">Property Types:</p>
                   <div className="flex flex-wrap gap-1">
                     {rule.applicablePropertyTypes.map((type, idx) => (
-                      <Badge key={idx} variant="outline" className="text-xs">
+                      <Badge key={`property-${idx}`} variant="outline" className="text-xs">
                         {type}
                       </Badge>
                     ))}

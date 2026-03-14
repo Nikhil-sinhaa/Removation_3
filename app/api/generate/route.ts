@@ -5,7 +5,7 @@ import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { Render } from "@/lib/db/models/Render";
 import { Project } from "@/lib/db/models/Project";
-import { generateWithReplicate, getModelForMode } from "@/lib/ai/replicate";
+import { generateWithComfyUI, getModelForMode } from "@/lib/ai/comfyui";
 import { generatePrompt } from "@/lib/ai/prompts";
 import { analyzeImageWithGroq } from "@/lib/ai/groq";
 import { z } from "zod";
@@ -121,19 +121,51 @@ export async function POST(req: NextRequest) {
       
       renderIds.push(render._id.toString());
 
-      // Generate with Replicate
-      const generatePromise = generateWithReplicate({
-        model,
-        input: {
-          image: validatedData.imageUrl,
-          prompt,
-          negative_prompt: "blurry, distorted, low quality, watermark, text, unrealistic, cartoon, anime, illustration, oversaturated",
+      // Generate with ComfyUI
+      const generatePromise = generateWithComfyUI({
+        image: validatedData.imageUrl,
+        prompt,
+        negative_prompt: "blurry, distorted, low quality, watermark, text, unrealistic, cartoon, anime, illustration, oversaturated",
+        mode: validatedData.mode,
+        style: validatedData.style,
+        roomType: validatedData.roomType,
+        settings: {
+          creativity: validatedData.settings?.creativity || 50,
+          preserveLayout: validatedData.settings?.preserveLayout,
+          enhanceQuality: validatedData.settings?.enhanceQuality,
+          colorScheme: validatedData.settings?.colorScheme,
+          materials: validatedData.settings?.materials,
+          lighting: validatedData.settings?.lighting,
+          timeOfDay: validatedData.settings?.timeOfDay,
           num_inference_steps: validatedData.mode === 'enhance' ? 50 : 30,
           guidance_scale: 7 + (validatedData.settings?.creativity || 50) / 20,
-          seed: Math.floor(Math.random() * 2147483647) + i * 1000,
           strength: validatedData.settings?.preserveLayout ? 0.6 : 0.85,
         },
-        renderId: render._id.toString(),
+        seed: Math.floor(Math.random() * 2147483647) + i * 1000,
+      }).then(async (result) => {
+        // Update render with completed result
+        await Render.findByIdAndUpdate(render._id, {
+          status: 'completed',
+          outputImage: result.output,
+          processingTime: result.processingTime,
+          completedAt: new Date(),
+          workflow: result.workflow
+        });
+        
+        return {
+          renderId: render._id.toString(),
+          output: result.output,
+          processingTime: result.processingTime
+        };
+      }).catch(async (error) => {
+        // Update render with error
+        await Render.findByIdAndUpdate(render._id, {
+          status: 'failed',
+          error: error.message,
+          completedAt: new Date()
+        });
+        
+        throw error;
       });
 
       renderPromises.push(generatePromise);

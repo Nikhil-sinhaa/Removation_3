@@ -1044,7 +1044,7 @@ export default function EditorPage() {
             ) : (
               /* Image Display */
               <div className="absolute inset-0 flex items-center justify-center p-8">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="sync">
                   {viewMode === 'single' && (
                     <motion.div
                       key="single"
@@ -1388,7 +1388,7 @@ export default function EditorPage() {
                   <h4 className="text-sm font-medium">Suggestions</h4>
                   {vastuIssues.map((issue, index) => (
                     <Card
-                      key={index}
+                      key={`vastu-issue-${index}`}
                       className={cn(
                         'border-l-4',
                         issue.severity === 'critical'
@@ -1522,7 +1522,7 @@ export default function EditorPage() {
                     <div className="space-y-4">
                       <h4 className="text-sm font-medium">Materials Breakdown</h4>
                       {costBreakdown.materials.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center">
+                        <div key={`material-${index}`} className="flex justify-between items-center">
                           <span className="text-sm">{item.name}</span>
                           <span className="text-sm font-medium">
                             {selectedCurrency === 'INR' ? '₹' : '$'}

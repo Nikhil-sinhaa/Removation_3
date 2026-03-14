@@ -45,7 +45,7 @@ export function Providers({ children }: ProvidersProps) {
         storageKey="removation-theme"
       >
         <TooltipProvider delayDuration={300}>
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             {children}
           </AnimatePresence>
 

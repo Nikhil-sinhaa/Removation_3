@@ -110,6 +110,7 @@ export default function SignInPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 className="w-full"
+                autoComplete="email"
               />
             </div>
             
@@ -127,6 +128,7 @@ export default function SignInPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="w-full"
+                autoComplete="current-password"
               />
             </div>
 

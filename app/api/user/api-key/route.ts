@@ -1,6 +1,5 @@
 // app/api/user/api-key/route.ts
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 import { randomBytes, createHash } from "crypto";
@@ -12,7 +11,8 @@ import { randomBytes, createHash } from "crypto";
  */
 export async function POST() {
     try {
-        const { userId } = await auth();
+        // TESTING: Bypass auth for development
+        const userId = "test-user-123";
 
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });

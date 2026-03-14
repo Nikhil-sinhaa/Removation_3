@@ -80,7 +80,7 @@ const AvatarGroup = React.forwardRef<HTMLDivElement, AvatarGroupProps>(
       >
         {visibleChildren.map((child, index) => (
           <div
-            key={index}
+            key={`avatar-child-${index}`}
             className="relative ring-2 ring-zinc-950 rounded-full"
             style={{ zIndex: visibleChildren.length - index }}
           >

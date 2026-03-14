@@ -2,7 +2,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Sparkles,
   Bell,
+  Shield,
   Search,
   HelpCircle,
   Zap,
@@ -43,7 +44,10 @@ const sidebarNavigation = [
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Projects', href: '/projects', icon: FolderOpen },
-      { name: 'Editor', href: '/editor', icon: Wand2 },
+      { name: 'AI Design Studio', href: '/ai-design', icon: Wand2 },
+      { name: 'Master Design Studio', href: '/master-design', icon: Settings },
+      { name: 'Professional Design Studio', href: '/professional-design', icon: Shield },
+      { name: 'Editor', href: '/editor', icon: Palette },
       { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
       { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
       { name: 'Object Removal', href: '/remove-object', icon: Eraser },
@@ -66,13 +70,14 @@ const sidebarNavigation = [
 ];
 
 const quickActions = [
-  { name: 'Dream Room', icon: Sparkles, color: 'violet' },
-  { name: 'Visualize Color', icon: Palette, color: 'green' },
-  { name: 'Object Removal', icon: Eraser, color: 'orange' },
+  { name: 'Dream Room', icon: Sparkles, color: 'violet', href: '/dream-room' },
+  { name: 'Visualize Color', icon: Palette, color: 'green', href: '/color-visualizer' },
+  { name: 'Object Removal', icon: Eraser, color: 'orange', href: '/remove-object' },
 ];
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, isLoading: isLoaded } = useAuth();
   const isSignedIn = !!user;
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -163,6 +168,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 {quickActions.map((action) => (
                   <button
                     key={action.name}
+                    onClick={() => router.push(action.href)}
                     className={cn(
                       'flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200',
                       action.color === 'violet' && 'bg-violet-50 hover:bg-violet-100 text-violet-600',

@@ -234,7 +234,7 @@ export function NewProjectModal({
         </div>
 
         {/* Step content */}
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           {step === "type" && (
             <motion.div
               key="type"
@@ -305,7 +305,9 @@ export function NewProjectModal({
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="My Living Room Redesign"
-                  className="h-12"
+                  required
+                  className="w-full"
+                  autoComplete="off"
                 />
               </div>
 

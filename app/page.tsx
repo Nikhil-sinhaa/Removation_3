@@ -864,7 +864,7 @@ function HeroSection() {
 
             {/* Dynamic Style Text */}
             <motion.div variants={fadeInUp} className="mb-4 h-10">
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="sync">
                 <motion.p
                   key={currentStyle}
                   initial={{ opacity: 0, y: 20 }}
@@ -892,16 +892,15 @@ function HeroSection() {
               variants={fadeInUp}
               className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
             >
-              <Link href="/sign-up">
+              <Link href="/ai-design">
                 <Button
-                  size="lg"
-                  className="relative overflow-hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-lg px-8 py-6 rounded-xl shadow-2xl shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-300 group"
+                  className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg px-8 py-6 rounded-xl shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 group"
                 >
                   <span className="relative z-10 flex items-center">
-                    Start Designing Free
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    Try AI Design Studio
+                    <Zap className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
                 </Button>
               </Link>
               <Button
@@ -1696,7 +1695,7 @@ function IndianExclusiveSection() {
                 "Direction-based room optimization",
                 "Element balance analysis",
               ].map((feature, index) => (
-                <div key={index} className="flex items-center gap-3">
+                <div key={`vastu-feature-${index}`} className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-full bg-amber-500/20 flex items-center justify-center">
                     <Check className="w-4 h-4 text-amber-400" />
                   </div>
@@ -1753,7 +1752,7 @@ function IndianExclusiveSection() {
                 "Multiple quality tiers",
                 "Export PDF estimates",
               ].map((feature, index) => (
-                <div key={index} className="flex items-center gap-3">
+                <div key={`cost-feature-${index}`} className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
                     <Check className="w-4 h-4 text-green-400" />
                   </div>
@@ -1771,7 +1770,7 @@ function IndianExclusiveSection() {
                   { label: "Labor", value: "₹1,20,000" },
                   { label: "GST (18%)", value: "₹66,600" },
                 ].map((item, index) => (
-                  <div key={index} className="flex justify-between text-sm">
+                  <div key={`item-${index}`} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{item.label}</span>
                     <span className="text-white font-medium">{item.value}</span>
                   </div>
@@ -2136,7 +2135,7 @@ function TestimonialsSection() {
           transition={{ delay: 0.2 }}
           className="max-w-4xl mx-auto mb-12"
         >
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             <motion.div
               key={activeIndex}
               initial={{ opacity: 0, y: 20 }}
@@ -2180,7 +2179,7 @@ function TestimonialsSection() {
         <div className="flex items-center justify-center gap-2 mb-12">
           {testimonials.map((_, index) => (
             <button
-              key={index}
+              key={`testimonial-nav-${index}`}
               onClick={() => setActiveIndex(index)}
               className={cn(
                 "w-2 h-2 rounded-full transition-all duration-300",
@@ -2288,7 +2287,7 @@ function FAQSection() {
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <motion.div
-              key={index}
+              key={`faq-${index}`}
               initial={{ opacity: 0, y: 10 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: index * 0.1 }}

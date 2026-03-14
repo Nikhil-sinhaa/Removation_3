@@ -191,6 +191,16 @@ const sampleProjects: Project[] = [
 
 const quickActions = [
   {
+    title: 'AI Design Studio',
+    description: 'Transform rooms with RTX 4060',
+    icon: Zap,
+    gradient: 'from-blue-500 to-purple-600',
+    bgGradient: 'from-blue-500/10 to-purple-600/10',
+    href: '/ai-design',
+    badge: 'Zero Cost',
+    badgeColor: 'bg-blue-100 text-blue-700',
+  },
+  {
     title: 'Redesign Room',
     description: 'Transform any room with AI',
     icon: Wand2,
@@ -721,6 +731,92 @@ export default function DashboardPage() {
           </div>
         </motion.div>
 
+        {/* AI Design Studio - Featured Section */}
+        <motion.div variants={itemVariants}>
+          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-8 border border-blue-100">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">🎨 AI Design Studio</h2>
+                <p className="text-gray-600">Transform your rooms with AI powered by your RTX 4060</p>
+              </div>
+              <Link
+                href="/ai-design"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Launch Studio
+              </Link>
+            </div>
+
+            {/* AI Features Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-white rounded-xl p-4 border border-white/50">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Zero Cost</h3>
+                    <p className="text-sm text-gray-600">Powered by your RTX 4060</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-4 border border-white/50">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">25 Seconds</h3>
+                    <p className="text-sm text-gray-600">Instant AI generation</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white rounded-xl p-4 border border-white/50">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Star className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Professional</h3>
+                    <p className="text-sm text-gray-600">SDXL quality results</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Link href="/ai-design">
+                <Button variant="outline" className="w-full justify-start bg-white/80 hover:bg-white border-white/50">
+                  <Home className="w-4 h-4 mr-2" />
+                  Living Room
+                </Button>
+              </Link>
+              <Link href="/ai-design">
+                <Button variant="outline" className="w-full justify-start bg-white/80 hover:bg-white border-white/50">
+                  <Bed className="w-4 h-4 mr-2" />
+                  Bedroom
+                </Button>
+              </Link>
+              <Link href="/ai-design">
+                <Button variant="outline" className="w-full justify-start bg-white/80 hover:bg-white border-white/50">
+                  <ChefHat className="w-4 h-4 mr-2" />
+                  Kitchen
+                </Button>
+              </Link>
+              <Link href="/ai-design">
+                <Button variant="outline" className="w-full justify-start bg-white/80 hover:bg-white border-white/50">
+                  <Bath className="w-4 h-4 mr-2" />
+                  Bathroom
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </motion.div>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Projects - Takes 2 columns */}
@@ -904,6 +1000,144 @@ export default function DashboardPage() {
 
           {/* Right Sidebar */}
           <motion.div variants={itemVariants} className="space-y-6">
+            {/* AI Design Studio Widget */}
+            <Card className="border-gradient-to-r from-blue-100 to-purple-100 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                      <Zap className="w-4 h-4 text-white" />
+                    </div>
+                    <CardTitle className="text-lg">AI Design Studio</CardTitle>
+                  </div>
+                  <Link href="/ai-design">
+                    <Button size="sm" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500">
+                      Launch
+                    </Button>
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <div className="w-full h-32 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl mb-3 flex items-center justify-center">
+                    <div className="text-center">
+                      <Zap className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                      <p className="text-sm font-medium text-gray-700">RTX 4060 Ready</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <div className="font-bold text-blue-600">$0</div>
+                      <div className="text-gray-500">per design</div>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <div className="font-bold text-purple-600">25s</div>
+                      <div className="text-gray-500">generation</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Link href="/ai-design">
+                    <Button variant="outline" size="sm" className="w-full justify-start bg-white/80 hover:bg-white border-white/50">
+                      <Wand2 className="w-4 h-4 mr-2" />
+                      Quick Design
+                    </Button>
+                  </Link>
+                  <Link href="/ai-design">
+                    <Button variant="outline" size="sm" className="w-full justify-start bg-white/80 hover:bg-white border-white/50">
+                      <Palette className="w-4 h-4 mr-2" />
+                      Browse Styles
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI Generated Designs Showcase */}
+            <Card className="border-gray-100">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-purple-500" />
+                    AI Designs
+                  </CardTitle>
+                  <Link href="/ai-design" className="text-sm text-purple-600 hover:text-purple-700">
+                    View all
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Sample AI generated designs */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="relative group cursor-pointer">
+                    <div className="aspect-square bg-gradient-to-br from-blue-200 to-purple-200 rounded-lg overflow-hidden">
+                      <img src="/images/hero-after.jpg" alt="Modern Living Room" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 rounded-lg flex items-center justify-center">
+                      <Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs font-medium text-gray-700">Modern</p>
+                      <p className="text-xs text-gray-500">Living Room</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group cursor-pointer">
+                    <div className="aspect-square bg-gradient-to-br from-green-200 to-emerald-200 rounded-lg overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-green-300 to-emerald-300 rounded-lg flex items-center justify-center">
+                        <Bed className="w-8 h-8 text-green-600" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 rounded-lg flex items-center justify-center">
+                      <Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs font-medium text-gray-700">Scandi</p>
+                      <p className="text-xs text-gray-500">Bedroom</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group cursor-pointer">
+                    <div className="aspect-square bg-gradient-to-br from-orange-200 to-amber-200 rounded-lg overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-orange-300 to-amber-300 rounded-lg flex items-center justify-center">
+                        <ChefHat className="w-8 h-8 text-orange-600" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 rounded-lg flex items-center justify-center">
+                      <Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs font-medium text-gray-700">Industrial</p>
+                      <p className="text-xs text-gray-500">Kitchen</p>
+                    </div>
+                  </div>
+                  
+                  <div className="relative group cursor-pointer">
+                    <div className="aspect-square bg-gradient-to-br from-pink-200 to-rose-200 rounded-lg overflow-hidden">
+                      <div className="w-full h-full bg-gradient-to-br from-pink-300 to-rose-300 rounded-lg flex items-center justify-center">
+                        <Bath className="w-8 h-8 text-pink-600" />
+                      </div>
+                    </div>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-300 rounded-lg flex items-center justify-center">
+                      <Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                    <div className="mt-1">
+                      <p className="text-xs font-medium text-gray-700">Boho</p>
+                      <p className="text-xs text-gray-500">Bathroom</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <Link href="/ai-design">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500">
+                    <Zap className="w-4 h-4 mr-2" />
+                    Create Your Design
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
             {/* Activity Feed */}
             <Card className="border-gray-100">
               <CardHeader className="pb-3">
@@ -955,7 +1189,7 @@ export default function DashboardPage() {
               <CardContent className="space-y-3">
                 {tips.map((tip, index) => (
                   <Link
-                    key={index}
+                    key={`tip-${index}`}
                     href={tip.href}
                     className="block p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
                   >
@@ -1184,6 +1418,30 @@ export default function DashboardPage() {
           </div>
         </motion.div>
       </motion.div>
-    </TooltipProvider>
+
+        {/* Floating AI Design Action Button */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 1.5, type: "spring", stiffness: 300, damping: 20 }}
+          className="fixed bottom-8 right-8 z-50"
+        >
+          <Link href="/ai-design">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-full shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 group relative overflow-hidden"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
+              <div className="relative flex items-center gap-3">
+                <div className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-white" />
+                </div>
+                <span className="font-medium">AI Design</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Button>
+          </Link>
+        </motion.div>
+      </TooltipProvider>
   );
 }

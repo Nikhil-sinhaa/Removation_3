@@ -200,7 +200,7 @@ export function ImageUploader({
 
   return (
     <div className={cn("w-full", className)}>
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         {previewUrl && !isUploading ? (
           <motion.div
             key="preview"

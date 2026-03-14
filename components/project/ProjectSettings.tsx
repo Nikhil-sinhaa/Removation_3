@@ -293,6 +293,8 @@ export function ProjectSettings({
                 handleChange();
               }}
               placeholder="Enter project name"
+              className="w-full"
+              autoComplete="off"
             />
           </div>
 

@@ -1,6 +1,5 @@
 import { fal } from "@fal-ai/client";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
 import { Render } from "@/lib/db/models/Render";
@@ -21,7 +20,8 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        const { userId } = await auth();
+        // TESTING: Bypass auth for development
+        const userId = "test-user-123";
 
         if (!userId) {
             return NextResponse.json(

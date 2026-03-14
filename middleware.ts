@@ -24,6 +24,11 @@ const publicPaths = [
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // TESTING: Skip auth check in development
+  if (process.env.NODE_ENV === 'development') {
+    return NextResponse.next();
+  }
+
   // Check if route is public
   const isPublicRoute = publicPaths.some(path => 
     pathname === path || pathname.startsWith(`${path}/`)

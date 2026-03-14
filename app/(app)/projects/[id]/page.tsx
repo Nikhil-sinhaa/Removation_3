@@ -785,7 +785,7 @@ export default function ProjectDetailPage() {
 
             {/* Renders Tab */}
             <TabsContent value="renders" className="mt-0">
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="sync">
                 {filteredRenders.length === 0 ? (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -1373,7 +1373,7 @@ function VastuAnalysisPanel({
           <ul className="space-y-3">
             {analysis.issues.map((issue, index) => (
               <li
-                key={index}
+                key={`issue-${index}`}
                 className="flex items-start gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20"
               >
                 <X className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
@@ -1396,7 +1396,7 @@ function VastuAnalysisPanel({
           <ul className="space-y-3">
             {analysis.suggestions.map((suggestion, index) => (
               <li
-                key={index}
+                key={`suggestion-${index}`}
                 className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20"
               >
                 <Zap className="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
@@ -1553,7 +1553,7 @@ function CostEstimatePanel({
 
                       acc.paths.push(
                         <path
-                          key={index}
+                          key={`path-${index}`}
                           d={`M 96 96 L ${x1} ${y1} A 80 80 0 ${largeArc} 1 ${x2} ${y2} Z`}
                           className={category.color.replace("bg-", "fill-")}
                         />

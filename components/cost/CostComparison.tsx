@@ -454,7 +454,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
           </div>
 
           {/* Selected City Comparison Detail */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             {selectedCompareCity && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}

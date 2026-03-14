@@ -1750,7 +1750,7 @@ export default function ProjectEditorPage() {
             ) : (
               /* Image Display based on view mode */
               <div className="absolute inset-0 flex items-center justify-center p-8 overflow-auto">
-                <AnimatePresence mode="wait">
+                <AnimatePresence mode="sync">
                   {viewMode === 'single' && (
                     <motion.div
                       key="single-view"
@@ -2088,7 +2088,7 @@ export default function ProjectEditorPage() {
                       </h4>
                       {vastuIssues.map((issue, index) => (
                         <Card
-                          key={index}
+                          key={`vastu-issue-${index}`}
                           className={cn(
                             'border-l-4',
                             issue.severity === 'critical'
@@ -2241,7 +2241,7 @@ export default function ProjectEditorPage() {
                     <div className="space-y-3 mb-4">
                       <h4 className="text-sm font-medium">Materials</h4>
                       {costBreakdown.materials.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center text-sm">
+                        <div key={`material-${index}`} className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">{item.name}</span>
                           <span className="font-medium">
                             {selectedCurrency === 'INR' ? '₹' : '$'}
@@ -2257,7 +2257,7 @@ export default function ProjectEditorPage() {
                     <div className="space-y-3 mb-4">
                       <h4 className="text-sm font-medium">Labor</h4>
                       {costBreakdown.labor.map((item, index) => (
-                        <div key={index} className="flex justify-between items-center text-sm">
+                        <div key={`labor-${index}`} className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">
                             {item.type}
                             {item.days && <span className="text-xs"> ({item.days} days)</span>}

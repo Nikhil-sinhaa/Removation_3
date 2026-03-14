@@ -1,6 +1,5 @@
 // app/api/user/export/route.ts
 import { NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 import Render from "@/lib/db/models/Render";
@@ -13,8 +12,14 @@ import Project from "@/lib/db/models/Project";
  */
 export async function POST() {
     try {
-        const { userId } = await auth();
-        const clerkUser = await currentUser();
+        // TESTING: Bypass auth for development
+        const userId = "test-user-123";
+        const clerkUser = { 
+            firstName: "Test", 
+            lastName: "User", 
+            emailAddresses: [{ emailAddress: "test@example.com" }],
+            createdAt: new Date()
+        };
 
         if (!userId || !clerkUser) {
             return new NextResponse("Unauthorized", { status: 401 });

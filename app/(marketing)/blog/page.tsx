@@ -667,7 +667,7 @@ export default function BlogPage() {
           </motion.div>
 
           {/* Posts Grid */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             {paginatedPosts.length > 0 ? (
               <motion.div
                 key={`${activeCategory}-${currentPage}`}

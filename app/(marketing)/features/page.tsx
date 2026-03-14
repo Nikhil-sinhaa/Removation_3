@@ -1029,7 +1029,7 @@ export default function FeaturesPage() {
             </p>
           </motion.div>
 
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             <motion.div
               key={activeCategory}
               initial="hidden"

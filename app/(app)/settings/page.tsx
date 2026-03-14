@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from '@/hooks/useAuth';
-// TODO: Remnant Clerk imports: useUser, useClerk
 import { motion, AnimatePresence } from "framer-motion";
 import {
   User,
@@ -146,12 +145,12 @@ const plans = [
 ];
 
 export default function SettingsPage() {
-  const { user, isLoading: isLoaded } = useAuth();
+  const { user, isLoading: isLoaded, logout } = useAuth();
   const isSignedIn = !!user;
-  const { signOut } = useClerk();
   const { language, setLanguage, t } = useLanguage();
 
   const [activeSection, setActiveSection] = useState("profile");
+  const [sectionRenderKey, setSectionRenderKey] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
 
@@ -205,21 +204,12 @@ export default function SettingsPage() {
       setProfile({
         firstName: user.firstName || "",
         lastName: user.lastName || "",
-        email: user.primaryEmailAddress?.emailAddress || "",
-        phone: user.primaryPhoneNumber?.phoneNumber || "",
-        company: (user.publicMetadata?.company as string) || "",
-        city: (user.publicMetadata?.city as string) || "",
-        country: (user.publicMetadata?.country as string) || "India",
+        email: user.email || "",
+        phone: "",
+        company: "",
+        city: "",
+        country: "India",
       });
-
-      // Load saved preferences from Clerk public metadata
-      const savedPrefs = user.publicMetadata?.preferences as any;
-      if (savedPrefs) {
-        setPreferences((prev) => ({ ...prev, ...savedPrefs }));
-        if (savedPrefs.notifications) {
-          setNotifications((prev) => ({ ...prev, ...savedPrefs.notifications }));
-        }
-      }
     }
 
     // Fetch real subscription data
@@ -249,19 +239,16 @@ export default function SettingsPage() {
   const handleProfileUpdate = async () => {
     setIsSaving(true);
     try {
-      await user?.update({
-        firstName: profile.firstName,
-        lastName: profile.lastName,
+      const response = await fetch("/api/user/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+        }),
       });
 
-      // Update public metadata
-      // await user?.update({
-      //   publicMetadata: {
-      //     company: profile.company,
-      //     city: profile.city,
-      //     country: profile.country,
-      //   },
-      // });
+      if (!response.ok) throw new Error("Failed to update profile");
 
       toast({
         title: language === "hi" ? "प्रोफ़ाइल अपडेट हो गई" : "Profile Updated",
@@ -429,7 +416,10 @@ export default function SettingsPage() {
               {settingsSections.map((section) => (
                 <button
                   key={section.id}
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={() => {
+                    setSectionRenderKey(prev => prev + 1);
+                    setActiveSection(section.id);
+                  }}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all",
                     activeSection === section.id
@@ -451,7 +441,7 @@ export default function SettingsPage() {
 
               {/* Sign Out Button */}
               <button
-                onClick={() => signOut()}
+                onClick={() => logout()}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
               >
                 <LogOut className="h-5 w-5" />
@@ -464,9 +454,9 @@ export default function SettingsPage() {
 
           {/* Main Content */}
           <main className="flex-1 max-w-3xl">
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="sync">
               <motion.div
-                key={activeSection}
+                key={`${activeSection}-${sectionRenderKey}`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
@@ -548,7 +538,8 @@ export default function SettingsPage() {
                           type="email"
                           value={profile.email}
                           disabled
-                          className="bg-muted"
+                          className="w-full"
+                          autoComplete="email"
                         />
                         <p className="text-xs text-muted-foreground">
                           {language === "hi"

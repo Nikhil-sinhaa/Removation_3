@@ -463,7 +463,7 @@ export function MaterialSelector({
                           <h4 className="text-xs font-medium mb-1">Advantages</h4>
                           <ul className="text-xs space-y-1">
                             {material.advantages.slice(0, 3).map((adv, idx) => (
-                              <li key={idx} className="flex items-start gap-1">
+                              <li key={`advantage-${idx}`} className="flex items-start gap-1">
                                 <Check className="h-3 w-3 text-green-500 mt-0.5 flex-shrink-0" />
                                 <span>{adv}</span>
                               </li>

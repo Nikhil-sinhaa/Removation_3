@@ -554,19 +554,10 @@ if (includeLabor) {
                   placeholder={t("Enter email address", "ईमेल पता दर्ज करें")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full"
+                  autoComplete="email"
                 />
-              </div>
-
-              <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                <p className="text-sm font-medium">
-                  {t("Email will include:", "ईमेल में शामिल होगा:")}
-                </p>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  <li>• {t("PDF cost estimate report", "PDF लागत अनुमान रिपोर्ट")}</li>
-                  <li>• {t("Design render image", "डिज़ाइन रेंडर छवि")}</li>
-                  <li>• {t("Material breakdown", "सामग्री विवरण")}</li>
-                  <li>• {t("Contractor contact link", "ठेकेदार संपर्क लिंक")}</li>
-                </ul>
               </div>
 
               <Button 

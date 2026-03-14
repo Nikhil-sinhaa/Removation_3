@@ -929,7 +929,7 @@ export default function PricingPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {TESTIMONIALS.map((testimonial, index) => (
                 <motion.div
-                  key={index}
+                  key={`testimonial-${index}`}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -988,7 +988,7 @@ export default function PricingPage() {
               <Accordion type="single" collapsible className="w-full">
                 {FAQS.map((faq, index) => (
                   <motion.div
-                    key={index}
+                    key={`faq-${index}`}
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
@@ -1115,7 +1115,7 @@ export default function PricingPage() {
                   { credits: 500, price: { usd: 70, inr: 5799 }, bonus: 50 },
                 ].map((pack, index) => (
                   <Card
-                    key={index}
+                    key={`pack-${index}`}
                     className={cn(
                       'relative cursor-pointer transition-all hover:shadow-lg',
                       pack.popular && 'border-primary'

@@ -238,7 +238,9 @@ export function CheckoutModal({
                     placeholder={isHindi ? 'आपका नाम' : 'Your full name'}
                     value={billingDetails.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    className="pl-10"
+                    required
+                    className="w-full"
+                    autoComplete="name"
                   />
                 </div>
               </div>
@@ -253,6 +255,9 @@ export function CheckoutModal({
                   placeholder="your@email.com"
                   value={billingDetails.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
+                  required
+                  className="w-full"
+                  autoComplete="email"
                 />
               </div>
 
@@ -558,7 +563,7 @@ export function CheckoutModal({
           </DialogTitle>
         </DialogHeader>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="sync">
           {renderStepContent()}
         </AnimatePresence>
 

@@ -7,11 +7,16 @@ export interface IRender {
     projectId?: string;
 
     // Input/Output
-    inputImage: string;
-    outputImage?: string;
+    inputImage: string; // Local file path or URL
+    outputImage?: string; // Local file path to generated image
     resultUrl?: string; // Added for webhook compatibility
     outputUrls?: string[]; // Added for multiple outputs
     maskImage?: string;
+    
+    // ComfyUI specific fields
+    originalImagePath?: string; // Original uploaded file path
+    generatedImagePath?: string; // Local path to generated image
+    promptId?: string; // ComfyUI prompt ID for tracking
 
     // Render configuration
     mode: 'redesign' | 'beautify' | 'creative' | 'furnish' | 'empty' | 'outdoor' | 'sketch' | 'enhance' | 'fill_room' | 'inpaint' | 'remove_object' | 'replace' | 'sketch_to_render';
@@ -45,6 +50,11 @@ const RenderSchema = new Schema<IRender>({
     resultUrl: String,
     outputUrls: [String],
     maskImage: String,
+    
+    // ComfyUI specific fields
+    originalImagePath: String,
+    generatedImagePath: String,
+    promptId: { type: String, index: true },
 
     mode: {
         type: String,

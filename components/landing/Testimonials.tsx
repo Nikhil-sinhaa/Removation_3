@@ -127,7 +127,7 @@ export function Testimonials() {
 
         {/* Main Testimonial Carousel */}
         <div className="max-w-4xl mx-auto">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="sync">
             <motion.div
               key={activeIndex}
               initial={{ opacity: 0, y: 20 }}

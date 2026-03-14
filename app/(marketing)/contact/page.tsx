@@ -361,6 +361,7 @@ const ContactForm = () => {
             onChange={(e) => handleChange("name", e.target.value)}
             required
             className="bg-neutral-800 border-neutral-700 focus:border-violet-500"
+            autoComplete="name"
           />
         </div>
         <div className="space-y-2">
@@ -375,6 +376,7 @@ const ContactForm = () => {
             onChange={(e) => handleChange("email", e.target.value)}
             required
             className="bg-neutral-800 border-neutral-700 focus:border-violet-500"
+            autoComplete="email"
           />
         </div>
       </div>
@@ -864,7 +866,7 @@ export default function ContactPage() {
             <Accordion type="single" collapsible className="space-y-4">
               {faqs.map((faq, index) => (
                 <AccordionItem
-                  key={index}
+                  key={`faq-${index}`}
                   value={`faq-${index}`}
                   className="border border-neutral-800 rounded-lg bg-neutral-900/50 backdrop-blur-sm px-6 data-[state=open]:border-violet-500/50"
                 >

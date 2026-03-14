@@ -375,7 +375,7 @@ export function ProjectHeader({
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {project.collaborators.slice(0, 3).map((collaborator, index) => (
-                    <Avatar key={index} className="w-8 h-8 border-2 border-white dark:border-gray-900">
+                    <Avatar key={`collaborator-${index}`} className="w-8 h-8 border-2 border-white dark:border-gray-900">
                       <AvatarImage src={collaborator.avatar} />
                       <AvatarFallback>{collaborator.name.charAt(0)}</AvatarFallback>
                     </Avatar>

@@ -1114,7 +1114,7 @@ export function ImagePreview({
           <div className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-1.5">
             {galleryImages.map((_, idx) => (
               <div
-                key={idx}
+                key={`gallery-nav-${idx}`}
                 className={cn(
                   "w-2 h-2 rounded-full transition-all duration-200",
                   idx === currentIndex

@@ -62,11 +62,20 @@ const nextConfig = {
       },
     ];
   },
-  webpack: (config) => {
+  webpack: (config, { dev, isServer }) => {
     config.externals.push({
       'utf-8-validate': 'commonjs utf-8-validate',
       bufferutil: 'commonjs bufferutil',
     });
+    
+    // Fix SourceMap error with unsupported URL field
+    // Use 'cheap-module-source-map' for dev to avoid Turbopack issues
+    if (dev && !isServer) {
+      config.devtool = 'cheap-module-source-map';
+    } else if (!dev) {
+      config.devtool = 'source-map';
+    }
+    
     return config;
   },
 };

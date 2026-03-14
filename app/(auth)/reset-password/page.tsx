@@ -95,6 +95,8 @@ function ResetPasswordForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full"
+              autoComplete="new-password"
             />
           </div>
 
@@ -106,6 +108,8 @@ function ResetPasswordForm() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              className="w-full"
+              autoComplete="new-password"
             />
           </div>
 

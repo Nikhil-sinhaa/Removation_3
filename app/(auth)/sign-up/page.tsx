@@ -90,6 +90,8 @@ export default function SignUpPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="w-full"
+              autoComplete="email"
             />
           </div>
 
@@ -101,6 +103,8 @@ export default function SignUpPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full"
+              autoComplete="new-password"
             />
           </div>
 
