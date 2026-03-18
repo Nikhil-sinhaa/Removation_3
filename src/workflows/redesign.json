@@ -22,7 +22,7 @@
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": ["2", 1],
-      "text": "blurry, low quality, distorted, unrealistic, extra furniture, text, watermark, deformed walls, cartoon"
+      "text": "{{NEGATIVE_PROMPT}}"
     }
   },
   "5": {
@@ -39,12 +39,12 @@
       "positive": ["3", 0],
       "negative": ["4", 0],
       "latent_image": ["5", 0],
-      "seed": {{SEED}},
+      "seed": "{{SEED}}",
       "steps": 20,
       "cfg": 7,
       "sampler_name": "dpmpp_2m",
       "scheduler": "karras",
-      "denoise": 0.75
+      "denoise": "{{DENOISE}}"
     }
   },
   "7": {
