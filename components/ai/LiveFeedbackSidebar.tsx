@@ -83,7 +83,7 @@ export function LiveFeedbackSidebar({
       }
     });
 
-    newSocket.on('comfy_executed', (data: ExecutedEvent) => {
+    newSocket.on('comfy:done', (data: ExecutedEvent) => {
       console.log('✅ Execution completed:', data);
       setLastExecuted(data);
       setCurrentProgress(null);

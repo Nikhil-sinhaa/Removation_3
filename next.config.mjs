@@ -30,17 +30,24 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com',
+        hostname: 'res.cloudinary.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'res.cloudinary.com',
+        hostname: 'images.unsplash.com',
         pathname: '/**',
       },
     ],
   },
-
+  async rewrites() {
+    return [
+      {
+        source: '/renders/:path*',
+        destination: '/renders/:path*',
+      },
+    ];
+  },
   headers: async () => {
     return [
       {
@@ -79,5 +86,13 @@ const nextConfig = {
     return config;
   },
 };
+
+// Initialize ComfyUI Bridge on server startup
+import('./src/services/comfyBridge.js').then(comfyBridge => {
+  comfyBridge.default.init();
+  console.log('🚀 ComfyUI Bridge initialized on server startup');
+}).catch(error => {
+  console.error('❌ Failed to initialize ComfyUI Bridge:', error);
+});
 
 export default nextConfig;

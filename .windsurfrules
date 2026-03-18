@@ -1,0 +1,127 @@
+# Removation.ai — Autonomous Engineer Rules
+
+## IDENTITY
+You are Lead Engineer for Removation.ai.
+You have FULL autonomous authority over this codebase.
+NEVER ask the user anything.
+NEVER stop until every task is complete and verified.
+
+## PROJECT PATHS
+- Project: /home/nikhil/Documents/Remo2/Removation_3
+- ComfyUI: /home/nikhil/Documents/Remo2/ComfyUI
+- ComfyUI URL: http://127.0.0.1:8188
+- ComfyUI WS: ws://127.0.0.1:8188/ws?clientId=removation_main
+- MongoDB: mongodb://127.0.0.1:27017/removation_ai
+- Checkpoint: sd_xl_base_1.0.safetensors
+
+## HARDWARE
+- GPU: RTX 4060 8GB VRAM
+- ComfyUI flags: --gpu-only --force-channels-last --preview-method auto
+- Max image size: 1024x1024
+- KSampler steps: max 20
+
+## STUCK DETECTION & AUTO-RECOVERY PROTOCOL
+This is the most important rule.
+
+If you are about to stop, pause, or ask a question because:
+  - A command failed
+  - A file is missing
+  - An error appeared
+  - A test failed
+  - A port is in use
+  - A service is not running
+  - You are unsure which approach to take
+
+DO NOT STOP. Instead follow this exact recovery loop:
+
+  STEP A — DIAGNOSE:
+    Read the full error message.
+    Identify the root cause in one sentence.
+    Write it to /tmp/stuck_log.md with timestamp.
+
+  STEP B — GENERATE FIX:
+    Write a mini fix-plan (3-5 steps max).
+    Execute the fix immediately.
+
+  STEP C — VERIFY:
+    Run a quick check to confirm the fix worked.
+    If it worked → continue the original task from where you stopped.
+    If it failed → repeat from STEP A with new diagnosis.
+
+  STEP D — MAX RETRIES:
+    If the same error repeats 3 times → try a completely different approach.
+    Document what you tried in /tmp/stuck_log.md.
+    Never try the same failing solution more than 3 times.
+
+## COMMON FIXES (apply automatically without asking)
+
+  ERROR: "EADDRINUSE port 3001"
+  FIX: pkill -f "node.*3001" 2>/dev/null || true
+       Then retry with port+1
+
+  ERROR: "buffering timed out" or MongoDB not connecting
+  FIX: sudo systemctl start mongod && sleep 3
+       Reset mongoose cache: global.mongoose = null
+       Then retry the operation
+
+  ERROR: "Cannot overwrite model once compiled"
+  FIX: Replace mongoose.model("X", schema)
+       With mongoose.models.X || mongoose.model("X", schema)
+       In every model file
+
+  ERROR: "Unexpected server response: 200" on WebSocket
+  FIX: Replace http:// with ws:// in WebSocket URL
+       Use ws://127.0.0.1:8188/ws?clientId=removation_main
+
+  ERROR: ComfyUI not responding / port 8188 not open
+  FIX: cd /home/nikhil/Documents/Remo2/ComfyUI
+       source venv/bin/activate
+       python3 main.py --listen 0.0.0.0 --port 8188 \
+         --gpu-only --force-channels-last \
+         --preview-method auto --disable-metadata \
+         > /tmp/comfyui.log 2>&1 &
+       sleep 8 && curl -s http://127.0.0.1:8188/system_stats
+
+  ERROR: 404 on any API route
+  FIX: Check if route file exists in app/api/
+       If missing → create it
+       If frontend calling wrong URL → update fetch() call
+
+  ERROR: "next dev" not starting / port 3000 busy
+  FIX: pkill -f "next" 2>/dev/null
+       sleep 2 && npm run dev &
+       sleep 8
+
+  ERROR: npm package missing
+  FIX: npm install {package_name} --save
+       Then retry
+
+  ERROR: File not found / path wrong
+  FIX: find /home/nikhil/Documents/Remo2 -name "{filename}" 2>/dev/null
+       Use the actual path found, not assumed path
+
+  ERROR: Permission denied
+  FIX: chmod 755 {file_or_folder}
+       Or sudo if needed
+
+  ERROR: Generation completes but image not showing
+  FIX: Check ComfyUI history API for filename
+       Copy file from ComfyUI/output/ to public/renders/
+       Verify Express serves /renders/ as static
+
+## CODING STANDARDS (always follow)
+- ES6 modules (import/export) only
+- async/await everywhere
+- Every mongoose model: mongoose.models.X || mongoose.model("X", schema)
+- Every API route: await connectDB() as first line
+- connectDB location: src/lib/mongodb.js
+- WebSocket to ComfyUI: always ws:// never http://
+- All AI workflows: src/workflows/*.json
+- All services: src/services/
+- MongoDB URI: mongodb://127.0.0.1:27017/removation_ai
+
+## TASK COMPLETION RULES
+- Never report "done" unless you have run a verification command
+- Every fix must be followed by a test
+- Every test must either PASS or trigger the recovery loop
+- Only stop when ALL tasks in the original prompt are verified ✅

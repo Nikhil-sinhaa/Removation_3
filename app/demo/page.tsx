@@ -74,7 +74,7 @@ export default function DemoPage() {
 
     const checkStatus = async () => {
       try {
-        const response = await fetch(`/api/demo/generate?id=${id}`);
+        const response = await fetch(`/api/ai/redesign?id=${id}`);
         const data = await response.json();
 
         if (data.status === 'completed') {
@@ -129,7 +129,7 @@ export default function DemoPage() {
         settings,
       }));
 
-      const response = await fetch('/api/demo/generate', {
+      const response = await fetch('/api/ai/redesign', {
         method: 'POST',
         body: formData,
       });

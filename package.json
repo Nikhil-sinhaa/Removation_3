@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "AI-Powered Interior Design & Renovation Platform with Vastu Shastra",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbo",
     "next-dev": "next dev --turbo",

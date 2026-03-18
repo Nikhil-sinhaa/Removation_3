@@ -12,12 +12,9 @@ source venv/bin/activate
 python main.py \
     --listen 127.0.0.1 \
     --port 8188 \
-    --highvram \
-    --enable-xformers \
     --disable-metadata \
     --gpu-only \
     --force-channels-last \
-    --preview-method auto \
-    --preview-size 256
+    --preview-method auto
 
 echo "✅ ComfyUI started with RTX 4060 optimizations"

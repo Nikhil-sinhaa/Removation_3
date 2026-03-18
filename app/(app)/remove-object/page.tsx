@@ -116,7 +116,7 @@ export default function RemoveObjectPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
-        const response = await fetch(`/api/working/status/${promptId}`);
+        const response = await fetch(`/api/ai/status/${promptId}`);
         const data = await response.json();
         
         addLog(`📊 Status check ${attempt + 1}: ${data.status}`);

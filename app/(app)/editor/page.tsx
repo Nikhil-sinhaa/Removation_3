@@ -312,7 +312,7 @@ export default function EditorPage() {
     }, 1000);
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('/api/ai/redesign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -356,7 +356,7 @@ export default function EditorPage() {
           if (completedRenders.find(r => r._id === renderId)) continue;
 
           try {
-            const statusRes = await fetch(`/api/generate?renderId=${renderId}`);
+            const statusRes = await fetch(`/api/ai/redesign?renderId=${renderId}`);
             if (statusRes.ok) {
               const statusData = await statusRes.json();
               const render = statusData.render;

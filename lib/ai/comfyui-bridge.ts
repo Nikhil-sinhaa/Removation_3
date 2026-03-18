@@ -29,12 +29,14 @@ class ComfyUIBridge {
   private outputDir: string;
   private publicDir: string;
   private baseUrl: string;
+  private comfyInputDir: string;
 
   constructor() {
-    this.baseUrl = process.env.COMFYUI_URL || 'http://127.0.0.1:8188';
+    this.baseUrl = process.env.COMFY_URL || 'http://127.0.0.1:8188';
     this.uploadDir = path.join(process.cwd(), 'uploads');
-    this.outputDir = '/home/nikhil/Documents/Remo2/ComfyUI/output';
-    this.publicDir = path.join(process.cwd(), 'public', 'generated');
+    this.outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+    this.publicDir = path.join(process.cwd(), 'public', 'renders');
+    this.comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
 
     this.ensureDirectories();
   }
@@ -54,7 +56,7 @@ class ComfyUIBridge {
       const filename = `upload_${Date.now()}_${path.basename(imagePath)}`;
       
       // Save to ComfyUI input directory
-      const comfyUIInputDir = '/home/nikhil/Documents/Remo2/ComfyUI/input';
+      const comfyUIInputDir = this.comfyInputDir;
       if (!fs.existsSync(comfyUIInputDir)) {
         fs.mkdirSync(comfyUIInputDir, { recursive: true });
       }
@@ -246,8 +248,7 @@ class ComfyUIBridge {
   private async downloadImage(filename: string, userId: string): Promise<string> {
     try {
       // Read the image from ComfyUI output directory
-      const comfyUIOutputDir = '/home/nikhil/Documents/Remo2/ComfyUI/output';
-      const sourcePath = path.join(comfyUIOutputDir, filename);
+      const sourcePath = path.join(this.outputDir, filename);
       
       if (!fs.existsSync(sourcePath)) {
         throw new Error(`Generated image not found: ${filename}`);
@@ -261,7 +262,7 @@ class ComfyUIBridge {
       fs.writeFileSync(publicPath, imageBuffer);
       
       console.log(`🖼️ Image copied to public: ${publicFilename}`);
-      return `/generated/${publicFilename}`;
+      return `/renders/${publicFilename}`;
     } catch (error) {
       console.error('Failed to download generated image:', error);
       throw new Error('Failed to download generated image');

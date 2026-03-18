@@ -131,20 +131,20 @@ export default function AIDesignPage() {
       addLog("🚀 Sending request to ComfyUI...");
 
       // Use the working API (no auth required)
-      const response = await fetch('/api/working/generate', {
+      const response = await fetch('/api/ai/redesign', {
         method: 'POST',
         body: formData,
       });
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
+      if (response.ok && data.projectId) {
         addLog("✅ Generation started successfully!");
-        addLog(`🎯 Prompt ID: ${data.promptId}`);
-        addLog(`⏱️ Estimated time: ${data.estimatedTime} seconds`);
+        addLog(`🎯 Project ID: ${data.projectId}`);
+        addLog(`⏱️ Processing started...`);
 
         // Poll for completion
-        await pollForResult(data.promptId);
+        await pollForResult(data.projectId);
       } else {
         addLog(`❌ Error: ${data.error}`);
         setError(data.error || 'Generation failed');
@@ -157,31 +157,31 @@ export default function AIDesignPage() {
     }
   };
 
-  const pollForResult = async (promptId: string) => {
-    const maxAttempts = 180; // 6 minutes max (was 1 minute)
+  const pollForResult = async (projectId: string) => {
+    const maxAttempts = 180; // 6 minutes max
     let completed = false;
     
     for (let attempt = 0; attempt < maxAttempts && !completed; attempt++) {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
-        const response = await fetch(`/api/working/status/${promptId}`);
+        const response = await fetch(`/api/ai/redesign?projectId=${projectId}`);
         const data = await response.json();
         
         addLog(`📊 Status check ${attempt + 1}: ${data.status}`);
         
         if (data.status === 'completed') {
           addLog("🎉 Generation completed!");
-          addLog(`🖼️ Generated image: ${data.generatedImage}`);
+          addLog(`🖼️ Generated image: ${data.resultImage}`);
           setResult({
             ...data,
-            outputImage: data.generatedImage // Map generatedImage to outputImage for compatibility
+            outputImage: data.resultImage // Map resultImage to outputImage for compatibility
           });
           completed = true;
           break;
-        } else if (data.status === 'error') {
-          addLog(`❌ Generation failed: ${data.message}`);
-          setError(data.message || 'Generation failed');
+        } else if (data.status === 'failed') {
+          addLog(`❌ Generation failed: ${data.errorMessage}`);
+          setError(data.errorMessage || 'Generation failed');
           completed = true;
           break;
         }

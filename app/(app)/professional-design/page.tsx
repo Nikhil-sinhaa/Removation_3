@@ -111,7 +111,7 @@ export default function ProfessionalDesignPage() {
 
       addLog("🚀 Sending request to Professional API...");
 
-      const response = await fetch('/api/professional/generate', {
+      const response = await fetch('/api/ai/redesign', {
         method: 'POST',
         body: formData,
       });
@@ -151,7 +151,7 @@ export default function ProfessionalDesignPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
-        const response = await fetch(`/api/working/status/${promptId}`);
+        const response = await fetch(`/api/ai/status/${promptId}`);
         const data = await response.json();
         
         addLog(`📊 Status check ${attempt + 1}: ${data.status}`);

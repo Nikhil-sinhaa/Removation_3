@@ -76,7 +76,7 @@ export default function SimpleTestPage() {
 
       addLog("Sending request to ComfyUI...");
 
-      const response = await fetch('/api/simple-test/generate', {
+      const response = await fetch('/api/ai/redesign', {
         method: 'POST',
         body: formData,
       });
