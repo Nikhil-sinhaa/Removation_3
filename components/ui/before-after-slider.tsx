@@ -166,27 +166,26 @@ export function BeforeAfterSlider({
         {showLabels && (
           <AnimatePresence>
             {showOverlay && (
-              <>
-                {/* Before Label */}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm"
-                >
-                  {beforeLabel}
-                </motion.div>
-
-                {/* After Label */}
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm"
-                >
-                  {afterLabel}
-                </motion.div>
-              </>
+              <motion.div
+                key="before-label"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="absolute top-4 left-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm"
+              >
+                {beforeLabel}
+              </motion.div>
+            )}
+            {showOverlay && (
+              <motion.div
+                key="after-label"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm"
+              >
+                {afterLabel}
+              </motion.div>
             )}
           </AnimatePresence>
         )}

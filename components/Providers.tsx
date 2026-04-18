@@ -10,7 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { CrispChat } from './CrispChat';
 import { PWAPrompt } from './PWAPrompt';
-import { AnimatePresence } from 'framer-motion';
+
 
 // Create a client
 const queryClient = new QueryClient({
@@ -45,9 +45,7 @@ export function Providers({ children }: ProvidersProps) {
         storageKey="removation-theme"
       >
         <TooltipProvider delayDuration={300}>
-          <AnimatePresence mode="sync">
-            {children}
-          </AnimatePresence>
+          {children}
 
           {/* Global Components */}
           <Toaster />

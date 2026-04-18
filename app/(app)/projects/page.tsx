@@ -845,12 +845,25 @@ export default function ProjectsPage() {
 
   // Load projects
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setProjects(sampleProjects);
-      setIsLoading(false);
-    }, 800);
-
-    return () => clearTimeout(timer);
+    const fetchProjects = async () => {
+      try {
+        const res = await fetch('/api/ai/history');
+        if (res.ok) {
+          const data = await res.json();
+          setProjects(data);
+        } else {
+          console.error("Failed to fetch projects");
+          setProjects(sampleProjects); // Fallback
+        }
+      } catch (err) {
+        console.error("Error fetching projects", err);
+        setProjects(sampleProjects); // Fallback
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProjects();
   }, []);
 
   // Keyboard shortcuts

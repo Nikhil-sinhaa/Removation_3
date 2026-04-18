@@ -2,7 +2,7 @@
   "1": {
     "class_type": "LoadImage",
     "inputs": {
-      "image": "{{IMAGE_FILENAME}}"
+      "image": "example.png"
     }
   },
   "2": {
@@ -15,14 +15,14 @@
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": ["2", 1],
-      "text": "{{POSITIVE_PROMPT}}"
+      "text": "professional interior design photography, 8k"
     }
   },
   "4": {
     "class_type": "CLIPTextEncode",
     "inputs": {
       "clip": ["2", 1],
-      "text": "{{NEGATIVE_PROMPT}}"
+      "text": "blurry, low quality, cartoon"
     }
   },
   "5": {
@@ -32,19 +32,45 @@
       "vae": ["2", 2]
     }
   },
+  "9": {
+    "class_type": "Canny",
+    "inputs": {
+      "image": ["1", 0],
+      "low_threshold": 0.4,
+      "high_threshold": 0.8
+    }
+  },
+  "10": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-canny-sdxl.safetensors"
+    }
+  },
+  "11": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "control_net": ["10", 0],
+      "image": ["9", 0],
+      "positive": ["3", 0],
+      "negative": ["4", 0],
+      "strength": 0.65,
+      "start_percent": 0.10,
+      "end_percent": 0.65
+    }
+  },
   "6": {
     "class_type": "KSampler",
     "inputs": {
       "model": ["2", 0],
-      "positive": ["3", 0],
-      "negative": ["4", 0],
+      "positive": ["11", 0],
+      "negative": ["11", 1],
       "latent_image": ["5", 0],
-      "seed": "{{SEED}}",
+      "seed": 12345,
       "steps": 20,
-      "cfg": 7,
+      "cfg": 7.5,
       "sampler_name": "dpmpp_2m",
       "scheduler": "karras",
-      "denoise": "{{DENOISE}}"
+      "denoise": 0.65
     }
   },
   "7": {

@@ -190,6 +190,7 @@ export function StylePresets({
                     <AnimatePresence>
                       {selectedStyle === preset.id && (
                         <motion.div
+                          key={`selected-${preset.id}`}
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
                           exit={{ scale: 0 }}
@@ -207,6 +208,7 @@ export function StylePresets({
                   <AnimatePresence>
                     {hoveredStyle === preset.id && (
                       <motion.div
+                        key={`hover-${preset.id}`}
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}

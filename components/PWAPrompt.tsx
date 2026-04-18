@@ -121,6 +121,7 @@ export function PWAPrompt() {
       {/* Main Install Prompt */}
       {showPrompt && !isIOS && (
         <motion.div
+          key="pwa-prompt-android"
           initial={{ opacity: 0, y: 100, scale: 0.9 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 100, scale: 0.9 }}
@@ -181,6 +182,7 @@ export function PWAPrompt() {
       {/* iOS Install Prompt */}
       {showPrompt && isIOS && (
         <motion.div
+          key="pwa-prompt-ios"
           initial={{ opacity: 0, y: 100 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 100 }}
@@ -219,6 +221,7 @@ export function PWAPrompt() {
       {/* iOS Instructions Modal */}
       {showIOSInstructions && (
         <motion.div
+          key="pwa-ios-instructions"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

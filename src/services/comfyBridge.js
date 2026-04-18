@@ -151,58 +151,43 @@ class ComfyBridgeService {
     console.log('✅ ComfyUI execution completed');
 
     try {
-      // Step A: Get filename from ComfyUI history API
-      console.log('🔍 Fetching history for prompt_id:', prompt_id);
+      // 1. Get filename from ComfyUI history
       const historyRes = await fetch(
         `http://127.0.0.1:8188/history/${prompt_id}` 
-      );
-      
-      if (!historyRes.ok) {
-        throw new Error(`History API failed: ${historyRes.status}`);
-      }
-      
-      const history = await historyRes.json();
-      console.log('🔍 History response keys:', Object.keys(history));
-      
-      const promptData = history[prompt_id];
-      if (!promptData) {
-        throw new Error(`No prompt data found for ${prompt_id}`);
-      }
-      
-      const outputs = promptData?.outputs;
+      )
+      const history = await historyRes.json()
+      const outputs = history[prompt_id]?.outputs
       if (!outputs) {
-        throw new Error(`No outputs found for prompt ${prompt_id}`);
+        throw new Error('No outputs in ComfyUI history')
       }
-      
-      const nodeId = Object.keys(outputs)[0]; // Should be "7"
-      console.log('🔍 Output node ID:', nodeId);
-      
-      const filename = outputs[nodeId].images[0].filename;
-      console.log('🔍 Generated filename:', filename);
+      const nodeId = Object.keys(outputs)[0]
+      const filename = outputs[nodeId].images[0].filename
 
-      // Step B: Copy file to public/renders
-      const fs = await import('fs/promises');
-      const src = `/home/nikhil/Documents/Remo2/ComfyUI/output/${filename}`;
-      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${filename}`;
-      await fs.mkdir('/home/nikhil/Documents/Remo2/Removation_3/public/renders', 
-        { recursive: true });
-      await fs.copyFile(src, dest);
+      // 2. Copy to public/renders
+      const fs = await import('fs/promises')
+      const src = `/home/nikhil/Documents/Remo2/ComfyUI/output/${filename}` 
+      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${filename}` 
+      await fs.mkdir(
+        '/home/nikhil/Documents/Remo2/Removation_3/public/renders',
+        { recursive: true }
+      )
+      await fs.copyFile(src, dest)
 
-      // Step C: Update MongoDB
+      // 3. Update MongoDB
+      const imageUrl = `/renders/${filename}` 
       await Project.findByIdAndUpdate(this.currentProcessing.projectId, {
-        resultImage: `/renders/${filename}`,
-        status: 'completed'
-      });
+        resultImage: imageUrl,
+        status: 'completed',
+        processingCompletedAt: new Date()
+      })
 
-      // Step D: Emit to frontend
+      // 4. Emit to frontend
       this.notifyFrontend('comfy:done', {
         projectId: this.currentProcessing.projectId,
-        imageUrl: `/renders/${filename}`,
+        imageUrl,
         filename
-      });
-      
-      // Trigger garbage collection
-      this.triggerGarbageCollection();
+      })
+      console.log(`? Generation complete: ${filename}`)
         
     } catch (error) {
       console.error('❌ Failed to process executed message:', error);
@@ -218,26 +203,73 @@ class ComfyBridgeService {
   }
 
   /**
-   * Poll for completed executions if WebSocket messages are not working
+   * Poll ComfyUI history until job completes or fails (fallback for missed WS events)
    */
   async pollForCompletion() {
-    if (!this.currentProcessing) return;
-    
-    try {
-      const historyRes = await fetch(`http://127.0.0.1:8188/history`);
-      const history = await historyRes.json();
-      
-      // Check if current prompt has outputs
-      const promptData = history[this.currentProcessing.promptId];
-      if (promptData && promptData.outputs) {
-        console.log('🔄 Found completed execution via polling');
-        await this.handleExecutedMessage({ 
-          prompt_id: this.currentProcessing.promptId 
-        });
+    if (!this.currentProcessing || !this.currentProcessing.promptId) return;
+
+    const promptId = this.currentProcessing.promptId;
+    const projectId = this.currentProcessing.projectId;
+    const maxPolls = 60;  // 60 × 5s = 5 minutes max
+    let polls = 0;
+
+    const interval = setInterval(async () => {
+      // Stop if another job took over or already resolved
+      if (!this.currentProcessing || this.currentProcessing.promptId !== promptId) {
+        clearInterval(interval);
+        return;
       }
-    } catch (error) {
-      console.error('❌ Polling failed:', error);
-    }
+
+      polls++;
+      if (polls > maxPolls) {
+        console.warn(`⏰ Polling timeout for prompt ${promptId}`);
+        clearInterval(interval);
+        await Project.findByIdAndUpdate(projectId, {
+          status: 'failed',
+          errorMessage: 'Generation timed out after 5 minutes',
+          processingCompletedAt: new Date()
+        });
+        this.currentProcessing = null;
+        this.processQueue();
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://127.0.0.1:8188/history/${promptId}`);
+        const history = await res.json();
+        const entry = history[promptId];
+
+        if (!entry) return; // not in history yet
+
+        const outputs = entry.outputs || {};
+        const status = entry.status || {};
+
+        // Check for execution error first
+        if (status.status_str === 'error' || (status.messages || []).some(m => m[0] === 'execution_error')) {
+          console.error(`❌ ComfyUI execution error for prompt ${promptId}`);
+          clearInterval(interval);
+          await Project.findByIdAndUpdate(projectId, {
+            status: 'failed',
+            errorMessage: 'ComfyUI execution error — check VRAM or workflow',
+            processingCompletedAt: new Date()
+          });
+          this.currentProcessing = null;
+          this.processQueue();
+          return;
+        }
+
+        // Check for successful outputs
+        const nodeId = Object.keys(outputs)[0];
+        if (nodeId && outputs[nodeId]?.images?.length > 0) {
+          console.log('✅ Polling found completed execution for prompt:', promptId);
+          clearInterval(interval);
+          // Delegate to the existing handler
+          await this.handleExecutedMessage({ prompt_id: promptId });
+        }
+      } catch (err) {
+        console.error('⚠️ Polling error:', err.message);
+      }
+    }, 5000); // poll every 5 seconds
   }
 
   /**
@@ -400,7 +432,7 @@ class ComfyBridgeService {
    * Process the job queue
    */
   async processQueue() {
-    if (this.queue.length === 0 || this.isProcessingQueue || !this.comfyUIConnected) {
+    if (this.queue.length === 0 || this.isProcessingQueue) {
       return;
     }
 
@@ -417,10 +449,34 @@ class ComfyBridgeService {
     };
 
     try {
+      // Before submitting job check VRAM
+      const statsRes = await fetch('http://127.0.0.1:8188/system_stats')
+      const stats = await statsRes.json()
+      const vramFreeMB = stats.devices[0].vram_free / 1024 / 1024
+      console.log(`VRAM free before job: ${vramFreeMB.toFixed(0)}MB`)
+      if (vramFreeMB < 500) {
+        console.warn('Low VRAM warning - generation may fail')
+      }
+
+      // Unload previous model + free VRAM cache before new job
+      try {
+        await fetch(`${this.comfyRestUrl}/free`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ unload_models: true, free_memory: true })
+        });
+        console.log('🧹 Models unloaded, VRAM freed before job');
+        // Give GPU a moment to actually release memory
+        await new Promise(r => setTimeout(r, 2000));
+      } catch (e) {
+        console.warn('⚠️ Could not flush VRAM:', e.message);
+      }
+
       // Update project status to processing
       await this.updateProjectResult(job.projectId, null, 'processing');
       
-      // Submit workflow to ComfyUI
+      // Submit workflow to ComfyUI REST API directly
+      // (Do NOT wait for WebSocket — polling handles completion)
       const response = await fetch(`${this.comfyRestUrl}/prompt`, {
         method: 'POST',
         headers: {
@@ -432,7 +488,7 @@ class ComfyBridgeService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(`ComfyUI HTTP ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
@@ -442,24 +498,26 @@ class ComfyBridgeService {
       }
 
       this.currentProcessing.promptId = result.prompt_id;
-      job.resolve({ promptId: result.prompt_id });
+      console.log(`✅ Workflow submitted to ComfyUI, prompt_id: ${result.prompt_id}`);
+
+      // Resolve immediately — continuous polling will mark it complete
+      job.resolve({ promptId: result.prompt_id, projectId: job.projectId });
       
-      // Start polling for completion as fallback
-      setTimeout(() => {
-        this.pollForCompletion();
-      }, 30000); // Start polling after 30 seconds
+      // Start continuous polling as the primary completion mechanism
+      this.pollForCompletion();
       
     } catch (error) {
-      console.error(`❌ Job failed: ${job.id}`, error);
+      console.error(`❌ Job submission failed: ${job.id}`, error);
       await this.updateProjectResult(job.projectId, null, 'failed');
       job.reject(error);
       this.currentProcessing = null;
     } finally {
       this.isProcessingQueue = false;
-      // Process next job after delay
+      // Process next job after short delay
       setTimeout(() => this.processQueue(), 1000);
     }
   }
+
 
   /**
    * Notify all frontend clients

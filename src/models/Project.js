@@ -42,6 +42,18 @@ const aiConfigSchema = new mongoose.Schema({
   objectName: {
     type: String,
     required: false
+  },
+  masterSelector: {
+    type: mongoose.Schema.Types.Mixed,
+    required: false
+  },
+  masterToggles: {
+    type: mongoose.Schema.Types.Mixed,
+    required: false
+  },
+  useControlNet: {
+    type: Boolean,
+    required: false
   }
 }, { _id: false });
 

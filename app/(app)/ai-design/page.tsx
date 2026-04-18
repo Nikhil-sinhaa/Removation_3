@@ -69,6 +69,8 @@ export default function AIDesignPage() {
   const [selectedStyle, setSelectedStyle] = useState(defaultStylePresets[0]);
   const [mode, setMode] = useState("redesign");
   const [roomType, setRoomType] = useState("living_room");
+  const [selectedPalette, setSelectedPalette] = useState({ id: "neutral", name: "Neutral" });
+  const [changeLevel, setChangeLevel] = useState("medium");
   const [settings, setSettings] = useState({
     creativity: 50,
     preserveLayout: true,
@@ -78,7 +80,7 @@ export default function AIDesignPage() {
     num_inference_steps: 25,
     guidance_scale: 7,
     strength: 0.6,
-    architecturalMode: false,
+    architecturalMode: true,
   });
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -113,22 +115,21 @@ export default function AIDesignPage() {
 
     addLog("🎯 Starting AI generation process...");
     addLog("📸 Image uploaded successfully");
-    addLog(`🎨 Style: ${selectedStyle.name} (${mode} mode)`);
+    addLog(`🎨 Style: ${selectedStyle.name}`);
     addLog(`🏠 Room type: ${roomType}`);
+    addLog(`🎨 Color palette: ${selectedPalette.name}`);
+    addLog(`⚡ Change intensity: ${changeLevel}`);
 
     try {
       const formData = new FormData();
       formData.append('image', selectedFile);
-      formData.append('data', JSON.stringify({
-        mode,
-        style: selectedStyle.id,
-        roomType,
-        prompt: `${selectedStyle.name} ${roomType} redesign`,
-        negative_prompt: "blurry, low quality, distorted, watermark, text",
-        settings,
-      }));
+      formData.append('style', selectedStyle.name);
+      formData.append('roomType', roomType);
+      formData.append('colorPalette', selectedPalette.name);
+      formData.append('changeLevel', changeLevel);
+      formData.append('useControlNet', String(settings.architecturalMode));
 
-      addLog("🚀 Sending request to ComfyUI...");
+      addLog("🚀 Sending request to AI redesign service...");
 
       // Use the working API (no auth required)
       const response = await fetch('/api/ai/redesign', {
@@ -148,11 +149,12 @@ export default function AIDesignPage() {
       } else {
         addLog(`❌ Error: ${data.error}`);
         setError(data.error || 'Generation failed');
+        setIsGenerating(false);
       }
-    } catch (err: any) {
-      addLog(`❌ Network error: ${err.message}`);
-      setError('Network error. Please try again.');
-    } finally {
+    } catch (error) {
+      console.error('Generation error:', error);
+      addLog(`❌ Network error: ${(error as Error).message}`);
+      setError('Network error occurred');
       setIsGenerating(false);
     }
   };
@@ -175,7 +177,7 @@ export default function AIDesignPage() {
           addLog(`🖼️ Generated image: ${data.resultImage}`);
           setResult({
             ...data,
-            outputImage: data.resultImage // Map resultImage to outputImage for compatibility
+            outputImage: data.resultImage + '?t=' + Date.now() // Add cache-buster
           });
           completed = true;
           break;
@@ -361,7 +363,11 @@ export default function AIDesignPage() {
                   />
                   <Label className="flex flex-col">
                     <span>🏛️ Architectural Mode</span>
-                    <span className="text-xs text-gray-500">Preserves room structure with ControlNet</span>
+                    <span className="text-xs text-gray-500">
+                      {settings.architecturalMode
+                        ? "ControlNet active — preserves walls, windows & doors"
+                        : "ControlNet off — faster processing, less structure control"}
+                    </span>
                   </Label>
                 </div>
 

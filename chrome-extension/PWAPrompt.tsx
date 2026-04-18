@@ -227,6 +227,7 @@ export function PWAPrompt({ className, delay = 10000 }: PWAPromptProps) {
       <AnimatePresence>
         {showOfflineToast && (
           <motion.div
+            key="offline-toast"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
@@ -250,6 +251,7 @@ export function PWAPrompt({ className, delay = 10000 }: PWAPromptProps) {
 
         {showOnlineToast && (
           <motion.div
+            key="online-toast"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}

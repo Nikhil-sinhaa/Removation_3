@@ -1,7 +1,7 @@
 // app/(app)/master-design/page.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,15 +34,16 @@ const roomTypes = [
 
 export default function MasterDesignPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [roomType, setRoomType] = useState("living_room");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const [promptId, setPromptId] = useState<string | null>(null);
   const [masterSelector, setMasterSelector] = useState<any>(null);
   const [masterToggles, setMasterToggles] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const addLog = (message: string) => {
     setLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
@@ -52,10 +53,21 @@ export default function MasterDesignPage() {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      // Revoke previous URL to avoid memory leaks
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(file));
+      setResult(null);
       setError(null);
       addLog(`Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     }
   };
+
+  // Auto-scroll to result when it appears
+  useEffect(() => {
+    if (result?.generatedImage && resultRef.current) {
+      resultRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [result]);
 
   const handleMasterSelectionChange = (selections: any, toggles: any) => {
     setMasterSelector(selections);
@@ -117,16 +129,11 @@ export default function MasterDesignPage() {
 
       if (response.ok && data.success) {
         addLog("✅ Generation started successfully!");
-        addLog(`🎯 Prompt ID: ${data.promptId}`);
-        addLog(`📝 Generated Prompt: ${data.generatedPrompt}`);
-        addLog(`🚀 Using ArchAi3d: ${data.useArchAi3d ? 'Yes' : 'No'}`);
-        addLog(`📊 Mode: ${data.mode}`);
+        addLog(`🎯 Project ID: ${data.projectId}`);
         addLog(`⏱️ Estimated time: ${data.estimatedTime} seconds`);
 
-        setPromptId(data.promptId);
-
-        // Poll for completion
-        await pollForResult(data.promptId);
+        // Poll for completion using projectId
+        await pollForResult(data.projectId);
       } else {
         addLog(`❌ Error: ${data.error}`);
         setError(data.error || 'Generation failed');
@@ -139,39 +146,45 @@ export default function MasterDesignPage() {
     }
   };
 
-  const pollForResult = async (promptId: string) => {
-    const maxAttempts = 30;
+  const pollForResult = async (projectId: string) => {
+    const maxAttempts = 90; // 3 minutes max (at 2s intervals)
     let completed = false;
     
     for (let attempt = 0; attempt < maxAttempts && !completed; attempt++) {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
-        const response = await fetch(`/api/ai/status/${promptId}`);
+        // Poll the redesign GET endpoint which returns the MongoDB project
+        const response = await fetch(`/api/ai/redesign?projectId=${projectId}`);
         const data = await response.json();
         
         addLog(`📊 Status check ${attempt + 1}: ${data.status}`);
         
         if (data.status === 'completed') {
           addLog("🎉 Generation completed!");
-          addLog(`🖼️ Generated image: ${data.generatedImage}`);
-          setResult(data);
+          addLog(`🖼️ Generated image: ${data.resultImage}`);
+          setResult({
+            ...data,
+            generatedImage: data.resultImage + '?t=' + Date.now(),
+            originalPreview: previewUrl,
+          });
           completed = true;
           break;
-        } else if (data.status === 'error') {
-          addLog(`❌ Generation failed: ${data.message}`);
-          setError(data.message || 'Generation failed');
+        } else if (data.status === 'failed') {
+          addLog(`❌ Generation failed: ${data.errorMessage || 'Unknown error'}`);
+          setError(data.errorMessage || 'Generation failed');
           completed = true;
           break;
         }
+        // status: 'queued' or 'processing' → keep polling
       } catch (err) {
         addLog(`⚠️ Status check error: ${err}`);
       }
     }
 
     if (!completed) {
-      addLog("⏰ Polling timeout");
-      setError("Generation taking too long");
+      addLog("⏰ Polling timeout — check ComfyUI is running");
+      setError("Generation is taking too long. Make sure ComfyUI is running at http://127.0.0.1:8188");
     }
   };
 
@@ -290,97 +303,82 @@ export default function MasterDesignPage() {
           </Button>
 
           {/* Logs */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Processing Logs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-900 text-green-400 p-3 rounded text-sm font-mono h-48 overflow-y-auto">
-                {logs.length > 0 ? (
-                  logs.map((log, index) => (
-                    <div key={index}>{log}</div>
-                  ))
-                ) : (
-                  <div className="text-gray-500">Waiting for action...</div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Middle Column - Master Selector */}
-        <div className="lg:col-span-2">
-          <MasterSelector
-            onSelectionChange={handleMasterSelectionChange}
-            roomType={roomType}
-          />
-        </div>
-      </div>
-
-      {/* Results Section */}
-      <AnimatePresence>
-        {result?.generatedImage && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mt-8"
-          >
+          {isGenerating && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  ✅ Master Design Complete
-                </CardTitle>
+                <CardTitle>Processing Logs</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>Status:</strong> {result.status}
-                    </div>
-                    <div>
-                      <strong>Processing Time:</strong> {result.processingTime}ms
-                    </div>
-                    <div>
-                      <strong>Room Type:</strong> {roomType}
-                    </div>
-                    <div>
-                      <strong>Categories Changed:</strong> {Object.keys(masterToggles || {}).filter(k => masterToggles[k]).length}
-                    </div>
-                  </div>
-                  
-                  <BeforeAfterSlider
-                    beforeImage={selectedFile ? URL.createObjectURL(selectedFile) : "/images/hero-before.jpg"}
-                    afterImage={result.generatedImage}
-                    beforeLabel="Original Room"
-                    afterLabel="Master AI Design"
-                  />
-                  
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                      <Sparkles className="w-5 h-5" />
-                      🎊 Master Design Success!
-                    </h3>
-                    <p className="text-sm text-blue-700 mb-2">
-                      Your room has been transformed using professional Master Selector with precise material control.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(masterToggles || {}).map(([key, enabled]) => 
-                        enabled ? (
-                          <Badge key={key} variant="secondary" className="bg-white">
-                            {key.charAt(0).toUpperCase() + key.slice(1)}: {masterSelector?.[key]}
-                          </Badge>
-                        ) : null
-                      )}
-                    </div>
-                  </div>
+                <div className="bg-gray-900 text-green-400 p-3 rounded text-sm font-mono h-48 overflow-y-auto">
+                  {logs.length > 0 ? (
+                    logs.map((log, index) => (
+                      <div key={index}>{log}</div>
+                    ))
+                  ) : (
+                    <div className="text-gray-500">Waiting for action...</div>
+                  )}
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </div>
+
+        {/* Middle Column - Master Selector OR Result */}
+        <div className="lg:col-span-2" ref={resultRef}>
+          <AnimatePresence mode="wait">
+            {result?.generatedImage ? (
+              <motion.div
+                key="result"
+                initial={{ opacity: 0, scale: 0.97 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Card className="border-green-200">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="flex items-center gap-2 text-green-700">
+                        <CheckCircle className="w-5 h-5" />
+                        Design Generated!
+                      </CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => { setResult(null); setLogs([]); }}
+                      >
+                        <Palette className="w-4 h-4 mr-1" />
+                        Redesign
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <BeforeAfterSlider
+                      beforeImage={result.originalPreview || "/images/hero-before.jpg"}
+                      afterImage={result.generatedImage}
+                      beforeLabel="Original Room"
+                      afterLabel="AI Redesigned"
+                    />
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="selector"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <MasterSelector
+                  onSelectionChange={handleMasterSelectionChange}
+                  roomType={roomType}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+
+
 
       {/* Error */}
       {error && (

@@ -36,12 +36,12 @@ const roomTypes = [
 
 export default function ProfessionalDesignPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [roomType, setRoomType] = useState("living_room");
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
-  const [promptId, setPromptId] = useState<string | null>(null);
   const [professionalSettings, setProfessionalSettings] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +53,9 @@ export default function ProfessionalDesignPage() {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      setPreviewUrl(URL.createObjectURL(file));
+      setResult(null);
       setError(null);
       addLog(`Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     }
@@ -89,24 +92,47 @@ export default function ProfessionalDesignPage() {
     addLog(`💻 Hardware Optimization: ${professionalSettings.hardwareOptimization.useTiledVAE ? 'Tiled VAE' : 'Standard'}`);
 
     try {
+      // Build material descriptions for the prompt
+      const materialParts: string[] = [];
+      if (professionalSettings.masterPrompt?.materials) {
+        const mats = professionalSettings.masterPrompt.materials;
+        if (mats.walls && mats.walls !== 'keep_original') materialParts.push(`${mats.walls} walls`);
+        if (mats.ceilings && mats.ceilings !== 'keep_original') materialParts.push(`${mats.ceilings} ceiling`);
+        if (mats.furniture && mats.furniture !== 'keep_original') materialParts.push(`${mats.furniture} furniture`);
+        if (mats.floors && mats.floors !== 'keep_original') materialParts.push(`${mats.floors} flooring`);
+        if (mats.lighting && mats.lighting !== 'keep_original') materialParts.push(`${mats.lighting} lighting`);
+      }
+
+      // Convert professional settings to masterSelector/masterToggles format
+      // so the backend can build a proper prompt
+      const masterSelector = {
+        wallColor: professionalSettings.masterPrompt?.materials?.walls || 'keep_original',
+        ceiling: professionalSettings.masterPrompt?.materials?.ceilings || 'keep_original',
+        furnitureStyle: professionalSettings.masterPrompt?.materials?.furniture || 'keep_original',
+        floorType: professionalSettings.masterPrompt?.materials?.floors || 'keep_original',
+        lighting: professionalSettings.masterPrompt?.materials?.lighting || 'keep_original',
+        decorStyle: 'architectural visualization',
+      };
+
+      const masterToggles = {
+        walls: masterSelector.wallColor !== 'keep_original',
+        ceiling: masterSelector.ceiling !== 'keep_original',
+        furniture: masterSelector.furnitureStyle !== 'keep_original',
+        floor: masterSelector.floorType !== 'keep_original',
+        lighting: masterSelector.lighting !== 'keep_original',
+        decor: false,
+      };
+
       const formData = new FormData();
       formData.append('image', selectedFile);
       formData.append('data', JSON.stringify({
         mode: "redesign",
         style: "professional",
         roomType,
-        prompt: "Professional architectural renovation",
-        negative_prompt: "blurry, low quality, distorted, weight spikes, perspective changes",
-        settings: {
-          creativity: 50,
-          num_inference_steps: professionalSettings.hardwareOptimization.steps,
-          guidance_scale: 7.5,
-          strength: 0.75,
-        },
-        structuralLock: professionalSettings.structuralLock,
-        encoderV2: professionalSettings.encoderV2,
-        masterPrompt: professionalSettings.masterPrompt,
-        hardwareOptimization: professionalSettings.hardwareOptimization,
+        changeLevel: 'medium',
+        masterSelector,
+        masterToggles,
+        useControlNet: professionalSettings.structuralLock?.enabled !== false,
       }));
 
       addLog("🚀 Sending request to Professional API...");
@@ -119,18 +145,12 @@ export default function ProfessionalDesignPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        addLog("✅ Professional generation started successfully!");
-        addLog(`🎯 Prompt ID: ${data.promptId}`);
-        addLog(`📝 Prompt Summary: ${data.promptSummary}`);
-        addLog(`🔒 Structural Lock Strength: ${data.structuralLock.strength}`);
-        addLog(`👁️ Context Strength: ${data.encoderV2.contextStrength}`);
-        addLog(`💻 Hardware Mode: ${data.hardwareOptimization.useTiledVAE ? 'Tiled VAE' : 'Standard'}`);
+        addLog("✅ Professional generation started!");
+        addLog(`🎯 Project ID: ${data.projectId}`);
         addLog(`⏱️ Estimated time: ${data.estimatedTime} seconds`);
 
-        setPromptId(data.promptId);
-
-        // Poll for completion
-        await pollForResult(data.promptId);
+        // Poll for completion using projectId
+        await pollForResult(data.projectId);
       } else {
         addLog(`❌ Error: ${data.error}`);
         setError(data.error || 'Generation failed');
@@ -143,28 +163,32 @@ export default function ProfessionalDesignPage() {
     }
   };
 
-  const pollForResult = async (promptId: string) => {
-    const maxAttempts = 30;
+  const pollForResult = async (projectId: string) => {
+    const maxAttempts = 90; // 3 minutes at 2s intervals
     let completed = false;
     
     for (let attempt = 0; attempt < maxAttempts && !completed; attempt++) {
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
-        const response = await fetch(`/api/ai/status/${promptId}`);
+        const response = await fetch(`/api/ai/redesign?projectId=${projectId}`);
         const data = await response.json();
         
         addLog(`📊 Status check ${attempt + 1}: ${data.status}`);
         
         if (data.status === 'completed') {
           addLog("🎉 Professional generation completed!");
-          addLog(`🖼️ Generated image: ${data.generatedImage}`);
-          setResult(data);
+          addLog(`🖼️ Generated image: ${data.resultImage}`);
+          setResult({
+            ...data,
+            generatedImage: data.resultImage + '?t=' + Date.now(),
+            originalPreview: previewUrl,
+          });
           completed = true;
           break;
-        } else if (data.status === 'error') {
-          addLog(`❌ Generation failed: ${data.message}`);
-          setError(data.message || 'Generation failed');
+        } else if (data.status === 'failed') {
+          addLog(`❌ Generation failed: ${data.errorMessage || 'Unknown error'}`);
+          setError(data.errorMessage || 'Generation failed');
           completed = true;
           break;
         }
@@ -174,8 +198,8 @@ export default function ProfessionalDesignPage() {
     }
 
     if (!completed) {
-      addLog("⏰ Polling timeout");
-      setError("Generation taking too long");
+      addLog("⏰ Polling timeout — check ComfyUI is running");
+      setError("Generation is taking too long. Make sure ComfyUI is running at http://127.0.0.1:8188");
     }
   };
 
@@ -356,7 +380,7 @@ export default function ProfessionalDesignPage() {
                   
                   <BeforeAfterSlider
                     beforeImage={selectedFile ? URL.createObjectURL(selectedFile) : "/images/hero-before.jpg"}
-                    afterImage={result.generatedImage}
+                    afterImage={result.generatedImage || result.resultImage}
                     beforeLabel="Original Room"
                     afterLabel="Professional AI Design"
                   />
