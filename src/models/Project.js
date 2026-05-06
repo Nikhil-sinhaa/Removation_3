@@ -54,6 +54,14 @@ const aiConfigSchema = new mongoose.Schema({
   useControlNet: {
     type: Boolean,
     required: false
+  },
+  furnitureImage: {
+    type: String,
+    required: false
+  },
+  skipStages: {
+    type: [Number],
+    required: false
   }
 }, { _id: false });
 
@@ -82,7 +90,7 @@ const projectSchema = new mongoose.Schema({
     default: 'queued'
   },
   aiConfig: {
-    type: aiConfigSchema,
+    type: mongoose.Schema.Types.Mixed,
     required: false
   },
   comfyPromptId: {
@@ -91,7 +99,14 @@ const projectSchema = new mongoose.Schema({
   },
   processingType: {
     type: String,
-    enum: ['redesign', 'object_removal', 'recolor'],
+    enum: [
+      'redesign', 'object_removal', 'recolor', 'ultra-pro',
+      'tab-render', 'tab-edit', 'tab-furnish', 'tab-lighting', 'tab-postprocess',
+      'tool-auto-edit', 'tool-empty-room', 'tool-point-edit',
+      'tool-interior-render', 'tool-exterior-render', 'tool-landscape',
+      'tool-style-transfer', 'tool-collage',
+      'tool-background', 'tool-view-extend', 'tool-lineart',
+    ],
     required: true
   },
   errorMessage: {
@@ -181,6 +196,10 @@ projectSchema.virtual('processingDurationSeconds').get(function() {
 projectSchema.set('toJSON', { virtuals: true });
 projectSchema.set('toObject', { virtuals: true });
 
-const Project = mongoose.models.Project || mongoose.model('Project', projectSchema);
+// Delete cached model to force schema re-registration during hot reload
+if (mongoose.models.Project) {
+  delete mongoose.models.Project;
+}
+const Project = mongoose.model('Project', projectSchema);
 
 export default Project;

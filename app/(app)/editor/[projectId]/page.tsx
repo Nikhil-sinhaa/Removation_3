@@ -355,11 +355,39 @@ export default function ProjectEditorPage() {
         const response = await fetch(`/api/projects/${projectId}`);
         if (!response.ok) throw new Error('Project not found');
         const data = await response.json();
-        setProject(data);
-        setSelectedRoomType(data.roomType);
-        if (data.renders.length > 0) {
-          setOriginalImage(data.renders[0].originalImage);
-          setSelectedRender(data.renders[data.renders.length - 1]);
+        // Normalize: the API may not return a renders array for redesign projects
+        const renders = data.renders || [];
+        const normalizedProject = {
+          ...data,
+          id: data.id || data._id?.toString(),
+          renders,
+          collaborators: data.collaborators || [],
+          tags: data.tags || (data.aiConfig?.style ? [data.aiConfig.style.toLowerCase()] : []),
+          isStarred: data.isStarred ?? false,
+          roomType: data.roomType || data.aiConfig?.roomType || 'Living Room',
+        };
+        setProject(normalizedProject);
+        setSelectedRoomType(normalizedProject.roomType);
+        if (renders.length > 0) {
+          setOriginalImage(renders[0].originalImage);
+          setSelectedRender(renders[renders.length - 1]);
+        } else if (data.originalImage || data.resultImage) {
+          // Fallback for redesign projects stored without renders array
+          if (data.originalImage) setOriginalImage(data.originalImage);
+          if (data.resultImage) {
+            setSelectedRender({
+              id: data._id?.toString() || data.id,
+              originalImage: data.originalImage || '',
+              generatedImage: data.resultImage,
+              style: data.aiConfig?.style || 'Modern',
+              roomType: data.aiConfig?.roomType || 'Living Room',
+              mode: 'redesign',
+              vastuScore: data.vastuScore,
+              createdAt: new Date(data.createdAt || Date.now()),
+              isFavorite: false,
+              version: 1,
+            });
+          }
         }
       } catch (error) {
         toast({
@@ -1217,6 +1245,7 @@ export default function ProjectEditorPage() {
                           src={style.thumbnail || '/images/styles/placeholder.jpg'}
                           alt={style.name}
                           fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent" />
@@ -1267,6 +1296,7 @@ export default function ProjectEditorPage() {
                             src={originalImage}
                             alt="Original"
                             fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover"
                           />
                         </div>
@@ -1299,6 +1329,7 @@ export default function ProjectEditorPage() {
                             src={render.generatedImage}
                             alt={`Render ${index + 1}`}
                             fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover"
                           />
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
@@ -1804,6 +1835,7 @@ export default function ProjectEditorPage() {
                             src={originalImage}
                             alt="Original"
                             fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover"
                           />
                           <Badge className="absolute top-2 left-2">Original</Badge>
@@ -1825,6 +1857,7 @@ export default function ProjectEditorPage() {
                               src={render.generatedImage}
                               alt={`Render v${render.version}`}
                               fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity">
@@ -1862,6 +1895,7 @@ export default function ProjectEditorPage() {
                           src={originalImage}
                           alt="Before"
                           fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />
                       </div>
@@ -1873,6 +1907,7 @@ export default function ProjectEditorPage() {
                           src={selectedRender.generatedImage}
                           alt="After"
                           fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />
                       </div>
@@ -1940,6 +1975,7 @@ export default function ProjectEditorPage() {
                               src={originalImage}
                               alt="Original"
                               fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="object-cover"
                             />
                             <div className="absolute bottom-1 left-1 right-1">
@@ -1966,6 +2002,7 @@ export default function ProjectEditorPage() {
                                   src={render.generatedImage}
                                   alt={`v${render.version}`}
                                   fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                   className="object-cover"
                                 />
                                 <div className="absolute bottom-1 left-1 right-1 flex justify-between">

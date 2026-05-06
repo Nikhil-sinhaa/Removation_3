@@ -294,6 +294,7 @@ export function ProjectHeader({
                   src={project.thumbnail}
                   alt={project.name}
                   fill
+                  sizes="96px"
                   className="object-cover"
                 />
               ) : (

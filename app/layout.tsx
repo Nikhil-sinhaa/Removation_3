@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/Providers'
@@ -8,19 +7,9 @@ import { AnalyticsProvider } from '@/components/AnalyticsProvider'
 import { PWAPrompt } from '@/components/PWAPrompt'
 import './globals.css'
 
-// Primary font - Inter for body text
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-})
-
-// Secondary font - Plus Jakarta Sans for headings
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-plus-jakarta',
-})
+// System font stack — Google Fonts downloads fail offline.
+// CSS variables are set directly in the className below.
+const fontClasses = 'font-inter font-plus-jakarta'
 
 // Complete SEO metadata
 export const metadata: Metadata = {
@@ -170,7 +159,7 @@ export default function RootLayout({
       <html
         lang="en"
         suppressHydrationWarning
-        className={`${inter.variable} ${plusJakarta.variable}`}
+        className=""
       >
         <head>
           {/* Preconnect to external domains for performance */}

@@ -1,18 +1,86 @@
 /**
  * API Route for Room Redesign — Next.js App Router
  * Handles POST /api/ai/redesign requests
- * 
- * Uses the same buildRedesignWorkflow logic as src/controllers/redesign.js.
- * The JSON template approach has been removed — workflow is built in JS
- * to avoid placeholder parsing issues.
+ *
+ * This is the REAL route handler. src/controllers/redesign.js is deprecated.
+ * Workflow is built entirely in JS — no JSON template.
  */
 
-import { writeFile, mkdir, copyFile } from 'fs/promises';
+import { writeFile, mkdir, copyFile, unlink } from 'fs/promises';
 import path from 'path';
+import { Readable } from 'stream';
 import { connectDB } from '../../../../src/lib/mongodb.js';
 import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
+import sharp from 'sharp';
+
+// Force Node.js runtime (Turbopack edge runtime can't do formData)
+export const runtime = 'nodejs';
+
+// ─── Turbopack-safe FormData parser ──────────────────────────────────────────
+// request.formData() crashes under `next dev --turbo`. This fallback uses
+// busboy (bundled with Node.js / Next.js) to manually parse multipart bodies.
+
+async function safeParseFormData(request) {
+  // Attempt 1: native (works in production / webpack dev)
+  try {
+    return await request.formData();
+  } catch (_nativeErr) {
+    console.warn('⚠️ Native formData() failed, using busboy fallback...');
+  }
+
+  // Attempt 2: busboy manual parse
+  const Busboy = (await import('busboy')).default;
+  const contentType = request.headers.get('content-type') || '';
+
+  return new Promise(async (resolve, reject) => {
+    const fields = new Map();
+    const files = new Map();
+
+    const bb = Busboy({ headers: { 'content-type': contentType } });
+
+    bb.on('file', (fieldname, fileStream, info) => {
+      const { filename, mimeType } = info;
+      const chunks = [];
+      fileStream.on('data', (chunk) => chunks.push(chunk));
+      fileStream.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        // Create a File-like object matching the Web API
+        const blob = new Blob([buffer], { type: mimeType });
+        blob.name = filename;
+        blob.arrayBuffer = async () => buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+        files.set(fieldname, blob);
+      });
+    });
+
+    bb.on('field', (fieldname, value) => {
+      fields.set(fieldname, value);
+    });
+
+    bb.on('close', () => {
+      // Build a FormData-like object with .get()
+      const result = {
+        get(key) {
+          return files.get(key) || fields.get(key) || null;
+        },
+      };
+      resolve(result);
+    });
+
+    bb.on('error', (err) => reject(err));
+
+    // Pipe request body into busboy
+    try {
+      const arrayBuffer = await request.arrayBuffer();
+      const nodeBuffer = Buffer.from(arrayBuffer);
+      const readable = Readable.from(nodeBuffer);
+      readable.pipe(bb);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 // ─── Lookup Maps ─────────────────────────────────────────────────────────────
 
@@ -55,9 +123,9 @@ const COLOR_MAP = {
 };
 
 const DENOISE_MAP = {
-  'light':  0.45,
-  'medium': 0.65,
-  'heavy':  0.80,
+  'light':  0.30,   // Subtle refresh — keeps 70% of original
+  'medium': 0.50,   // Balanced — keeps 50% of original
+  'heavy':  0.65,   // Dramatic but safe — keeps 35% of original
 };
 
 // ─── Workflow Builder ─────────────────────────────────────────────────────────
@@ -151,6 +219,17 @@ function buildRedesignWorkflow({
       "class_type": "LoadImage",
       "inputs": { "image": path.basename(imageFilename) }
     },
+    // Node 15: Resize input image for SDXL (no cropping — preserves full frame)
+    "15": {
+      "class_type": "ImageScale",
+      "inputs": {
+        "image":   ["1", 0],
+        "width":   1024,
+        "height":  1024,
+        "upscale_method": "lanczos",
+        "crop":    "disabled"
+      }
+    },
     "2": {
       "class_type": "CheckpointLoaderSimple",
       "inputs": { "ckpt_name": "sd_xl_base_1.0.safetensors" }
@@ -165,14 +244,14 @@ function buildRedesignWorkflow({
     },
     "5": {
       "class_type": "VAEEncode",
-      "inputs": { "pixels": ["1", 0], "vae": ["2", 2] }
+      "inputs": { "pixels": ["15", 0], "vae": ["2", 2] }
     },
     "9": {
       "class_type": "Canny",
       "inputs": {
-        "image":          ["1", 0],
-        "low_threshold":  0.4,
-        "high_threshold": 0.8
+        "image":          ["15", 0],
+        "low_threshold":  0.1,
+        "high_threshold": 0.4
       }
     },
     "10": {
@@ -186,9 +265,9 @@ function buildRedesignWorkflow({
         "image":         ["9", 0],
         "positive":      ["3", 0],
         "negative":      ["4", 0],
-        "strength":      useControlNet ? 0.65 : 0.0,
-        "start_percent": 0.10,
-        "end_percent":   useControlNet ? 0.65 : 0.0,
+        "strength":      useControlNet ? 0.85 : 0.0,
+        "start_percent": 0.0,
+        "end_percent":   useControlNet ? 0.85 : 0.0,
       }
     },
     "6": {
@@ -199,8 +278,8 @@ function buildRedesignWorkflow({
         "negative":     ["11", 1],
         "latent_image": ["5", 0],
         "seed":         seed ?? Math.floor(Math.random() * 999999999),
-        "steps":        20,
-        "cfg":          7.5,
+        "steps":        25,
+        "cfg":          5.0,
         "sampler_name": "dpmpp_2m",
         "scheduler":    "karras",
         "denoise":      denoise,
@@ -226,7 +305,7 @@ export async function POST(request) {
   try {
     console.log('🎨 Starting room redesign...');
 
-    const formData = await request.formData();
+    const formData = await safeParseFormData(request);
     const imageFile = formData.get('image');
 
     const rawData   = formData.get('data');
@@ -254,13 +333,27 @@ export async function POST(request) {
     const uploadPath = path.join(uploadsDir, uploadFilename);
     await writeFile(uploadPath, buffer);
 
-    // Copy to ComfyUI input folder (ComfyUI requires the image here)
+    // ── Pre-process: convert to PNG, fit within SDXL max (no cropping) ──────
+    // Uses 'inside' fit to preserve the full image without cropping.
+    // The longest edge is capped at 1024 for SDXL, aspect ratio is preserved.
     const comfyInputDir = '/home/nikhil/Documents/Remo2/ComfyUI/input';
     await mkdir(comfyInputDir, { recursive: true });
-    const comfyFilename = uploadFilename;
+    const comfyFilename = uploadFilename.replace(/\.[^.]+$/, '.png');
     const comfyInputPath = path.join(comfyInputDir, comfyFilename);
-    await copyFile(uploadPath, comfyInputPath);
-    console.log(`✅ Image copied to ComfyUI: ${comfyFilename}`);
+
+    try {
+      await sharp(buffer)
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .png()
+        .toFile(comfyInputPath);
+      console.log(`✅ Image converted to PNG (fit inside 1024, no crop) and copied to ComfyUI: ${comfyFilename}`);
+    } catch (sharpErr) {
+      // Fallback: copy raw file if sharp fails
+      console.warn(`⚠️ Sharp conversion failed, copying raw file: ${sharpErr.message}`);
+      const fallbackFilename = uploadFilename;
+      const fallbackPath = path.join(comfyInputDir, fallbackFilename);
+      await copyFile(uploadPath, fallbackPath);
+    }
 
     // Create project record
     const projectName = masterSelector

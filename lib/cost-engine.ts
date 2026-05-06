@@ -118,6 +118,7 @@ interface RenovationCostParams {
     includeTax?: boolean;
     timeline?: 'standard' | 'express';
     additionalRequirements?: string[];
+    furnitureCost?: number;
 }
 
 interface CostResult {
@@ -130,7 +131,7 @@ interface CostResult {
 }
 
 export function calculateRenovationCost(params: RenovationCostParams): CostResult {
-    const { roomType, areaInSqft, city, renovationType, includeLabor = true, includeTax = true, timeline = 'standard' } = params;
+    const { roomType, areaInSqft, city, renovationType, includeLabor = true, includeTax = true, timeline = 'standard', furnitureCost = 0 } = params;
 
     // Base cost per sqft based on renovation type
     const baseCostPerSqft: Record<string, number> = {
@@ -157,15 +158,20 @@ export function calculateRenovationCost(params: RenovationCostParams): CostResul
 
     const materialCost = baseCost * 0.6;
     const laborCost = includeLabor ? baseCost * 0.4 : 0;
-    const subtotal = materialCost + laborCost;
+    const subtotal = materialCost + laborCost + furnitureCost;
     const taxAmount = includeTax ? subtotal * 0.18 : 0; // 18% GST
     const totalCost = subtotal + taxAmount;
 
     const breakdown = [
         { category: 'Materials', cost: materialCost, description: 'Flooring, walls, ceiling, fixtures' },
         { category: 'Labor', cost: laborCost, description: 'Installation and finishing work' },
-        { category: 'Tax (GST)', cost: taxAmount, description: '18% GST on materials and labor' },
     ];
+
+    if (furnitureCost > 0) {
+        breakdown.push({ category: 'Furniture', cost: furnitureCost, description: 'Sourced furniture items' });
+    }
+
+    breakdown.push({ category: 'Tax (GST)', cost: taxAmount, description: '18% GST on materials, labor, and furniture' });
 
     const estimatedDays = timeline === 'express' ? 15 : 30;
 

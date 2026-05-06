@@ -213,7 +213,8 @@ class ComfyUIBridge {
         const promptHistory = history[promptId];
 
         if (promptHistory) {
-          if (promptHistory.status?.str === 'success') {
+          // FIX: ComfyUI returns status.status_str, not status.str
+          if (promptHistory.status?.status_str === 'success' || promptHistory.status?.completed) {
             // Find the output image
             const outputs = promptHistory.outputs;
             for (const nodeId in outputs) {
@@ -225,10 +226,10 @@ class ComfyUIBridge {
                 };
               }
             }
-          } else if (promptHistory.status?.str === 'error') {
+          } else if (promptHistory.status?.status_str === 'error') {
             return {
               success: false,
-              error: promptHistory.status?.msg || 'Generation failed',
+              error: promptHistory.status?.messages?.[0]?.[1] || 'Generation failed',
             };
           }
         }
@@ -277,6 +278,85 @@ class ComfyUIBridge {
       return false;
     }
   }
+
+  /**
+   * Flush GPU VRAM by calling ComfyUI's POST /free endpoint.
+   * Critical for multi-stage pipeline on 8GB RTX 4060.
+   */
+  async flushVRAM(): Promise<void> {
+    try {
+      await axios.post(`${this.baseUrl}/free`, {
+        unload_models: true,
+        free_memory: true,
+      });
+      console.log('🧹 VRAM flushed via POST /free');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error: any) {
+      console.warn(`⚠️ VRAM flush failed (non-fatal): ${error.message}`);
+    }
+  }
+
+  /**
+   * Execute the full 6-stage Ultra-Pro Interior Design Pipeline.
+   * Each stage runs as a separate ComfyUI prompt with VRAM flush between.
+   *
+   * @see lib/ai/pipeline-orchestrator.ts for stage details
+   */
+  async generateMultiStage(
+    request: import('./pipeline-orchestrator').PipelineRequest,
+    onProgress?: import('./pipeline-orchestrator').PipelineProgressCallback
+  ): Promise<import('./pipeline-orchestrator').PipelineResult> {
+    const { runFullPipeline } = await import('./pipeline-orchestrator');
+    return runFullPipeline(request, onProgress);
+  }
+
+  /**
+   * Execute the Ultra-Pro verified pipeline.
+   * Uses validated node class_types from Impact Pack / IPAdapter Plus source.
+   * Stages: Scene Understanding → Geometry Lock → Regional Inpaint →
+   *         IPAdapter Furniture → MaskDetailer Refine → 4x-UltraSharp Upscale
+   *
+   * @param request Ultra-Pro pipeline request with master selector, furniture, etc.
+   * @param onProgress Optional callback for real-time stage progress updates.
+   * @returns Pipeline result with final image path and per-stage timings.
+   */
+  async generateUltraPro(
+    request: import('./workflows/ultra-pro-pipeline').UltraProPipelineRequest,
+    onProgress?: import('./pipeline-orchestrator').PipelineProgressCallback
+  ): Promise<import('./pipeline-orchestrator').PipelineResult> {
+    const { runUltraProPipeline } = await import('./pipeline-orchestrator');
+    const result = await runUltraProPipeline(request, onProgress);
+
+    // If successful, download the final image to public dir
+    if (result.success && result.finalImage) {
+      try {
+        const publicPath = await this.downloadImage(result.finalImage, request.userId);
+        result.finalImage = publicPath;
+      } catch (err: any) {
+        console.warn(`⚠️ Could not copy final image to public: ${err.message}`);
+      }
+    }
+
+    return result;
+  }
 }
 
 export const comfyUIBridge = new ComfyUIBridge();
+
+// Re-export pipeline types for convenience
+export type {
+  PipelineRequest,
+  PipelineResult,
+  PipelineProgressCallback,
+  PipelineStage,
+} from './pipeline-orchestrator';
+
+// Re-export Ultra-Pro types
+export type {
+  UltraProPipelineRequest,
+  UltraProStage1Input,
+  UltraProStage2Input,
+  UltraProStage3Input,
+  UltraProStage4Input,
+  UltraProStage56Input,
+} from './workflows/ultra-pro-pipeline';

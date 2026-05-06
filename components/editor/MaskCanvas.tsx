@@ -124,6 +124,7 @@ export default function MaskCanvas({ imageUrl, onErase, isLoading }: MaskCanvasP
               src={imageUrl} 
               alt="Room to edit" 
               fill
+              sizes="(max-width: 1024px) 100vw, 896px"
               className="object-contain pointer-events-none"
               priority
             />

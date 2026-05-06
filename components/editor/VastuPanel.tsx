@@ -78,8 +78,8 @@ export function VastuPanel({ roomType, className }: VastuPanelProps) {
                         <Sparkles className="w-4 h-4 text-orange-500" />
                         Vastu Analysis
                     </h3>
-                    <Badge variant={analysis?.rating === 'excellent' ? 'default' : 'outline'}>
-                        {analysis?.rating?.toUpperCase() || 'ANALYZING'}
+                    <Badge variant={analysis?.overallScore?.grade === 'excellent' ? 'default' : 'outline'}>
+                        {analysis?.overallScore?.grade?.toUpperCase() || 'ANALYZING'}
                     </Badge>
                 </div>
 
@@ -104,12 +104,12 @@ export function VastuPanel({ roomType, className }: VastuPanelProps) {
                 <div className="space-y-2 pt-2">
                     <div className="flex justify-between text-sm">
                         <span>Compatibility Score</span>
-                        <span className={cn("font-bold", getScoreColor(analysis?.score || 0))}>
-                            {analysis?.score || 0}/100
+                        <span className={cn("font-bold", getScoreColor(analysis?.overallScore?.value || 0))}>
+                            {analysis?.overallScore?.value || 0}/100
                         </span>
                     </div>
                     <Progress
-                        value={analysis?.score || 0}
+                        value={analysis?.overallScore?.value || 0}
                         className="h-2"
                     // We'll need to customize Progress component or use inline style for color
                     />

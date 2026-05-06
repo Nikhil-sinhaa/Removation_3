@@ -18,6 +18,7 @@ class ComfyBridgeService {
     this.maxReconnectAttempts = 5;
     this.queue = [];
     this.isProcessingQueue = false;
+    this._ultraProRunning = false;  // Gap 4: concurrent job guard
     
     // ComfyUI configuration
     this.comfyUIUrl = process.env.COMFY_WS_URL || 'ws://127.0.0.1:8188/ws?clientId=removation_main';
@@ -28,6 +29,11 @@ class ComfyBridgeService {
   }
 
   async init() {
+    if (this._initialized) {
+      console.log('ℹ️ ComfyUI Bridge already initialized, skipping');
+      return;
+    }
+    this._initialized = true;
     console.log('🚀 Initializing ComfyUI Bridge Service...');
     this.connectToComfyUI();
     this.startBackendServer();
@@ -50,7 +56,11 @@ class ComfyBridgeService {
       });
 
       this.comfyUIWebSocket.on('message', (data) => {
-        this.handleComfyUIMessage(JSON.parse(data.toString()));
+        // ComfyUI sends binary preview frames (TAESD) — skip those
+        if (Buffer.isBuffer(data) && data[0] === 0) return;
+        try {
+          this.handleComfyUIMessage(JSON.parse(data.toString()));
+        } catch { /* binary or malformed message — ignore */ }
       });
 
       this.comfyUIWebSocket.on('close', () => {
@@ -360,51 +370,50 @@ class ComfyBridgeService {
    * Start backend WebSocket server for frontend clients
    */
   startBackendServer() {
-    const startServer = (port) => {
-      // Kill existing server if it exists
-      if (this.backendServer) {
-        this.backendServer.close();
-        this.backendServer = null;
+    // Guard: skip if we already have a listening server
+    if (this.backendServer) {
+      console.log('ℹ️ Backend WS server already running, skipping re-bind');
+      return;
+    }
+
+    const port = Number(this.backendPort);
+    const server = http.createServer();
+    const io = new Server(server, {
+      cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
       }
+    });
 
-      const server = http.createServer();
-      const io = new Server(server, {
-        cors: {
-          origin: "*",
-          methods: ["GET", "POST"]
-        }
+    io.on('connection', (socket) => {
+      console.log('🔗 Frontend client connected:', socket.id);
+      this.frontendClients.set(socket.id, socket);
+      
+      // Send initial connection status
+      socket.emit('comfy:status', { 
+        status: this.comfyUIConnected ? 'connected' : 'disconnected' 
       });
 
-      io.on('connection', (socket) => {
-        console.log('🔗 Frontend client connected:', socket.id);
-        this.frontendClients.set(socket.id, socket);
-        
-        // Send initial connection status
-        socket.emit('comfy:status', { 
-          status: this.comfyUIConnected ? 'connected' : 'disconnected' 
-        });
-      });
-
-      io.on('disconnect', (socket) => {
+      // FIX: disconnect must be on the individual socket, not on io.
+      // Previously on io scope → clients were never removed → memory leak.
+      socket.on('disconnect', () => {
         console.log('🔌 Frontend client disconnected:', socket.id);
         this.frontendClients.delete(socket.id);
       });
+    });
 
-      server.on('error', (err) => {
-        if (err.code === 'EADDRINUSE') {
-          console.log(`Port ${port} in use, trying ${port + 1}`);
-          startServer(port + 1);
-        }
-      });
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        // Port is already in use — another instance owns it. Don't cascade.
+        console.log(`ℹ️ Port ${port} already in use — reusing existing WS server`);
+      }
+    });
 
-      server.listen(port, () => {
-        console.log(`Backend WS server on port ${port}`);
-      });
+    server.listen(port, () => {
+      console.log(`✅ Backend WS server on port ${port}`);
+    });
 
-      this.backendServer = server;
-    };
-    
-    startServer(3001);
+    this.backendServer = server;
   }
 
   /**
@@ -433,6 +442,12 @@ class ComfyBridgeService {
    */
   async processQueue() {
     if (this.queue.length === 0 || this.isProcessingQueue) {
+      return;
+    }
+
+    // Gap 4: Block regular jobs while Ultra-Pro is running
+    if (this._ultraProRunning) {
+      console.log('⏸️ Queue paused — Ultra-Pro pipeline is running');
       return;
     }
 
@@ -587,9 +602,591 @@ class ComfyBridgeService {
       };
     }
   }
+
+  // ─── Ultra-Pro Multi-Stage Pipeline ─────────────────────────────────
+
+  /**
+   * Execute the 6-stage Ultra-Pro pipeline sequentially.
+   * Each stage is submitted as a separate ComfyUI prompt.
+   * VRAM is flushed between stages via POST /free.
+   *
+   * @param {string} projectId - MongoDB project ID
+   * @param {object} opts - Pipeline options
+   * @param {string} opts.imageFilename - Input image in ComfyUI/input
+   * @param {string} opts.roomType - Room type for prompts
+   * @param {object} opts.masterSelector - Material/finish selections
+   * @param {object} opts.masterToggles - Which elements to change
+   * @param {string} [opts.furnitureImage] - BG-removed product image
+   * @param {string} [opts.styleReference] - Moodboard/style image
+   * @param {number[]} [opts.skipStages] - Stages to skip
+   */
+  async enqueueUltraProJob(projectId, opts) {
+    // Reject if another job is in progress
+    if (this.isProcessingQueue || this._ultraProRunning) {
+      const msg = 'Another generation is already running. Please wait.';
+      console.warn('⚠️', msg);
+      this.notifyFrontend('comfy:ultrapro:error', { projectId, error: msg });
+      return { success: false, error: msg };
+    }
+
+    this._ultraProRunning = true;  // Acquire mutex
+
+    const {
+      buildStage1, buildStage2, buildStage3,
+      buildStage4, buildStage5, buildStage6,
+    } = await import('../workflows/ultraProBuilder.js');
+
+    const {
+      imageFilename, roomType, masterSelector, masterToggles,
+      furnitureImage, styleReference, skipStages = [],
+      structuralLock = {},    // ProfessionalSelector structural lock params
+    } = opts;
+
+    const skip = new Set(skipStages);
+    const stageOutputs = {};      // { stage1: { wall_mask: 'wall_mask_00001_.png', ... } }
+    const timings = {};
+    // Count active stages: 1(scene) + 2(geom) + 3(inpaint) + optional 4(furniture) + optional 5(refine) + optional 6(upscale)
+    const TOTAL_STAGES = [1,2,3,4,5,6].filter(s => !skip.has(s)).length;
+
+    // Update project to processing
+    await this.updateProjectResult(projectId, null, 'processing');
+    this.notifyFrontend('comfy:ultrapro:start', { projectId, totalStages: TOTAL_STAGES });
+
+    try {
+      // ═══ STAGE 1: Scene Understanding ═══
+      if (!skip.has(1)) {
+        const t0 = Date.now();
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 1, name: 'Scene Understanding', status: 'running' });
+
+        const workflow1 = buildStage1(imageFilename);
+        const outputs1 = await this._submitStageAndWait(workflow1);
+        await this._copyOutputsToInput(outputs1);
+        stageOutputs.stage1 = this._extractFilenames(outputs1, 'stage1/');
+        timings.stage1 = Date.now() - t0;
+
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 1, status: 'done', ms: timings.stage1 });
+        await this._flushVRAM();
+      }
+
+      // ═══ STAGE 2: Geometry Locking ═══
+      if (!skip.has(2)) {
+        const t0 = Date.now();
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 2, name: 'Geometry Locking', status: 'running' });
+
+        const depthMap = stageOutputs.stage1?.depth_map || 'depth_map_00001_.png';
+        // Pass structuralLock params so ProfessionalSelector settings reach the workflow
+        const workflow2 = buildStage2(imageFilename, depthMap, { masterSelector, masterToggles, roomType, structuralLock });
+        const outputs2 = await this._submitStageAndWait(workflow2);
+        await this._copyOutputsToInput(outputs2);
+        stageOutputs.stage2 = this._extractFilenames(outputs2, 'stage2/');
+        timings.stage2 = Date.now() - t0;
+
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 2, status: 'done', ms: timings.stage2 });
+        await this._flushVRAM();
+      }
+
+      // ═══ STAGE 3: Regional Inpainting ═══
+      if (!skip.has(3)) {
+        const t0 = Date.now();
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 3, name: 'Regional Inpainting', status: 'running' });
+
+        const redesigned = stageOutputs.stage2?.redesigned || 'redesigned_00001_.png';
+        const wallMask   = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
+        const objectMask = stageOutputs.stage1?.object_mask || 'object_mask_00001_.png';
+
+        const wallPrompt = masterToggles?.walls
+          ? `${masterSelector.wallColor} walls, smooth surface, professional finish`
+          : 'original walls, clean surface';
+        const furniturePrompt = masterToggles?.furniture
+          ? `${masterSelector.furnitureStyle} furniture, high quality, detailed texture`
+          : 'original furniture, clean, organized';
+
+        const workflow3 = buildStage3(redesigned, wallMask, objectMask, { wallPrompt, furniturePrompt });
+        const outputs3 = await this._submitStageAndWait(workflow3);
+        await this._copyOutputsToInput(outputs3);
+        stageOutputs.stage3 = this._extractFilenames(outputs3, 'stage3/');
+        timings.stage3 = Date.now() - t0;
+
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 3, status: 'done', ms: timings.stage3 });
+        await this._flushVRAM();
+      }
+
+      // ═══ STAGE 4: IPAdapter Furniture (optional) ═══
+      let prevImage = stageOutputs.stage3?.regional_inpainted || 'regional_inpainted_00001_.png';
+
+      if (!skip.has(4) && furnitureImage) {
+        const t0 = Date.now();
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 4, name: 'Furniture Placement', status: 'running' });
+
+        const objectMask = stageOutputs.stage1?.object_mask || 'object_mask_00001_.png';
+        const depthMap = stageOutputs.stage1?.depth_map || 'depth_map_00001_.png';
+        const styleRef = styleReference || imageFilename;
+
+        const workflow4 = buildStage4(prevImage, styleRef, furnitureImage, objectMask, depthMap);
+        const outputs4 = await this._submitStageAndWait(workflow4);
+        await this._copyOutputsToInput(outputs4);
+        stageOutputs.stage4 = this._extractFilenames(outputs4, 'stage4/');
+        prevImage = stageOutputs.stage4?.furniture_placed || 'furniture_placed_00001_.png';
+        timings.stage4 = Date.now() - t0;
+
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 4, status: 'done', ms: timings.stage4 });
+        await this._flushVRAM();
+      }
+
+      // ═══ STAGE 5: Iterative Refinement ═══
+      let refinedImage = prevImage;
+
+      if (!skip.has(5)) {
+        const t0 = Date.now();
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 5, name: 'Detail Refinement', status: 'running' });
+
+        const wallMask   = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
+        const objectMask = stageOutputs.stage1?.object_mask || 'object_mask_00001_.png';
+
+        const workflow5 = buildStage5(prevImage, wallMask, objectMask);
+        const outputs5 = await this._submitStageAndWait(workflow5);
+        await this._copyOutputsToInput(outputs5);
+        stageOutputs.stage5 = this._extractFilenames(outputs5, 'stage5/');
+        refinedImage = stageOutputs.stage5?.refined || stageOutputs.stage5?._last || prevImage;
+        timings.stage5 = Date.now() - t0;
+
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 5, status: 'done', ms: timings.stage5 });
+        await this._flushVRAM();
+      }
+
+      // ═══ STAGE 6: 4× Upscale + Sharpen ═══
+      if (!skip.has(6)) {
+        const t0 = Date.now();
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 6, name: '4× Upscale', status: 'running' });
+
+        const workflow6 = buildStage6(refinedImage);
+        const outputs6 = await this._submitStageAndWait(workflow6);
+        await this._copyOutputsToInput(outputs6);
+        stageOutputs.stage6 = this._extractFilenames(outputs6, 'stage6_final/');
+        timings.stage6 = Date.now() - t0;
+
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 6, status: 'done', ms: timings.stage6 });
+      }
+
+      // ═══ FINAL: Copy result to public/renders + update MongoDB ═══
+      // Priority: stage6 upscale → stage5 refined → stage4/3 inpainted (whichever ran last)
+      const finalFilename =
+        stageOutputs.stage6?.ultra_hd_result
+        || stageOutputs.stage6?._last
+        || stageOutputs.stage5?.refined
+        || stageOutputs.stage5?._last
+        || refinedImage
+        || prevImage;
+
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+      const inputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+
+      // Try multiple locations: output subfolder, flat in output, or input dir
+      let srcPath = null;
+      const candidates = [
+        path.join(outputDir, 'stage6_final', finalFilename),  // stage6_final/ultra_hd_result_00001_.png
+        path.join(outputDir, finalFilename),                   // flat in output/
+        path.join(inputDir, finalFilename),                    // copied to input/
+      ];
+      for (const candidate of candidates) {
+        try {
+          await fs.access(candidate);
+          srcPath = candidate;
+          break;
+        } catch { /* try next */ }
+      }
+
+      const safeName = finalFilename.replace(/\//g, '_');
+      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${safeName}`;
+      await fs.mkdir('/home/nikhil/Documents/Remo2/Removation_3/public/renders', { recursive: true });
+
+      try {
+        if (srcPath) {
+          await fs.copyFile(srcPath, dest);
+          console.log(`📋 Final image copied from: ${srcPath}`);
+        } else {
+          console.warn(`⚠️ Final image not found in any location: ${finalFilename}`);
+        }
+      } catch (copyErr) {
+        console.warn('⚠️ Could not copy final image:', copyErr.message);
+      }
+
+      const imageUrl = `/renders/${finalFilename.replace(/\//g, '_')}`;
+      await Project.findByIdAndUpdate(projectId, {
+        resultImage: imageUrl,
+        status: 'completed',
+        processingCompletedAt: new Date(),
+      });
+
+      this.notifyFrontend('comfy:ultrapro:done', {
+        projectId,
+        imageUrl,
+        filename: finalFilename,
+        timings,
+        totalMs: Object.values(timings).reduce((a, b) => a + b, 0),
+      });
+
+      console.log(`🎉 Ultra-Pro pipeline complete: ${finalFilename}`);
+      return { success: true, imageUrl, timings };
+
+    } catch (error) {
+      console.error('❌ Ultra-Pro pipeline failed:', error.message);
+      await Project.findByIdAndUpdate(projectId, {
+        status: 'failed',
+        errorMessage: `Ultra-Pro pipeline error: ${error.message}`,
+        processingCompletedAt: new Date(),
+      });
+      this.notifyFrontend('comfy:ultrapro:error', { projectId, error: error.message });
+      return { success: false, error: error.message };
+    } finally {
+      this._ultraProRunning = false;  // Release mutex
+      // Resume regular queue if jobs are pending
+      if (this.queue.length > 0) {
+        setTimeout(() => this.processQueue(), 2000);
+      }
+    }
+  }
+
+  // ─── Tab-Specific Single-Stage Job ──────────────────────────────────
+
+  /**
+   * Execute a single-tab workflow (Render / Edit / Furnish / Lighting / Post-process).
+   * Unlike enqueueUltraProJob, this submits a single ComfyUI prompt and polls for completion.
+   *
+   * @param {string} projectId - MongoDB project ID
+   * @param {'render'|'edit'|'furnish'|'lighting'|'postprocess'} tab - Which tab workflow
+   * @param {object} opts - Tab-specific options passed to the workflow builder
+   * @returns {Promise<{success: boolean, imageUrl?: string, error?: string}>}
+   */
+  async enqueueTabJob(projectId, tab, opts) {
+    // Wait for mutex if another generation is running (max 5 min)
+    const maxWait = 300_000; // 5 minutes
+    const pollInterval = 3_000; // 3 seconds
+    let waited = 0;
+    while (this._ultraProRunning && waited < maxWait) {
+      console.log(`⏳ Tab ${tab} waiting for mutex (${Math.round(waited/1000)}s)...`);
+      await new Promise(r => setTimeout(r, pollInterval));
+      waited += pollInterval;
+    }
+    if (this._ultraProRunning) {
+      const msg = 'Pipeline busy for too long. Please try again.';
+      this.notifyFrontend('comfy:tab:error', { projectId, tab, error: msg });
+      return { success: false, error: msg };
+    }
+
+    this._ultraProRunning = true;  // Acquire mutex (shared with Ultra-Pro)
+
+    try {
+      // Import all workflow builders
+      const {
+        buildRenderWorkflow, buildEditWorkflow, buildFurnishWorkflow,
+        buildLightingWorkflow, buildPostProcessWorkflow,
+        buildAutoEditWorkflow, buildEmptyRoomWorkflow, buildPointEditWorkflow,
+        buildInteriorRenderWorkflow, buildExteriorRenderWorkflow, buildLandscapeWorkflow,
+        buildStyleTransferWorkflow, buildCollageWorkflow,
+        buildBackgroundWorkflow, buildViewExtenderWorkflow, buildLineartWorkflow,
+      } = await import('../workflows/ultraProBuilder.js');
+
+      // Build the workflow for the requested tab/tool
+      let workflow;
+      const tabName = {
+        render: 'Render', edit: 'Edit', furnish: 'Furnish',
+        lighting: 'Lighting', postprocess: 'Post-Process',
+        'auto-edit': 'Auto Edit', 'empty-room': 'Empty Room', 'point-edit': 'Point & Edit',
+        'interior-render': 'Interior Render', 'exterior-render': 'Exterior Render',
+        landscape: 'Landscape', 'style-transfer': 'Style Transfer',
+        collage: 'Collage', background: 'Background',
+        'view-extend': 'View Extend', lineart: 'Lineart',
+      }[tab] || tab;
+
+      switch (tab) {
+        case 'render':
+          workflow = buildRenderWorkflow(opts.imageFilename, opts);
+          break;
+        case 'edit':
+          workflow = buildEditWorkflow(opts.imageFilename, opts.maskFilename, opts);
+          break;
+        case 'furnish':
+          workflow = buildFurnishWorkflow(
+            opts.imageFilename, opts.furnitureImage,
+            opts.emptyMask || null, opts.depthMap || null, opts
+          );
+          break;
+        case 'lighting':
+          workflow = buildLightingWorkflow(opts.imageFilename, opts);
+          break;
+        case 'postprocess':
+          workflow = buildPostProcessWorkflow(opts.imageFilename, opts);
+          break;
+        // ─── New tools ──────────────────────────────────────────
+        case 'auto-edit':
+          workflow = buildAutoEditWorkflow(opts.imageFilename, opts);
+          break;
+        case 'empty-room':
+          workflow = buildEmptyRoomWorkflow(opts.imageFilename, opts);
+          break;
+        case 'point-edit':
+          workflow = buildPointEditWorkflow(opts.imageFilename, opts.maskFilename, opts);
+          break;
+        case 'interior-render':
+          workflow = buildInteriorRenderWorkflow(opts.imageFilename, opts);
+          break;
+        case 'exterior-render':
+          workflow = buildExteriorRenderWorkflow(opts.imageFilename, opts);
+          break;
+        case 'landscape':
+          workflow = buildLandscapeWorkflow(opts.imageFilename, opts);
+          break;
+        case 'style-transfer':
+          workflow = buildStyleTransferWorkflow(opts.imageFilename, opts.referenceImage, opts);
+          break;
+        case 'collage':
+          workflow = buildCollageWorkflow(opts.imageFilename, opts.referenceImages || [], opts);
+          break;
+        case 'background':
+          workflow = buildBackgroundWorkflow(opts.imageFilename, opts);
+          break;
+        case 'view-extend':
+          workflow = buildViewExtenderWorkflow(opts.imageFilename, opts);
+          break;
+        case 'lineart':
+          workflow = buildLineartWorkflow(opts.imageFilename, opts);
+          break;
+        default:
+          throw new Error(`Unknown tab: ${tab}`);
+      }
+
+      // Update project status
+      await this.updateProjectResult(projectId, null, 'processing');
+      this.notifyFrontend('comfy:tab:start', { projectId, tab, name: tabName });
+
+      // Flush VRAM + submit
+      const t0 = Date.now();
+      const outputs = await this._submitStageAndWait(workflow);
+      const elapsed = Date.now() - t0;
+
+      // Copy output to input (for chaining) + extract filenames
+      // New tools use tool_<name>/result prefix; legacy tabs use tab_<name>/
+      const prefix = tab.startsWith('auto-') || tab === 'empty-room' || tab === 'point-edit' ||
+        tab === 'interior-render' || tab === 'exterior-render' || tab === 'landscape' ||
+        tab === 'style-transfer' || tab === 'collage' || tab === 'background' ||
+        tab === 'view-extend' || tab === 'lineart'
+        ? `tool_${tab.replace(/-/g, '_')}/` : `tab_${tab}/`;
+      await this._copyOutputsToInput(outputs);
+      const filenames = this._extractFilenames(outputs, prefix);
+
+      // Find the final output image
+      const finalFilename = filenames.result || filenames._last;
+
+      // Copy result to public/renders
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+      const inputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+
+      let srcPath = null;
+      const candidates = [
+        path.join(outputDir, prefix, finalFilename),
+        path.join(outputDir, `tab_${tab}`, finalFilename),
+        path.join(outputDir, finalFilename),
+        path.join(inputDir, finalFilename),
+      ];
+      for (const candidate of candidates) {
+        try {
+          await fs.access(candidate);
+          srcPath = candidate;
+          break;
+        } catch { /* try next */ }
+      }
+
+      const safeName = (finalFilename || `${tab}_result_${Date.now()}.png`).replace(/\//g, '_');
+      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${safeName}`;
+      await fs.mkdir('/home/nikhil/Documents/Remo2/Removation_3/public/renders', { recursive: true });
+
+      if (srcPath) {
+        await fs.copyFile(srcPath, dest);
+        console.log(`📋 Tab ${tab} result copied: ${srcPath}`);
+      } else {
+        console.warn(`⚠️ Tab ${tab} output not found: ${finalFilename}`);
+      }
+
+      const imageUrl = `/renders/${safeName}`;
+      await Project.findByIdAndUpdate(projectId, {
+        resultImage: imageUrl,
+        status: 'completed',
+        processingCompletedAt: new Date(),
+      });
+
+      this.notifyFrontend('comfy:tab:done', {
+        projectId, tab, name: tabName,
+        imageUrl, filename: finalFilename,
+        ms: elapsed,
+      });
+
+      console.log(`🎉 Tab ${tab} complete: ${finalFilename} (${(elapsed / 1000).toFixed(1)}s)`);
+      return { success: true, imageUrl, ms: elapsed };
+
+    } catch (error) {
+      console.error(`❌ Tab ${tab} failed:`, error.message);
+      await Project.findByIdAndUpdate(projectId, {
+        status: 'failed',
+        errorMessage: `Tab ${tab} error: ${error.message}`,
+        processingCompletedAt: new Date(),
+      });
+      this.notifyFrontend('comfy:tab:error', { projectId, tab, error: error.message });
+      return { success: false, error: error.message };
+    } finally {
+      this._ultraProRunning = false;  // Release mutex
+      if (this.queue.length > 0) {
+        setTimeout(() => this.processQueue(), 2000);
+      }
+    }
+  }
+
+  // ─── Internal Helpers for Ultra-Pro ─────────────────────────────────
+
+  /**
+   * Submit a single stage workflow and poll until completion.
+   * Returns the outputs object from ComfyUI history.
+   */
+  async _submitStageAndWait(workflow) {
+    // Flush VRAM before submission
+    await this._flushVRAM();
+
+    const res = await fetch(`${this.comfyRestUrl}/prompt`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: workflow }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`ComfyUI HTTP ${res.status}: ${text}`);
+    }
+
+    const { prompt_id } = await res.json();
+    console.log(`📤 Stage submitted: ${prompt_id}`);
+
+    // Poll for completion (6 min timeout)
+    const deadline = Date.now() + 360_000;
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const histRes = await fetch(`${this.comfyRestUrl}/history/${prompt_id}`);
+        const history = await histRes.json();
+        const entry = history[prompt_id];
+        if (!entry) continue;
+
+        // Check for error
+        if (entry.status?.status_str === 'error' ||
+            (entry.status?.messages || []).some(m => m[0] === 'execution_error')) {
+          throw new Error('ComfyUI execution error — check VRAM or workflow');
+        }
+
+        // Check for success
+        const outputs = entry.outputs || {};
+        const hasImages = Object.values(outputs).some(o => o?.images?.length > 0);
+        if (hasImages) {
+          console.log(`✅ Stage completed: ${prompt_id}`);
+          return outputs;
+        }
+      } catch (err) {
+        if (err.message.includes('execution error')) throw err;
+        console.warn(`⚠️ Poll error: ${err.message}`);
+      }
+    }
+
+    throw new Error('Stage timed out after 6 minutes');
+  }
+
+  /**
+   * Flush GPU VRAM between stages via POST /free.
+   */
+  async _flushVRAM() {
+    try {
+      await fetch(`${this.comfyRestUrl}/free`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ unload_models: true, free_memory: true }),
+      });
+      await new Promise(r => setTimeout(r, 1000));
+      console.log('🧹 VRAM flushed');
+    } catch (e) {
+      console.warn('⚠️ VRAM flush failed:', e.message);
+    }
+  }
+
+  /**
+   * Copy stage output images from ComfyUI/output/ to ComfyUI/input/
+   * so that subsequent stages' LoadImage nodes can find them.
+   * ComfyUI's LoadImage only searches the input/ directory.
+   */
+  async _copyOutputsToInput(outputs) {
+    const fs = await import('fs/promises');
+    const path = await import('path');
+    const outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+    const inputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+
+    for (const nodeId in outputs) {
+      const images = outputs[nodeId]?.images;
+      if (!images) continue;
+      for (const img of images) {
+        const filename = img.filename || img.name;
+        if (!filename) continue;
+        const subfolder = img.subfolder || '';
+        const src = path.join(outputDir, subfolder, filename);
+        // Flatten subfolder paths: "stage1/wall_mask_00001_.png" → "wall_mask_00001_.png"
+        const flatName = filename.includes('/') ? filename.split('/').pop() : filename;
+        const dest = path.join(inputDir, flatName);
+        try {
+          await fs.copyFile(src, dest);
+          console.log(`📋 Copied to input: ${filename} → ${flatName}`);
+          // IMPORTANT: Update the img record so downstream stages reference
+          // the flat filename (which is what LoadImage will find in input/)
+          img._inputFilename = flatName;
+        } catch (err) {
+          console.warn(`⚠️ Could not copy ${filename} to input: ${err.message}`);
+        }
+      }
+    }
+  }
+
+  /**
+   * Extract output filenames from ComfyUI history outputs.
+   * Maps "stage1/wall_mask_00001_.png" → { wall_mask: "wall_mask_00001_.png" }
+   * Uses the flat input filename (copied by _copyOutputsToInput) so LoadImage
+   * nodes in subsequent stages can actually find them.
+   */
+  _extractFilenames(outputs, prefix) {
+    const result = {};
+    for (const nodeId in outputs) {
+      const images = outputs[nodeId]?.images;
+      if (!images) continue;
+      for (const img of images) {
+        const origFilename = img.filename || img.name;
+        if (!origFilename) continue;
+        // Prefer the flat input filename (set by _copyOutputsToInput)
+        // so LoadImage nodes in later stages can find it in ComfyUI/input/
+        const usableFilename = img._inputFilename || origFilename;
+        const key = origFilename
+          .replace(prefix, '')
+          .replace(/_\d+_?\.\w+$/, '')
+          .trim();
+        if (key) result[key] = usableFilename;
+        result._last = usableFilename;
+      }
+    }
+    return result;
+  }
 }
 
-// Singleton instance
-const comfyBridgeService = new ComfyBridgeService();
+// Singleton instance — use Node.js `global` to survive Turbopack/HMR re-imports.
+// `globalThis` may differ across Turbopack compilation contexts, but `global`
+// is guaranteed to be the same object across all modules in the same process.
+const comfyBridgeService =
+  global.__comfyBridgeInstance ||
+  (global.__comfyBridgeInstance = new ComfyBridgeService());
 
 export default comfyBridgeService;

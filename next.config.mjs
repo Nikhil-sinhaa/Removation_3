@@ -87,12 +87,11 @@ const nextConfig = {
   },
 };
 
-// Initialize ComfyUI Bridge on server startup
-import('./src/services/comfyBridge.js').then(comfyBridge => {
-  comfyBridge.default.init();
-  console.log('🚀 ComfyUI Bridge initialized on server startup');
+// Import ComfyUI Bridge to trigger singleton initialization on server startup
+import('./src/services/comfyBridge.js').then(() => {
+  console.log('🚀 ComfyUI Bridge module loaded');
 }).catch(error => {
-  console.error('❌ Failed to initialize ComfyUI Bridge:', error);
+  console.error('❌ Failed to load ComfyUI Bridge:', error);
 });
 
 export default nextConfig;

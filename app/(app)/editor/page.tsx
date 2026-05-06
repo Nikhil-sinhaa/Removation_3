@@ -192,6 +192,7 @@ function StyleCard({
         src={imgSrc}
         alt={style.name}
         fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         className="object-cover"
         onError={() => setImgSrc('/images/styles/placeholder.jpg')}
       />
@@ -1157,6 +1158,7 @@ export default function EditorPage() {
                             src={originalImage}
                             alt="Original"
                             fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             className="object-cover"
                           />
                           <Badge className="absolute top-2 left-2">Original</Badge>
@@ -1179,6 +1181,7 @@ export default function EditorPage() {
                               src={img.url}
                               alt={img.style}
                               fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                               className="object-cover"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 hover:opacity-100 transition-opacity">
@@ -1224,6 +1227,7 @@ export default function EditorPage() {
                           src={originalImage}
                           alt="Before"
                           fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />
                       </div>
@@ -1237,6 +1241,7 @@ export default function EditorPage() {
                           src={selectedGenerated.url}
                           alt="After"
                           fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           className="object-cover"
                         />
                       </div>
@@ -1315,6 +1320,7 @@ export default function EditorPage() {
                         src={originalImage}
                         alt="Original"
                         fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
                       />
                     )}
@@ -1342,6 +1348,7 @@ export default function EditorPage() {
                         src={img.url}
                         alt={`Generated ${index + 1}`}
                         fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover"
                       />
                       {img.isFavorite && (

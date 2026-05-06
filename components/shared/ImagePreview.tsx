@@ -1,4 +1,4 @@
-﻿// components/shared/ImagePreview.tsx
+// components/shared/ImagePreview.tsx
 "use client";
 
 import React, { useState, useRef, useCallback, useEffect } from "react";
@@ -793,6 +793,7 @@ export function ImagePreview({
                 src={blurDataURL}
                 alt=""
                 fill
+                sizes="100vw"
                 className="object-cover blur-lg scale-110"
               />
             )}

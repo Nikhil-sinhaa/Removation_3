@@ -1,6 +1,10 @@
 /**
- * Room Redesign Controller
- * Handles structure-preserving room redesign using ControlNet
+ * Room Redesign Controller (EXPRESS — DEPRECATED)
+ * 
+ * ⚠️  THIS FILE IS NOT USED by the Next.js app.
+ * The REAL handler is: app/api/ai/redesign/route.js
+ * This file is kept only as a reference.
+ * Any changes should be made in route.js instead.
  */
 
 import multer from 'multer';

@@ -543,12 +543,16 @@ function BeforeAfterSlider({
   beforeImage, 
   afterImage,
   beforeLabel = "Before",
-  afterLabel = "After"
+  afterLabel = "After",
+  priority = false,
+  sizes = "(max-width: 1024px) 100vw, 1024px"
 }: { 
   beforeImage: string; 
   afterImage: string;
   beforeLabel?: string;
   afterLabel?: string;
+  priority?: boolean;
+  sizes?: string;
 }) {
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
@@ -602,8 +606,9 @@ function BeforeAfterSlider({
           src={afterImage}
           alt="After"
           fill
+          sizes={sizes}
           className="object-cover"
-          priority
+          priority={priority}
         />
         <div className="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-sm text-white font-medium">
           {afterLabel}
@@ -619,8 +624,9 @@ function BeforeAfterSlider({
           src={beforeImage}
           alt="Before"
           fill
+          sizes={sizes}
           className="object-cover"
-          priority
+          priority={priority}
         />
         <div className="absolute bottom-4 left-4 px-3 py-1.5 rounded-lg bg-black/60 backdrop-blur-sm text-sm text-white font-medium">
           {beforeLabel}
@@ -799,7 +805,6 @@ function FloatingElements() {
 function HeroSection() {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 150]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
 
   const [currentStyle, setCurrentStyle] = useState(0);
   const styles = [
@@ -832,7 +837,7 @@ function HeroSection() {
       {/* Floating Elements */}
       <FloatingElements />
 
-      <motion.div style={{ y, opacity }} className="relative z-10 w-full">
+      <motion.div style={{ y }} className="relative z-10 w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-24">
           <motion.div
             initial="initial"
@@ -946,6 +951,7 @@ function HeroSection() {
                   afterImage="/images/hero-after.jpg"
                   beforeLabel="Original Room"
                   afterLabel="AI Redesigned"
+                  priority={true}
                 />
 
                 {/* Overlay Info Badges */}
@@ -1608,6 +1614,7 @@ function GallerySection() {
                     afterImage={item.after}
                     beforeLabel="Before"
                     afterLabel={item.style}
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
               </motion.div>
@@ -2643,7 +2650,7 @@ export default function LandingPage() {
   });
 
   return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
+    <main className="dark min-h-screen bg-background overflow-x-hidden">
       {/* Progress Bar */}
       <motion.div
         className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-600 to-pink-600 z-50 origin-left"

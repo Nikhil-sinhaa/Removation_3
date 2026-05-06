@@ -40,7 +40,9 @@ export function CrispChat({ crispWebsiteId }: CrispChatProps) {
     crispWebsiteId = process.env.NEXT_PUBLIC_CRISP_WEBSITE_ID;
   }
 
-  if (!crispWebsiteId) return null;
+  // Guard against placeholder Crisp IDs
+  const isPlaceholder = !crispWebsiteId || crispWebsiteId.includes('your_') || crispWebsiteId === 'xxxxx';
+  if (isPlaceholder) return null;
 
   return (
     <Script

@@ -522,6 +522,13 @@ export interface EditorState {
   isLoading: boolean;
   loadingMessage: string;
   isInitialized: boolean;
+
+  // Ultra-Pro pipeline state
+  ultraProStage: number;           // current stage (1-6), 0 = idle
+  isUltraProRunning: boolean;
+  ultraProProjectId: string | null;
+
+  placedFurniture: {name: string, price: number, url: string, imageUrl?: string}[];
 }
 
 export const initialEditorState: EditorState = {
@@ -569,6 +576,13 @@ export const initialEditorState: EditorState = {
   isLoading: false,
   loadingMessage: '',
   isInitialized: false,
+
+  // Ultra-Pro defaults
+  ultraProStage: 0,
+  isUltraProRunning: false,
+  ultraProProjectId: null,
+
+  placedFurniture: [],
 };
 
 // ============================================
@@ -739,6 +753,13 @@ export interface EditorActions {
   setCostLoading: (loading: boolean) => void;
   requestCostEstimate: () => Promise<void>;
   updateCostSettings: (settings: Partial<{ city: string; squareFootage: number; quality: string }>) => void;
+  addPlacedFurniture: (item: {name: string, price: number, url: string, imageUrl?: string}) => void;
+  clearPlacedFurniture: () => void;
+
+  // Ultra-Pro pipeline
+  startUltraProGeneration: () => Promise<void>;
+  setUltraProStage: (stage: number) => void;
+  setUltraProRunning: (running: boolean) => void;
 
   // Presets
   addPreset: (preset: Omit<Preset, 'id' | 'createdAt'>) => string;
@@ -2401,6 +2422,90 @@ const editorStoreCreator: StateCreator<
 
   updateCostSettings: (settings) => {
     // Implementation
+  },
+
+  addPlacedFurniture: (item) => {
+    set((state) => {
+      state.placedFurniture.push(item);
+    });
+  },
+
+  clearPlacedFurniture: () => {
+    set((state) => {
+      state.placedFurniture = [];
+    });
+  },
+
+  // ─── Ultra-Pro Pipeline Actions ─────────────────────────────────
+
+  startUltraProGeneration: async () => {
+    const state = get();
+    if (!state.currentImage?.url || state.isUltraProRunning) return;
+
+    set((s) => {
+      s.isUltraProRunning = true;
+      s.ultraProStage = 0;
+      s.isGenerating = true;
+      s.generationProgress = 0;
+      s.generationStatus = 'Preparing Ultra-Pro pipeline...';
+      s.generationError = null;
+    });
+
+    try {
+      // Fetch the source image as a Blob for FormData upload
+      const imgRes = await fetch(state.currentImage.url);
+      const imgBlob = await imgRes.blob();
+
+      const formData = new FormData();
+      formData.append('image', imgBlob, 'room.png');
+      formData.append('data', JSON.stringify({
+        roomType: state.roomType?.id || 'living_room',
+        masterSelector: (state.project as any)?.masterSelector || {},
+        masterToggles: (state.project as any)?.masterToggles || {},
+        furnitureImage: (state.project as any)?.furnitureImage || null,
+        styleReference: null,
+        skipStages: [],
+      }));
+
+      const response = await fetch('/api/ai/ultra-pro', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      set((s) => {
+        s.ultraProProjectId = result.projectId;
+        s.generationStatus = `Ultra-Pro queued (${result.stages} stages)`;
+      });
+
+      console.log('✅ Ultra-Pro submitted:', result.projectId);
+      // Socket.IO hook will handle progress + completion from here
+    } catch (error: any) {
+      console.error('❌ Ultra-Pro submission failed:', error.message);
+      set((s) => {
+        s.isUltraProRunning = false;
+        s.isGenerating = false;
+        s.generationError = error.message;
+        s.generationProgress = 0;
+        s.generationStatus = '';
+      });
+    }
+  },
+
+  setUltraProStage: (stage) => {
+    set((s) => { s.ultraProStage = stage; });
+  },
+
+  setUltraProRunning: (running) => {
+    set((s) => {
+      s.isUltraProRunning = running;
+      if (!running) s.isGenerating = false;
+    });
   },
 
   addPreset: (preset) => {

@@ -7,9 +7,12 @@ import { useAuth } from '@/hooks/useAuth';
 import posthog from 'posthog-js';
 import { PostHogProvider } from 'posthog-js/react';
 
-// Initialize PostHog
-if (typeof window !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+// Initialize PostHog — guard against placeholder API keys
+const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY || '';
+const isPlaceholderKey = !posthogKey || posthogKey.startsWith('phc_your_') || posthogKey.startsWith('phc_xxxxx');
+
+if (typeof window !== 'undefined' && posthogKey && !isPlaceholderKey) {
+  posthog.init(posthogKey, {
     api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com',
     capture_pageview: false, // We'll handle this manually
     capture_pageleave: true,

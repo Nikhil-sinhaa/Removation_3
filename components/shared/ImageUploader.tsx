@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useCallback, useRef } from "react";
 import Image from "next/image";
@@ -217,6 +217,7 @@ export function ImageUploader({
               src={previewUrl}
               alt="Uploaded image"
               fill
+              sizes="(max-width: 768px) 100vw, 33vw"
               className="object-cover"
             />
 

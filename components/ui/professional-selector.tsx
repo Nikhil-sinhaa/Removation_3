@@ -1,7 +1,7 @@
 // components/ui/professional-selector.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,13 +36,17 @@ export function ProfessionalSelector({ onSelectionChange, roomType }: Profession
   const [hardwareMode, setHardwareMode] = useState<'conservative' | 'standard' | 'quality'>('standard');
   const [materials, setMaterials] = useState({
     walls: 'keep_original',
-    ceilings: 'keep_original',
+    ceiling: 'keep_original',
     furniture: 'keep_original',
     floors: 'keep_original',
     lighting: 'keep_original',
   });
 
-  const updateSelections = () => {
+  // Single effect that recomputes and pushes selections whenever any state changes.
+  // This replaces all the scattered setTimeout(updateSelections, 0) calls that
+  // suffered from stale closures, and the mount-only useEffect that caused
+  // hydration mismatches.
+  useEffect(() => {
     const selections = {
       structuralLock: {
         enabled: structuralLock,
@@ -65,46 +69,38 @@ export function ProfessionalSelector({ onSelectionChange, roomType }: Profession
     };
 
     onSelectionChange(selections);
-  };
-
-  // Update selections when any setting changes
-  useState(() => {
-    updateSelections();
-  });
+  }, [
+    structuralLock, structuralStrength, cannyThreshold,
+    contextStrength, userTextStrength, twoStageInterpolation,
+    materials, hardwareMode, onSelectionChange,
+  ]);
 
   const handleMaterialChange = (category: string, value: string) => {
     setMaterials(prev => ({ ...prev, [category]: value }));
-    setTimeout(updateSelections, 0);
   };
 
   const handleStructuralStrengthChange = (value: number[]) => {
     setStructuralStrength(value);
-    setTimeout(updateSelections, 0);
   };
 
   const handleCannyThresholdChange = (value: number[]) => {
     setCannyThreshold(value);
-    setTimeout(updateSelections, 0);
   };
 
   const handleContextStrengthChange = (value: number[]) => {
     setContextStrength(value);
-    setTimeout(updateSelections, 0);
   };
 
   const handleUserTextStrengthChange = (value: number[]) => {
     setUserTextStrength(value);
-    setTimeout(updateSelections, 0);
   };
 
   const handleTwoStageInterpolationChange = (enabled: boolean) => {
     setTwoStageInterpolation(enabled);
-    setTimeout(updateSelections, 0);
   };
 
   const handleHardwareModeChange = (mode: 'conservative' | 'standard' | 'quality') => {
     setHardwareMode(mode);
-    setTimeout(updateSelections, 0);
   };
 
   return (
@@ -140,7 +136,6 @@ export function ProfessionalSelector({ onSelectionChange, roomType }: Profession
               checked={structuralLock}
               onCheckedChange={(enabled) => {
                 setStructuralLock(enabled);
-                setTimeout(updateSelections, 0);
               }}
             />
           </div>
@@ -244,7 +239,10 @@ export function ProfessionalSelector({ onSelectionChange, roomType }: Profession
             <div key={category} className="space-y-2">
               <Label className="capitalize">{category}</Label>
               <div className="grid grid-cols-2 gap-2">
-                {PROFESSIONAL_PRESETS.materials[category as keyof typeof PROFESSIONAL_PRESETS.materials].map((material) => (
+                {(PROFESSIONAL_PRESETS.materials[(
+            // 'ceiling' in state maps to 'ceilings' in PRESETS — use stable lookup
+            category === 'ceiling' ? 'ceilings' : category
+          ) as keyof typeof PROFESSIONAL_PRESETS.materials] || []).map((material) => (
                   <Button
                     key={material}
                     variant={value === material ? "default" : "outline"}

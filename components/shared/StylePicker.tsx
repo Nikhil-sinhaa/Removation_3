@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Check, Search, Sparkles, TrendingUp, Crown, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -108,6 +108,7 @@ export function StylePicker({
                 src={selectedStyleData.thumbnail}
                 alt={selectedStyleData.name}
                 fill
+                sizes="96px"
                 className="object-cover"
               />
               {selectedStyleData.premium && (
@@ -244,6 +245,7 @@ export function StylePicker({
                     src={style.thumbnail}
                     alt={style.name}
                     fill
+                    sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-200"
                   />
                   {style.premium && (
@@ -341,6 +343,7 @@ export function StylePicker({
                     src={style.thumbnail}
                     alt={style.name}
                     fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover"
                   />
                 </div>

@@ -1,0 +1,497 @@
+{
+  "id": "stage2-triple-controlnet-sdxl-8gb",
+  "revision": 1,
+  "last_node_id": 20,
+  "last_link_id": 22,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [26, 100],
+      "size": [315, 314],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [1, 2, 3]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["original_image.png"],
+      "title": "📷 Load Original Room Image"
+    },
+
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [26, 470],
+      "size": [315, 314],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [4]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["stage1/depth_map_00001_.png"],
+      "title": "📐 Load Depth Map (from Stage 1)"
+    },
+
+    {
+      "id": 3,
+      "type": "Canny",
+      "pos": [420, 100],
+      "size": [315, 82],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 1}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [5]}
+      ],
+      "properties": {"Node name for S&R": "Canny"},
+      "widgets_values": [0.10, 0.40],
+      "title": "📐 Canny Edge Detection"
+    },
+
+    {
+      "id": 4,
+      "type": "LineArtPreprocessor",
+      "pos": [420, 250],
+      "size": [315, 82],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 2}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [6]}
+      ],
+      "properties": {"Node name for S&R": "LineArtPreprocessor"},
+      "widgets_values": ["disable", 512],
+      "title": "✏️ Lineart Preprocessor (Realistic)"
+    },
+
+    {
+      "id": 5,
+      "type": "CheckpointLoaderSimple",
+      "pos": [26, 840],
+      "size": [315, 98],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "slot_index": 0, "links": [7]},
+        {"name": "CLIP", "type": "CLIP", "slot_index": 1, "links": [8, 9]},
+        {"name": "VAE", "type": "VAE", "slot_index": 2, "links": [10, 11]}
+      ],
+      "properties": {"Node name for S&R": "CheckpointLoaderSimple"},
+      "widgets_values": ["sd_xl_base_1.0.safetensors"],
+      "title": "🧠 SDXL Base Checkpoint"
+    },
+
+    {
+      "id": 6,
+      "type": "CLIPTextEncode",
+      "pos": [420, 420],
+      "size": [420, 164],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 8}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [12]}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": [
+        "(professional architectural interior photography:1.4), (preserve exact original room structure walls windows doors:1.5), (maintain same room dimensions and layout:1.3), modern interior design, clean straight lines, realistic textures and materials, professional lighting, sharp focus, ultra high detail 8k, interior design magazine quality"
+      ],
+      "title": "✅ POSITIVE Prompt"
+    },
+
+    {
+      "id": 7,
+      "type": "CLIPTextEncode",
+      "pos": [420, 640],
+      "size": [420, 164],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 9}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [13]}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": [
+        "(different room layout:1.5), (moved walls or windows:1.4), blurry, low quality, pixelated, jpeg artifacts, floating furniture, unrealistic perspective, distorted proportions, cartoon, painting, oversaturated, text, watermark, extra rooms, outdoor"
+      ],
+      "title": "❌ NEGATIVE Prompt"
+    },
+
+    {
+      "id": 8,
+      "type": "ControlNetLoader",
+      "pos": [420, 860],
+      "size": [315, 58],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [14]}
+      ],
+      "properties": {"Node name for S&R": "ControlNetLoader"},
+      "widgets_values": ["control-lora-depth-rank128.safetensors"],
+      "title": "🔒 ControlNet LoRA: DEPTH (200MB)"
+    },
+
+    {
+      "id": 9,
+      "type": "ControlNetLoader",
+      "pos": [420, 960],
+      "size": [315, 58],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [15]}
+      ],
+      "properties": {"Node name for S&R": "ControlNetLoader"},
+      "widgets_values": ["control-lora-canny-rank128.safetensors"],
+      "title": "🔒 ControlNet LoRA: CANNY (200MB)"
+    },
+
+    {
+      "id": 10,
+      "type": "ControlNetLoader",
+      "pos": [420, 1060],
+      "size": [315, 58],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [16]}
+      ],
+      "properties": {"Node name for S&R": "ControlNetLoader"},
+      "widgets_values": ["control-lora-sketch-rank128-metadata.safetensors"],
+      "title": "🔒 ControlNet LoRA: LINEART/SKETCH (200MB)"
+    },
+
+    {
+      "id": 11,
+      "type": "ControlNetApplyAdvanced",
+      "pos": [900, 420],
+      "size": [315, 186],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "positive", "type": "CONDITIONING", "link": 12},
+        {"name": "negative", "type": "CONDITIONING", "link": 13},
+        {"name": "control_net", "type": "CONTROL_NET", "link": 14},
+        {"name": "image", "type": "IMAGE", "link": 4}
+      ],
+      "outputs": [
+        {"name": "positive", "type": "CONDITIONING", "slot_index": 0, "links": [17]},
+        {"name": "negative", "type": "CONDITIONING", "slot_index": 1, "links": [18]}
+      ],
+      "properties": {"Node name for S&R": "ControlNetApplyAdvanced"},
+      "widgets_values": [0.90, 0.0, 1.0],
+      "title": "🔒 Apply Depth ControlNet (str: 0.90)"
+    },
+
+    {
+      "id": 12,
+      "type": "ControlNetApplyAdvanced",
+      "pos": [900, 660],
+      "size": [315, 186],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "positive", "type": "CONDITIONING", "link": 17},
+        {"name": "negative", "type": "CONDITIONING", "link": 18},
+        {"name": "control_net", "type": "CONTROL_NET", "link": 15},
+        {"name": "image", "type": "IMAGE", "link": 5}
+      ],
+      "outputs": [
+        {"name": "positive", "type": "CONDITIONING", "slot_index": 0, "links": [19]},
+        {"name": "negative", "type": "CONDITIONING", "slot_index": 1, "links": [20]}
+      ],
+      "properties": {"Node name for S&R": "ControlNetApplyAdvanced"},
+      "widgets_values": [0.65, 0.0, 0.85],
+      "title": "🔒 Apply Canny ControlNet (str: 0.65)"
+    },
+
+    {
+      "id": 13,
+      "type": "ControlNetApplyAdvanced",
+      "pos": [900, 900],
+      "size": [315, 186],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "positive", "type": "CONDITIONING", "link": 19},
+        {"name": "negative", "type": "CONDITIONING", "link": 20},
+        {"name": "control_net", "type": "CONTROL_NET", "link": 16},
+        {"name": "image", "type": "IMAGE", "link": 6}
+      ],
+      "outputs": [
+        {"name": "positive", "type": "CONDITIONING", "slot_index": 0, "links": [21]},
+        {"name": "negative", "type": "CONDITIONING", "slot_index": 1, "links": [22]}
+      ],
+      "properties": {"Node name for S&R": "ControlNetApplyAdvanced"},
+      "widgets_values": [0.45, 0.0, 0.70],
+      "title": "🔒 Apply Lineart ControlNet (str: 0.45)"
+    },
+
+    {
+      "id": 14,
+      "type": "VAEEncode",
+      "pos": [1300, 100],
+      "size": [210, 46],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "pixels", "type": "IMAGE", "link": 3},
+        {"name": "vae", "type": "VAE", "link": 10}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [23]}
+      ],
+      "properties": {"Node name for S&R": "VAEEncode"},
+      "widgets_values": [],
+      "title": "🖼️→🔢 Encode Original to Latent"
+    },
+
+    {
+      "id": 15,
+      "type": "KSampler",
+      "pos": [1300, 250],
+      "size": [315, 262],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 7},
+        {"name": "positive", "type": "CONDITIONING", "link": 21},
+        {"name": "negative", "type": "CONDITIONING", "link": 22},
+        {"name": "latent_image", "type": "LATENT", "link": 23}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [24]}
+      ],
+      "properties": {"Node name for S&R": "KSampler"},
+      "widgets_values": [
+        918026620137394,
+        "randomize",
+        25,
+        5.0,
+        "dpmpp_2m",
+        "karras",
+        0.50
+      ],
+      "title": "🎲 KSampler (img2img + Triple ControlNet)"
+    },
+
+    {
+      "id": 16,
+      "type": "VAEDecode",
+      "pos": [1300, 570],
+      "size": [210, 46],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 24},
+        {"name": "vae", "type": "VAE", "link": 11}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [25]}
+      ],
+      "properties": {"Node name for S&R": "VAEDecode"},
+      "widgets_values": [],
+      "title": "🔢→🖼️ Decode Latent to Image"
+    },
+
+    {
+      "id": 17,
+      "type": "SaveImage",
+      "pos": [1300, 680],
+      "size": [315, 270],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 25}
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": ["stage2/redesigned"],
+      "title": "💾 Save: Geometry-Locked Redesign"
+    }
+  ],
+
+  "links": [
+    [1,  1, 0,  3, 0, "IMAGE"],
+    [2,  1, 0,  4, 0, "IMAGE"],
+    [3,  1, 0, 14, 0, "IMAGE"],
+    [4,  2, 0, 11, 3, "IMAGE"],
+    [5,  3, 0, 12, 3, "IMAGE"],
+    [6,  4, 0, 13, 3, "IMAGE"],
+    [7,  5, 0, 15, 0, "MODEL"],
+    [8,  5, 1,  6, 0, "CLIP"],
+    [9,  5, 1,  7, 0, "CLIP"],
+    [10, 5, 2, 14, 1, "VAE"],
+    [11, 5, 2, 16, 1, "VAE"],
+    [12, 6, 0, 11, 0, "CONDITIONING"],
+    [13, 7, 0, 11, 1, "CONDITIONING"],
+    [14, 8, 0, 11, 2, "CONTROL_NET"],
+    [15, 9, 0, 12, 2, "CONTROL_NET"],
+    [16, 10,0, 13, 2, "CONTROL_NET"],
+    [17, 11,0, 12, 0, "CONDITIONING"],
+    [18, 11,1, 12, 1, "CONDITIONING"],
+    [19, 12,0, 13, 0, "CONDITIONING"],
+    [20, 12,1, 13, 1, "CONDITIONING"],
+    [21, 13,0, 15, 1, "CONDITIONING"],
+    [22, 13,1, 15, 2, "CONDITIONING"],
+    [23, 14,0, 15, 3, "LATENT"],
+    [24, 15,0, 16, 0, "LATENT"],
+    [25, 16,0, 17, 0, "IMAGE"]
+  ],
+
+  "groups": [
+    {
+      "title": "INPUT — Original Image + Depth Map (from Stage 1)",
+      "bounding": [10, 50, 350, 770],
+      "color": "#3f789e"
+    },
+    {
+      "title": "PREPROCESSORS — Edge + Lineart Extraction",
+      "bounding": [400, 50, 440, 310],
+      "color": "#8A2BE2"
+    },
+    {
+      "title": "PROMPTS — Positive + Negative",
+      "bounding": [400, 380, 440, 460],
+      "color": "#2a363b"
+    },
+    {
+      "title": "CONTROLNET MODELS — 3× LoRA (~200MB each)",
+      "bounding": [400, 830, 440, 310],
+      "color": "#e76f51"
+    },
+    {
+      "title": "CONTROLNET CHAIN — Depth → Canny → Lineart (conditioning cascade)",
+      "bounding": [880, 380, 360, 740],
+      "color": "#e9c46a"
+    },
+    {
+      "title": "SDXL CHECKPOINT",
+      "bounding": [10, 800, 350, 180],
+      "color": "#264653"
+    },
+    {
+      "title": "SAMPLING + OUTPUT",
+      "bounding": [1280, 50, 360, 930],
+      "color": "#2a9d8f"
+    }
+  ],
+
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.45,
+      "offset": [50, 30]
+    },
+    "info": {
+      "name": "Stage 2: Geometry Locking — Triple ControlNet",
+      "description": "Locks room geometry using 3 chained ControlNet LoRAs (Depth → Canny → Lineart) on SDXL. Ensures structural integrity of walls, windows, doors while allowing surface/style changes. img2img denoise 0.50.",
+      "author": "Removation Pipeline",
+      "version": "1.0",
+      "target_gpu": "RTX 4060 8GB (--lowvram --fp8_e4m3fn)",
+      "node_class_types_verified": {
+        "Canny": "ComfyUI core — built-in edge detector",
+        "LineArtPreprocessor": "comfyui_controlnet_aux/node_wrappers/lineart.py:26",
+        "ControlNetLoader": "ComfyUI core — loads .safetensors controlnet models",
+        "ControlNetApplyAdvanced": "ComfyUI core — applies controlnet with strength + start/end percent",
+        "CheckpointLoaderSimple": "ComfyUI core",
+        "CLIPTextEncode": "ComfyUI core",
+        "VAEEncode": "ComfyUI core",
+        "KSampler": "ComfyUI core",
+        "VAEDecode": "ComfyUI core",
+        "SaveImage": "ComfyUI core"
+      },
+      "controlnet_chain": {
+        "step_1_depth": {
+          "model": "control-lora-depth-rank128.safetensors (~200MB)",
+          "strength": 0.90,
+          "start": 0.0,
+          "end": 1.0,
+          "purpose": "Locks 3D geometry — walls stay at correct angles"
+        },
+        "step_2_canny": {
+          "model": "control-lora-canny-rank128.safetensors (~200MB)",
+          "strength": 0.65,
+          "start": 0.0,
+          "end": 0.85,
+          "purpose": "Preserves hard edges — window frames, door frames, corners"
+        },
+        "step_3_lineart": {
+          "model": "control-lora-sketch-rank128-metadata.safetensors (~200MB)",
+          "strength": 0.45,
+          "start": 0.0,
+          "end": 0.70,
+          "purpose": "Maintains fine structural details — trim, molding, fixtures"
+        }
+      },
+      "required_models": {
+        "sdxl_checkpoint": "sd_xl_base_1.0.safetensors → models/checkpoints/",
+        "depth_controlnet_lora": "control-lora-depth-rank128.safetensors → models/controlnet/",
+        "canny_controlnet_lora": "control-lora-canny-rank128.safetensors → models/controlnet/",
+        "lineart_controlnet_lora": "control-lora-sketch-rank128-metadata.safetensors → models/controlnet/"
+      },
+      "required_custom_nodes": [
+        "comfyui_controlnet_aux (LineArtPreprocessor)"
+      ],
+      "inputs": {
+        "original_image": "The original room photo",
+        "depth_map": "Output from Stage 1 (stage1/depth_map_00001_.png)"
+      },
+      "outputs": {
+        "stage2/redesigned": "Geometry-locked redesigned image with preserved structure"
+      },
+      "vram_budget": {
+        "sdxl_base_fp8": "~4.5GB",
+        "controlnet_lora_x3": "~600MB (3 × 200MB)",
+        "vae_encode_decode": "~200MB",
+        "peak_total": "~5.3GB — safe for 8GB GPU",
+        "note": "ControlNet LoRAs are much smaller than full ControlNets (2.5GB each). Using rank128 LoRAs keeps total VRAM under 6GB."
+      },
+      "sampling": {
+        "denoise": 0.50,
+        "steps": 25,
+        "cfg": 5.0,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras",
+        "rationale": "Denoise 0.50 preserves ~50% of original structure while allowing meaningful style changes. CFG 5.0 is moderate to avoid oversaturation."
+      }
+    }
+  },
+  "version": 0.4
+}

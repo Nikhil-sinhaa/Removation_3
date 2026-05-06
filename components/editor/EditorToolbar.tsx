@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editor-store';
+import { useUltraProSocket } from '@/hooks/useUltraProSocket';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -35,6 +36,7 @@ import {
   Eye,
   EyeOff,
   ImageIcon,
+  Zap,
 } from 'lucide-react';
 
 interface ToolbarItem {
@@ -64,7 +66,16 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
     history,
     historyIndex,
     reset,
+    isUltraProRunning,
+    ultraProStage,
+    isGenerating,
+    generationProgress,
+    generationStatus,
+    startUltraProGeneration,
   } = useEditorStore();
+
+  // Initialize Socket.IO listener for Ultra-Pro pipeline events
+  useUltraProSocket();
 
   const showOriginal = ui?.showCompareView || false;
   const setShowOriginal = toggleCompareView;
@@ -280,6 +291,44 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
 
         {/* Enhancement Tools */}
         {renderToolGroup(enhancementTools)}
+
+        <div className="w-px h-6 bg-white/10" />
+
+        {/* Ultra Pro Button */}
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => startUltraProGeneration()}
+                disabled={!currentImage || isUltraProRunning || isGenerating}
+                className={cn(
+                  "relative flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-200",
+                  "bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30",
+                  "hover:from-amber-500/30 hover:to-orange-500/30",
+                  isUltraProRunning && "animate-pulse from-amber-500/40 to-orange-500/40",
+                  (!currentImage || isGenerating) && "opacity-40 cursor-not-allowed",
+                )}
+              >
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-semibold text-amber-300 hidden lg:inline">
+                  {isUltraProRunning
+                    ? `Stage ${ultraProStage}/6 (${generationProgress}%)`
+                    : 'Ultra Pro'}
+                </span>
+                {isUltraProRunning && (
+                  <div className="absolute bottom-0 left-0 h-0.5 bg-amber-400 rounded-full transition-all"
+                    style={{ width: `${generationProgress}%` }}
+                  />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {isUltraProRunning
+                ? generationStatus || 'Processing...'
+                : '6-Stage AI Pipeline: SAM2 → ControlNet → Regional → IPAdapter → Upscale'}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
 
       <div className="flex items-center gap-4">

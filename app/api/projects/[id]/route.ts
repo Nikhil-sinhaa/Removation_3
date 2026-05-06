@@ -4,13 +4,15 @@ import { connectToDatabase } from "@/lib/db/mongodb";
 import Project from "@/lib/db/models/Project";
 import Render from "@/lib/db/models/Render";
 
+const isDev = process.env.NODE_ENV === 'development';
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const authUser = await getCurrentUser();
-  const userId = authUser?.id;
+        const userId = authUser?.id || (isDev ? 'dev-user' : null);
         const { id } = await params;
 
         if (!userId) {
@@ -38,7 +40,7 @@ export async function PATCH(
 ) {
     try {
         const authUser = await getCurrentUser();
-  const userId = authUser?.id;
+        const userId = authUser?.id || (isDev ? 'dev-user' : null);
         const { id } = await params;
         const body = await request.json();
 
@@ -71,7 +73,7 @@ export async function DELETE(
 ) {
     try {
         const authUser = await getCurrentUser();
-  const userId = authUser?.id;
+        const userId = authUser?.id || (isDev ? 'dev-user' : null);
         const { id } = await params;
 
         if (!userId) {

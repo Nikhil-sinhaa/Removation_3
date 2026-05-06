@@ -1,0 +1,25 @@
+{
+  "name": "Removation.ai - AI Interior Design & Renovation Platform",
+  "short_name": "Removation.ai",
+  "description": "Transform your space with AI-powered interior design. Get instant renovations, Vastu Shastra analysis, and real-time cost estimates.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed",
+  "orientation": "portrait-primary",
+  "categories": ["design", "lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

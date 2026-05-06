@@ -1,5 +1,18 @@
+// ⚠️ DEPRECATED — NOT USED IN PRODUCTION ⚠️
+//
+// This file is a reference/design artifact and is NOT called by any active code.
+// THE ACTIVE PIPELINE IS:
+//   src/services/comfyBridge.js → enqueueUltraProJob()
+//   src/workflows/ultraProBuilder.js → buildStage1..6()
+//
+// This file contains node class_types NOT confirmed installed in ComfyUI:
+//   - ArchAi3DQwenEncoderV2 (proprietary custom node — not installed)
+//   - ArchAi3dRoomTransformPromptBuilder (proprietary custom node — not installed)
+//   - Qwen-Image-InstantX-ControlNet-Union.safetensors (model not confirmed installed)
+// This is a single-stage workflow, not a 6-stage pipeline.
+//
 // lib/ai/comfyui-workflows-professional.ts
-import { GenerationRequest } from "./comfyui-bridge";
+
 
 export interface ProfessionalGenerationRequest extends GenerationRequest {
   structuralLock: {
@@ -141,7 +154,7 @@ export function createProfessionalWorkflow(request: ProfessionalGenerationReques
           "mode": masterPrompt.mode,
           "room_type": request.roomType,
           "wall_material": masterPrompt.materials.walls,
-          "ceiling_material": masterPrompt.materials.ceiling,
+          "ceiling_material": masterPrompt.materials.ceiling || masterPrompt.materials.ceilings,
           "furniture_material": masterPrompt.materials.furniture,
           "floor_material": masterPrompt.materials.floors,
           "lighting_material": masterPrompt.materials.lighting,

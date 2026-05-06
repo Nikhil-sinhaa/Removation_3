@@ -1,0 +1,74 @@
+{
+  "id": "ultra-pro-interior-pipeline-sdxl-8gb-master",
+  "revision": 1,
+  "description": "Combined 6-Stage Ultra-Pro Interior Design Pipeline — Master Reference. NOT for direct ComfyUI import (too large). Use the individual stage JSONs or the TypeScript API builders in ultra-pro-pipeline.ts instead.",
+  "target_gpu": "RTX 4060 8GB (--lowvram --fp8_e4m3fn)",
+  "stages": {
+    "stage1_scene_understanding": {
+      "file": "Stage1_SceneUnderstanding_SDXL_8GB.json",
+      "nodes": 20,
+      "purpose": "SAM2 + CLIPSeg segmentation + DepthAnythingV2",
+      "outputs": ["wall_mask", "floor_mask", "object_mask", "empty_mask", "depth_map"],
+      "peak_vram": "~3.5GB"
+    },
+    "stage2_geometry_locking": {
+      "file": "Stage2_TripleControlNet_SDXL_8GB.json",
+      "nodes": 17,
+      "purpose": "Triple ControlNet chain: Depth(0.90) → Canny(0.65) → Lineart(0.45)",
+      "outputs": ["redesigned_room"],
+      "peak_vram": "~5.5GB"
+    },
+    "stage3_regional_inpainting": {
+      "file": "Stage3_RegionalInpainting_SDXL_8GB.json",
+      "nodes": 19,
+      "purpose": "RegionalSampler with per-region prompts (walls vs furniture)",
+      "outputs": ["regional_inpainted"],
+      "peak_vram": "~5.0GB"
+    },
+    "stage4_ipadapter_furniture": {
+      "file": "Stage4_IPAdapter_Furniture_SDXL_8GB.json",
+      "nodes": 19,
+      "purpose": "Dual IPAdapter: style transfer (0.40) + masked furniture placement (0.80)",
+      "outputs": ["furniture_placed"],
+      "peak_vram": "~5.8GB"
+    },
+    "stage5_6_refinement_upscale": {
+      "file": "Stage5-6_Refinement_Upscale_SDXL_8GB.json",
+      "nodes": 21,
+      "purpose": "MaskDetailerPipe refinement + 4x-UltraSharp upscale + ImageSharpen",
+      "outputs": ["refined (intermediate)", "ultra_hd_result (final)"],
+      "peak_vram": "~5.2GB"
+    }
+  },
+  "execution_order": [
+    "stage1_scene_understanding",
+    "stage2_geometry_locking",
+    "stage3_regional_inpainting",
+    "stage4_ipadapter_furniture",
+    "stage5_6_refinement_upscale"
+  ],
+  "vram_flush_between_stages": true,
+  "vram_flush_method": "POST /free { unload_models: true, free_memory: true }",
+  "total_nodes": 96,
+  "required_models": {
+    "checkpoints": ["sd_xl_base_1.0.safetensors"],
+    "controlnet": [
+      "control-lora-depth-rank128.safetensors",
+      "control-lora-canny-rank128.safetensors",
+      "control-lora-rank128.safetensors"
+    ],
+    "ipadapter": ["ip-adapter-plus_sdxl_vit-h.safetensors (auto-downloaded by UnifiedLoader)"],
+    "clip_vision": ["CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors (auto-downloaded)"],
+    "sam": ["sam2_hiera_small.safetensors"],
+    "depth": ["depth_anything_v2_vits.pth"],
+    "upscale": ["4x-UltraSharp.pth"]
+  },
+  "required_custom_nodes": [
+    "ComfyUI-Impact-Pack (SAMLoader, CLIPSegDetectorProvider, ImpactSimpleDetectorSEGS, SegsToCombinedMask, MaskDetailerPipe, RegionalSampler, RegionalPrompt, KSamplerAdvancedProvider, ToBasicPipe, EditBasicPipe, CombineRegionalPrompts)",
+    "comfyui_controlnet_aux (CannyEdgePreprocessor, LineArtPreprocessor, DepthAnythingV2Preprocessor)",
+    "ComfyUI_IPAdapter_plus (IPAdapterUnifiedLoader, IPAdapterAdvanced, PrepImageForClipVision)"
+  ],
+  "launch_flags": "--lowvram --fp8_e4m3fn --preview-method taesd --disable-smart-memory",
+  "typescript_api": "lib/ai/workflows/ultra-pro-pipeline.ts",
+  "orchestrator": "lib/ai/pipeline-orchestrator.ts"
+}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -212,6 +212,7 @@ export function RenderGrid({
                   src={render.renderedImage}
                   alt={`${render.style} ${render.roomType}`}
                   fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   className={cn(
                     "object-cover transition-transform duration-500",
                     hoveredId === render.id && "scale-105"
@@ -380,6 +381,7 @@ export function RenderGrid({
                 src={selectedRender.renderedImage}
                 alt={selectedRender.style}
                 fill
+                sizes="(max-width: 1280px) 100vw, 1280px"
                 className="object-contain"
               />
             </div>

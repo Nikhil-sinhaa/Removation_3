@@ -9,7 +9,8 @@ import {
     TrendingUp,
     Package,
     Hammer,
-    Receipt
+    Receipt,
+    ShoppingBag
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,6 +27,7 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { calculateRenovationCost } from "@/lib/cost-engine";
+import { useEditorStore } from "@/stores/editor-store";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -42,19 +44,24 @@ export function CostPanel({ roomType, className, currency = 'INR' }: CostPanelPr
     const [includeLabor, setIncludeLabor] = useState(true);
     const [includeTax, setIncludeTax] = useState(true);
 
+    const { placedFurniture } = useEditorStore();
+
     const [estimate, setEstimate] = useState<any>(null);
 
     useEffect(() => {
+        const totalFurnitureCost = placedFurniture.reduce((sum, item) => sum + (item.price || 0), 0);
+
         const result = calculateRenovationCost({
             roomType,
             areaInSqft: area,
             city: city.toLowerCase(),
             renovationType: quality,
             includeLabor,
-            includeTax
+            includeTax,
+            furnitureCost: totalFurnitureCost
         });
         setEstimate(result);
-    }, [roomType, area, quality, city, includeLabor, includeTax]);
+    }, [roomType, area, quality, city, includeLabor, includeTax, placedFurniture]);
 
     const formatCurrency = (amount: number) => {
         if (currency === 'INR') {
@@ -162,6 +169,7 @@ export function CostPanel({ roomType, className, currency = 'INR' }: CostPanelPr
                                     <div className="flex items-center gap-2">
                                         {item.category === 'Materials' && <Package className="w-3.5 h-3.5 text-blue-500" />}
                                         {item.category === 'Labor' && <Hammer className="w-3.5 h-3.5 text-orange-500" />}
+                                        {item.category === 'Furniture' && <ShoppingBag className="w-3.5 h-3.5 text-amber-500" />}
                                         {item.category.includes('Tax') && <IndianRupee className="w-3.5 h-3.5 text-purple-500" />}
                                         <span>{item.category}</span>
                                     </div>

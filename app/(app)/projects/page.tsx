@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-// TODO: Remnant Clerk imports: useUser
+import { BeforeAfterSlider } from '@/components/ui/before-after-slider';
 import {
   Plus,
   Search,
@@ -146,6 +146,8 @@ interface Project {
   id: string;
   name: string;
   thumbnail: string | null;
+  resultImage: string | null;
+  description: string | null;
   roomType: string;
   style: string;
   rendersCount: number;
@@ -192,6 +194,8 @@ const sampleProjects: Project[] = [
     id: '1',
     name: 'Living Room Makeover',
     thumbnail: null,
+    resultImage: null,
+    description: 'Modern Minimalist style',
     roomType: 'Living Room',
     style: 'Modern Minimalist',
     rendersCount: 5,
@@ -209,6 +213,8 @@ const sampleProjects: Project[] = [
     id: '2',
     name: 'Master Bedroom Redesign',
     thumbnail: null,
+    resultImage: null,
+    description: 'Scandinavian style',
     roomType: 'Bedroom',
     style: 'Scandinavian',
     rendersCount: 3,
@@ -226,6 +232,8 @@ const sampleProjects: Project[] = [
     id: '3',
     name: 'Kitchen Renovation',
     thumbnail: null,
+    resultImage: null,
+    description: 'Contemporary style',
     roomType: 'Kitchen',
     style: 'Contemporary',
     rendersCount: 8,
@@ -243,6 +251,8 @@ const sampleProjects: Project[] = [
     id: '4',
     name: 'Home Office Setup',
     thumbnail: null,
+    resultImage: null,
+    description: 'Industrial style',
     roomType: 'Office',
     style: 'Industrial',
     rendersCount: 4,
@@ -260,6 +270,8 @@ const sampleProjects: Project[] = [
     id: '5',
     name: 'Bathroom Upgrade',
     thumbnail: null,
+    resultImage: null,
+    description: 'Luxury Modern style',
     roomType: 'Bathroom',
     style: 'Luxury Modern',
     rendersCount: 2,
@@ -277,6 +289,8 @@ const sampleProjects: Project[] = [
     id: '6',
     name: 'Kids Room Design',
     thumbnail: null,
+    resultImage: null,
+    description: 'Playful Modern style',
     roomType: 'Bedroom',
     style: 'Playful Modern',
     rendersCount: 6,
@@ -294,6 +308,8 @@ const sampleProjects: Project[] = [
     id: '7',
     name: 'Garden Patio Design',
     thumbnail: null,
+    resultImage: null,
+    description: 'Tropical style',
     roomType: 'Outdoor',
     style: 'Tropical',
     rendersCount: 4,
@@ -421,6 +437,7 @@ function ProjectCard({
   onSelect,
   onToggleFavorite,
   onOpenMenu,
+  onCompare,
 }: {
   project: Project;
   index: number;
@@ -428,6 +445,7 @@ function ProjectCard({
   onSelect: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onOpenMenu: (id: string, e: React.MouseEvent) => void;
+  onCompare?: (project: Project) => void;
 }) {
   const RoomIcon = roomTypeIcons[project.roomType] || Folder;
   const colors = roomTypeColors[project.roomType] || {
@@ -478,27 +496,39 @@ function ProjectCard({
       {/* Thumbnail */}
       <Link href={`/editor/${project.id}`}>
         <div className="aspect-video relative overflow-hidden">
-          {/* Gradient Background */}
-          <div
-            className={cn(
-              'absolute inset-0 bg-gradient-to-br opacity-80',
-              colors.gradient
-            )}
-          />
+          {/* Thumbnail: real image or gradient fallback */}
+          {project.thumbnail ? (
+            <img
+              src={project.thumbnail}
+              alt={project.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          ) : (
+            <>
+              <div
+                className={cn(
+                  'absolute inset-0 bg-gradient-to-br opacity-80',
+                  colors.gradient
+                )}
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                  <RoomIcon className="w-8 h-8 text-white" />
+                </div>
+              </div>
+            </>
+          )}
 
-          {/* Pattern Overlay */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute inset-0" style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }} />
-          </div>
-
-          {/* Center Icon */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-              <RoomIcon className="w-8 h-8 text-white" />
+          {/* Result image badge (small overlay in corner) */}
+          {project.resultImage && (
+            <div className="absolute bottom-2 right-2 w-16 h-12 rounded-md overflow-hidden border-2 border-white shadow-lg">
+              <img
+                src={project.resultImage}
+                alt="AI Result"
+                className="w-full h-full object-cover"
+              />
             </div>
-          </div>
+          )}
 
           {/* Hover Overlay */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
@@ -559,6 +589,9 @@ function ProjectCard({
                 {project.name}
               </h3>
             </Link>
+            {project.description && (
+              <p className="text-xs text-gray-500 mt-0.5 truncate italic">{project.description}</p>
+            )}
             <div className="flex items-center gap-2 mt-1">
               <span className={cn('px-2 py-0.5 rounded text-xs font-medium', colors.bg, colors.text)}>
                 {project.roomType}
@@ -598,6 +631,12 @@ function ProjectCard({
                   <Eye className="w-4 h-4 mr-2" />
                   View Details
                 </DropdownMenuItem>
+                {project.thumbnail && project.resultImage && onCompare && (
+                  <DropdownMenuItem onClick={() => onCompare(project)}>
+                    <SlidersHorizontal className="w-4 h-4 mr-2" />
+                    Compare Before/After
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem>
                   <Edit3 className="w-4 h-4 mr-2" />
                   Rename
@@ -839,6 +878,9 @@ export default function ProjectsPage() {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [projectToRename, setProjectToRename] = useState<Project | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
+
+  // Compare modal
+  const [compareProject, setCompareProject] = useState<Project | null>(null);
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
@@ -1357,6 +1399,7 @@ export default function ProjectsPage() {
                       onSelect={toggleSelection}
                       onToggleFavorite={toggleFavorite}
                       onOpenMenu={() => {}}
+                      onCompare={(p) => setCompareProject(p)}
                     />
                   ))}
                 </AnimatePresence>
@@ -1539,6 +1582,29 @@ export default function ProjectsPage() {
                 Save
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Compare Before/After Modal */}
+        <Dialog open={!!compareProject} onOpenChange={(open) => !open && setCompareProject(null)}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-violet-600" />
+                {compareProject?.name} — Before / After
+              </DialogTitle>
+              <DialogDescription>
+                {compareProject?.description}
+              </DialogDescription>
+            </DialogHeader>
+            {compareProject?.thumbnail && compareProject?.resultImage && (
+              <BeforeAfterSlider
+                beforeImage={compareProject.thumbnail}
+                afterImage={compareProject.resultImage}
+                beforeLabel="Original"
+                afterLabel="AI Redesigned"
+              />
+            )}
           </DialogContent>
         </Dialog>
 
