@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-05-20T17:47:40.793Z",
-  "node1_image": "roomchanger_1779299249468_contemporary-residential-living-room-background-wall-color-powder-blue-photo.png",
-  "node2_wallMask": "wall_mask_00058_.png",
-  "node4_positivePrompt": "(Pure White painted walls:1.4), (soft matte Pure White paint:1.3), Pure White wall color, smooth even Pure White finish, architectural Pure White interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed",
+  "timestamp": "2026-05-20T17:53:01.454Z",
+  "node1_image": "roomchanger_1779299573296_simple-minimalist-living-room-interior-generative-ai-photo.png",
+  "node2_wallMask": "wall_mask_00060_.png",
+  "node4_positivePrompt": "(Sky Blue painted walls:1.4), (soft matte Sky Blue paint:1.3), Sky Blue wall color, smooth even Sky Blue finish, architectural Sky Blue interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed",
   "node5_negativePrompt": "wrong color, color bleeding onto furniture, patterned wallpaper, textured wallpaper, dirty walls, stained walls, blurry, low quality, distorted, watermark, text, deformed objects, changed floor, changed furniture",
   "node8_sampler": {
-    "seed": 3625167640,
+    "seed": 4013382217,
     "steps": 40,
     "cfg": 9.5,
     "sampler_name": "dpmpp_2m",
@@ -14,15 +14,15 @@
   },
   "dimensions": {
     "roomImage": {
-      "filename": "roomchanger_1779299249468_contemporary-residential-living-room-background-wall-color-powder-blue-photo.png",
+      "filename": "roomchanger_1779299573296_simple-minimalist-living-room-interior-generative-ai-photo.png",
       "width": 1024,
-      "height": 683,
+      "height": 573,
       "format": "png"
     },
     "wallMask": {
-      "filename": "wall_mask_00058_.png",
+      "filename": "wall_mask_00060_.png",
       "width": 1024,
-      "height": 683,
+      "height": 573,
       "format": "png"
     }
   },
@@ -30,13 +30,13 @@
     "1": {
       "class_type": "LoadImage",
       "inputs": {
-        "image": "roomchanger_1779299249468_contemporary-residential-living-room-background-wall-color-powder-blue-photo.png"
+        "image": "roomchanger_1779299573296_simple-minimalist-living-room-interior-generative-ai-photo.png"
       }
     },
     "2": {
       "class_type": "LoadImage",
       "inputs": {
-        "image": "wall_mask_00058_.png"
+        "image": "wall_mask_00060_.png"
       }
     },
     "3": {
@@ -52,7 +52,7 @@
           "3",
           1
         ],
-        "text": "(Pure White painted walls:1.4), (soft matte Pure White paint:1.3), Pure White wall color, smooth even Pure White finish, architectural Pure White interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed"
+        "text": "(Sky Blue painted walls:1.4), (soft matte Sky Blue paint:1.3), Sky Blue wall color, smooth even Sky Blue finish, architectural Sky Blue interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed"
       }
     },
     "5": {
@@ -97,7 +97,7 @@
           "16",
           0
         ],
-        "seed": 3625167640,
+        "seed": 4013382217,
         "steps": 40,
         "cfg": 9.5,
         "sampler_name": "dpmpp_2m",
