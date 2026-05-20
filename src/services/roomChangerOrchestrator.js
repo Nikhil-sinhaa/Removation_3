@@ -11,7 +11,7 @@
  *   colorPrompt      ──► Stage 3 nodes 4 & 5
  */
 
-import { readFile } from 'fs/promises';
+import { readFile, writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { buildWallPrompt, NEGATIVE_PROMPT } from '../config/roomChangerPrompts.js';
@@ -182,6 +182,56 @@ export async function runRoomChanger({
     stage3['8'].inputs.seed = seed;
     // Remove control_after_generate so ComfyUI doesn't try to auto-increment the seed
     delete stage3['8'].inputs.control_after_generate;
+
+    // ── TEMPORARY DIAGNOSTIC ─────────────────────────────────────────────────
+    // Dumps the full Stage 3 API graph + image dimensions to tmp/ so you can
+    // diff the dashboard submission against a ComfyUI Manager submission.
+    // DO NOT DELETE — remove only after the quality-difference bug is fixed.
+    try {
+      const _sharp = (await import('sharp')).default;
+      const _comfyInput = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+      async function _getDims(filename) {
+        try {
+          const m = await _sharp(path.join(_comfyInput, filename)).metadata();
+          return { width: m.width, height: m.height, format: m.format };
+        } catch (e) { return { error: e.message }; }
+      }
+      const [_roomDims, _maskDims] = await Promise.all([
+        _getDims(finalComfyFilename),
+        _getDims(wallMaskFilename),
+      ]);
+      const _diagnosticPayload = {
+        timestamp: new Date().toISOString(),
+        node1_image: stage3['1'].inputs.image,
+        node2_wallMask: stage3['2'].inputs.image,
+        node4_positivePrompt: stage3['4'].inputs.text,
+        node5_negativePrompt: stage3['5'].inputs.text,
+        node8_sampler: {
+          seed: stage3['8'].inputs.seed,
+          steps: stage3['8'].inputs.steps,
+          cfg: stage3['8'].inputs.cfg,
+          sampler_name: stage3['8'].inputs.sampler_name,
+          scheduler: stage3['8'].inputs.scheduler,
+          denoise: stage3['8'].inputs.denoise,
+        },
+        dimensions: {
+          roomImage: { filename: finalComfyFilename, ..._roomDims },
+          wallMask:  { filename: wallMaskFilename,   ..._maskDims },
+        },
+        stage3_graph: stage3,
+      };
+      const _tmpDir = path.join(process.cwd(), 'tmp');
+      await mkdir(_tmpDir, { recursive: true });
+      await writeFile(
+        path.join(_tmpDir, 'dashboard-stage3-submission.json'),
+        JSON.stringify(_diagnosticPayload, null, 2),
+      );
+      console.log('🔍 DIAGNOSTIC: Stage 3 submission written → tmp/dashboard-stage3-submission.json');
+      console.log('🔍 DIAGNOSTIC: roomImage dims =', _roomDims, '| wallMask dims =', _maskDims);
+    } catch (_diagErr) {
+      console.warn('⚠️ DIAGNOSTIC write failed (non-fatal):', _diagErr.message);
+    }
+    // ── END TEMPORARY DIAGNOSTIC ─────────────────────────────────────────────
 
     const t1 = Date.now();
     const outputs3 = await comfyBridge._submitStageAndWait(stage3);
