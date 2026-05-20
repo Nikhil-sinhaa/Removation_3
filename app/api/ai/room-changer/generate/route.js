@@ -119,7 +119,15 @@ export async function POST(request) {
       runId: retryRunId || undefined,
       retryStage3: !!retryRunId,
     }).catch(err => {
-      console.error('Room Changer background error:', err.message);
+      // WALL_MASK_INSUFFICIENT_COVERAGE is a user-recoverable input error, not a
+      // system fault. The orchestrator already wrote the clean message to
+      // Project.errorMessage and emitted comfy:roomchanger:error via Socket.IO —
+      // no further action needed here other than a less alarming log level.
+      if (err.code === 'WALL_MASK_INSUFFICIENT_COVERAGE') {
+        console.warn(`⚠️  Room Changer: wall detection failed (project ${projId}): ${err.message}`);
+      } else {
+        console.error('Room Changer background error:', err.message);
+      }
     });
 
     return NextResponse.json({ success: true, projectId: projId });

@@ -183,6 +183,54 @@ export async function runRoomChanger({
     // Remove control_after_generate so ComfyUI doesn't try to auto-increment the seed
     delete stage3['8'].inputs.control_after_generate;
 
+    // ── Wall mask coverage guard ─────────────────────────────────────────────
+    // If CLIPSeg/SAM failed to detect most of the wall, fail fast with a
+    // clear user-facing error instead of running Stage 3 on a broken mask.
+    try {
+      const sharp = (await import('sharp')).default;
+      const comfyInput = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+      const wallMaskPath = path.join(comfyInput, wallMaskFilename);
+
+      const { data, info } = await sharp(wallMaskPath)
+        .greyscale()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      const totalPixels = info.width * info.height;
+      let whitePixels = 0;
+      for (let i = 0; i < data.length; i++) {
+        if (data[i] > 128) whitePixels++;
+      }
+
+      const coveragePercent = (whitePixels / totalPixels) * 100;
+      console.log(`🧱 Wall mask coverage: ${coveragePercent.toFixed(1)}% ` +
+                  `(${whitePixels}/${totalPixels} px) — ${wallMaskFilename}`);
+
+      if (coveragePercent < 15) {
+        const err = new Error(
+          "Couldn't reliably detect walls in this image. Try a photo where " +
+          "walls are clearly visible and well-lit, or a different angle."
+        );
+        err.code = 'WALL_MASK_INSUFFICIENT_COVERAGE';
+        err.coveragePercent = coveragePercent;
+        err.wallMaskFilename = wallMaskFilename;
+        throw err;
+      }
+
+      if (coveragePercent > 75) {
+        console.warn(
+          `⚠️  Wall mask coverage unusually high (${coveragePercent.toFixed(1)}%). ` +
+          `Mask may be over-detecting non-wall regions. Result quality may vary.`
+        );
+      }
+    } catch (maskCheckErr) {
+      if (maskCheckErr.code === 'WALL_MASK_INSUFFICIENT_COVERAGE') {
+        throw maskCheckErr;
+      }
+      console.warn(`⚠️  Wall mask coverage check failed (non-fatal):`, maskCheckErr.message);
+    }
+    // ── End coverage guard ───────────────────────────────────────────────────
+
     // ── TEMPORARY DIAGNOSTIC ─────────────────────────────────────────────────
     // Dumps the full Stage 3 API graph + image dimensions to tmp/ so you can
     // diff the dashboard submission against a ComfyUI Manager submission.
