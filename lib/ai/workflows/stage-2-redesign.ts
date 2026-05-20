@@ -79,7 +79,7 @@ export function createStage2RedesignWorkflow(input: Stage2Input) {
     // Using rank-128 LoRA (~200MB) instead of full ControlNet (~2.5GB)
     '3': {
       inputs: {
-        control_net_name: 'control-lora-canny-rank128.safetensors',
+        control_net_name: 'control-lora-canny-rank256.safetensors',
       },
       class_type: 'ControlNetLoader',
     },

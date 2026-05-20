@@ -2,6 +2,8 @@
 import fs from 'fs';
 import path from 'path';
 import axios from 'axios';
+import { getActiveComfyBaseUrl, isCloudMode } from './gpu-mode-router';
+import { uploadImageToRemoteComfy, downloadOutputFromRemoteComfy } from './cloud-comfy-adapter';
 
 export interface GenerationRequest {
   image: string; // File path or base64
@@ -32,13 +34,18 @@ class ComfyUIBridge {
   private comfyInputDir: string;
 
   constructor() {
-    this.baseUrl = process.env.COMFY_URL || 'http://127.0.0.1:8188';
+    // URL is always resolved dynamically so mode-switching works without restart
     this.uploadDir = path.join(process.cwd(), 'uploads');
     this.outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
     this.publicDir = path.join(process.cwd(), 'public', 'renders');
     this.comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
 
     this.ensureDirectories();
+  }
+
+  /** Active base URL — always call this rather than reading a cached field. */
+  private get baseUrl(): string {
+    return getActiveComfyBaseUrl();
   }
 
   private ensureDirectories(): void {
@@ -51,19 +58,21 @@ class ComfyUIBridge {
 
   async uploadImage(imagePath: string): Promise<string> {
     try {
-      // For ComfyUI, we need to save the image to the input folder
       const imageBuffer = fs.readFileSync(imagePath);
       const filename = `upload_${Date.now()}_${path.basename(imagePath)}`;
-      
-      // Save to ComfyUI input directory
+
+      if (isCloudMode()) {
+        // Upload directly to remote ComfyUI via HTTP
+        return await uploadImageToRemoteComfy(imageBuffer, filename, this.baseUrl);
+      }
+
+      // Local: write to ComfyUI input directory on disk
       const comfyUIInputDir = this.comfyInputDir;
       if (!fs.existsSync(comfyUIInputDir)) {
         fs.mkdirSync(comfyUIInputDir, { recursive: true });
       }
-      
       const outputPath = path.join(comfyUIInputDir, filename);
       fs.writeFileSync(outputPath, imageBuffer);
-      
       console.log(`📸 Image saved to ComfyUI input: ${filename}`);
       return filename;
     } catch (error) {
@@ -248,20 +257,23 @@ class ComfyUIBridge {
 
   private async downloadImage(filename: string, userId: string): Promise<string> {
     try {
-      // Read the image from ComfyUI output directory
-      const sourcePath = path.join(this.outputDir, filename);
-      
-      if (!fs.existsSync(sourcePath)) {
-        throw new Error(`Generated image not found: ${filename}`);
+      let imageBuffer: Buffer;
+
+      if (isCloudMode()) {
+        // Cloud: download from remote ComfyUI output
+        imageBuffer = await downloadOutputFromRemoteComfy(filename, '', this.baseUrl);
+      } else {
+        // Local: read from disk
+        const sourcePath = path.join(this.outputDir, filename);
+        if (!fs.existsSync(sourcePath)) {
+          throw new Error(`Generated image not found: ${filename}`);
+        }
+        imageBuffer = fs.readFileSync(sourcePath);
       }
-      
-      const imageBuffer = fs.readFileSync(sourcePath);
-      
+
       const publicFilename = `${userId}_${Date.now()}_${filename}`;
       const publicPath = path.join(this.publicDir, publicFilename);
-      
       fs.writeFileSync(publicPath, imageBuffer);
-      
       console.log(`🖼️ Image copied to public: ${publicFilename}`);
       return `/renders/${publicFilename}`;
     } catch (error) {

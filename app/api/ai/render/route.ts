@@ -15,6 +15,7 @@ import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { checkIPAdapterModels, IPADAPTER_MISSING_ERROR } from '@/lib/ai/preflight';
+import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 
 export const runtime = 'nodejs';
 
@@ -74,17 +75,12 @@ export async function POST(request: Request) {
       cannyStrength = 0.85,
     } = data;
 
-    // Save image to ComfyUI/input
+    // Save image to ComfyUI/input (local or remote cloud)
     const bytes = await imageFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
-    await mkdir(comfyInputDir, { recursive: true });
     const comfyFilename = `render_${Date.now()}.png`;
 
-    await sharp(buffer)
-      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-      .png()
-      .toFile(path.join(comfyInputDir, comfyFilename));
+    const comfyInputFilename = await saveImageForComfy(buffer, comfyFilename);
 
     // Save optional reference image
     let referenceImage: string | null = null;
@@ -93,11 +89,7 @@ export async function POST(request: Request) {
       const refBytes = await refFile.arrayBuffer();
       const refBuffer = Buffer.from(refBytes);
       const refFilename = `render_ref_${Date.now()}.png`;
-      await sharp(refBuffer)
-        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-        .png()
-        .toFile(path.join(comfyInputDir, refFilename));
-      referenceImage = refFilename;
+      referenceImage = await saveImageForComfy(refBuffer, refFilename);
 
       // IPAdapter pre-flight: validate models before enqueueing
       const ipOk = await checkIPAdapterModels();
@@ -106,24 +98,23 @@ export async function POST(request: Request) {
       }
     }
 
-    // Save upload copy for preview
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-    await writeFile(path.join(uploadsDir, comfyFilename), buffer);
+    // Save upload copy for preview (always local, served by Next.js)
+    const previewUrl = await saveUploadPreview(buffer, comfyFilename);
 
     // Create project
     const project = await Project.create({
       name: `Render — ${roomType}`,
       userId: '000000000000000000000000',
-      originalImage: `/uploads/${comfyFilename}`,
+      originalImage: previewUrl,
       status: 'queued',
       processingType: 'tab-render',
       aiConfig: { style, roomType, prompt, strength },
     });
 
-    // Fire-and-forget
-    comfyBridge.enqueueTabJob(project._id.toString(), 'render', {
-      imageFilename: comfyFilename,
+    // Fire-and-forget — enqueueSmartTabJob runs Stage 1 scene analysis
+    // before the render workflow, providing depth map for dual-ControlNet
+    comfyBridge.enqueueSmartTabJob(project._id.toString(), 'render', {
+      imageFilename: comfyInputFilename,
       roomType,
       style,
       prompt,

@@ -110,9 +110,12 @@ export async function POST(request: Request) {
       aiConfig: { roomType, prompt, denoise },
     });
 
-    comfyBridge.enqueueTabJob(project._id.toString(), 'edit', {
+    // enqueueSmartTabJob pre-runs Stage 1 to provide depth map,
+    // giving the edit workflow ControlNet guidance for perspective preservation
+    comfyBridge.enqueueSmartTabJob(project._id.toString(), 'edit', {
       imageFilename: imgFilename,
       maskFilename,
+      roomType,
       prompt,
       negativePrompt,
       denoise,

@@ -74,12 +74,15 @@ cd /home/nikhil/Documents/Remo2/ComfyUI
 source venv/bin/activate
 
 # ComfyUI optimized for RTX 4060 8GB
+export XFORMERS_FORCE_DISABLE_TRITON=1
+export TORCH_CUDNN_V8_API_ENABLED=1
 python3 main.py \
     --listen 0.0.0.0 \
     --port 8188 \
     --lowvram \
     --preview-method auto \
     --disable-metadata \
+    --disable-xformers \
     > /tmp/logs/comfyui.log 2>&1 &
 
 COMFYUI_PID=$!

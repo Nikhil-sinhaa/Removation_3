@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BeforeAfterSlider } from "@/components/ui/before-after-slider";
 import { ProfessionalSelector } from "@/components/ui/professional-selector";
+import GPUModeSwitch from "@/components/ui/GPUModeSwitch";
 import { io, Socket } from "socket.io-client";
 import { analyzeVastu } from "@/lib/vastu-engine";
 import {
@@ -297,6 +298,14 @@ export default function ProfessionalDesignPage() {
       if (!enableUpscale) skipStages.push(6);
       if (!furnitureFile) skipStages.push(4);
 
+      // Bug #1 fix: Remap UI slider range 1.5-2.0 → valid ControlNet range 0.70-0.95
+      // The ProfessionalSelector sends structuralLock.strength in range 1.5-2.0 which is
+      // a UI-friendly scale, but ControlNetApplyAdvanced.strength must be 0.0-1.0.
+      const rawLock = professionalSettings.structuralLock ?? {};
+      const remappedStrength = rawLock.strength != null
+        ? 0.70 + ((rawLock.strength - 1.5) / (2.0 - 1.5)) * (0.95 - 0.70)
+        : 0.85; // default
+
       const formData = new FormData();
       formData.append('image', selectedFile);
       // Append furniture file if provided (backend will save to ComfyUI/input)
@@ -309,8 +318,13 @@ export default function ProfessionalDesignPage() {
         masterSelector,
         masterToggles,
         skipStages,
-        // Forward structural lock params from ProfessionalSelector to workflow builder
-        structuralLock: professionalSettings.structuralLock ?? {},
+        // Forward structural lock params — strength remapped to 0.70-0.95 range
+        structuralLock: {
+          ...rawLock,
+          strength: remappedStrength,
+        },
+        // Bug #4 fix: Forward encoderV2 settings so workflows can use them
+        encoderV2: professionalSettings.encoderV2 ?? {},
       }));
 
       addLog("📤 Submitting to Ultra-Pro pipeline...");
@@ -397,6 +411,11 @@ export default function ProfessionalDesignPage() {
             <Badge className="bg-purple-100 text-purple-800"><Cpu className="w-3 h-3 mr-1" />8GB Safe</Badge>
           </div>
         </motion.div>
+      </div>
+
+      {/* ── GPU Mode Switch ───────────────────────────────────────────── */}
+      <div className="flex justify-end mb-6">
+        <GPUModeSwitch />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

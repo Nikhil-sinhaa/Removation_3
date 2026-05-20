@@ -129,11 +129,12 @@ export async function POST(request: Request) {
       aiConfig: { roomType, prompt, furnitureUrl, placement, itemCount: items.length },
     });
 
-    comfyBridge.enqueueTabJob(project._id.toString(), 'furnish', {
+    // enqueueSmartTabJob auto-runs Stage 1 scene analysis first,
+    // providing emptyMask + depthMap so buildFurnishWorkflow skips CLIPSeg
+    comfyBridge.enqueueSmartTabJob(project._id.toString(), 'furnish', {
       imageFilename: imgFilename,
       furnitureImage: furnFilename,
-      emptyMask: null,
-      depthMap: null,
+      roomType,
       prompt: prompt || undefined,
       placement: placement || undefined,
     }).catch((err: any) => console.error('❌ Furnish tab error:', err.message));

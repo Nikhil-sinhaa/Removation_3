@@ -30,6 +30,9 @@ import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+// Cloud-aware image saving
+import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
+import { getGPUMode } from '@/lib/ai/gpu-mode-router';
 
 export const runtime = 'nodejs';
 
@@ -86,36 +89,30 @@ export async function POST(request) {
     const skipStages     = data.skipStages     || [];
     // ProfessionalSelector structural lock params (canny thresholds, ControlNet strength)
     const structuralLock = data.structuralLock || {};
+    // ArchAi3D Encoder V2 settings (contextStrength, userTextStrength, twoStageInterpolation)
+    const encoderV2 = data.encoderV2 || {};
 
     if (!imageFile) {
       return Response.json({ error: 'No image provided' }, { status: 400 });
     }
 
-    // Save uploaded image
+    // Read uploaded bytes
     const bytes = await imageFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-    const uploadFilename = `ultrapro_${Date.now()}_${imageFile.name}`;
-    const uploadPath = path.join(uploadsDir, uploadFilename);
-    await writeFile(uploadPath, buffer);
 
-    // Convert to PNG, fit within SDXL max (no cropping — preserves full image)
-    const comfyInputDir = '/home/nikhil/Documents/Remo2/ComfyUI/input';
-    await mkdir(comfyInputDir, { recursive: true });
+    // Save preview copy for the app UI (always local)
+    const uploadFilename = `ultrapro_${Date.now()}_${imageFile.name || 'image.png'}`;
+    const previewUrl = await saveUploadPreview(buffer, uploadFilename);
+
+    // Save to ComfyUI/input (local disk OR upload to remote ComfyUI in cloud mode)
     const comfyFilename = uploadFilename.replace(/\.[^.]+$/, '.png');
-    const comfyInputPath = path.join(comfyInputDir, comfyFilename);
-
+    let comfyInputFilename;
     try {
-      await sharp(buffer)
-        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-        .png()
-        .toFile(comfyInputPath);
-      console.log(`✅ Image → PNG (fit inside 1024, no crop): ${comfyFilename}`);
+      comfyInputFilename = await saveImageForComfy(buffer, comfyFilename);
+      console.log(`✅ Image saved for ComfyUI: ${comfyInputFilename}`);
     } catch (sharpErr) {
-      console.warn(`⚠️ Sharp failed, copying raw: ${sharpErr.message}`);
-      const { copyFile } = await import('fs/promises');
-      await copyFile(uploadPath, path.join(comfyInputDir, uploadFilename));
+      console.warn(`⚠️ saveImageForComfy failed, retrying with raw buffer: ${sharpErr.message}`);
+      comfyInputFilename = await saveImageForComfy(buffer, uploadFilename);
     }
 
     // Save furniture image to ComfyUI/input (if provided)
@@ -125,42 +122,45 @@ export async function POST(request) {
         const furnBytes = await furnitureImageFile.arrayBuffer();
         const furnBuffer = Buffer.from(furnBytes);
         const furnFilename = `furniture_${Date.now()}.png`;
-        const furnPath = path.join(comfyInputDir, furnFilename);
-        await sharp(furnBuffer)
-          .resize(1024, 1024, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-          .png()
-          .toFile(furnPath);
-        furnitureImage = furnFilename;
-        console.log(`✅ Furniture image → PNG: ${furnFilename}`);
+        furnitureImage = await saveImageForComfy(furnBuffer, furnFilename, { width: 1024, height: 1024 });
+        console.log(`✅ Furniture image saved: ${furnitureImage}`);
       } catch (furnErr) {
         console.warn(`⚠️ Furniture image processing failed: ${furnErr.message}`);
       }
     }
 
-    // ─── IPAdapter Pre-flight: Verify model weights exist before Stage 4 runs ──
-    // If missing, auto-skip Stage 4 and warn the user instead of failing mid-pipeline
-    // with a cryptic "ComfyUI execution error — check VRAM or workflow" message.
+    // ─── IPAdapter Pre-flight ───────────────────────────────────────────────────
+    // In cloud mode: skip local model check (models are on Colab, not here)
+    // In local mode: check model files exist before Stage 4 runs
     let ipadapterAvailable = false;
     let ipadapterWarning = null;
     if (furnitureImage) {
-      const COMFY_BASE = process.env.COMFY_BASE || '/home/nikhil/Documents/Remo2/ComfyUI';
-      const { access: fsAccess } = await import('fs/promises');
-      const requiredModels = [
-        { path: `${COMFY_BASE}/models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors`, label: 'IPAdapter Plus SDXL' },
-        { path: `${COMFY_BASE}/models/clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors`, label: 'CLIP ViT-H' },
-      ];
-      const missing = [];
-      for (const model of requiredModels) {
-        try { await fsAccess(model.path); }
-        catch { missing.push(model.label); }
-      }
-      if (missing.length === 0) {
+      const isCloud = getGPUMode() === 'cloud';
+      if (isCloud) {
+        // Trust that Colab has the models; any missing model will surface as
+        // a ComfyUI execution error at Stage 4 which we handle gracefully.
         ipadapterAvailable = true;
-        console.log('✅ IPAdapter models verified — Stage 4 will run');
+        console.log('☁️  Cloud mode: skipping local IPAdapter model check');
       } else {
-        ipadapterWarning = `Stage 4 skipped: missing models — ${missing.join(', ')}. Upload these to ComfyUI/models/ipadapter/ and clip_vision/.`;
-        console.warn(`⚠️ ${ipadapterWarning}`);
-        if (!skipStages.includes(4)) skipStages.push(4);
+        const COMFY_BASE = process.env.COMFY_BASE || '/home/nikhil/Documents/Remo2/ComfyUI';
+        const { access: fsAccess } = await import('fs/promises');
+        const requiredModels = [
+          { path: `${COMFY_BASE}/models/ipadapter/ip-adapter-plus_sdxl_vit-h.safetensors`, label: 'IPAdapter Plus SDXL' },
+          { path: `${COMFY_BASE}/models/clip_vision/CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors`, label: 'CLIP ViT-H' },
+        ];
+        const missing = [];
+        for (const model of requiredModels) {
+          try { await fsAccess(model.path); }
+          catch { missing.push(model.label); }
+        }
+        if (missing.length === 0) {
+          ipadapterAvailable = true;
+          console.log('✅ IPAdapter models verified — Stage 4 will run');
+        } else {
+          ipadapterWarning = `Stage 4 skipped: missing models — ${missing.join(', ')}. Upload these to ComfyUI/models/ipadapter/ and clip_vision/.`;
+          console.warn(`⚠️ ${ipadapterWarning}`);
+          if (!skipStages.includes(4)) skipStages.push(4);
+        }
       }
     }
 
@@ -168,7 +168,7 @@ export async function POST(request) {
     const project = await Project.create({
       name:           `Ultra-Pro ${roomType}`,
       userId:         '000000000000000000000000',
-      originalImage:  `/uploads/${uploadFilename}`,
+      originalImage:  previewUrl,
       status:         'queued',
       processingType: 'ultra-pro',
       aiConfig: {
@@ -184,7 +184,7 @@ export async function POST(request) {
 
     // Fire-and-forget: start the multi-stage pipeline in the background
     comfyBridge.enqueueUltraProJob(project._id.toString(), {
-      imageFilename: comfyFilename,
+      imageFilename: comfyInputFilename,
       roomType,
       masterSelector,
       masterToggles,
@@ -192,6 +192,7 @@ export async function POST(request) {
       styleReference,
       skipStages,
       structuralLock,
+      encoderV2,
     }).catch(err => {
       console.error('❌ Ultra-Pro background error:', err.message);
     });

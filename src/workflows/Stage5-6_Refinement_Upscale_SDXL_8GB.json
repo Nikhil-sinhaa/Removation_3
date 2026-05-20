@@ -2,7 +2,7 @@
   "id": "stage5-6-refinement-upscale-sdxl-8gb",
   "revision": 1,
   "last_node_id": 26,
-  "last_link_id": 34,
+  "last_link_id": 35,
   "nodes": [
     {
       "id": 1,
@@ -73,8 +73,8 @@
         {"name": "VAE", "type": "VAE", "slot_index": 2, "links": [7, 8, 28, 29, 30]}
       ],
       "properties": {"Node name for S&R": "CheckpointLoaderSimple"},
-      "widgets_values": ["sd_xl_base_1.0.safetensors"],
-      "title": "🧠 SDXL Base Checkpoint"
+      "widgets_values": ["sd_xl_base_1.0_0.9vae.safetensors"],
+      "title": "🧠 SDXL Base Checkpoint (use FP8 build if you have one)"
     },
 
     {
@@ -236,8 +236,9 @@
       ],
       "properties": {"Node name for S&R": "MaskDetailerPipe"},
       "widgets_values": [
-        512, true, 1024, true,
-        918026620137394, 15, 5.0, "dpmpp_2m", "karras", 0.35,
+        384, true, 768, true,
+        918026620137394, "fixed",
+        12, 5.0, "dpmpp_2m", "karras", 0.35,
         5, 3.0, 10, 0.2, 1, 1
       ],
       "title": "🧱 Detailer: Wall Regions (denoise 0.35)"
@@ -267,8 +268,9 @@
       ],
       "properties": {"Node name for S&R": "MaskDetailerPipe"},
       "widgets_values": [
-        512, true, 1024, true,
-        918026620137394, 15, 6.0, "dpmpp_2m", "karras", 0.40,
+        384, true, 768, true,
+        918026620137394, "fixed",
+        12, 6.0, "dpmpp_2m", "karras", 0.40,
         5, 3.0, 10, 0.2, 1, 1
       ],
       "title": "🪑 Detailer: Furniture Regions (denoise 0.40)"
@@ -325,7 +327,7 @@
       ],
       "properties": {"Node name for S&R": "ImageUpscaleWithModel"},
       "widgets_values": [],
-      "title": "🔍 4× Pixel Upscale (UltraSharp)"
+      "title": "🔍 4× Pixel Upscale (UltraSharp) — auto-tiles on low VRAM"
     },
 
     {
@@ -343,15 +345,15 @@
         {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [20]}
       ],
       "properties": {"Node name for S&R": "ImageScale"},
-      "widgets_values": ["lanczos", 2048, 2048, "disabled"],
-      "title": "📐 Downscale to 2048×2048 (VRAM-safe)"
+      "widgets_values": ["lanczos", 1536, 1536, "disabled"],
+      "title": "📐 Downscale to 1536×1536 (8GB-safe; was 2048)"
     },
 
     {
       "id": 17,
-      "type": "VAEEncode",
+      "type": "VAEEncodeTiled",
       "pos": [1700, 530],
-      "size": [210, 46],
+      "size": [210, 110],
       "flags": {},
       "order": 16,
       "mode": 0,
@@ -362,9 +364,9 @@
       "outputs": [
         {"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [21]}
       ],
-      "properties": {"Node name for S&R": "VAEEncode"},
-      "widgets_values": [],
-      "title": "🖼️→🔢 Encode Upscaled to Latent"
+      "properties": {"Node name for S&R": "VAEEncodeTiled"},
+      "widgets_values": [512, 64],
+      "title": "🖼️→🔢 Encode Upscaled (TILED 512)"
     },
 
     {
@@ -399,9 +401,9 @@
 
     {
       "id": 19,
-      "type": "VAEDecode",
+      "type": "VAEDecodeTiled",
       "pos": [1700, 960],
-      "size": [210, 46],
+      "size": [210, 110],
       "flags": {},
       "order": 18,
       "mode": 0,
@@ -412,9 +414,9 @@
       "outputs": [
         {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [23]}
       ],
-      "properties": {"Node name for S&R": "VAEDecode"},
-      "widgets_values": [],
-      "title": "🔢→🖼️ Decode Upscaled"
+      "properties": {"Node name for S&R": "VAEDecodeTiled"},
+      "widgets_values": [512, 64, 64, 8],
+      "title": "🔢→🖼️ Decode Upscaled (TILED 512)"
     },
 
     {
@@ -462,7 +464,7 @@
     [5,  4, 1,  5, 0, "CLIP"],
     [6,  4, 1,  6, 0, "CLIP"],
     [7,  4, 2,  7, 2, "VAE"],
-    [8,  4, 2,  8, 1, "VAE"],
+    [8,  4, 2, 19, 1, "VAE"],
     [9,  5, 0,  7, 3, "CONDITIONING"],
     [10, 6, 0,  7, 4, "CONDITIONING"],
     [11, 7, 0, 11, 2, "BASIC_PIPE"],
@@ -573,7 +575,7 @@
       },
       "stage6_upscale": {
         "model_upscale": {
-          "model": "4x-UltraSharp.pth",
+          "model": "RealESRGAN_x4plus.pth",
           "factor": "4×",
           "note": "Pixel-space upscale using pre-trained super-resolution model"
         },
@@ -606,8 +608,8 @@
       },
       "required_models": {
         "sdxl_checkpoint": "sd_xl_base_1.0.safetensors → models/checkpoints/",
-        "upscale_model": "4x-UltraSharp.pth → models/upscale_models/",
-        "download_url": "https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth"
+        "upscale_model": "RealESRGAN_x4plus.pth → models/upscale_models/ (bundled with ComfyUI)",
+        "note_4x_ultrasharp": "Download 4x-UltraSharp.pth from https://huggingface.co/Kim2091/UltraSharp/resolve/main/4x-UltraSharp.pth and place in models/upscale_models/ to use a sharper upscaler"
       },
       "vram_budget": {
         "stage5_peak": {
@@ -629,4 +631,4 @@
     }
   },
   "version": 0.4
-}
+} 

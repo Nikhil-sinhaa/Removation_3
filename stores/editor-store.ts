@@ -528,6 +528,20 @@ export interface EditorState {
   isUltraProRunning: boolean;
   ultraProProjectId: string | null;
 
+  // Smart Tab Job state (Stage 1 + tab workflow)
+  currentToolTab: string | null;                // e.g. 'render', 'edit', 'furnish'
+  toolPhase: 'idle' | 'scene_analysis' | 'processing' | 'done' | 'error';  // 2-phase status
+  sceneAnalysisComplete: boolean;               // true after Stage 1 finishes
+  sceneMasks: {
+    wall_mask: string | null;
+    floor_mask: string | null;
+    ceiling_mask: string | null;
+    object_mask: string | null;
+    empty_space_mask: string | null;
+    depth_map: string | null;
+  } | null;
+  sceneAnalysisMs: number;                      // Stage 1 duration in ms
+
   placedFurniture: {name: string, price: number, url: string, imageUrl?: string}[];
 }
 
@@ -581,6 +595,13 @@ export const initialEditorState: EditorState = {
   ultraProStage: 0,
   isUltraProRunning: false,
   ultraProProjectId: null,
+
+  // Smart Tab defaults
+  currentToolTab: null,
+  toolPhase: 'idle',
+  sceneAnalysisComplete: false,
+  sceneMasks: null,
+  sceneAnalysisMs: 0,
 
   placedFurniture: [],
 };
@@ -760,6 +781,12 @@ export interface EditorActions {
   startUltraProGeneration: () => Promise<void>;
   setUltraProStage: (stage: number) => void;
   setUltraProRunning: (running: boolean) => void;
+
+  // Smart Tab Job
+  setCurrentToolTab: (tab: string | null) => void;
+  setToolPhase: (phase: EditorState['toolPhase']) => void;
+  setSceneAnalysisComplete: (complete: boolean, masks?: EditorState['sceneMasks'], ms?: number) => void;
+  resetToolState: () => void;
 
   // Presets
   addPreset: (preset: Omit<Preset, 'id' | 'createdAt'>) => string;
@@ -2505,6 +2532,34 @@ const editorStoreCreator: StateCreator<
     set((s) => {
       s.isUltraProRunning = running;
       if (!running) s.isGenerating = false;
+    });
+  },
+
+  // ─── Smart Tab Job Actions ─────────────────────────────────────────
+
+  setCurrentToolTab: (tab) => {
+    set((s) => { s.currentToolTab = tab; });
+  },
+
+  setToolPhase: (phase) => {
+    set((s) => { s.toolPhase = phase; });
+  },
+
+  setSceneAnalysisComplete: (complete, masks, ms) => {
+    set((s) => {
+      s.sceneAnalysisComplete = complete;
+      if (masks) s.sceneMasks = masks;
+      if (ms !== undefined) s.sceneAnalysisMs = ms;
+    });
+  },
+
+  resetToolState: () => {
+    set((s) => {
+      s.currentToolTab = null;
+      s.toolPhase = 'idle';
+      s.sceneAnalysisComplete = false;
+      s.sceneMasks = null;
+      s.sceneAnalysisMs = 0;
     });
   },
 

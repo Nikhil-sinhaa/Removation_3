@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
     const project = await Project.create({ name: `Auto Edit — ${objectToEdit}`, userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-auto-edit', aiConfig: { objectToEdit, editDescription, denoise } });
-    comfyBridge.enqueueTabJob(project._id.toString(), 'auto-edit', { imageFilename: fn, objectToEdit, editDescription, denoise, detectThreshold }).catch((e: any) => console.error('❌ Auto-edit error:', e.message));
+    comfyBridge.enqueueSmartTabJob(project._id.toString(), 'auto-edit', { imageFilename: fn, objectToEdit, editDescription, denoise, detectThreshold }).catch((e: any) => console.error('❌ Auto-edit error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'auto-edit', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Auto-edit failed', message: error.message }, { status: 500 }); }
 }

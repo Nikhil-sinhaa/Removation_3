@@ -68,3 +68,29 @@ pids
 /chrome-extension/dist
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Generated AI render outputs
+/public/renders/
+
+# Claude / AI tooling state (local only)
+.claude-flow/
+.claude/
+.mcp.json
+
+# Graphify cache (auto-generated)
+graphify-out/cache/
+
+# Dev scratch files
+claude_prompt.txt
+myplan.txt
+prompt.md
+prompts/
+notebooks/
+
+# One-off test & diagnostic scripts
+run_minimax_test.py
+test_minimax.py
+scripts/diagnose-room-changer.js
+scripts/diagnostics/
+scripts/test-stable-stage1.js
+scripts/test-stage1-quick.mjs

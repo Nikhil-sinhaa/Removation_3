@@ -18,6 +18,10 @@ import type {
 } from './workflows/types';
 
 import { createStage1AnalysisWorkflow, parseStage1Output } from './workflows/stage-1-analysis';
+import {
+  createStableSceneUnderstandingWorkflow,
+  parseStableSceneOutputs,
+} from './comfyui-workflows-master';
 import { createStage2RedesignWorkflow, parseStage2Output } from './workflows/stage-2-redesign';
 import { createStage3FurnitureWorkflow, parseStage3Output } from './workflows/stage-3-furniture';
 import { createStage4LightingWorkflow, parseStage4Output } from './workflows/stage-4-lighting';
@@ -29,6 +33,8 @@ import { createStage6CompositeWorkflow, parseStage6Output } from './workflows/st
 export interface PipelineRequest {
   /** User-uploaded room photo (ComfyUI input-relative filename) */
   imagePath: string;
+  /** Base64-encoded image (required for stable Stage 1 TS pathway) */
+  imageBase64?: string;
   /** Room type for prompt context */
   roomType: string;
   /** User ID for file namespacing */
@@ -55,6 +61,9 @@ export interface PipelineRequest {
 
   // Stages to skip (for partial runs)
   skipStages?: number[];
+
+  // Use legacy CLIPSeg-based Stage 1 instead of stable DINO+SAM2
+  useLegacyStage1?: boolean;
 }
 
 export interface PipelineResult {
@@ -107,35 +116,69 @@ export class PipelineOrchestrator {
 
     try {
       // ═══════════════════════════════════════════════════════════
-      // STAGE 1: Structural Analysis
+      // STAGE 1: Scene Understanding (Stable DINO+SAM2 or Legacy)
       // ═══════════════════════════════════════════════════════════
-      let stage1Result: ReturnType<typeof parseStage1Output>;
+      //
+      // Stable (default): Pure GroundingDINO+SAM2, produces 6 outputs:
+      //   wall_mask, floor_mask, ceiling_mask, object_mask, empty_mask, depth_map
+      //
+      // Legacy (useLegacyStage1: true): CLIPSeg+DINO hybrid, produces 3 outputs:
+      //   cannyEdgeMap, depthMap, furnitureMask
+      //
+      // Stable masks are higher quality and feed directly into Stages 2-6.
+
+      let stage1Result: Record<string, string>;
 
       if (!skipSet.has(1)) {
         const t0 = Date.now();
-        this.emitProgress(1, 'starting', 'Extracting edges, depth, and furniture masks');
 
-        const stage1Workflow = createStage1AnalysisWorkflow({
-          imagePath: request.imagePath,
-          roomType: request.roomType,
-          userMaskPath: request.userMaskPath,
-        });
+        if (request.useLegacyStage1 || !request.imageBase64) {
+          // ── Legacy pathway ────────────────────────────────────
+          this.emitProgress(1, 'starting', 'Extracting edges, depth, and masks (legacy CLIPSeg)');
+          const stage1Workflow = createStage1AnalysisWorkflow({
+            imagePath: request.imagePath,
+            roomType: request.roomType,
+            userMaskPath: request.userMaskPath,
+          });
+          const stage1History = await this.submitAndWait(stage1Workflow);
+          const legacyResult = parseStage1Output(stage1History);
+          // Map legacy 3-output format to unified format
+          stage1Result = {
+            depth_map: legacyResult.depthMap || '',
+            object_mask: legacyResult.furnitureMask || '',
+            wall_mask: '',
+            floor_mask: '',
+            ceiling_mask: '',
+            empty_space_mask: '',
+          };
+        } else {
+          // ── Stable pathway (pure DINO+SAM2) ───────────────────
+          this.emitProgress(1, 'starting', 'Scene Understanding (Stable DINO+SAM2, 6 outputs)');
+          const { workflow } = createStableSceneUnderstandingWorkflow(
+            request.imageBase64,
+            request.roomType,
+          );
+          const stage1History = await this.submitAndWait(workflow);
+          stage1Result = parseStableSceneOutputs(stage1History);
+        }
 
-        const stage1History = await this.submitAndWait(stage1Workflow);
-        stage1Result = parseStage1Output(stage1History);
         stageOutputs.stage1 = stage1Result;
         timings.stage1 = Date.now() - t0;
-        this.emitProgress(1, 'completed', `Done in ${timings.stage1}ms`);
+        this.emitProgress(1, 'completed', `Done in ${timings.stage1}ms — ${Object.keys(stage1Result).filter(k => stage1Result[k]).length} outputs`);
 
         await this.flushVRAM();
       } else {
         this.emitProgress(1, 'skipped');
-        stage1Result = stageOutputs.stage1 || { cannyEdgeMap: '', depthMap: '', furnitureMask: '' };
+        stage1Result = stageOutputs.stage1 || {
+          depth_map: '', object_mask: '', wall_mask: '',
+          floor_mask: '', ceiling_mask: '', empty_space_mask: '',
+        };
       }
 
       // ═══════════════════════════════════════════════════════════
       // STAGE 2: Base Room Redesign
       // ═══════════════════════════════════════════════════════════
+      // Now receives depth_map from Stage 1 for dual-ControlNet guidance.
       let stage2Result: ReturnType<typeof parseStage2Output>;
 
       if (!skipSet.has(2)) {
@@ -144,12 +187,18 @@ export class PipelineOrchestrator {
 
         const stage2Workflow = createStage2RedesignWorkflow({
           imagePath: request.imagePath,
-          cannyEdgeMap: stage1Result.cannyEdgeMap,
-          depthMap: stage1Result.depthMap,
+          // Unified format: use depth_map from stable Stage 1
+          // The Canny edge map is generated inline by Stage 2 from the original image.
+          cannyEdgeMap: '',  // Stage 2 generates Canny internally from imagePath
+          depthMap: stage1Result.depth_map || stage1Result['depthMap'] || '',
           masterSelector: request.masterSelector,
           masterToggles: request.masterToggles,
           styleReferenceImage: request.styleReferenceImage,
           userMaskPath: request.userMaskPath,
+          // New: pass full scene masks for enhanced redesign context
+          wallMask: stage1Result.wall_mask || '',
+          floorMask: stage1Result.floor_mask || '',
+          objectMask: stage1Result.object_mask || '',
         });
 
         const stage2History = await this.submitAndWait(stage2Workflow);
@@ -167,6 +216,7 @@ export class PipelineOrchestrator {
       // ═══════════════════════════════════════════════════════════
       // STAGE 3: Furniture Compositing (per furniture item)
       // ═══════════════════════════════════════════════════════════
+      // Uses object_mask from Stage 1 for precise furniture placement areas.
       let stage3Result: ReturnType<typeof parseStage3Output>;
       let currentImage = stage2Result.baseRedesignedImage;
 
@@ -180,7 +230,8 @@ export class PipelineOrchestrator {
 
           const stage3Workflow = createStage3FurnitureWorkflow({
             baseRedesignedImage: currentImage,
-            furnitureMask: item.placementMask || stage1Result.furnitureMask,
+            // Use pre-computed object_mask from Stage 1, or item-specific mask
+            furnitureMask: item.placementMask || stage1Result.object_mask || stage1Result['furnitureMask'] || '',
             furnitureReferenceImage: item.processedImagePath,
             furnitureStyleText: `${item.category} in ${request.masterSelector.furnitureStyle} style`,
             userMaskPath: request.userMaskPath,

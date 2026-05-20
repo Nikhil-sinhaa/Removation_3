@@ -1,12 +1,24 @@
 /**
  * ComfyUI Closed-Loop Bridge Service
  * Connects to ComfyUI WebSocket and manages FIFO queue processing
+ *
+ * GPU Mode Switch: Reads from lib/ai/gpu-mode-router to decide whether
+ * to talk to local ComfyUI (127.0.0.1:8188) or a remote Cloud instance.
  */
 
 import WebSocket from 'ws';
 import { Server } from 'socket.io';
 import http from 'http';
 import Project from '../models/Project.js';
+
+// ── GPU Mode helpers (lazy import — @/ alias works in Turbopack + CJS) ──────────
+let _gpuRouter = null;
+async function getGPURouter() {
+  if (!_gpuRouter) {
+    _gpuRouter = await import('@/lib/ai/gpu-mode-router');
+  }
+  return _gpuRouter;
+}
 
 class ComfyBridgeService {
   constructor() {
@@ -19,13 +31,48 @@ class ComfyBridgeService {
     this.queue = [];
     this.isProcessingQueue = false;
     this._ultraProRunning = false;  // Gap 4: concurrent job guard
-    
-    // ComfyUI configuration
-    this.comfyUIUrl = process.env.COMFY_WS_URL || 'ws://127.0.0.1:8188/ws?clientId=removation_main';
-    this.comfyRestUrl = process.env.COMFY_URL || 'http://127.0.0.1:8188';
+
+    // ── ComfyUI URLs — resolved dynamically from gpu-mode-router ─────────────
+    // Always call this.getComfyRestUrl() / this.getComfyWsUrl() instead of
+    // reading these fields directly — they may change when mode is toggled.
     this.backendPort = process.env.BACKEND_WS_PORT || 3001;
-    
+
     this.init();
+  }
+
+  /** Active ComfyUI HTTP base URL (respects GPU mode switch). */
+  async getComfyRestUrl() {
+    try {
+      const r = await getGPURouter();
+      return r.getActiveComfyBaseUrl();
+    } catch {
+      return process.env.COMFY_URL || 'http://127.0.0.1:8188';
+    }
+  }
+
+  /** Active ComfyUI WebSocket URL (respects GPU mode switch). */
+  async getComfyWsUrl() {
+    try {
+      const r = await getGPURouter();
+      return r.getActiveComfyWsUrl();
+    } catch {
+      return process.env.COMFY_WS_URL || 'ws://127.0.0.1:8188/ws?clientId=removation_main';
+    }
+  }
+
+  /** True when cloud ComfyUI (Colab/RunPod) is active. */
+  async _isCloud() {
+    try {
+      const r = await getGPURouter();
+      return r.isCloudMode();
+    } catch {
+      return false;
+    }
+  }
+
+  /** Lazy cloud-comfy adapter (only loaded when needed). */
+  async _cloudAdapter() {
+    return import('@/lib/ai/cloud-comfy-adapter');
   }
 
   async init() {
@@ -42,11 +89,15 @@ class ComfyBridgeService {
   /**
    * Connect to ComfyUI WebSocket
    */
-  connectToComfyUI() {
+  async connectToComfyUI() {
     try {
-      console.log('🔗 Connecting to ComfyUI:', this.comfyUIUrl);
-      
-      this.comfyUIWebSocket = new WebSocket(this.comfyUIUrl);
+      const wsUrl = await this.getComfyWsUrl();
+      const cloud = await this._isCloud();
+      console.log(`🔗 Connecting to ComfyUI [${cloud ? 'CLOUD ☁️' : 'LOCAL 🖥️'}]: ${wsUrl}`);
+
+      this.comfyUIWebSocket = new WebSocket(wsUrl, {
+        headers: { 'bypass-tunnel-reminder': 'true' }
+      });
       
       this.comfyUIWebSocket.on('open', () => {
         console.log('✅ Connected to ComfyUI WebSocket');
@@ -162,8 +213,10 @@ class ComfyBridgeService {
 
     try {
       // 1. Get filename from ComfyUI history
+      const comfyUrl = await this.getComfyRestUrl();
       const historyRes = await fetch(
-        `http://127.0.0.1:8188/history/${prompt_id}` 
+        `${comfyUrl}/history/${prompt_id}`,
+        { headers: { 'bypass-tunnel-reminder': 'true' } }
       )
       const history = await historyRes.json()
       const outputs = history[prompt_id]?.outputs
@@ -173,15 +226,22 @@ class ComfyBridgeService {
       const nodeId = Object.keys(outputs)[0]
       const filename = outputs[nodeId].images[0].filename
 
-      // 2. Copy to public/renders
-      const fs = await import('fs/promises')
-      const src = `/home/nikhil/Documents/Remo2/ComfyUI/output/${filename}` 
-      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${filename}` 
-      await fs.mkdir(
-        '/home/nikhil/Documents/Remo2/Removation_3/public/renders',
-        { recursive: true }
-      )
-      await fs.copyFile(src, dest)
+      // 2. Copy to public/renders (local or cloud)
+      const fs = await import('fs/promises');
+      const publicRendersDir = '/home/nikhil/Documents/Remo2/Removation_3/public/renders';
+      const dest = `${publicRendersDir}/${filename}`;
+      await fs.mkdir(publicRendersDir, { recursive: true });
+
+      const isCloud = await this._isCloud();
+      if (isCloud) {
+        // Download output from remote ComfyUI
+        const adapter = await this._cloudAdapter();
+        const imgBuffer = await adapter.downloadOutputFromRemoteComfy(filename, '', comfyUrl);
+        await fs.writeFile(dest, imgBuffer);
+      } else {
+        const src = `${process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output'}/${filename}`;
+        await fs.copyFile(src, dest);
+      }
 
       // 3. Update MongoDB
       const imageUrl = `/renders/${filename}` 
@@ -245,7 +305,9 @@ class ComfyBridgeService {
       }
 
       try {
-        const res = await fetch(`http://127.0.0.1:8188/history/${promptId}`);
+        const res = await fetch(`${await this.getComfyRestUrl()}/history/${promptId}`, {
+          headers: { 'bypass-tunnel-reminder': 'true' }
+        });
         const history = await res.json();
         const entry = history[promptId];
 
@@ -465,24 +527,37 @@ class ComfyBridgeService {
 
     try {
       // Before submitting job check VRAM
-      const statsRes = await fetch('http://127.0.0.1:8188/system_stats')
-      const stats = await statsRes.json()
-      const vramFreeMB = stats.devices[0].vram_free / 1024 / 1024
-      console.log(`VRAM free before job: ${vramFreeMB.toFixed(0)}MB`)
-      if (vramFreeMB < 500) {
-        console.warn('Low VRAM warning - generation may fail')
+      const activeUrl = await this.getComfyRestUrl();
+      try {
+        const statsRes = await fetch(`${activeUrl}/system_stats`, {
+          headers: { 'bypass-tunnel-reminder': 'true' }
+        });
+        const stats = await statsRes.json();
+        const vramFreeMB = stats.devices[0].vram_free / 1024 / 1024;
+        const cloud = await this._isCloud();
+        console.log(`VRAM free before job [${cloud ? 'CLOUD ☁️' : 'LOCAL 🖥️'}]: ${vramFreeMB.toFixed(0)}MB`);
+        if (vramFreeMB < 500) console.warn('Low VRAM warning - generation may fail');
+      } catch (e) {
+        console.warn('⚠️ Could not fetch VRAM stats:', e.message);
       }
 
       // Unload previous model + free VRAM cache before new job
+      // (skipped in cloud mode — T4 has 15 GB, localtunnel POST /free times out)
       try {
-        await fetch(`${this.comfyRestUrl}/free`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ unload_models: true, free_memory: true })
-        });
-        console.log('🧹 Models unloaded, VRAM freed before job');
-        // Give GPU a moment to actually release memory
-        await new Promise(r => setTimeout(r, 2000));
+        const cloud = await this._isCloud();
+        if (!cloud) {
+          await fetch(`${activeUrl}/free`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'bypass-tunnel-reminder': 'true'
+            },
+            body: JSON.stringify({ unload_models: true, free_memory: true })
+          });
+          console.log('🧹 Models unloaded, VRAM freed before job');
+          // Give GPU a moment to actually release memory
+          await new Promise(r => setTimeout(r, 2000));
+        }
       } catch (e) {
         console.warn('⚠️ Could not flush VRAM:', e.message);
       }
@@ -492,10 +567,11 @@ class ComfyBridgeService {
       
       // Submit workflow to ComfyUI REST API directly
       // (Do NOT wait for WebSocket — polling handles completion)
-      const response = await fetch(`${this.comfyRestUrl}/prompt`, {
+      const response = await fetch(`${activeUrl}/prompt`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true'
         },
         body: JSON.stringify({
           prompt: job.workflow
@@ -632,7 +708,7 @@ class ComfyBridgeService {
     this._ultraProRunning = true;  // Acquire mutex
 
     const {
-      buildStage1, buildStage2, buildStage3,
+      buildStage1, buildStableStage1, buildStage2, buildStage3,
       buildStage4, buildStage5, buildStage6,
     } = await import('../workflows/ultraProBuilder.js');
 
@@ -640,6 +716,8 @@ class ComfyBridgeService {
       imageFilename, roomType, masterSelector, masterToggles,
       furnitureImage, styleReference, skipStages = [],
       structuralLock = {},    // ProfessionalSelector structural lock params
+      encoderV2 = {},         // ArchAi3D Encoder V2 (contextStrength, userTextStrength)
+      useLegacyStage1 = false, // Set true to use CLIPSeg-based buildStage1
     } = opts;
 
     const skip = new Set(skipStages);
@@ -656,13 +734,20 @@ class ComfyBridgeService {
       // ═══ STAGE 1: Scene Understanding ═══
       if (!skip.has(1)) {
         const t0 = Date.now();
-        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 1, name: 'Scene Understanding', status: 'running' });
+        const stage1Name = useLegacyStage1 ? 'Scene Understanding (CLIPSeg+DINO)' : 'Scene Understanding (Stable DINO+SAM2)';
+        this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 1, name: stage1Name, status: 'running' });
 
-        const workflow1 = buildStage1(imageFilename);
+        // Use stable (pure GroundingDINO+SAM2) by default, legacy CLIPSeg version via flag
+        const workflow1 = useLegacyStage1
+          ? buildStage1(imageFilename, { roomType })
+          : buildStableStage1(imageFilename, { roomType });
         const outputs1 = await this._submitStageAndWait(workflow1);
         await this._copyOutputsToInput(outputs1);
         stageOutputs.stage1 = this._extractFilenames(outputs1, 'stage1/');
         timings.stage1 = Date.now() - t0;
+
+        // Fix A.1.7: abort early if SAM2 produced an empty wall_mask
+        await this._validateMaskNonBlack(stageOutputs.stage1.wall_mask);
 
         this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 1, status: 'done', ms: timings.stage1 });
         await this._flushVRAM();
@@ -674,8 +759,8 @@ class ComfyBridgeService {
         this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 2, name: 'Geometry Locking', status: 'running' });
 
         const depthMap = stageOutputs.stage1?.depth_map || 'depth_map_00001_.png';
-        // Pass structuralLock params so ProfessionalSelector settings reach the workflow
-        const workflow2 = buildStage2(imageFilename, depthMap, { masterSelector, masterToggles, roomType, structuralLock });
+        // Pass structuralLock + encoderV2 so ProfessionalSelector settings reach the workflow
+        const workflow2 = buildStage2(imageFilename, depthMap, { masterSelector, masterToggles, roomType, structuralLock, encoderV2 });
         const outputs2 = await this._submitStageAndWait(workflow2);
         await this._copyOutputsToInput(outputs2);
         stageOutputs.stage2 = this._extractFilenames(outputs2, 'stage2/');
@@ -684,6 +769,15 @@ class ComfyBridgeService {
         this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 2, status: 'done', ms: timings.stage2 });
         await this._flushVRAM();
       }
+
+      // Build prompts once — used by Stage 3 (inpainting) AND Stage 4 (furniture placement)
+      const wallColor = masterSelector.wallColor || 'neutral';
+      const wallPrompt = masterToggles?.walls
+        ? `interior wall painted ${wallColor}, smooth matte finish, solid even color, professional paint job, photorealistic`
+        : 'original wall, clean surface, photorealistic';
+      const furniturePrompt = masterToggles?.furniture
+        ? `${masterSelector.furnitureStyle} furniture, high quality materials, professional interior design, detailed texture, photorealistic rendering, clean and organized`
+        : 'original furniture, clean, organized';
 
       // ═══ STAGE 3: Regional Inpainting ═══
       if (!skip.has(3)) {
@@ -694,14 +788,7 @@ class ComfyBridgeService {
         const wallMask   = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
         const objectMask = stageOutputs.stage1?.object_mask || 'object_mask_00001_.png';
 
-        const wallPrompt = masterToggles?.walls
-          ? `${masterSelector.wallColor} walls, smooth surface, professional finish`
-          : 'original walls, clean surface';
-        const furniturePrompt = masterToggles?.furniture
-          ? `${masterSelector.furnitureStyle} furniture, high quality, detailed texture`
-          : 'original furniture, clean, organized';
-
-        const workflow3 = buildStage3(redesigned, wallMask, objectMask, { wallPrompt, furniturePrompt });
+        const workflow3 = buildStage3(redesigned, wallMask, objectMask, { wallPrompt, furniturePrompt, masterToggles });
         const outputs3 = await this._submitStageAndWait(workflow3);
         await this._copyOutputsToInput(outputs3);
         stageOutputs.stage3 = this._extractFilenames(outputs3, 'stage3/');
@@ -722,7 +809,7 @@ class ComfyBridgeService {
         const depthMap = stageOutputs.stage1?.depth_map || 'depth_map_00001_.png';
         const styleRef = styleReference || imageFilename;
 
-        const workflow4 = buildStage4(prevImage, styleRef, furnitureImage, objectMask, depthMap);
+        const workflow4 = buildStage4(prevImage, styleRef, furnitureImage, objectMask, depthMap, furniturePrompt);
         const outputs4 = await this._submitStageAndWait(workflow4);
         await this._copyOutputsToInput(outputs4);
         stageOutputs.stage4 = this._extractFilenames(outputs4, 'stage4/');
@@ -861,22 +948,25 @@ class ComfyBridgeService {
    * @returns {Promise<{success: boolean, imageUrl?: string, error?: string}>}
    */
   async enqueueTabJob(projectId, tab, opts) {
-    // Wait for mutex if another generation is running (max 5 min)
-    const maxWait = 300_000; // 5 minutes
-    const pollInterval = 3_000; // 3 seconds
-    let waited = 0;
-    while (this._ultraProRunning && waited < maxWait) {
-      console.log(`⏳ Tab ${tab} waiting for mutex (${Math.round(waited/1000)}s)...`);
-      await new Promise(r => setTimeout(r, pollInterval));
-      waited += pollInterval;
-    }
-    if (this._ultraProRunning) {
-      const msg = 'Pipeline busy for too long. Please try again.';
-      this.notifyFrontend('comfy:tab:error', { projectId, tab, error: msg });
-      return { success: false, error: msg };
-    }
+    // If called from enqueueSmartTabJob, mutex is already held — skip re-acquisition
+    if (!opts._skipMutex) {
+      // Wait for mutex if another generation is running (max 5 min)
+      const maxWait = 300_000; // 5 minutes
+      const pollInterval = 3_000; // 3 seconds
+      let waited = 0;
+      while (this._ultraProRunning && waited < maxWait) {
+        console.log(`⏳ Tab ${tab} waiting for mutex (${Math.round(waited/1000)}s)...`);
+        await new Promise(r => setTimeout(r, pollInterval));
+        waited += pollInterval;
+      }
+      if (this._ultraProRunning) {
+        const msg = 'Pipeline busy for too long. Please try again.';
+        this.notifyFrontend('comfy:tab:error', { projectId, tab, error: msg });
+        return { success: false, error: msg };
+      }
 
-    this._ultraProRunning = true;  // Acquire mutex (shared with Ultra-Pro)
+      this._ultraProRunning = true;  // Acquire mutex (shared with Ultra-Pro)
+    }
 
     try {
       // Import all workflow builders
@@ -1045,6 +1135,131 @@ class ComfyBridgeService {
     }
   }
 
+  // ─── Smart Tab Job: Stage 1 + Tab Workflow ───────────────────────────
+
+  /**
+   * Execute a tab workflow with automatic Stage 1 scene understanding.
+   *
+   * For tabs that benefit from masks (render, furnish, edit, empty-room, auto-edit),
+   * this method first runs buildStableStage1() to produce:
+   *   - wall_mask, floor_mask, ceiling_mask, object_mask, empty_mask, depth_map
+   * Then feeds those masks into the tab workflow as opts.
+   *
+   * For tabs that don't need masks (lighting, postprocess, lineart, etc.),
+   * this falls through to the standard enqueueTabJob.
+   *
+   * @param {string} projectId - MongoDB project ID
+   * @param {string} tab - Tab type (render, edit, furnish, etc.)
+   * @param {object} opts - Tab-specific options
+   * @param {string} opts.imageFilename - Input image in ComfyUI/input/
+   * @param {string} [opts.roomType] - Room type for GroundingDINO prompts
+   * @param {boolean} [opts.skipSceneAnalysis=false] - Skip Stage 1 if masks already provided
+   * @returns {Promise<{success: boolean, imageUrl?: string, sceneOutputs?: object, error?: string}>}
+   */
+  async enqueueSmartTabJob(projectId, tab, opts) {
+    // Tabs that benefit from pre-computed masks
+    const MASK_TABS = new Set(['render', 'furnish', 'edit', 'empty-room', 'auto-edit', 'interior-render']);
+
+    // Skip scene analysis if:
+    // 1. Tab doesn't need masks, OR
+    // 2. User explicitly opted out, OR
+    // 3. Masks are already provided in opts
+    const hasMasks = opts.wallMask && opts.objectMask && opts.depthMap;
+    if (!MASK_TABS.has(tab) || opts.skipSceneAnalysis || hasMasks) {
+      // Standard single-shot tab job
+      return this.enqueueTabJob(projectId, tab, opts);
+    }
+
+    // ── Phase 1: Run Stable Stage 1 ──────────────────────────────────
+    // Acquire mutex early (shared with Ultra-Pro and standard tab jobs)
+    const maxWait = 300_000;
+    const pollInterval = 3_000;
+    let waited = 0;
+    while (this._ultraProRunning && waited < maxWait) {
+      console.log(`⏳ SmartTab ${tab} waiting for mutex (${Math.round(waited/1000)}s)...`);
+      await new Promise(r => setTimeout(r, pollInterval));
+      waited += pollInterval;
+    }
+    if (this._ultraProRunning) {
+      const msg = 'Pipeline busy for too long. Please try again.';
+      this.notifyFrontend('comfy:tab:error', { projectId, tab, error: msg });
+      return { success: false, error: msg };
+    }
+
+    this._ultraProRunning = true;
+
+    try {
+      const { buildStableStage1 } = await import('../workflows/ultraProBuilder.js');
+
+      // ── Phase 1: Scene Understanding ─────────────────────────────
+      this.notifyFrontend('comfy:tab:start', {
+        projectId, tab,
+        name: `Scene Analysis → ${tab.charAt(0).toUpperCase() + tab.slice(1)}`,
+        phase: 'scene_understanding',
+      });
+
+      const t0 = Date.now();
+      const sceneWorkflow = buildStableStage1(opts.imageFilename, { roomType: opts.roomType || 'general' });
+      const sceneOutputs = await this._submitStageAndWait(sceneWorkflow);
+      await this._copyOutputsToInput(sceneOutputs);
+      const sceneMasks = this._extractFilenames(sceneOutputs, 'stage1/');
+      const sceneMs = Date.now() - t0;
+
+      console.log(`🔍 Scene analysis complete (${(sceneMs/1000).toFixed(1)}s):`, Object.keys(sceneMasks));
+      this.notifyFrontend('comfy:tab:scene_done', {
+        projectId, tab, ms: sceneMs,
+        masks: Object.keys(sceneMasks),
+      });
+
+      // Flush VRAM between Stage 1 and tab workflow
+      await this._flushVRAM();
+
+      // ── Phase 2: Inject masks into tab opts ──────────────────────
+      // Enrich opts with Stage 1 outputs so tab workflows can use them
+      const enrichedOpts = {
+        ...opts,
+        // Mask filenames (flat, in ComfyUI/input/)
+        wallMask: sceneMasks.wall_mask || null,
+        floorMask: sceneMasks.floor_mask || null,
+        ceilingMask: sceneMasks.ceiling_mask || null,
+        objectMask: sceneMasks.object_mask || null,
+        emptyMask: sceneMasks.empty_mask || null,
+        depthMap: sceneMasks.depth_map || null,
+        // Flag so tab builders know masks are pre-computed
+        _hasSceneMasks: true,
+        // Skip mutex re-acquisition — we already hold it from Phase 1
+        _skipMutex: true,
+      };
+
+      // DO NOT release the mutex here — enqueueTabJob will release it in its finally block.
+      // Releasing early would create a race window where another job could start.
+
+      // ── Phase 2: Run tab workflow with enriched opts ──────────────
+      const tabResult = await this.enqueueTabJob(projectId, tab, enrichedOpts);
+
+      return {
+        ...tabResult,
+        sceneOutputs: sceneMasks,
+        sceneMs,
+      };
+
+    } catch (error) {
+      console.error(`❌ SmartTab ${tab} failed:`, error.message);
+      await Project.findByIdAndUpdate(projectId, {
+        status: 'failed',
+        errorMessage: `SmartTab ${tab} error: ${error.message}`,
+        processingCompletedAt: new Date(),
+      });
+      this.notifyFrontend('comfy:tab:error', { projectId, tab, error: error.message });
+      return { success: false, error: error.message };
+    } finally {
+      this._ultraProRunning = false;
+      if (this.queue.length > 0) {
+        setTimeout(() => this.processQueue(), 2000);
+      }
+    }
+  }
+
   // ─── Internal Helpers for Ultra-Pro ─────────────────────────────────
 
   /**
@@ -1052,12 +1267,22 @@ class ComfyBridgeService {
    * Returns the outputs object from ComfyUI history.
    */
   async _submitStageAndWait(workflow) {
+    // Fix B.2: count SaveImage nodes up-front for strict output validation
+    const saveImageNodeIds = Object.entries(workflow)
+      .filter(([, node]) => node?.class_type === 'SaveImage')
+      .map(([id]) => id);
+    const expectedSaveCount = saveImageNodeIds.length;
+
     // Flush VRAM before submission
     await this._flushVRAM();
 
-    const res = await fetch(`${this.comfyRestUrl}/prompt`, {
+    const comfyUrl = await this.getComfyRestUrl();
+    const res = await fetch(`${comfyUrl}/prompt`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'bypass-tunnel-reminder': 'true'
+      },
       body: JSON.stringify({ prompt: workflow }),
     });
 
@@ -1066,15 +1291,29 @@ class ComfyBridgeService {
       throw new Error(`ComfyUI HTTP ${res.status}: ${text}`);
     }
 
-    const { prompt_id } = await res.json();
+    // Fix A.1.1/D.3: check for node_errors / top-level error before polling
+    const submitResult = await res.json();
+    if (submitResult.error) {
+      throw new Error(`ComfyUI rejected prompt: ${JSON.stringify(submitResult.error)}`);
+    }
+    if (submitResult.node_errors && Object.keys(submitResult.node_errors).length > 0) {
+      throw new Error(`ComfyUI node_errors: ${JSON.stringify(submitResult.node_errors)}`);
+    }
+    const prompt_id = submitResult.prompt_id;
+    if (!prompt_id) throw new Error('ComfyUI did not return a prompt_id');
     console.log(`📤 Stage submitted: ${prompt_id}`);
 
-    // Poll for completion (6 min timeout)
-    const deadline = Date.now() + 360_000;
+    // Poll for completion (respect timeout env var, default 5 mins)
+    const timeoutMs = process.env.COMFY_STAGE_TIMEOUT_MS
+      ? parseInt(process.env.COMFY_STAGE_TIMEOUT_MS, 10)
+      : 300_000;
+    const deadline = Date.now() + timeoutMs;
     while (Date.now() < deadline) {
       await new Promise(r => setTimeout(r, 3000));
       try {
-        const histRes = await fetch(`${this.comfyRestUrl}/history/${prompt_id}`);
+        const histRes = await fetch(`${comfyUrl}/history/${prompt_id}`, {
+          headers: { 'bypass-tunnel-reminder': 'true' }
+        });
         const history = await histRes.json();
         const entry = history[prompt_id];
         if (!entry) continue;
@@ -1085,11 +1324,23 @@ class ComfyBridgeService {
           throw new Error('ComfyUI execution error — check VRAM or workflow');
         }
 
-        // Check for success
+        // Fix B.2: strict SaveImage count check
         const outputs = entry.outputs || {};
-        const hasImages = Object.values(outputs).some(o => o?.images?.length > 0);
-        if (hasImages) {
+        const presentNodeIds = Object.keys(outputs).filter(id => outputs[id]?.images?.length > 0);
+        if (presentNodeIds.length > 0) {
+          if (expectedSaveCount > 0 && presentNodeIds.length < expectedSaveCount) {
+            const missing = saveImageNodeIds.filter(id => !presentNodeIds.includes(id));
+            const err = new Error(
+              `COMFY_PARTIAL_EXECUTION: expected ${expectedSaveCount} SaveImage outputs, got ${presentNodeIds.length}. ` +
+              `Present: [${presentNodeIds.join(', ')}]. Missing: [${missing.join(', ')}].`
+            );
+            err.code = 'COMFY_PARTIAL_EXECUTION';
+            err.presentNodes = presentNodeIds;
+            err.missingNodes = missing;
+            throw err;
+          }
           console.log(`✅ Stage completed: ${prompt_id}`);
+          outputs._promptId = prompt_id;
           return outputs;
         }
       } catch (err) {
@@ -1103,12 +1354,25 @@ class ComfyBridgeService {
 
   /**
    * Flush GPU VRAM between stages via POST /free.
+   * In cloud mode (Colab T4 = 15 GB) we skip the flush because:
+   *  1. The T4 has enough VRAM for back-to-back SDXL stages.
+   *  2. Localtunnel POST /free reliably times out, breaking the pipeline.
    */
   async _flushVRAM() {
+    const isCloud = await this._isCloud();
+    if (isCloud) {
+      // Skip flush in cloud mode — T4 has ample VRAM
+      await new Promise(r => setTimeout(r, 500)); // small courtesy delay
+      return;
+    }
     try {
-      await fetch(`${this.comfyRestUrl}/free`, {
+      const comfyUrl = await this.getComfyRestUrl();
+      await fetch(`${comfyUrl}/free`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'bypass-tunnel-reminder': 'true'
+        },
         body: JSON.stringify({ unload_models: true, free_memory: true }),
       });
       await new Promise(r => setTimeout(r, 1000));
@@ -1124,6 +1388,17 @@ class ComfyBridgeService {
    * ComfyUI's LoadImage only searches the input/ directory.
    */
   async _copyOutputsToInput(outputs) {
+    const isCloud = await this._isCloud();
+
+    if (isCloud) {
+      // Cloud mode: re-upload each output image back to the remote ComfyUI input dir
+      const baseUrl = await this.getComfyRestUrl();
+      const adapter = await this._cloudAdapter();
+      await adapter.copyOutputsToRemoteInput(outputs, baseUrl);
+      return;
+    }
+
+    // Local mode: copy files on disk
     const fs = await import('fs/promises');
     const path = await import('path');
     const outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
@@ -1150,6 +1425,35 @@ class ComfyBridgeService {
           console.warn(`⚠️ Could not copy ${filename} to input: ${err.message}`);
         }
       }
+    }
+  }
+
+  /**
+   * Fix A.1.7: Validate that a mask image is not all-black (empty SEGS).
+   * Uses sharp to sum greyscale pixel values. Throws if sum < threshold.
+   */
+  async _validateMaskNonBlack(filename, threshold = 100) {
+    if (!filename) return;
+    try {
+      const fs = await import('fs/promises');
+      const path = await import('path');
+      const sharp = (await import('sharp')).default;
+      const inputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+      const outputDir = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+      let filePath = path.join(inputDir, filename);
+      try { await fs.access(filePath); } catch { filePath = path.join(outputDir, filename); }
+      const { data } = await sharp(filePath).greyscale().raw().toBuffer({ resolveWithObject: true });
+      const sum = data.reduce((s, v) => s + v, 0);
+      if (sum < threshold) {
+        throw new Error(
+          `EMPTY_SEGS: wall_mask is all-black (pixel sum=${sum}). ` +
+          `GroundingDINO/SAM2 found no walls — check confidence threshold or roomType prompt.`
+        );
+      }
+      console.log(`✅ wall_mask valid (pixel sum=${sum})`);
+    } catch (err) {
+      if (err.message.startsWith('EMPTY_SEGS')) throw err;
+      console.warn(`⚠️ Could not validate wall_mask (${filename}): ${err.message}`);
     }
   }
 
