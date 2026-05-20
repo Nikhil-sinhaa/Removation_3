@@ -186,9 +186,9 @@ export function createUltraProStage2(input: UltraProStage2Input): Workflow {
         class_type: "LineArtPreprocessor",
       },
       // Load ControlNets (LoRA rank128 variants for VRAM efficiency)
-      "6": { inputs: { control_net_name: "control-lora-depth-rank128.safetensors" }, class_type: "ControlNetLoader" },
-      "7": { inputs: { control_net_name: "control-lora-canny-rank128.safetensors" }, class_type: "ControlNetLoader" },
-      "8": { inputs: { control_net_name: "control-lora-rank128.safetensors" }, class_type: "ControlNetLoader" },
+      "6": { inputs: { control_net_name: "control-lora-depth-rank256.safetensors" }, class_type: "ControlNetLoader" },
+      "7": { inputs: { control_net_name: "control-lora-canny-rank256.safetensors" }, class_type: "ControlNetLoader" },
+      "8": { inputs: { control_net_name: "control-lora-sketch-rank256.safetensors" }, class_type: "ControlNetLoader" },
       // Prompts
       "9": { inputs: { text: positivePrompt, clip: ref("1", 1) }, class_type: "CLIPTextEncode" },
       "10": {
@@ -410,7 +410,7 @@ export function createUltraProStage4(input: UltraProStage4Input): Workflow {
         class_type: "CLIPTextEncode",
       },
       // Depth ControlNet for spatial consistency
-      "14": { inputs: { control_net_name: "control-lora-depth-rank128.safetensors" }, class_type: "ControlNetLoader" },
+      "14": { inputs: { control_net_name: "control-lora-depth-rank256.safetensors" }, class_type: "ControlNetLoader" },
       "15": {
         inputs: {
           positive: ref("12"), negative: ref("13"),

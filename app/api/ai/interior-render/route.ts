@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     if (refFile) { const rb = Buffer.from(await refFile.arrayBuffer()); const rf = `interior_ref_${Date.now()}.png`; await sharp(rb).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, rf)); referenceImage = rf; }
 
     const project = await Project.create({ name: `Interior Render — ${roomType}`, userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-interior-render', aiConfig: { roomType, style, prompt, strength } });
-    comfyBridge.enqueueTabJob(project._id.toString(), 'interior-render', { imageFilename: fn, roomType, style, prompt, strength, referenceImage }).catch((e: any) => console.error('❌ Interior render error:', e.message));
+    comfyBridge.enqueueSmartTabJob(project._id.toString(), 'interior-render', { imageFilename: fn, roomType, style, prompt, strength, referenceImage }).catch((e: any) => console.error('❌ Interior render error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'interior-render', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Interior render failed', message: error.message }, { status: 500 }); }
 }

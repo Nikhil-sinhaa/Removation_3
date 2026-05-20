@@ -16,7 +16,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:health": "playwright test tests/e2e/health.spec.ts",
-    "test:auth": "playwright test tests/e2e/auth.setup.ts --headed"
+    "test:auth": "playwright test tests/e2e/auth.setup.ts --headed",
+    "test:stage1": "node scripts/test-stable-stage1.js"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

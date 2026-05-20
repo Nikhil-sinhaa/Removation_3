@@ -222,7 +222,7 @@ export default function RoomChangerPage() {
     setProjectId(null);
   };
 
-  const canGenerate = !!selectedFile && !!color.hex && !isGenerating;
+  const canGenerate = !isGenerating;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (

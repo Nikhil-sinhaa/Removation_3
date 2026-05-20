@@ -41,7 +41,8 @@ export async function POST(request: Request) {
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
     const project = await Project.create({ name: 'Empty Room', userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-empty-room', aiConfig: { useLama } });
-    comfyBridge.enqueueTabJob(project._id.toString(), 'empty-room', { imageFilename: fn, objectsToRemove, useLama }).catch((e: any) => console.error('❌ Empty-room error:', e.message));
+    // Stage 1 provides object_mask for precise furniture detection before removal
+    comfyBridge.enqueueSmartTabJob(project._id.toString(), 'empty-room', { imageFilename: fn, objectsToRemove, useLama }).catch((e: any) => console.error('❌ Empty-room error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'empty-room', status: 'queued', useLama });
   } catch (error: any) { return NextResponse.json({ error: 'Empty room failed', message: error.message }, { status: 500 }); }
 }

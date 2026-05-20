@@ -1,0 +1,424 @@
+{
+  "id": "auto-furniture-removal-minimax-v2-fixed",
+  "revision": 2,
+  "last_node_id": 25,
+  "last_link_id": 40,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [26, 100],
+      "size": [315, 314],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [1, 20]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["room.png"],
+      "title": "📷 Load Room Image"
+    },
+
+    {
+      "id": 2,
+      "type": "SAMLoader",
+      "pos": [26, 450],
+      "size": [315, 78],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "SAM_MODEL", "type": "SAM_MODEL", "slot_index": 0, "links": [2]}
+      ],
+      "properties": {"Node name for S&R": "SAMLoader"},
+      "widgets_values": ["sam2_hiera_small.pt", "AUTO"],
+      "title": "🎯 SAM2 (Hiera-Small)"
+    },
+
+    {
+      "id": 3,
+      "type": "PrimitiveNode",
+      "pos": [26, 580],
+      "size": [315, 82],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "INT", "type": "INT", "slot_index": 0, "links": [30], "widget": {"name": "select"}}
+      ],
+      "properties": {"Node name for S&R": "PrimitiveNode"},
+      "widgets_values": [1, "fixed"],
+      "title": "🎚️ FURNITURE LEVEL  (1=basic / 2=+decor / 3=all)"
+    },
+
+    {
+      "id": 4,
+      "type": "CLIPSegDetectorProvider",
+      "pos": [420, 100],
+      "size": [400, 130],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "BBOX_DETECTOR", "type": "BBOX_DETECTOR", "slot_index": 0, "links": [3]}
+      ],
+      "properties": {"Node name for S&R": "CLIPSegDetectorProvider"},
+      "widgets_values": ["sofa, couch, chair, armchair, table, dining table, coffee table, bed, mattress, cabinet, dresser, wardrobe, bookshelf, desk", 7.0, 0.15, 4],
+      "title": "🪑 LEVEL 1 — Basic Furniture (thresh 0.15)"
+    },
+
+    {
+      "id": 5,
+      "type": "CLIPSegDetectorProvider",
+      "pos": [420, 260],
+      "size": [400, 130],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "BBOX_DETECTOR", "type": "BBOX_DETECTOR", "slot_index": 0, "links": [4]}
+      ],
+      "properties": {"Node name for S&R": "CLIPSegDetectorProvider"},
+      "widgets_values": ["sofa, couch, chair, table, bed, cabinet, dresser, wardrobe, bookshelf, desk, rug, carpet, lamp, floor lamp, table lamp, plant, potted plant, painting, picture frame, wall art, pillow, cushion, vase", 7.0, 0.15, 4],
+      "title": "🛋️ LEVEL 2 — +Decor (thresh 0.15)"
+    },
+
+    {
+      "id": 6,
+      "type": "CLIPSegDetectorProvider",
+      "pos": [420, 420],
+      "size": [400, 130],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "BBOX_DETECTOR", "type": "BBOX_DETECTOR", "slot_index": 0, "links": [5]}
+      ],
+      "properties": {"Node name for S&R": "CLIPSegDetectorProvider"},
+      "widgets_values": ["sofa, couch, chair, table, bed, cabinet, dresser, wardrobe, bookshelf, desk, rug, carpet, lamp, plant, potted plant, painting, picture frame, wall art, pillow, cushion, vase, television, tv, monitor, computer, speaker, fan, refrigerator, microwave, oven, curtain, drapes, blinds, mirror, books", 7.0, 0.12, 4],
+      "title": "🏠 LEVEL 3 — All Movable (thresh 0.12)"
+    },
+
+    {
+      "id": 7,
+      "type": "ImpactSwitch",
+      "pos": [900, 100],
+      "size": [315, 130],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "select", "type": "INT", "link": 30, "widget": {"name": "select"}},
+        {"name": "input1", "type": "*", "link": 3, "label": "L1 Basic"},
+        {"name": "input2", "type": "*", "link": 4, "label": "L2 +Decor"},
+        {"name": "input3", "type": "*", "link": 5, "label": "L3 All"}
+      ],
+      "outputs": [
+        {"name": "selected_value", "type": "*", "slot_index": 0, "links": [6]},
+        {"name": "selected_label", "type": "STRING", "slot_index": 1, "links": null},
+        {"name": "selected_index", "type": "INT", "slot_index": 2, "links": null}
+      ],
+      "properties": {"Node name for S&R": "ImpactSwitch"},
+      "widgets_values": [1, 3, true],
+      "title": "🔀 Switch by Level"
+    },
+
+    {
+      "id": 8,
+      "type": "ImpactSimpleDetectorSEGS",
+      "pos": [900, 280],
+      "size": [315, 320],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {"name": "bbox_detector", "type": "BBOX_DETECTOR", "link": 6},
+        {"name": "image", "type": "IMAGE", "link": 1},
+        {"name": "sam_model_opt", "type": "SAM_MODEL", "link": 2}
+      ],
+      "outputs": [
+        {"name": "SEGS", "type": "SEGS", "slot_index": 0, "links": [7]}
+      ],
+      "properties": {"Node name for S&R": "ImpactSimpleDetectorSEGS"},
+      "widgets_values": [0.15, 0, 3.0, 10, 0.5, 0, 0, 0.7, 0],
+      "title": "🔍 Detect + SAM2 (thresh 0.15)"
+    },
+
+    {
+      "id": 9,
+      "type": "SegsToCombinedMask",
+      "pos": [1260, 100],
+      "size": [240, 46],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {"name": "segs", "type": "SEGS", "link": 7}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "slot_index": 0, "links": [8]}
+      ],
+      "properties": {"Node name for S&R": "SegsToCombinedMask"},
+      "widgets_values": [],
+      "title": "SEGS → Combined Mask"
+    },
+
+    {
+      "id": 10,
+      "type": "GrowMask",
+      "pos": [1260, 180],
+      "size": [240, 82],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {"name": "mask", "type": "MASK", "link": 8}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "slot_index": 0, "links": [31]}
+      ],
+      "properties": {"Node name for S&R": "GrowMask"},
+      "widgets_values": [12, true],
+      "title": "📏 Grow Mask +12px"
+    },
+
+    {
+      "id": 23,
+      "type": "MaskToImage",
+      "pos": [1260, 290],
+      "size": [240, 30],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "mask", "type": "MASK", "link": 31}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [32, 33]}
+      ],
+      "properties": {"Node name for S&R": "MaskToImage"},
+      "widgets_values": [],
+      "title": "🔄 Mask → Image (for device fix)"
+    },
+
+    {
+      "id": 24,
+      "type": "SaveImage",
+      "pos": [1260, 350],
+      "size": [240, 270],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 33}
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": ["furniture_removal/debug_mask"],
+      "title": "💾 Save: Debug Mask"
+    },
+
+    {
+      "id": 25,
+      "type": "ImageToMask",
+      "pos": [1540, 100],
+      "size": [240, 58],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 32}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "slot_index": 0, "links": [34]}
+      ],
+      "properties": {"Node name for S&R": "ImageToMask"},
+      "widgets_values": ["red"],
+      "title": "🔄 Image → Mask (clean device-aligned mask)"
+    },
+
+    {
+      "id": 13,
+      "type": "ImageSizeAdjuster",
+      "pos": [1540, 200],
+      "size": [285, 150],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 20},
+        {"name": "mask", "type": "MASK", "link": 34}
+      ],
+      "outputs": [
+        {"name": "adjusted_image", "type": "IMAGE", "slot_index": 0, "links": [11]},
+        {"name": "adjusted_mask", "type": "MASK", "slot_index": 1, "links": [12]}
+      ],
+      "properties": {"Node name for S&R": "ImageSizeAdjuster"},
+      "widgets_values": [16, "resize", 1, "black"],
+      "title": "📐 Size Adjust (÷16)"
+    },
+
+    {
+      "id": 14,
+      "type": "MinimaxModelLoader",
+      "pos": [1540, 390],
+      "size": [285, 170],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "vae", "type": "VAE", "slot_index": 0, "links": [13]},
+        {"name": "transformer", "type": "TRANSFORMER", "slot_index": 1, "links": [14]},
+        {"name": "scheduler", "type": "SCHEDULER", "slot_index": 2, "links": [15]}
+      ],
+      "properties": {"Node name for S&R": "MinimaxModelLoader"},
+      "widgets_values": ["Auto", "float16", "cuda", false],
+      "title": "🧠 Minimax Loader (device=cuda)"
+    },
+
+    {
+      "id": 15,
+      "type": "MinimaxImageRemover",
+      "pos": [1540, 590],
+      "size": [285, 210],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 11},
+        {"name": "mask", "type": "MASK", "link": 12},
+        {"name": "vae", "type": "VAE", "link": 13},
+        {"name": "transformer", "type": "TRANSFORMER", "link": 14},
+        {"name": "scheduler", "type": "SCHEDULER", "link": 15}
+      ],
+      "outputs": [
+        {"name": "image", "type": "IMAGE", "slot_index": 0, "links": [16]}
+      ],
+      "properties": {"Node name for S&R": "MinimaxImageRemover"},
+      "widgets_values": [12, 6, 268860912614053, "randomize"],
+      "title": "✨ Minimax Image Remover"
+    },
+
+    {
+      "id": 16,
+      "type": "SaveImage",
+      "pos": [1870, 100],
+      "size": [320, 320],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 16}
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": ["furniture_removal/empty_room"],
+      "title": "💾 Save: Empty Room"
+    },
+
+    {
+      "id": 17,
+      "type": "PreviewImage",
+      "pos": [1870, 450],
+      "size": [320, 280],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 16}
+      ],
+      "outputs": [],
+      "properties": {"Node name for S&R": "PreviewImage"},
+      "widgets_values": [],
+      "title": "👁️ Preview Result"
+    }
+  ],
+
+  "links": [
+    [1,  1,  0,  8,  1, "IMAGE"],
+    [2,  2,  0,  8,  2, "SAM_MODEL"],
+    [3,  4,  0,  7,  1, "BBOX_DETECTOR"],
+    [4,  5,  0,  7,  2, "BBOX_DETECTOR"],
+    [5,  6,  0,  7,  3, "BBOX_DETECTOR"],
+    [6,  7,  0,  8,  0, "BBOX_DETECTOR"],
+    [7,  8,  0,  9,  0, "SEGS"],
+    [8,  9,  0, 10,  0, "MASK"],
+    [11, 13, 0, 15,  0, "IMAGE"],
+    [12, 13, 1, 15,  1, "MASK"],
+    [13, 14, 0, 15,  2, "VAE"],
+    [14, 14, 1, 15,  3, "TRANSFORMER"],
+    [15, 14, 2, 15,  4, "SCHEDULER"],
+    [16, 15, 0, 16,  0, "IMAGE"],
+    [20,  1, 0, 13,  0, "IMAGE"],
+    [30,  3, 0,  7,  0, "INT"],
+    [31, 10, 0, 23,  0, "MASK"],
+    [32, 23, 0, 25,  0, "IMAGE"],
+    [33, 23, 0, 24,  0, "IMAGE"],
+    [34, 25, 0, 13,  1, "MASK"]
+  ],
+
+  "groups": [
+    {
+      "title": "INPUT",
+      "bounding": [10, 50, 350, 700],
+      "color": "#3f789e"
+    },
+    {
+      "title": "FURNITURE LEVEL — pick 1, 2, or 3",
+      "bounding": [400, 50, 480, 520],
+      "color": "#8A2BE2"
+    },
+    {
+      "title": "DETECT + REFINE",
+      "bounding": [880, 50, 350, 610],
+      "color": "#e76f51"
+    },
+    {
+      "title": "MASK → IMG → MASK (device fix + debug)",
+      "bounding": [1240, 50, 280, 620],
+      "color": "#264653"
+    },
+    {
+      "title": "MINIMAX REMOVAL",
+      "bounding": [1530, 50, 320, 780],
+      "color": "#2a9d8f"
+    },
+    {
+      "title": "OUTPUT",
+      "bounding": [1860, 50, 350, 700],
+      "color": "#556B2F"
+    }
+  ],
+
+  "config": {},
+  "extra": {
+    "ds": {"scale": 0.45, "offset": [50, 30]},
+    "info": {
+      "name": "Auto Furniture Removal V2 — Device-Fixed",
+      "version": "2.0",
+      "fixes_from_v1": [
+        "DEVICE MISMATCH FIX: Mask is now routed Mask→Image→Mask before going into MinimaxImageRemover. The CLIPSeg+SAM2+SegsToCombinedMask chain produces a CPU-tensor mask. Converting it through MaskToImage and back via ImageToMask forces a fresh tensor that gets placed on the correct device when ImageSizeAdjuster runs.",
+        "MinimaxModelLoader device set explicitly to 'cuda' (was 'auto' which can pick cpu when VRAM is tight)",
+        "Empty mask fix: All three CLIPSeg thresholds lowered to 0.12-0.15 (was 0.25-0.30) so detectors don't return zero SEGS on smaller/lower-contrast images",
+        "SimpleDetectorSEGS detection threshold lowered 0.20-0.35 → 0.15"
+      ],
+      "device_mismatch_root_cause": "MinimaxImageRemover expects its mask tensor on the same device as its transformer (cuda). When a mask comes from CPU-side operations (CLIPSeg → SAM2 → SegsToCombinedMask → GrowMask), it stays on CPU. ComfyUI doesn't auto-migrate it because the node signature doesn't declare a device requirement. The Mask→Image→Mask round-trip forces ComfyUI to materialize a fresh tensor, which the ImageSizeAdjuster downstream then aligns correctly.",
+      "how_to_use": "1) Load room image  2) Set LEVEL primitive to 1/2/3  3) Queue  4) CHECK furniture_removal/debug_mask_*.png FIRST — confirm furniture is white on black. If mask is correct but result is wrong, the issue is Minimax. If mask is empty, lower thresholds further.",
+      "tuning": {
+        "empty_mask_warning_in_log": "Lower CLIPSeg threshold from 0.15 to 0.10 or even 0.08 on the active level detector. Lower SimpleDetectorSEGS threshold (widget 1) to 0.10.",
+        "still_device_error": "Check that MinimaxModelLoader has device='cuda' not 'auto' or 'cpu'. Restart ComfyUI fully to release stuck CPU tensors.",
+        "removes_walls_too": "Raise CLIPSeg threshold on active level back to 0.20-0.25, OR drop one level (level 2→1)"
+      }
+    }
+  },
+  "version": 0.4
+}

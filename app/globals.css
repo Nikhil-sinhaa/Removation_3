@@ -538,10 +538,13 @@
 
   .glass-card {
     @apply relative overflow-hidden rounded-2xl;
-    @apply bg-gradient-to-br from-white/10 via-white/5 to-transparent;
-    @apply backdrop-blur-xl border;
-  border-color: rgba(255, 255, 255, 0.1);
-    @apply shadow-xl shadow-black/5;
+    @apply bg-white/5;
+    @apply backdrop-blur-2xl backdrop-saturate-[1.5];
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.05),
+      0 8px 32px 0 rgba(0, 0, 0, 0.3);
   }
 
   .glass-card::before {
@@ -560,16 +563,19 @@
 
   .glass-card-interactive {
     @apply glass-card cursor-pointer;
-    @apply transition-all duration-300 ease-out;
+    /* Use will-change for 60fps.design */
+    will-change: transform;
+    @apply transition-transform duration-500 ease-[cubic-bezier(0.175,0.885,0.32,1.275)];
   }
 
   .glass-card-interactive:hover {
-    @apply border bg-white/10;
-  border-color: rgba(255, 255, 255, 0.1);
-    transform: translateY(-4px) scale(1.01);
+    @apply bg-white/10;
+    transform: translateY(-6px) scale(1.02);
     box-shadow: 
-      0 20px 40px rgba(0, 0, 0, 0.3),
-      0 0 40px rgba(var(--glow-purple), 0.1);
+      inset 0 1px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -1px 1px rgba(255, 255, 255, 0.05),
+      0 20px 40px rgba(0, 0, 0, 0.4),
+      0 0 40px rgba(0, 216, 255, 0.15); /* Cyan subtle glow */
   }
 
   .glass-card-interactive:active {
@@ -947,35 +953,68 @@
     @apply px-6 py-4 border-t border-border;
   }
 
-  /* Feature Card */
+  /* Feature Card — glass3d.dev 3-layer optics */
   .feature-card {
-    @apply relative p-6 rounded-2xl overflow-hidden;
-    @apply bg-gradient-to-br from-white/[0.08] to-white/[0.02];
-    @apply border border;
-  border-color: rgba(255, 255, 255, 0.1);
-    @apply transition-all duration-300 ease-out;
+    @apply relative p-6 rounded-2xl overflow-hidden cursor-pointer;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    /* 3D glass layers */
+    box-shadow:
+      inset 0 1px 1px rgba(255, 255, 255, 0.18),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.1),
+      0 8px 32px rgba(0, 0, 0, 0.28);
+    /* 60fps.design: only animate transform */
+    will-change: transform;
+    transition: transform 400ms cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                box-shadow 400ms ease,
+                border-color 400ms ease;
   }
 
+  /* Specular shimmer line at top */
   .feature-card::before {
     content: '';
-    @apply absolute -top-10 -left-10 w-20 h-20 rounded-full;
-    background: radial-gradient(
-      circle,
-      rgba(var(--glow-purple), 0.15) 0%,
-      transparent 70%
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
     );
-    @apply transition-transform duration-500;
+    opacity: 0;
+    transition: opacity 400ms ease;
+  }
+
+  .feature-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+      circle at 50% 0%,
+      rgba(255, 255, 255, 0.06) 0%,
+      transparent 60%
+    );
+    opacity: 0;
+    transition: opacity 400ms ease;
+    pointer-events: none;
   }
 
   .feature-card:hover {
-    @apply border;
-  border-color: rgba(255, 255, 255, 0.2);
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    transform: translateY(-8px) scale(1.015);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.28),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.08),
+      0 24px 48px rgba(0, 0, 0, 0.36),
+      0 0 60px rgba(0, 216, 255, 0.08);
   }
 
-  .feature-card:hover::before {
-    transform: scale(1.5);
+  .feature-card:hover::before,
+  .feature-card:hover::after {
+    opacity: 1;
   }
 
   .feature-icon {
@@ -2318,42 +2357,44 @@
 
   .hero-gradient {
     @apply absolute inset-0 pointer-events-none;
+    background: radial-gradient(
+      ellipse 100% 80% at 50% -10%,
+      rgba(0, 120, 220, 0.18) 0%,
+      rgba(0, 216, 255, 0.08) 40%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 80% 80%,
+      rgba(0, 80, 200, 0.12) 0%,
+      transparent 60%
+    );
   }
 
   .hero-gradient::before {
     content: '';
-    @apply absolute top-0 left-1/2 -translate-x-1/2;
-    @apply w-[min(1000px,150vw)] h-[1000px];
-    background: radial-gradient(
-      ellipse at center top,
-      rgba(var(--glow-purple), 0.25) 0%,
-      rgba(var(--glow-pink), 0.1) 40%,
-      transparent 70%
-    );
-    filter: blur(40px);
+    @apply absolute inset-0;
+    /* Deep space noise texture overlay */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    background-size: 200px 200px;
+    opacity: 0.6;
   }
 
   .hero-gradient::after {
     content: '';
-    @apply absolute bottom-0 right-0;
-    @apply w-[600px] h-[600px];
-    background: radial-gradient(
-      circle,
-      rgba(var(--glow-pink), 0.15) 0%,
-      transparent 70%
-    );
-    filter: blur(60px);
+    @apply absolute bottom-0 left-0 right-0;
+    height: 200px;
+    background: linear-gradient(to top, hsl(var(--background)), transparent);
   }
 
-  /* Grid Pattern Background */
+  /* Grid Pattern Background — finer, more editorial */
   .hero-grid {
     @apply absolute inset-0 pointer-events-none;
     background-image: 
-      linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
-    -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 100%);
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 100%);
   }
 
   /* Dot Pattern */

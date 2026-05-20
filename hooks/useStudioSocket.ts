@@ -19,17 +19,41 @@ export function useStudioSocket() {
       reconnectionAttempts: 5,
     });
 
-    // ─── Tab events ─────────────────────────────────────────────
-    socket.on('comfy:tab:start', (data: { projectId: string; tab: string; name: string }) => {
+    // ─── Tab events (includes Smart Tab 2-phase flow) ─────────────────
+    socket.on('comfy:tab:start', (data: { projectId: string; tab: string; name: string; phase?: string }) => {
+      const state = useEditorStore.getState();
+      const isScenePhase = data.phase === 'scene_understanding';
+
       useEditorStore.setState({
         isGenerating: true,
-        generationProgress: 5,
-        generationStatus: `${data.name}: Starting...`,
+        generationProgress: isScenePhase ? 5 : 40,
+        generationStatus: isScenePhase
+          ? `🔍 Analyzing scene structure...`
+          : `${data.name}: Processing...`,
         generationError: null,
+      });
+
+      // Track the smart tab phase
+      state.setCurrentToolTab(data.tab);
+      state.setToolPhase(isScenePhase ? 'scene_analysis' : 'processing');
+    });
+
+    // Smart Tab: Stage 1 (scene analysis) complete
+    socket.on('comfy:tab:scene_done', (data: { projectId: string; tab: string; ms: number; masks: string[] }) => {
+      const state = useEditorStore.getState();
+      state.setSceneAnalysisComplete(true, undefined, data.ms);
+      state.setToolPhase('processing');
+
+      useEditorStore.setState({
+        generationProgress: 40,
+        generationStatus: `Scene analyzed (${(data.ms / 1000).toFixed(1)}s) — Now generating ${data.tab}...`,
       });
     });
 
     socket.on('comfy:tab:done', (data: { projectId: string; tab: string; imageUrl: string; ms: number }) => {
+      const state = useEditorStore.getState();
+      state.setToolPhase('done');
+
       useEditorStore.setState({
         isGenerating: false,
         generationProgress: 100,
@@ -44,15 +68,23 @@ export function useStudioSocket() {
           createdAt: new Date(),
         },
       });
+
+      // Reset tool state after a short delay so the user sees "Complete"
+      setTimeout(() => state.resetToolState(), 3000);
     });
 
     socket.on('comfy:tab:error', (data: { tab: string; error: string }) => {
+      const state = useEditorStore.getState();
+      state.setToolPhase('error');
+
       useEditorStore.setState({
         isGenerating: false,
         generationProgress: 0,
         generationError: data.error,
         generationStatus: `Error: ${data.error}`,
       });
+
+      setTimeout(() => state.resetToolState(), 5000);
     });
 
     // ─── Ultra-Pro events (reuse from existing) ─────────────────

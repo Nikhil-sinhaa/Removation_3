@@ -1,0 +1,205 @@
+{
+  "last_node_id": 22,
+  "last_link_id": 30,
+  "nodes": [
+    {
+      "id": 1, "type": "CheckpointLoaderSimple", "pos": [50, 50], "size": [315, 98],
+      "flags": {}, "order": 0, "mode": 0,
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "slot_index": 0, "links": [1]},
+        {"name": "CLIP", "type": "CLIP", "slot_index": 1, "links": [2,3]},
+        {"name": "VAE", "type": "VAE", "slot_index": 2, "links": [4,5]}
+      ],
+      "widgets_values": ["sd_xl_base_1.0.safetensors"],
+      "title": "🧠 SDXL Checkpoint"
+    },
+    {
+      "id": 2, "type": "LoadImage", "pos": [50, 220], "size": [315, 314],
+      "flags": {}, "order": 1, "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [6,10,20]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["redesigned_00001_.png"],
+      "title": "📷 Redesigned Image (from Stage 2)"
+    },
+    {
+      "id": 3, "type": "LoadImage", "pos": [50, 600], "size": [315, 314],
+      "flags": {}, "order": 2, "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [7]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["wall_mask_00001_.png"],
+      "title": "🧱 Wall Mask (from Stage 1)"
+    },
+    {
+      "id": 4, "type": "LoadImage", "pos": [50, 980], "size": [315, 314],
+      "flags": {}, "order": 3, "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [8]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["object_mask_00001_.png"],
+      "title": "🪑 Object Mask (from Stage 1)"
+    },
+    {
+      "id": 5, "type": "ImageToMask", "pos": [450, 700], "size": [200, 46],
+      "flags": {}, "order": 4, "mode": 0,
+      "inputs": [{"name": "image", "type": "IMAGE", "link": 7}],
+      "outputs": [{"name": "MASK", "type": "MASK", "slot_index": 0, "links": [11]}],
+      "widgets_values": ["red"],
+      "title": "Wall Image → Mask"
+    },
+    {
+      "id": 6, "type": "ImageToMask", "pos": [450, 800], "size": [200, 46],
+      "flags": {}, "order": 5, "mode": 0,
+      "inputs": [{"name": "image", "type": "IMAGE", "link": 8}],
+      "outputs": [{"name": "MASK", "type": "MASK", "slot_index": 0, "links": [12]}],
+      "widgets_values": ["red"],
+      "title": "Object Image → Mask"
+    },
+    {
+      "id": 7, "type": "MaskComposite", "pos": [700, 700], "size": [240, 160],
+      "flags": {}, "order": 6, "mode": 0,
+      "inputs": [
+        {"name": "destination", "type": "MASK", "link": 11},
+        {"name": "source", "type": "MASK", "link": 12}
+      ],
+      "outputs": [{"name": "MASK", "type": "MASK", "slot_index": 0, "links": [13]}],
+      "widgets_values": [0, 0, "subtract"],
+      "title": "🔑 Wall − Objects → Paint-Safe Mask"
+    },
+    {
+      "id": 20, "type": "CannyEdgePreprocessor", "pos": [450, 300], "size": [300, 100],
+      "flags": {}, "order": 7, "mode": 0,
+      "inputs": [{"name": "image", "type": "IMAGE", "link": 20}],
+      "outputs": [{"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [21]}],
+      "widgets_values": [80, 180, 1024],
+      "title": "🔲 Canny for ControlNet Lock"
+    },
+    {
+      "id": 21, "type": "ControlNetLoader", "pos": [450, 450], "size": [315, 58],
+      "flags": {}, "order": 8, "mode": 0,
+      "outputs": [{"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [22]}],
+      "widgets_values": ["controlnet-canny-sdxl.safetensors"],
+      "title": "📎 ControlNet Canny"
+    },
+    {
+      "id": 9, "type": "CLIPTextEncode", "pos": [450, 50], "size": [400, 100],
+      "flags": {}, "order": 9, "mode": 0,
+      "inputs": [{"name": "clip", "type": "CLIP", "link": 2}],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [14]}],
+      "widgets_values": ["interior wall painted warm beige, smooth matte finish, solid even color, professional paint job, photorealistic"],
+      "title": "✅ Wall Color Prompt (Edit This!)"
+    },
+    {
+      "id": 10, "type": "CLIPTextEncode", "pos": [450, 180], "size": [400, 80],
+      "flags": {}, "order": 10, "mode": 0,
+      "inputs": [{"name": "clip", "type": "CLIP", "link": 3}],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [15]}],
+      "widgets_values": ["blurry, low quality, distorted, grey walls, white walls, beige walls, colorless, deformed furniture, floating objects"],
+      "title": "❌ Negative Prompt"
+    },
+    {
+      "id": 22, "type": "ControlNetApplyAdvanced", "pos": [900, 100], "size": [300, 186],
+      "flags": {}, "order": 11, "mode": 0,
+      "inputs": [
+        {"name": "positive", "type": "CONDITIONING", "link": 14},
+        {"name": "negative", "type": "CONDITIONING", "link": 15},
+        {"name": "control_net", "type": "CONTROL_NET", "link": 22},
+        {"name": "image", "type": "IMAGE", "link": 21}
+      ],
+      "outputs": [
+        {"name": "positive", "type": "CONDITIONING", "slot_index": 0, "links": [25]},
+        {"name": "negative", "type": "CONDITIONING", "slot_index": 1, "links": [26]}
+      ],
+      "widgets_values": [0.52, 0.0, 0.70],
+      "title": "📎 Apply ControlNet (0.52, end 0.70)"
+    },
+    {
+      "id": 11, "type": "VAEEncodeForInpaint", "pos": [900, 400], "size": [280, 120],
+      "flags": {}, "order": 12, "mode": 0,
+      "inputs": [
+        {"name": "pixels", "type": "IMAGE", "link": 6},
+        {"name": "vae", "type": "VAE", "link": 4},
+        {"name": "mask", "type": "MASK", "link": 13}
+      ],
+      "outputs": [{"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [16]}],
+      "widgets_values": [0],
+      "title": "VAE Encode for Inpaint (grow_mask_by: 0)"
+    },
+    {
+      "id": 12, "type": "KSampler", "pos": [1300, 100], "size": [315, 262],
+      "flags": {}, "order": 13, "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 1},
+        {"name": "positive", "type": "CONDITIONING", "link": 25},
+        {"name": "negative", "type": "CONDITIONING", "link": 26},
+        {"name": "latent_image", "type": "LATENT", "link": 16}
+      ],
+      "outputs": [{"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [17]}],
+      "widgets_values": [42, "fixed", 20, 7.5, "dpmpp_2m", "karras", 0.77],
+      "title": "🎨 KSampler Inpaint (denoise 0.77)"
+    },
+    {
+      "id": 13, "type": "VAEDecode", "pos": [1650, 100], "size": [210, 46],
+      "flags": {}, "order": 14, "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 17},
+        {"name": "vae", "type": "VAE", "link": 5}
+      ],
+      "outputs": [{"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [18]}],
+      "title": "VAE Decode"
+    },
+    {
+      "id": 18, "type": "SaveImage", "pos": [1650, 200], "size": [300, 270],
+      "flags": {}, "order": 15, "mode": 0,
+      "inputs": [{"name": "images", "type": "IMAGE", "link": 18}],
+      "widgets_values": ["stage3/regional_inpainted"],
+      "title": "💾 Save: regional_inpainted"
+    }
+  ],
+  "links": [
+    [1,  1, 0, 12,0, "MODEL"],
+    [2,  1, 1, 9, 0, "CLIP"],
+    [3,  1, 1, 10,0, "CLIP"],
+    [4,  1, 2, 11,1, "VAE"],
+    [5,  1, 2, 13,1, "VAE"],
+    [6,  2, 0, 11,0, "IMAGE"],
+    [7,  3, 0, 5, 0, "IMAGE"],
+    [8,  4, 0, 6, 0, "IMAGE"],
+    [10, 2, 0, 8, 0, "IMAGE"],
+    [11, 5, 0, 7, 0, "MASK"],
+    [12, 6, 0, 7, 1, "MASK"],
+    [13, 7, 0, 11,2, "MASK"],
+    [14, 9, 0, 22,0, "CONDITIONING"],
+    [15, 10,0, 22,1, "CONDITIONING"],
+    [16, 11,0, 12,3, "LATENT"],
+    [17, 12,0, 13,0, "LATENT"],
+    [18, 13,0, 18,0, "IMAGE"],
+    [20, 2, 0, 20,0, "IMAGE"],
+    [21, 20,0, 22,3, "IMAGE"],
+    [22, 21,0, 22,2, "CONTROL_NET"],
+    [25, 22,0, 12,1, "CONDITIONING"],
+    [26, 22,1, 12,2, "CONDITIONING"]
+  ],
+  "groups": [
+    {"title": "📷 INPUT — Redesigned Image + Masks", "bounding": [30, 20, 380, 1300], "color": "#3f789e"},
+    {"title": "🔑 MASK ALGEBRA — Wall minus Objects", "bounding": [420, 660, 560, 240], "color": "#e76f51"},
+    {"title": "📎 CONTROLNET LOCK — Preserve Structure", "bounding": [420, 260, 560, 280], "color": "#8A2BE2"},
+    {"title": "🎨 INPAINTING — Wall Color Application", "bounding": [870, 60, 510, 510], "color": "#2a9d8f"},
+    {"title": "💾 OUTPUT", "bounding": [1620, 170, 360, 320], "color": "#264653"}
+  ],
+  "config": {},
+  "extra": {
+    "ds": {"scale": 0.45, "offset": [50, 30]},
+    "info": {
+      "name": "Stage 3: Regional Wall Inpainting",
+      "description": "Masked wall inpainting using VAEEncodeForInpaint. Wall mask minus object mask ensures furniture is never painted. Canny ControlNet (0.52) preserves room structure. Denoise 0.77 applies wall color. Edit the Wall Color Prompt node!",
+      "version": "3.0",
+      "target_gpu": "RTX 4060 8GB"
+    }
+  },
+  "version": 0.4
+}

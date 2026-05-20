@@ -1,0 +1,241 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": { "image": "original_image.png", "upload": "image" }
+  },
+  "2": {
+    "class_type": "DownloadAndLoadCLIPSeg",
+    "inputs": { "model": "Kijai/clipseg-rd64-refined-fp16" }
+  },
+  "3": {
+    "class_type": "BatchCLIPSeg",
+    "inputs": {
+      "images": ["1", 0],
+      "opt_model": ["2", 0],
+      "text": "interior vertical wall surface, painted wall, plaster wall, smooth wall, wallpaper, wall panel",
+      "threshold": 0.35,
+      "binary_mask": false,
+      "combine_mask": true,
+      "use_cuda": true,
+      "blur_sigma": 1.5
+    }
+  },
+  "3b": {
+    "class_type": "BatchCLIPSeg",
+    "inputs": {
+      "images": ["1", 0],
+      "opt_model": ["2", 0],
+      "text": "room wall background, wall behind furniture, textured wall surface, wall gap visible",
+      "threshold": 0.35,
+      "binary_mask": false,
+      "combine_mask": true,
+      "use_cuda": true,
+      "blur_sigma": 1.5
+    }
+  },
+  "4": {
+    "class_type": "BatchCLIPSeg",
+    "inputs": {
+      "images": ["1", 0],
+      "opt_model": ["2", 0],
+      "text": "floor, hardwood floor, tile floor, marble floor, carpet, vitrified tiles, stone floor, floor surface",
+      "threshold": 0.35,
+      "binary_mask": false,
+      "combine_mask": true,
+      "use_cuda": true,
+      "blur_sigma": 1.5
+    }
+  },
+  "4b": {
+    "class_type": "BatchCLIPSeg",
+    "inputs": {
+      "images": ["1", 0],
+      "opt_model": ["2", 0],
+      "text": "ground surface, flat horizontal floor area, walking space, floor gap between furniture",
+      "threshold": 0.35,
+      "binary_mask": false,
+      "combine_mask": true,
+      "use_cuda": true,
+      "blur_sigma": 1.5
+    }
+  },
+  "5": {
+    "class_type": "BatchCLIPSeg",
+    "inputs": {
+      "images": ["1", 0],
+      "opt_model": ["2", 0],
+      "text": "ceiling, false ceiling, overhead surface, ceiling with lights, POP ceiling, decorative ceiling",
+      "threshold": 0.40,
+      "binary_mask": false,
+      "combine_mask": true,
+      "use_cuda": true,
+      "blur_sigma": 1.5
+    }
+  },
+  "5b": {
+    "class_type": "BatchCLIPSeg",
+    "inputs": {
+      "images": ["1", 0],
+      "opt_model": ["2", 0],
+      "text": "upper room surface, ceiling molding, ceiling fan mount area, white ceiling plaster",
+      "threshold": 0.40,
+      "binary_mask": false,
+      "combine_mask": true,
+      "use_cuda": true,
+      "blur_sigma": 1.5
+    }
+  },
+  "6": {
+    "class_type": "GroundingDinoModelLoader (segment anything2)",
+    "inputs": { "model_name": "GroundingDINO_SwinT_OGC (694MB)" }
+  },
+  "7": {
+    "class_type": "SAM2ModelLoader (segment anything2)",
+    "inputs": { "model_name": "sam2_hiera_small.pt" }
+  },
+  "8": {
+    "class_type": "GroundingDinoSAM2Segment (segment anything2)",
+    "inputs": {
+      "sam_model": ["7", 0],
+      "grounding_dino_model": ["6", 0],
+      "image": ["1", 0],
+      "prompt": "sofa . couch . chair . armchair . recliner . bed . bed frame . wardrobe . closet . cabinet . chest of drawers . dresser . bookshelf . shelf . rack . desk . study table . dining table . side table . coffee table . center table . TV unit . entertainment unit . display cabinet",
+      "threshold": 0.30,
+      "keep_model_loaded": true
+    }
+  },
+  "9": {
+    "class_type": "GroundingDinoSAM2Segment (segment anything2)",
+    "inputs": {
+      "sam_model": ["7", 0],
+      "grounding_dino_model": ["6", 0],
+      "image": ["1", 0],
+      "prompt": "lamp . floor lamp . table lamp . ceiling fan . curtain . window curtain . rug . carpet . mat . plant . potted plant . television . TV . air conditioner . AC unit . mirror . wall clock . photo frame . idol . statue . vase . speaker . door . window",
+      "threshold": 0.27,
+      "keep_model_loaded": false
+    }
+  },
+  "10": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["3", 0], "source": ["3b", 0], "x": 0, "y": 0, "operation": "or" }
+  },
+  "11": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["4", 0], "source": ["4b", 0], "x": 0, "y": 0, "operation": "or" }
+  },
+  "12": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["5", 0], "source": ["5b", 0], "x": 0, "y": 0, "operation": "or" }
+  },
+  "13": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["8", 1], "source": ["9", 1], "x": 0, "y": 0, "operation": "or" }
+  },
+  "14": {
+    "class_type": "ThresholdMask",
+    "inputs": { "mask": ["10", 0], "value": 0.30 }
+  },
+  "15": {
+    "class_type": "ThresholdMask",
+    "inputs": { "mask": ["11", 0], "value": 0.30 }
+  },
+  "16": {
+    "class_type": "ThresholdMask",
+    "inputs": { "mask": ["12", 0], "value": 0.32 }
+  },
+  "17": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["14", 0], "source": ["15", 0], "x": 0, "y": 0, "operation": "subtract" }
+  },
+  "18": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["17", 0], "source": ["16", 0], "x": 0, "y": 0, "operation": "subtract" }
+  },
+  "19": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["18", 0], "source": ["13", 0], "x": 0, "y": 0, "operation": "subtract" }
+  },
+  "20": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["15", 0], "source": ["13", 0], "x": 0, "y": 0, "operation": "subtract" }
+  },
+  "21": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["16", 0], "source": ["13", 0], "x": 0, "y": 0, "operation": "subtract" }
+  },
+  "22": {
+    "class_type": "GrowMaskWithBlur",
+    "inputs": {
+      "mask": ["19", 0],
+      "expand": 4,
+      "incremental_expandrate": 0.0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 3.0,
+      "lerp_alpha": 1.0,
+      "decay_factor": 1.0,
+      "fill_holes": true
+    }
+  },
+  "23": {
+    "class_type": "GrowMaskWithBlur",
+    "inputs": {
+      "mask": ["20", 0],
+      "expand": 2,
+      "incremental_expandrate": 0.0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 2.0,
+      "lerp_alpha": 1.0,
+      "decay_factor": 1.0,
+      "fill_holes": true
+    }
+  },
+  "24": {
+    "class_type": "GrowMaskWithBlur",
+    "inputs": {
+      "mask": ["21", 0],
+      "expand": 2,
+      "incremental_expandrate": 0.0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 2.0,
+      "lerp_alpha": 1.0,
+      "decay_factor": 1.0,
+      "fill_holes": true
+    }
+  },
+  "25": {
+    "class_type": "GrowMaskWithBlur",
+    "inputs": {
+      "mask": ["13", 0],
+      "expand": 3,
+      "incremental_expandrate": 0.0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 2.0,
+      "lerp_alpha": 1.0,
+      "decay_factor": 1.0,
+      "fill_holes": false
+    }
+  },
+  "26": {
+    "class_type": "MaskComposite",
+    "inputs": { "destination": ["23", 0], "source": ["25", 0], "x": 0, "y": 0, "operation": "subtract" }
+  },
+  "27": {
+    "class_type": "DepthAnythingV2Preprocessor",
+    "inputs": { "image": ["1", 0], "ckpt_name": "depth_anything_v2_vits.pth", "resolution": 1024 }
+  },
+  "30": { "class_type": "MaskToImage", "inputs": { "mask": ["22", 0] } },
+  "31": { "class_type": "MaskToImage", "inputs": { "mask": ["23", 0] } },
+  "32": { "class_type": "MaskToImage", "inputs": { "mask": ["24", 0] } },
+  "33": { "class_type": "MaskToImage", "inputs": { "mask": ["25", 0] } },
+  "34": { "class_type": "MaskToImage", "inputs": { "mask": ["26", 0] } },
+  "40": { "class_type": "SaveImage", "inputs": { "images": ["30", 0], "filename_prefix": "stage1/wall_mask" } },
+  "41": { "class_type": "SaveImage", "inputs": { "images": ["31", 0], "filename_prefix": "stage1/floor_mask" } },
+  "42": { "class_type": "SaveImage", "inputs": { "images": ["32", 0], "filename_prefix": "stage1/ceiling_mask" } },
+  "43": { "class_type": "SaveImage", "inputs": { "images": ["33", 0], "filename_prefix": "stage1/object_mask" } },
+  "44": { "class_type": "SaveImage", "inputs": { "images": ["34", 0], "filename_prefix": "stage1/empty_mask" } },
+  "45": { "class_type": "SaveImage", "inputs": { "images": ["27", 0], "filename_prefix": "stage1/depth_map" } }
+}

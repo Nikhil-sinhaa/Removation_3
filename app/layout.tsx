@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Outfit, DM_Sans } from 'next/font/google'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/Providers'
@@ -7,10 +8,17 @@ import { AnalyticsProvider } from '@/components/AnalyticsProvider'
 import { PWAPrompt } from '@/components/PWAPrompt'
 import './globals.css'
 
-// System font stack — Google Fonts downloads fail offline.
-// CSS variables are set directly in the className below.
-const fontClasses = 'font-inter font-plus-jakarta'
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
+})
 
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-dm-sans',
+})
 // Complete SEO metadata
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://removation.ai'),
@@ -159,7 +167,7 @@ export default function RootLayout({
       <html
         lang="en"
         suppressHydrationWarning
-        className=""
+        className={`${outfit.variable} ${dmSans.variable}`}
       >
         <head>
           {/* Preconnect to external domains for performance */}

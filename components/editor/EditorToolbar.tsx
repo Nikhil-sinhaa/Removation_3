@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/stores/editor-store';
 import { useUltraProSocket } from '@/hooks/useUltraProSocket';
 import { Button } from '@/components/ui/button';
+import { ToolProgressBar } from '@/components/editor/ToolProgressBar';
 import {
   Tooltip,
   TooltipContent,
@@ -72,6 +73,8 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
     generationProgress,
     generationStatus,
     startUltraProGeneration,
+    toolPhase,
+    currentToolTab,
   } = useEditorStore();
 
   // Initialize Socket.IO listener for Ultra-Pro pipeline events
@@ -275,6 +278,7 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
   };
 
   return (
+    <>
     <div
       className={cn(
         "flex items-center justify-between px-4 py-2",
@@ -354,5 +358,11 @@ export function EditorToolbar({ className }: EditorToolbarProps) {
         </Button>
       </div>
     </div>
+
+      {/* Smart Tab Progress Bar — appears below toolbar during AI generation */}
+      {(toolPhase !== 'idle' || isGenerating) && (
+        <ToolProgressBar className="mx-4 mb-2" />
+      )}
+    </>
   );
 }

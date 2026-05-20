@@ -22,7 +22,7 @@
 
 ## Services
 
-- **ComfyUI**: http://localhost:8188
+- **ComfyUI**: http://localhost: 8188
 - **Next.js**: http://localhost:3000
 - **Logs**: `/tmp/logs/comfyui.log` and `/tmp/logs/nextjs.log`
 

@@ -338,13 +338,14 @@ function GradientOrb({
   color = "purple" 
 }: { 
   className?: string; 
-  color?: "purple" | "pink" | "blue" | "green" 
+  color?: "purple" | "pink" | "blue" | "green" | "cyan" 
 }) {
   const colorMap = {
     purple: "from-purple-600/30 to-violet-600/30",
     pink: "from-pink-600/30 to-rose-600/30",
-    blue: "from-blue-600/30 to-cyan-600/30",
+    blue: "from-blue-600/30 to-indigo-600/30",
     green: "from-green-600/30 to-emerald-600/30",
+    cyan: "from-cyan-500/30 to-blue-500/30",
   };
 
   return (
@@ -399,11 +400,11 @@ function Navbar() {
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+          "fixed top-0 left-0 right-0 z-50 will-change-transform",
           scrolled
-            ? "bg-background/80 backdrop-blur-2xl border-b border-white/5 shadow-lg shadow-purple-500/5"
+            ? "bg-white/5 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.1)]"
             : "bg-transparent"
         )}
       >
@@ -695,7 +696,7 @@ function FloatingElements() {
             repeat: Infinity,
             ease: "easeInOut"
           }}
-          className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl"
+          className="w-20 h-20 rounded-2xl glass-card flex items-center justify-center"
         >
           <Home className="w-10 h-10 text-purple-400" />
         </motion.div>
@@ -719,7 +720,7 @@ function FloatingElements() {
             ease: "easeInOut",
             delay: 0.5
           }}
-          className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-600/20 to-rose-600/20 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl"
+          className="w-16 h-16 rounded-2xl glass-card flex items-center justify-center"
         >
           <Palette className="w-8 h-8 text-pink-400" />
         </motion.div>
@@ -743,7 +744,7 @@ function FloatingElements() {
             ease: "easeInOut",
             delay: 1
           }}
-          className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-600/20 to-purple-600/20 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl"
+          className="w-14 h-14 rounded-xl glass-card flex items-center justify-center"
         >
           <Wand2 className="w-7 h-7 text-indigo-400" />
         </motion.div>
@@ -830,8 +831,8 @@ function HeroSection() {
       <div className="absolute inset-0 hero-grid opacity-30" />
       
       {/* Gradient Orbs */}
-      <GradientOrb className="w-[600px] h-[600px] -top-64 -left-64" color="purple" />
-      <GradientOrb className="w-[500px] h-[500px] -bottom-32 -right-32" color="pink" />
+      <GradientOrb className="w-[600px] h-[600px] -top-64 -left-64" color="blue" />
+      <GradientOrb className="w-[500px] h-[500px] -bottom-32 -right-32" color="cyan" />
       <GradientOrb className="w-[400px] h-[400px] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" color="blue" />
 
       {/* Floating Elements */}
@@ -847,8 +848,8 @@ function HeroSection() {
           >
             {/* Badge */}
             <motion.div variants={fadeInUp} className="mb-6">
-              <Badge className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 text-purple-300 border-purple-500/30 px-4 py-2 text-sm backdrop-blur-sm">
-                <Sparkles className="w-4 h-4 mr-2 animate-pulse" />
+              <Badge className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 text-cyan-300 border-cyan-500/20 px-4 py-2 text-sm backdrop-blur-sm">
+                <Sparkles className="w-4 h-4 mr-2 animate-pulse text-cyan-400" />
                 #1 AI Interior Design Platform in India
               </Badge>
             </motion.div>
@@ -860,7 +861,7 @@ function HeroSection() {
             >
               Transform Any Space with{" "}
               <span className="relative">
-                <span className="bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                   AI-Powered
                 </span>
               </span>{" "}
@@ -876,9 +877,9 @@ function HeroSection() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="text-xl sm:text-2xl text-purple-300"
+                  className="text-xl sm:text-2xl text-cyan-300"
                 >
-                  Try <span className="font-semibold">{styles[currentStyle]}</span> style →
+                  Try <span className="font-semibold text-white">{styles[currentStyle]}</span> style →
                 </motion.p>
               </AnimatePresence>
             </motion.div>
@@ -899,13 +900,13 @@ function HeroSection() {
             >
               <Link href="/ai-design">
                 <Button
-                  className="relative overflow-hidden bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-lg px-8 py-6 rounded-xl shadow-2xl shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 group"
+                  className="relative overflow-hidden bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-lg px-8 py-6 rounded-xl shadow-2xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 group"
                 >
-                  <span className="relative z-10 flex items-center">
+                  <span className="relative z-10 flex items-center text-white font-semibold">
                     Try AI Design Studio
                     <Zap className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
                 </Button>
               </Link>
               <Button
@@ -989,7 +990,7 @@ function HeroSection() {
                   className="p-4 rounded-2xl bg-card/90 backdrop-blur-xl border border-white/10 shadow-2xl"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
                       <Wand2 className="w-6 h-6 text-white" />
                     </div>
                     <div>
@@ -1003,13 +1004,13 @@ function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.4, duration: 0.5 }}
+                transition={{ type: "spring", stiffness: 180, damping: 22, delay: 1.4 }}
                 className="absolute -right-6 top-1/3 hidden lg:block"
               >
                 <motion.div
                   animate={{ y: [0, 10, 0] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                  className="p-4 rounded-2xl bg-card/90 backdrop-blur-xl border border-white/10 shadow-2xl"
+                  className="p-4 rounded-2xl glass-card"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
@@ -1028,13 +1029,13 @@ function HeroSection() {
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.6, duration: 0.5 }}
+                transition={{ type: "spring", stiffness: 180, damping: 22, delay: 1.6 }}
                 className="absolute -right-4 bottom-1/4 hidden xl:block"
               >
                 <motion.div
                   animate={{ y: [0, -6, 0] }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                  className="p-4 rounded-2xl bg-card/90 backdrop-blur-xl border border-white/10 shadow-2xl"
+                  className="p-4 rounded-2xl glass-card"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-green-500/30">
@@ -1048,15 +1049,14 @@ function HeroSection() {
                 </motion.div>
               </motion.div>
 
-              {/* Render Time Badge */}
               <motion.div
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 1.8, duration: 0.3 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20, delay: 1.8 }}
                 className="absolute -bottom-4 left-1/2 -translate-x-1/2"
               >
-                <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg shadow-purple-500/30">
-                  <Zap className="w-4 h-4 text-white" />
+                <div className="flex items-center gap-2 px-4 py-2 rounded-full glass-card">
+                  <Zap className="w-4 h-4 text-cyan-400" />
                   <span className="text-white text-sm font-medium">Generated in 8.2 seconds</span>
                 </div>
               </motion.div>
@@ -1069,19 +1069,25 @@ function HeroSection() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2 }}
+        transition={{ delay: 2.2, duration: 0.8 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2"
       >
         <motion.div
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-          className="flex flex-col items-center gap-2 text-muted-foreground cursor-pointer"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+          className="flex flex-col items-center gap-2 text-muted-foreground/60 cursor-pointer hover:text-muted-foreground transition-colors"
           onClick={() => {
             document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
           }}
         >
-          <span className="text-sm">Scroll to explore</span>
-          <ChevronDown className="w-5 h-5" />
+          <span className="text-xs tracking-widest uppercase">Explore</span>
+          <div className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center pt-1.5">
+            <motion.div
+              animate={{ y: [0, 8, 0], opacity: [1, 0, 1] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+              className="w-1 h-1.5 rounded-full bg-cyan-400"
+            />
+          </div>
         </motion.div>
       </motion.div>
     </section>
@@ -1218,28 +1224,28 @@ function FeaturesSection() {
   return (
     <section id="features" className="py-24 relative overflow-hidden" ref={ref}>
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-background via-purple-900/5 to-background" />
-      <GradientOrb className="w-[800px] h-[800px] -left-96 top-0 opacity-30" color="purple" />
-      <GradientOrb className="w-[600px] h-[600px] -right-64 bottom-0 opacity-20" color="pink" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-sky-900/5 to-background" />
+      <GradientOrb className="w-[800px] h-[800px] -left-96 top-0 opacity-20" color="blue" />
+      <GradientOrb className="w-[600px] h-[600px] -right-64 bottom-0 opacity-15" color="cyan" />
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
+          transition={{ type: "spring", stiffness: 200, damping: 28 }}
           className="text-center mb-16"
         >
-          <Badge className="bg-purple-600/20 text-purple-300 border-purple-500/30 mb-4">
-            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+          <Badge className="bg-cyan-500/10 text-cyan-300 border-cyan-500/20 mb-4">
+            <Sparkles className="w-3.5 h-3.5 mr-1.5 text-cyan-400" />
             32 Powerful Features
           </Badge>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold font-display text-white mb-4 tracking-tight">
             Everything You Need to{" "}
-            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
               Design Better
             </span>
           </h2>
-          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             From AI room redesign to real-time cost estimation. All the tools professionals use, now for everyone.
           </p>
         </motion.div>
@@ -1250,48 +1256,40 @@ function FeaturesSection() {
               key={feature.title}
               initial={{ opacity: 0, y: 30 }}
               animate={isInView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ type: "spring", stiffness: 180, damping: 22, delay: index * 0.07 }}
               className="group"
             >
-              <div
-                className={cn(
-                  "relative h-full p-6 rounded-2xl border backdrop-blur-sm transition-all duration-300",
-                  "bg-gradient-to-br hover:bg-gradient-to-br",
-                  feature.gradient,
-                  feature.borderColor,
-                  "hover:border-opacity-40 hover:shadow-lg hover:shadow-purple-500/5",
-                  "hover:-translate-y-1"
-                )}
-              >
+              <div className="feature-card h-full">
                 {feature.badge && (
-                  <div className="absolute -top-3 right-4">
+                  <div className="absolute -top-3 right-4 z-10">
                     <Badge className="bg-gradient-to-r from-amber-600/30 to-orange-600/30 text-amber-300 border-amber-500/30 text-xs shadow-lg">
                       {feature.badge}
                     </Badge>
                   </div>
                 )}
 
-                <div
+                <motion.div
                   className={cn(
                     "w-12 h-12 rounded-xl flex items-center justify-center mb-4",
                     "bg-gradient-to-br shadow-lg",
-                    feature.iconBg,
-                    "group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300"
+                    feature.iconBg
                   )}
+                  whileHover={{ scale: 1.12, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
                   <div className="text-white">{feature.icon}</div>
-                </div>
+                </motion.div>
 
-                <h3 className="text-lg font-semibold text-white mb-2 group-hover:text-white transition-colors">
+                <h3 className="text-lg font-semibold font-display text-white mb-2 tracking-tight">
                   {feature.title}
                 </h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   {feature.description}
                 </p>
 
-                <div className="mt-4 flex items-center text-sm text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="mt-4 flex items-center text-sm text-cyan-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <span>Learn more</span>
-                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-300" />
                 </div>
               </div>
             </motion.div>

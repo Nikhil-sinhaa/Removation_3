@@ -1,0 +1,134 @@
+{
+  "last_node_id": 13,
+  "last_link_id": 15,
+  "nodes": [
+    {
+      "id": 1, "type": "CheckpointLoaderSimple", "pos": [50, 50], "size": [315, 98],
+      "flags": {}, "order": 0, "mode": 0,
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "slot_index": 0, "links": [1]},
+        {"name": "CLIP", "type": "CLIP", "slot_index": 1, "links": [2,3]},
+        {"name": "VAE", "type": "VAE", "slot_index": 2, "links": [4,5]}
+      ],
+      "widgets_values": ["sd_xl_base_1.0.safetensors"],
+      "title": "🧠 SDXL Checkpoint"
+    },
+    {
+      "id": 2, "type": "LoadImage", "pos": [50, 220], "size": [315, 314],
+      "flags": {}, "order": 1, "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [6]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["furniture_placed_00001_.png"],
+      "title": "📷 Previous Stage Result"
+    },
+    {
+      "id": 4, "type": "LoadImage", "pos": [50, 600], "size": [315, 314],
+      "flags": {}, "order": 2, "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [8]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["object_mask_00001_.png"],
+      "title": "🪑 Object Mask (from Stage 1)"
+    },
+    {
+      "id": 5, "type": "CLIPTextEncode", "pos": [450, 50], "size": [400, 100],
+      "flags": {}, "order": 3, "mode": 0,
+      "inputs": [{"name": "clip", "type": "CLIP", "link": 2}],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [9]}],
+      "widgets_values": ["(professional architectural interior photography:1.3), ultra sharp details, pristine surfaces, photorealistic, (8k RAW photo:1.2), masterpiece"],
+      "title": "✅ Quality Enhancement Prompt"
+    },
+    {
+      "id": 6, "type": "CLIPTextEncode", "pos": [450, 200], "size": [400, 80],
+      "flags": {}, "order": 4, "mode": 0,
+      "inputs": [{"name": "clip", "type": "CLIP", "link": 3}],
+      "outputs": [{"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [10]}],
+      "widgets_values": ["blurry, low quality, noise, artifacts, jpeg compression, pixelated, cartoon, watermark, distorted, oversaturated"],
+      "title": "❌ Negative Prompt"
+    },
+    {
+      "id": 8, "type": "ImageToMask", "pos": [450, 600], "size": [200, 46],
+      "flags": {}, "order": 5, "mode": 0,
+      "inputs": [{"name": "image", "type": "IMAGE", "link": 8}],
+      "outputs": [{"name": "MASK", "type": "MASK", "slot_index": 0, "links": [11]}],
+      "widgets_values": ["red"],
+      "title": "Object Image → Mask"
+    },
+    {
+      "id": 10, "type": "VAEEncodeForInpaint", "pos": [700, 350], "size": [280, 120],
+      "flags": {}, "order": 6, "mode": 0,
+      "inputs": [
+        {"name": "pixels", "type": "IMAGE", "link": 6},
+        {"name": "vae", "type": "VAE", "link": 4},
+        {"name": "mask", "type": "MASK", "link": 11}
+      ],
+      "outputs": [{"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [12]}],
+      "widgets_values": [2],
+      "title": "VAE Encode for Inpaint (grow 2)"
+    },
+    {
+      "id": 11, "type": "KSampler", "pos": [1050, 50], "size": [315, 262],
+      "flags": {}, "order": 7, "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 1},
+        {"name": "positive", "type": "CONDITIONING", "link": 9},
+        {"name": "negative", "type": "CONDITIONING", "link": 10},
+        {"name": "latent_image", "type": "LATENT", "link": 12}
+      ],
+      "outputs": [{"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [13]}],
+      "widgets_values": [42, "fixed", 12, 4.0, "dpmpp_2m", "karras", 0.18],
+      "title": "🔧 KSampler Refinement (denoise 0.18 — sharpening only)"
+    },
+    {
+      "id": 12, "type": "VAEDecode", "pos": [1400, 50], "size": [210, 46],
+      "flags": {}, "order": 8, "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 13},
+        {"name": "vae", "type": "VAE", "link": 5}
+      ],
+      "outputs": [{"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [14]}],
+      "title": "VAE Decode"
+    },
+    {
+      "id": 13, "type": "SaveImage", "pos": [1400, 150], "size": [300, 270],
+      "flags": {}, "order": 9, "mode": 0,
+      "inputs": [{"name": "images", "type": "IMAGE", "link": 14}],
+      "widgets_values": ["stage5/refined"],
+      "title": "💾 Save: refined"
+    }
+  ],
+  "links": [
+    [1,  1, 0, 11,0, "MODEL"],
+    [2,  1, 1, 5, 0, "CLIP"],
+    [3,  1, 1, 6, 0, "CLIP"],
+    [4,  1, 2, 10,1, "VAE"],
+    [5,  1, 2, 12,1, "VAE"],
+    [6,  2, 0, 10,0, "IMAGE"],
+    [8,  4, 0, 8, 0, "IMAGE"],
+    [9,  5, 0, 11,1, "CONDITIONING"],
+    [10, 6, 0, 11,2, "CONDITIONING"],
+    [11, 8, 0, 10,2, "MASK"],
+    [12, 10,0, 11,3, "LATENT"],
+    [13, 11,0, 12,0, "LATENT"],
+    [14, 12,0, 13,0, "IMAGE"]
+  ],
+  "groups": [
+    {"title": "📷 INPUT — Previous Stage + Object Mask", "bounding": [30, 20, 380, 920], "color": "#3f789e"},
+    {"title": "🔧 REFINEMENT — Low-Denoise Sharpening Pass", "bounding": [420, 20, 630, 510], "color": "#2a9d8f"},
+    {"title": "💾 OUTPUT", "bounding": [1370, 120, 360, 320], "color": "#264653"}
+  ],
+  "config": {},
+  "extra": {
+    "ds": {"scale": 0.5, "offset": [50, 30]},
+    "info": {
+      "name": "Stage 5: Detail Refinement",
+      "description": "Light inpainting pass (denoise 0.18) over object regions only. Walls are untouched to preserve Stage 3 wall color. This is a texture sharpening pass, not a regeneration pass. 12 steps, cfg 4.0.",
+      "version": "3.0",
+      "target_gpu": "RTX 4060 8GB"
+    }
+  },
+  "version": 0.4
+}

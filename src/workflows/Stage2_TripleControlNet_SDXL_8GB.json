@@ -152,7 +152,7 @@
         {"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [14]}
       ],
       "properties": {"Node name for S&R": "ControlNetLoader"},
-      "widgets_values": ["control-lora-depth-rank128.safetensors"],
+      "widgets_values": ["control-lora-depth-rank256.safetensors"],
       "title": "🔒 ControlNet LoRA: DEPTH (200MB)"
     },
 
@@ -169,7 +169,7 @@
         {"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [15]}
       ],
       "properties": {"Node name for S&R": "ControlNetLoader"},
-      "widgets_values": ["control-lora-canny-rank128.safetensors"],
+      "widgets_values": ["control-lora-canny-rank256.safetensors"],
       "title": "🔒 ControlNet LoRA: CANNY (200MB)"
     },
 
@@ -186,7 +186,7 @@
         {"name": "CONTROL_NET", "type": "CONTROL_NET", "slot_index": 0, "links": [16]}
       ],
       "properties": {"Node name for S&R": "ControlNetLoader"},
-      "widgets_values": ["control-lora-sketch-rank128-metadata.safetensors"],
+      "widgets_values": ["control-lora-sketch-rank256.safetensors"],
       "title": "🔒 ControlNet LoRA: LINEART/SKETCH (200MB)"
     },
 
@@ -439,21 +439,21 @@
       },
       "controlnet_chain": {
         "step_1_depth": {
-          "model": "control-lora-depth-rank128.safetensors (~200MB)",
+          "model": "control-lora-depth-rank256.safetensors (~400MB)",
           "strength": 0.90,
           "start": 0.0,
           "end": 1.0,
           "purpose": "Locks 3D geometry — walls stay at correct angles"
         },
         "step_2_canny": {
-          "model": "control-lora-canny-rank128.safetensors (~200MB)",
+          "model": "control-lora-canny-rank256.safetensors (~400MB)",
           "strength": 0.65,
           "start": 0.0,
           "end": 0.85,
           "purpose": "Preserves hard edges — window frames, door frames, corners"
         },
         "step_3_lineart": {
-          "model": "control-lora-sketch-rank128-metadata.safetensors (~200MB)",
+          "model": "control-lora-sketch-rank256.safetensors (~400MB)",
           "strength": 0.45,
           "start": 0.0,
           "end": 0.70,
@@ -462,9 +462,9 @@
       },
       "required_models": {
         "sdxl_checkpoint": "sd_xl_base_1.0.safetensors → models/checkpoints/",
-        "depth_controlnet_lora": "control-lora-depth-rank128.safetensors → models/controlnet/",
-        "canny_controlnet_lora": "control-lora-canny-rank128.safetensors → models/controlnet/",
-        "lineart_controlnet_lora": "control-lora-sketch-rank128-metadata.safetensors → models/controlnet/"
+        "depth_controlnet_lora": "control-lora-depth-rank256.safetensors → models/controlnet/",
+        "canny_controlnet_lora": "control-lora-canny-rank256.safetensors → models/controlnet/",
+        "lineart_controlnet_lora": "control-lora-sketch-rank256.safetensors → models/controlnet/"
       },
       "required_custom_nodes": [
         "comfyui_controlnet_aux (LineArtPreprocessor)"
