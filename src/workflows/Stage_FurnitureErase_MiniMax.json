@@ -1,0 +1,117 @@
+{
+  "last_node_id": 7,
+  "last_link_id": 8,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [80, 100],
+      "size": [260, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [1]},
+        {"name": "MASK", "type": "MASK", "links": null}
+      ],
+      "widgets_values": ["furniture-detect/adjusted_placeholder.png", "image"]
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [80, 320],
+      "size": [260, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [2]},
+        {"name": "MASK", "type": "MASK", "links": null}
+      ],
+      "widgets_values": ["mask.png", "image"]
+    },
+    {
+      "id": 3,
+      "type": "ImageToMask",
+      "pos": [400, 320],
+      "size": [220, 80],
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 2}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "links": [3]}
+      ],
+      "widgets_values": ["red"]
+    },
+    {
+      "id": 4,
+      "type": "MinimaxModelLoader",
+      "pos": [400, 500],
+      "size": [300, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "vae", "type": "VAE", "links": [4]},
+        {"name": "transformer", "type": "TRANSFORMER", "links": [5]},
+        {"name": "scheduler", "type": "SCHEDULER", "links": [6]}
+      ],
+      "widgets_values": ["Auto", "float16", "auto", false]
+    },
+    {
+      "id": 5,
+      "type": "MinimaxImageRemover",
+      "pos": [760, 250],
+      "size": [300, 180],
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 1},
+        {"name": "mask", "type": "MASK", "link": 8},
+        {"name": "vae", "type": "VAE", "link": 4},
+        {"name": "transformer", "type": "TRANSFORMER", "link": 5},
+        {"name": "scheduler", "type": "SCHEDULER", "link": 6}
+      ],
+      "outputs": [
+        {"name": "image", "type": "IMAGE", "links": [7]}
+      ],
+      "widgets_values": [40, 6, 268860912614053, "randomize"]
+    },
+    {
+      "id": 6,
+      "type": "SaveImage",
+      "pos": [1120, 250],
+      "size": [240, 100],
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 7}
+      ],
+      "outputs": [],
+      "widgets_values": ["furniture-erased/result"]
+    },
+    {
+      "id": 7,
+      "type": "InvertMask",
+      "pos": [600, 320],
+      "size": [200, 80],
+      "inputs": [
+        {"name": "mask", "type": "MASK", "link": 3}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "links": [8]}
+      ],
+      "widgets_values": []
+    }
+  ],
+  "links": [
+    [1, 1, 0, 5, 0, "IMAGE"],
+    [2, 2, 0, 3, 0, "IMAGE"],
+    [3, 3, 0, 7, 0, "MASK"],
+    [4, 4, 0, 5, 2, "VAE"],
+    [5, 4, 1, 5, 3, "TRANSFORMER"],
+    [6, 4, 2, 5, 4, "SCHEDULER"],
+    [7, 5, 0, 6, 0, "IMAGE"],
+    [8, 7, 0, 5, 1, "MASK"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "info": "Erase stage: LoadImage adjusted(1) + LoadImage mask(2) → ImageToMask(3) + MinimaxModelLoader(4) → MinimaxImageRemover(5) → SaveImage(6). Node IDs for orchestrator injection: image=node1, mask=node2, remover=node5.",
+    "inputs": {
+      "node_1_room_image": "furniture-detect/adjusted_*.png — the RESIZED image from detect stage. NOT the original upload.",
+      "node_2_mask": "furniture-detect/mask_*.png — the mask from detect stage. Must match node_1 dimensions exactly."
+    }
+  },
+  "version": 0.4
+}

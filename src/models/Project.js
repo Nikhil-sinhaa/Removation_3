@@ -106,7 +106,7 @@ const projectSchema = new mongoose.Schema({
       'tool-interior-render', 'tool-exterior-render', 'tool-landscape',
       'tool-style-transfer', 'tool-collage',
       'tool-background', 'tool-view-extend', 'tool-lineart',
-      'room-changer',
+      'room-changer', 'furniture-remover', 'ceiling-changer',
     ],
     required: true
   },

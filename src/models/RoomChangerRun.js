@@ -18,6 +18,9 @@ const roomChangerRunSchema = new mongoose.Schema({
   // Stored so Stage 3 can be retried without re-running Stage 1
   stage1Outputs:  { type: mongoose.Schema.Types.Mixed },
   stage1Completed:{ type: Boolean, default: false },
+  feedbackRating: { type: String, enum: ['up', 'down', null], default: null },
+  feedbackText:   { type: String, default: null, maxlength: 1000 },
+  feedbackAt:     { type: Date, default: null },
 }, { timestamps: true });
 
 roomChangerRunSchema.index({ projectId: 1 });

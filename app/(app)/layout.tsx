@@ -33,6 +33,7 @@ import {
   Palette,
   Eraser,
   Paintbrush,
+  Layers,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -52,7 +53,9 @@ const sidebarNavigation = [
       { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
       { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
       { name: 'Object Removal', href: '/remove-object', icon: Eraser },
+      { name: 'Furniture Remover', href: '/furniture-remover', icon: Eraser },
       { name: 'Room Changer', href: '/room-changer', icon: Paintbrush },
+      { name: 'Ceiling Changer', href: '/ceiling-changer', icon: Layers },
     ],
   },
   {

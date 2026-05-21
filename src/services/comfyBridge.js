@@ -1318,10 +1318,11 @@ class ComfyBridgeService {
         const entry = history[prompt_id];
         if (!entry) continue;
 
-        // Check for error
-        if (entry.status?.status_str === 'error' ||
-            (entry.status?.messages || []).some(m => m[0] === 'execution_error')) {
-          throw new Error('ComfyUI execution error — check VRAM or workflow');
+        // Check for error — surface the actual ComfyUI detail
+        const execError = (entry.status?.messages || []).find(m => m[0] === 'execution_error');
+        if (entry.status?.status_str === 'error' || execError) {
+          const detail = execError ? JSON.stringify(execError[1]) : entry.status?.status_str;
+          throw new Error(`ComfyUI execution error: ${detail}`);
         }
 
         // Fix B.2: strict SaveImage count check

@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     // Only fetch completed projects that have a result image
     const projects = await Project.find({
-      processingType: 'redesign',
+      processingType: { $in: ['redesign', 'room-changer', 'furniture-remover', 'ceiling-changer'] },
       status: 'completed',
       resultImage: { $ne: null },
     })
@@ -30,7 +30,21 @@ export async function GET(request: Request) {
     });
 
     // Build a human-readable description from aiConfig
-    function buildDescription(cfg: any): string {
+    function buildDescription(cfg: any, processingType?: string): string {
+      if (processingType === 'room-changer') {
+        const colorName = cfg?.colorName || 'Custom';
+        return `${colorName} wall color`;
+      }
+
+      if (processingType === 'furniture-remover') {
+        return 'Furniture removed';
+      }
+
+      if (processingType === 'ceiling-changer') {
+        const colorName = cfg?.colorName || 'Custom';
+        return `${colorName} ceiling color`;
+      }
+
       if (!cfg) return 'AI-generated redesign';
       const parts: string[] = [];
 
@@ -60,7 +74,7 @@ export async function GET(request: Request) {
       name: p.name,
       thumbnail: p.originalImage && existsSync(path.join(cwd, 'public', p.originalImage)) ? p.originalImage : p.resultImage,
       resultImage: p.resultImage,
-      description: buildDescription(p.aiConfig),
+      description: buildDescription(p.aiConfig, p.processingType),
       roomType: p.aiConfig?.roomType || 'Unknown',
       style: p.aiConfig?.style || 'Unknown',
       rendersCount: 1, // we treat each generation as a single render for now

@@ -13,7 +13,7 @@
  */
 
 const WIDGET_NAMES = {
-  LoadImage: ['image'],
+  LoadImage: ['image', 'upload_type'],
   SaveImage: ['filename_prefix'],
   CheckpointLoaderSimple: ['ckpt_name'],
   CLIPTextEncode: ['text'],
@@ -28,6 +28,48 @@ const WIDGET_NAMES = {
     'sam_mask_hint_threshold', 'post_dilation',
   ],
   DepthAnythingV2Preprocessor: ['ckpt_name', 'resolution'],
+  'SAMModelLoader (segment anything)': ['model_name'],
+  'GroundingDinoModelLoader (segment anything)': ['model_name'],
+  'GroundingDinoSAMSegment (segment anything)': ['prompt', 'threshold'],
+  GrowMask: ['expand', 'tapered_corners'],
+  LamaRemover: ['mask_threshold', 'gaussblur_radius', 'invert_mask'],
+  LamaRemoverIMG: ['mask_threshold', 'gaussblur_radius', 'invert_mask'],
+  AILab_LamaRemover: ['removal_strength', 'edge_smoothness'],
+  RMBG: [
+    'model',
+    'sensitivity',
+    'process_res',
+    'mask_blur',
+    'mask_offset',
+    'invert_output',
+    'refine_foreground',
+    'background',
+    'background_color',
+  ],
+  MinimaxImageRemover: [
+    'num_inference_steps',
+    'mask_dilation_iterations',
+    'seed',
+    'control_after_generate',
+  ],
+  MinimaxModelLoader: [
+    'scheduler',
+    'torch_dtype',
+    'device',
+    'local_files_only',
+  ],
+  ImageScale: [
+    'upscale_method',
+    'width',
+    'height',
+    'crop',
+  ],
+  ImageSizeAdjuster: [
+    'divisible_by',
+    'adjustment_mode',
+    'scale_by',
+    'pad_color',
+  ],
 };
 
 /**

@@ -37,6 +37,13 @@ interface ResultState {
   canRetryStage3: boolean;
 }
 
+interface FeedbackState {
+  rating: 'up' | 'down' | null;
+  text: string;
+  submitted: boolean;
+  submitting: boolean;
+}
+
 export default function RoomChangerPage() {
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -47,6 +54,7 @@ export default function RoomChangerPage() {
   const [result, setResult]             = useState<ResultState | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
+  const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
 
   const isGeneratingRef = useRef(isGenerating);
   useEffect(() => {
@@ -113,6 +121,7 @@ export default function RoomChangerPage() {
         runId: data.runId,
         canRetryStage3: false,
       });
+      setFeedback({ rating: null, text: "", submitted: false, submitting: false });
       setIsGenerating(false);
     });
 
@@ -220,6 +229,25 @@ export default function RoomChangerPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
+    setFeedback({ rating: null, text: "", submitted: false, submitting: false });
+  };
+
+  const handleFeedbackRating = (rating: 'up' | 'down') => {
+    if (feedback.submitted || feedback.rating !== null) return;
+    setFeedback(prev => ({ ...prev, rating }));
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!result?.runId || !feedback.rating || feedback.submitting || feedback.submitted) return;
+    setFeedback(prev => ({ ...prev, submitting: true }));
+    try {
+      await fetch('/api/ai/room-changer/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId: result.runId, rating: feedback.rating, text: feedback.text }),
+      });
+    } catch { /* ignore — best-effort */ }
+    setFeedback(prev => ({ ...prev, submitting: false, submitted: true }));
   };
 
   const canGenerate = !isGenerating;
@@ -484,6 +512,74 @@ export default function RoomChangerPage() {
                       >
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another Color
                       </Button>
+                    </div>
+
+                    {/* Feedback */}
+                    <div className="pt-3 border-t border-gray-100">
+                      {feedback.submitted ? (
+                        <p className="text-center text-sm text-green-600 font-medium">Thanks for your feedback</p>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-gray-700 text-center">Happy with this result?</p>
+                          <div className="flex gap-3 justify-center">
+                            <button
+                              onClick={() => handleFeedbackRating('up')}
+                              disabled={feedback.rating !== null}
+                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-colors ${
+                                feedback.rating === 'up'
+                                  ? 'border-green-500 bg-green-50'
+                                  : feedback.rating !== null
+                                  ? 'border-gray-200 opacity-40 cursor-not-allowed'
+                                  : 'border-gray-200 hover:border-green-400 hover:bg-green-50 cursor-pointer'
+                              }`}
+                              aria-label="Thumbs up"
+                            >
+                              👍
+                            </button>
+                            <button
+                              onClick={() => handleFeedbackRating('down')}
+                              disabled={feedback.rating !== null}
+                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-colors ${
+                                feedback.rating === 'down'
+                                  ? 'border-red-400 bg-red-50'
+                                  : feedback.rating !== null
+                                  ? 'border-gray-200 opacity-40 cursor-not-allowed'
+                                  : 'border-gray-200 hover:border-red-300 hover:bg-red-50 cursor-pointer'
+                              }`}
+                              aria-label="Thumbs down"
+                            >
+                              👎
+                            </button>
+                          </div>
+                          {feedback.rating && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="space-y-2"
+                            >
+                              <p className="text-xs text-gray-500 text-center">
+                                {feedback.rating === 'up' ? 'Glad you liked it!' : 'Sorry — help us improve'}
+                              </p>
+                              <textarea
+                                value={feedback.text}
+                                onChange={e => setFeedback(prev => ({ ...prev, text: e.target.value }))}
+                                maxLength={1000}
+                                rows={2}
+                                placeholder={feedback.rating === 'up' ? 'Tell us what worked (optional)' : 'What went wrong? (optional)'}
+                                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 placeholder:text-gray-400"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={handleFeedbackSubmit}
+                                disabled={feedback.submitting}
+                                className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                              >
+                                {feedback.submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Submitting…</> : 'Submit'}
+                              </Button>
+                            </motion.div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
