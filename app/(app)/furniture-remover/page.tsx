@@ -383,8 +383,8 @@ export default function FurnitureRemoverPage() {
             const imgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imgData.data;
             for (let i = 0; i < data.length; i += 4) {
-              const alpha = data[i + 3];
-              if (alpha > 0) {
+              const redChannel = data[i]; // R channel of rgba(239, 68, 68, 0.4) brush
+              if (redChannel > 0) {
                 // Painted zone
                 data[i] = 255;   // R
                 data[i+1] = 255; // G

@@ -40,8 +40,9 @@ async function acquireMutex() {
  * Replaces the previous two-stage detect+erase pipeline.
  *
  * @param {object} opts
- * @param {string}   opts.comfyFilename   - Filename already saved in ComfyUI/input/
- * @param {string}   opts.inputImageUrl   - Public URL /uploads/...
+ * @param {string}   opts.comfyFilename      - Filename already saved in ComfyUI/input/
+ * @param {string}   [opts.maskComfyFilename] - User-painted B&W mask (manual mode). If set, skips RMBG.
+ * @param {string}   opts.inputImageUrl      - Public URL /uploads/...
  * @param {string}   opts.projectId
  * @param {string}   [opts.userId]
  * @param {function} [opts.onProgress]
@@ -49,6 +50,7 @@ async function acquireMutex() {
  */
 export async function runFurnitureRemover({
   comfyFilename,
+  maskComfyFilename = null,
   inputImageUrl,
   projectId,
   userId,
@@ -71,16 +73,36 @@ export async function runFurnitureRemover({
     });
     onProgress({ stage: 1, percent: 0 });
 
-    // Load + convert single-stage workflow
+    // Branch: manual (user mask) vs auto (RMBG)
+    let workflowFile, outputNodeId;
+
+    if (maskComfyFilename) {
+      // ── Manual mode: user-painted B&W mask → LamaRemoverIMG ───────────────
+      console.log(`🎨 Manual mask mode — skipping RMBG, using ${maskComfyFilename}`);
+      workflowFile = 'Stage_FurnitureErase_LaMa.json';
+      outputNodeId = '4';
+    } else {
+      // ── Auto mode: RMBG detects furniture → LamaRemoverIMG ────────────────
+      console.log('🤖 Auto RMBG mode');
+      workflowFile = 'Stage_FurnitureRemove_Combined.json';
+      outputNodeId = '8';
+    }
+
     const workflowJson = JSON.parse(
-      await readFile(path.join(WORKFLOWS_DIR, 'Stage_FurnitureRemove_Combined.json'), 'utf8')
+      await readFile(path.join(WORKFLOWS_DIR, workflowFile), 'utf8')
     );
     const apiGraph = JSON.parse(JSON.stringify(guiToApiGraph(workflowJson)));
 
-    // Node 1: LoadImage — inject the room photo
+    // Inject filenames into the API graph
     apiGraph['1'].inputs.image = comfyFilename;
-
-    // No other injections needed — RMBG and LaMa params are fixed in the workflow
+    if (maskComfyFilename) {
+      // Manual: node 2 = mask LoadImage
+      apiGraph['2'].inputs.image = maskComfyFilename;
+      console.log(`  node 1 = ${comfyFilename}`);
+      console.log(`  node 2 = ${maskComfyFilename}`);
+    } else {
+      console.log(`  node 1 = ${comfyFilename}`);
+    }
 
     const t0 = Date.now();
     const outputs = await comfyBridge._submitStageAndWait(apiGraph);
@@ -90,8 +112,8 @@ export async function runFurnitureRemover({
 
     await _copyOutputsToPublic(outputs);
 
-    // Node 8 is the SaveImage (result) in the combined workflow
-    const outputFilename = _firstImageFromNode(outputs, '8');
+    // Read output from the correct SaveImage node
+    const outputFilename = _firstImageFromNode(outputs, outputNodeId);
 
     if (!outputFilename) {
       const err = new Error('No output image was produced. Check VRAM and the workflow logs.');

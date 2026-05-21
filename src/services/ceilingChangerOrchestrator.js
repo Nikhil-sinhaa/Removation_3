@@ -146,7 +146,7 @@ export async function runCeilingChanger({
       console.log(`🏛️ Ceiling mask coverage: ${coveragePercent.toFixed(1)}% ` +
                   `(${whitePixels}/${totalPixels} px) — ${ceilingMaskFilename}`);
 
-      if (coveragePercent < 15) {
+      if (coveragePercent < 8) {
         const err = new Error(
           "Couldn't detect the ceiling in this image. Try a photo where " +
           "the ceiling is clearly visible."

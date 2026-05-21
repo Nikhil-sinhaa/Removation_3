@@ -55,6 +55,7 @@ export async function POST(request) {
   try {
     const formData = await safeParseFormData(request);
     const imageFile = formData.get('roomImage');
+    const maskFile  = formData.get('maskImage');   // optional — set in manual mode
 
     // ── Validation ────────────────────────────────────────────────────────────
     if (!imageFile) {
@@ -75,6 +76,20 @@ export async function POST(request) {
       comfyFilename = await saveImageForComfy(buffer, uploadFilename);
     }
 
+    // Save user-painted mask if present (manual mode)
+    let maskComfyFilename = null;
+    if (maskFile) {
+      const maskBytes  = await maskFile.arrayBuffer();
+      const maskBuffer = Buffer.from(maskBytes);
+      const maskUploadFilename = `furnituremask_${Date.now()}.png`;
+      try {
+        maskComfyFilename = await saveImageForComfy(maskBuffer, maskUploadFilename);
+        console.log(`💾 Manual mask saved: ${maskComfyFilename}`);
+      } catch (e) {
+        console.warn('⚠️  Failed to save mask image:', e.message);
+      }
+    }
+
     // ── Create Project document for status polling ────────────────────────────
     const project = await Project.create({
       name: 'Furniture Remover',
@@ -86,9 +101,10 @@ export async function POST(request) {
 
     const projId = String(project._id);
 
-    // ── Fire-and-forget single-stage pipeline ─────────────────────────────────
+    // ── Fire-and-forget pipeline ──────────────────────────────────────────────
     runFurnitureRemover({
       comfyFilename,
+      maskComfyFilename,   // null = auto RMBG mode; set = manual mask mode
       inputImageUrl,
       projectId: projId,
       userId: null,
