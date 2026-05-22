@@ -12,9 +12,27 @@ import { connectDB } from '../../../../../src/lib/mongodb.js';
 import Project from '../../../../../src/models/Project.js';
 import FurnitureRemoverRun from '../../../../../src/models/FurnitureRemoverRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
-import { runFurnitureRemover } from '../../../../../src/services/furnitureRemoverOrchestrator.js';
+import { runFurnitureRemover, runManualFurnitureErase } from '../../../../../src/services/furnitureRemoverOrchestrator.js';
 
 export const runtime = 'nodejs';
+
+// Helper to save uploaded file preview and upload it to ComfyUI input directory
+async function saveUploadAndComfy(file, isMask = false) {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+  const prefix = isMask ? 'furnituremask' : 'furnitureremover';
+  const uploadFilename = `${prefix}_${Date.now()}_${file.name || (isMask ? 'mask.png' : 'room.png')}`;
+
+  const inputImageUrl = await saveUploadPreview(buffer, uploadFilename);
+  const pngFilename = uploadFilename.replace(/\.[^.]+$/, '.png');
+  let comfyFilename;
+  try {
+    comfyFilename = await saveImageForComfy(buffer, pngFilename);
+  } catch {
+    comfyFilename = await saveImageForComfy(buffer, uploadFilename);
+  }
+  return { inputImageUrl, comfyFilename };
+}
 
 // ── Turbopack-safe multipart parser (shared pattern) ──
 async function safeParseFormData(request) {
@@ -54,41 +72,16 @@ export async function POST(request) {
 
   try {
     const formData = await safeParseFormData(request);
-    const imageFile = formData.get('roomImage');
-    const maskFile  = formData.get('maskImage');   // optional — set in manual mode
+    const roomImageFile = formData.get('roomImage');
+    const userMaskFile  = formData.get('userMask') || formData.get('maskImage');   // present if manual brush mode
 
     // ── Validation ────────────────────────────────────────────────────────────
-    if (!imageFile) {
+    if (!roomImageFile) {
       return NextResponse.json({ error: 'No room image provided' }, { status: 400 });
     }
 
-    // Save image for ComfyUI and as preview
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const uploadFilename = `furnitureremover_${Date.now()}_${imageFile.name || 'room.png'}`;
-
-    const inputImageUrl = await saveUploadPreview(buffer, uploadFilename);
-    const pngFilename = uploadFilename.replace(/\.[^.]+$/, '.png');
-    let comfyFilename;
-    try {
-      comfyFilename = await saveImageForComfy(buffer, pngFilename);
-    } catch {
-      comfyFilename = await saveImageForComfy(buffer, uploadFilename);
-    }
-
-    // Save user-painted mask if present (manual mode)
-    let maskComfyFilename = null;
-    if (maskFile) {
-      const maskBytes  = await maskFile.arrayBuffer();
-      const maskBuffer = Buffer.from(maskBytes);
-      const maskUploadFilename = `furnituremask_${Date.now()}.png`;
-      try {
-        maskComfyFilename = await saveImageForComfy(maskBuffer, maskUploadFilename);
-        console.log(`💾 Manual mask saved: ${maskComfyFilename}`);
-      } catch (e) {
-        console.warn('⚠️  Failed to save mask image:', e.message);
-      }
-    }
+    // Save room image
+    const { inputImageUrl, comfyFilename } = await saveUploadAndComfy(roomImageFile, false);
 
     // ── Create Project document for status polling ────────────────────────────
     const project = await Project.create({
@@ -101,20 +94,28 @@ export async function POST(request) {
 
     const projId = String(project._id);
 
-    // ── Fire-and-forget pipeline ──────────────────────────────────────────────
-    runFurnitureRemover({
-      comfyFilename,
-      maskComfyFilename,   // null = auto RMBG mode; set = manual mask mode
-      inputImageUrl,
-      projectId: projId,
-      userId: null,
-    }).catch(err => {
-      if (err.code === 'FURNITURE_NOT_DETECTED') {
-        console.warn(`⚠️  Furniture Remover: no output (project ${projId}): ${err.message}`);
-      } else {
-        console.error('Furniture Remover background error:', err.message);
-      }
-    });
+    // ── Branching into Manual vs Auto Mode ─────────────────────────────────────
+    if (userMaskFile) {
+      // MANUAL MODE — user painted a mask
+      console.log(`🎨 Manual mode starting for project ${projId}`);
+      const { comfyFilename: comfyMaskFilename } = await saveUploadAndComfy(userMaskFile, true);
+
+      runManualFurnitureErase({
+        comfyFilename,
+        comfyMaskFilename,
+        projectId: projId,
+      }).catch(err => console.error('Manual erase error:', err.message));
+
+    } else {
+      // AUTO MODE — full CLIPSeg + MiniMax + LaMa pipeline
+      console.log(`🤖 Auto mode starting for project ${projId}`);
+
+      runFurnitureRemover({
+        comfyFilename,
+        inputImageUrl,
+        projectId: projId,
+      }).catch(err => console.error('Auto remove error:', err.message));
+    }
 
     return NextResponse.json({ success: true, projectId: projId });
 

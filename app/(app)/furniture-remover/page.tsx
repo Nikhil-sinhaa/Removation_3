@@ -50,6 +50,72 @@ const PRESET_CATEGORIES = [
   "sofa", "chair", "table", "bed", "cabinet", "lamp", "rug", "plants", "clutter"
 ];
 
+// Helper to convert red-drawn display canvas mask to white-on-black PNG blob,
+// scaled up perfectly to the original image resolution to prevent alignment issues.
+async function exportMaskAsWhiteOnBlack(
+  sourceCanvas: HTMLCanvasElement,
+  targetWidth: number,
+  targetHeight: number
+): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    // 1. Create canvas matching high-res target (original image) resolution
+    const output = document.createElement("canvas");
+    output.width  = targetWidth;
+    output.height = targetHeight;
+    const ctx = output.getContext("2d");
+    if (!ctx) return reject(new Error("Could not get high-res canvas context"));
+
+    // 2. Fill background as pure black (non-mask)
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, output.width, output.height);
+
+    // 3. Draw display canvas content onto offscreen display-sized canvas to process raw pixel data
+    const temp = document.createElement("canvas");
+    temp.width = sourceCanvas.width;
+    temp.height = sourceCanvas.height;
+    const tempCtx = temp.getContext("2d");
+    if (!tempCtx) return reject(new Error("Could not get temp canvas context"));
+    tempCtx.drawImage(sourceCanvas, 0, 0);
+
+    const srcData = tempCtx.getImageData(0, 0, temp.width, temp.height);
+    const dstData = tempCtx.createImageData(temp.width, temp.height);
+
+    // 4. Convert transparent/red brush strokes to white, and empty space to opaque black
+    for (let i = 0; i < srcData.data.length; i += 4) {
+      const r = srcData.data[i];
+      const g = srcData.data[i + 1];
+      const b = srcData.data[i + 2];
+      const a = srcData.data[i + 3];
+
+      // Detect red brush strokes (rgba(239, 68, 68, 0.4) overlay)
+      const isRed = a > 10 && r > 100 && r > g * 1.2 && r > b * 1.2;
+      if (isRed) {
+        dstData.data[i]     = 255; // R
+        dstData.data[i + 1] = 255; // G
+        dstData.data[i + 2] = 255; // B
+        dstData.data[i + 3] = 255; // A (fully opaque white)
+      } else {
+        dstData.data[i]     = 0;
+        dstData.data[i + 1] = 0;
+        dstData.data[i + 2] = 0;
+        dstData.data[i + 3] = 255; // A (fully opaque black)
+      }
+    }
+    tempCtx.putImageData(dstData, 0, 0);
+
+    // 5. Upscale cleanly to target resolution and draw onto output canvas
+    ctx.drawImage(temp, 0, 0, targetWidth, targetHeight);
+
+    output.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error("Failed to create blob from canvas"));
+      }
+    }, "image/png");
+  });
+}
+
 export default function FurnitureRemoverPage() {
   // ── Mode & Core State ──────────────────────────────────────────────────────
   const [activeTab, setActiveTab]       = useState<'auto' | 'manual'>('auto');
@@ -344,73 +410,13 @@ export default function FurnitureRemoverPage() {
           throw new Error("Please paint/brush over the furniture area you wish to remove.");
         }
 
-        // Draw onto matching high-resolution canvas matching original size
-        const maskCanvas = document.createElement("canvas");
-        maskCanvas.width  = img.naturalWidth;
-        maskCanvas.height = img.naturalHeight;
-
-        const maskCtx = maskCanvas.getContext("2d");
-        if (!maskCtx) throw new Error("Could not initialize high-res canvas context.");
-
-        // Draw background black (non-mask)
-        maskCtx.fillStyle = "#000000";
-        maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
-
-        // Render painted lines scaled up as white (mask)
-        maskCtx.fillStyle = "#ffffff";
-        maskCtx.strokeStyle = "#ffffff";
-        maskCtx.lineCap = "round";
-        maskCtx.lineJoin = "round";
-
-        // Create virtual high-res scale draw function
-        const scaleX = img.naturalWidth / canvas.width;
-        const scaleY = img.naturalHeight / canvas.height;
-
-        // Replay history lines to full size
-        // Alternatively, load display base64 image and upscale it onto the offscreen canvas
-        await new Promise<void>((resolve, reject) => {
-          const displayMaskImg = new Image();
-          displayMaskImg.onload = () => {
-            // Draw overlay with white brush instead of semi-transparent red
-            // We can read context and paint transparent pixels to white and transparent red to white
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext("2d");
-            if (!tempCtx) return reject();
-            tempCtx.drawImage(displayMaskImg, 0, 0);
-
-            const imgData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imgData.data;
-            for (let i = 0; i < data.length; i += 4) {
-              const redChannel = data[i]; // R channel of rgba(239, 68, 68, 0.4) brush
-              if (redChannel > 0) {
-                // Painted zone
-                data[i] = 255;   // R
-                data[i+1] = 255; // G
-                data[i+2] = 255; // B
-                data[i+3] = 255; // A
-              } else {
-                data[i] = 0;
-                data[i+1] = 0;
-                data[i+2] = 0;
-                data[i+3] = 255;
-              }
-            }
-            tempCtx.putImageData(imgData, 0, 0);
-
-            // Draw upscaled onto final high-res canvas
-            maskCtx.drawImage(tempCanvas, 0, 0, maskCanvas.width, maskCanvas.height);
-            resolve();
-          };
-          displayMaskImg.onerror = reject;
-          displayMaskImg.src = canvas.toDataURL();
-        });
-
-        // Convert offscreen canvas to PNG blob
-        const maskBlob = await new Promise<Blob | null>(res => maskCanvas.toBlob(res, "image/png"));
-        if (!maskBlob) throw new Error("Failed to export painted canvas mask blob.");
-        formData.append("maskImage", maskBlob, "furniture_mask.png");
+        const maskBlob = await exportMaskAsWhiteOnBlack(
+          canvas,
+          img.naturalWidth,
+          img.naturalHeight
+        );
+        const maskFile = new File([maskBlob], "mask.png", { type: "image/png" });
+        formData.append("userMask", maskFile);
       }
 
       const res = await fetch("/api/ai/furniture-remover/generate", {

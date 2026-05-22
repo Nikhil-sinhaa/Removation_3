@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-05-20T19:47:45.856Z",
-  "node1_image": "roomchanger_1779306457658_contemporary-residential-living-room-background-wall-color-powder-blue-photo.png",
-  "node2_wallMask": "wall_mask_00074_.png",
-  "node4_positivePrompt": "(Antique White painted walls:1.4), (soft matte Antique White paint:1.3), Antique White wall color, smooth even Antique White finish, architectural Antique White interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed",
+  "timestamp": "2026-05-22T08:52:21.435Z",
+  "node1_image": "roomchanger_1779439918228_empty-with-blue-wall-room.png",
+  "node2_wallMask": "wall_mask_00075_.png",
+  "node4_positivePrompt": "(Sage Green painted walls:1.4), (soft matte Sage Green paint:1.3), Sage Green wall color, smooth even Sage Green finish, architectural Sage Green interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed",
   "node5_negativePrompt": "wrong color, color bleeding onto furniture, patterned wallpaper, textured wallpaper, dirty walls, stained walls, blurry, low quality, distorted, watermark, text, deformed objects, changed floor, changed furniture",
   "node8_sampler": {
-    "seed": 1599528528,
+    "seed": 1557431441,
     "steps": 40,
     "cfg": 9.5,
     "sampler_name": "dpmpp_2m",
@@ -14,15 +14,15 @@
   },
   "dimensions": {
     "roomImage": {
-      "filename": "roomchanger_1779306457658_contemporary-residential-living-room-background-wall-color-powder-blue-photo.png",
+      "filename": "roomchanger_1779439918228_empty-with-blue-wall-room.png",
       "width": 1024,
-      "height": 683,
+      "height": 461,
       "format": "png"
     },
     "wallMask": {
-      "filename": "wall_mask_00074_.png",
+      "filename": "wall_mask_00075_.png",
       "width": 1024,
-      "height": 683,
+      "height": 461,
       "format": "png"
     }
   },
@@ -30,13 +30,13 @@
     "1": {
       "class_type": "LoadImage",
       "inputs": {
-        "image": "roomchanger_1779306457658_contemporary-residential-living-room-background-wall-color-powder-blue-photo.png"
+        "image": "roomchanger_1779439918228_empty-with-blue-wall-room.png"
       }
     },
     "2": {
       "class_type": "LoadImage",
       "inputs": {
-        "image": "wall_mask_00074_.png"
+        "image": "wall_mask_00075_.png"
       }
     },
     "3": {
@@ -52,7 +52,7 @@
           "3",
           1
         ],
-        "text": "(Antique White painted walls:1.4), (soft matte Antique White paint:1.3), Antique White wall color, smooth even Antique White finish, architectural Antique White interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed"
+        "text": "(Sage Green painted walls:1.4), (soft matte Sage Green paint:1.3), Sage Green wall color, smooth even Sage Green finish, architectural Sage Green interior, professional interior photography, natural soft daylight, accurate color reproduction, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed"
       }
     },
     "5": {
@@ -97,7 +97,7 @@
           "16",
           0
         ],
-        "seed": 1599528528,
+        "seed": 1557431441,
         "steps": 40,
         "cfg": 9.5,
         "sampler_name": "dpmpp_2m",

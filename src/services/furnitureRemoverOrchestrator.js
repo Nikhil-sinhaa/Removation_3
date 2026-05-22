@@ -36,24 +36,21 @@ async function acquireMutex() {
 // ── runFurnitureRemover ───────────────────────────────────────────────────────
 
 /**
- * Single-stage furniture removal using RMBG + AILab_LamaRemover.
- * Replaces the previous two-stage detect+erase pipeline.
+ * Single-stage furniture removal using combined auto-detection workflow.
  *
  * @param {object} opts
- * @param {string}   opts.comfyFilename      - Filename already saved in ComfyUI/input/
- * @param {string}   [opts.maskComfyFilename] - User-painted B&W mask (manual mode). If set, skips RMBG.
- * @param {string}   opts.inputImageUrl      - Public URL /uploads/...
- * @param {string}   opts.projectId
- * @param {string}   [opts.userId]
+ * @param {string} opts.comfyFilename      - Filename already saved in ComfyUI/input/
+ * @param {string} opts.inputImageUrl      - Public URL /uploads/...
+ * @param {string} opts.projectId
+ * @param {string} [opts.userId]
  * @param {function} [opts.onProgress]
  * @returns {Promise<{ beforeUrl, afterUrl }>}
  */
 export async function runFurnitureRemover({
   comfyFilename,
-  maskComfyFilename = null,
   inputImageUrl,
   projectId,
-  userId,
+  userId = null,
   onProgress = () => {},
 }) {
   await acquireMutex();
@@ -73,36 +70,20 @@ export async function runFurnitureRemover({
     });
     onProgress({ stage: 1, percent: 0 });
 
-    // Branch: manual (user mask) vs auto (RMBG)
-    let workflowFile, outputNodeId;
+    // Load new combined workflow
+    const workflowPath = path.join(process.cwd(), 'src', 'workflows', 'combinedremovernew.json');
+    const guiGraph = JSON.parse(await readFile(workflowPath, 'utf8'));
+    const apiGraph = guiToApiGraph(guiGraph);
 
-    if (maskComfyFilename) {
-      // ── Manual mode: user-painted B&W mask → LamaRemoverIMG ───────────────
-      console.log(`🎨 Manual mask mode — skipping RMBG, using ${maskComfyFilename}`);
-      workflowFile = 'Stage_FurnitureErase_LaMa.json';
-      outputNodeId = '4';
-    } else {
-      // ── Auto mode: RMBG detects furniture → LamaRemoverIMG ────────────────
-      console.log('🤖 Auto RMBG mode');
-      workflowFile = 'Stage_FurnitureRemove_Combined.json';
-      outputNodeId = '8';
-    }
+    // Inject room image into LoadImage node (id: 54)
+    apiGraph['54'].inputs.image = comfyFilename;
 
-    const workflowJson = JSON.parse(
-      await readFile(path.join(WORKFLOWS_DIR, workflowFile), 'utf8')
-    );
-    const apiGraph = JSON.parse(JSON.stringify(guiToApiGraph(workflowJson)));
+    // Randomize MiniMax seed (id: 40)
+    apiGraph['40'].inputs.seed = Math.floor(Math.random() * 2 ** 32);
+    // Also set control_after_generate to fixed after randomizing
+    apiGraph['40'].inputs.control_after_generate = 'fixed';
 
-    // Inject filenames into the API graph
-    apiGraph['1'].inputs.image = comfyFilename;
-    if (maskComfyFilename) {
-      // Manual: node 2 = mask LoadImage
-      apiGraph['2'].inputs.image = maskComfyFilename;
-      console.log(`  node 1 = ${comfyFilename}`);
-      console.log(`  node 2 = ${maskComfyFilename}`);
-    } else {
-      console.log(`  node 1 = ${comfyFilename}`);
-    }
+    const outputNodeId = '61';
 
     const t0 = Date.now();
     const outputs = await comfyBridge._submitStageAndWait(apiGraph);
@@ -163,6 +144,124 @@ export async function runFurnitureRemover({
     });
 
     throw error;
+
+  } finally {
+    comfyBridge._ultraProRunning = false;
+    if (comfyBridge.queue?.length > 0) {
+      setTimeout(() => comfyBridge.processQueue(), 2000);
+    }
+  }
+}
+
+/**
+ * Manual erase — uses user-painted mask directly with LaMa only.
+ * Fast (~2-3s). No auto-detection.
+ *
+ * @param {object} opts
+ * @param {string} opts.comfyFilename      - Room image in ComfyUI/input/
+ * @param {string} opts.comfyMaskFilename  - User mask PNG in ComfyUI/input/
+ * @param {string} opts.projectId
+ * @param {string} [opts.userId]
+ * @param {function} [opts.onProgress]
+ */
+export async function runManualFurnitureErase({
+  comfyFilename,
+  comfyMaskFilename,
+  projectId,
+  userId = null,
+  onProgress = () => {},
+}) {
+  await acquireMutex();
+
+  let run;
+
+  try {
+    const project = await Project.findById(projectId).lean();
+    const inputImageUrl = project?.originalImage || '';
+
+    run = await FurnitureRemoverRun.create({
+      projectId,
+      userId,
+      inputImageUrl,
+    });
+
+    comfyBridge.notifyFrontend('comfy:furniture-remover:start', {
+      projectId,
+      runId: String(run._id),
+    });
+    onProgress({ stage: 1, percent: 0 });
+
+    // Use Stage_FurnitureErase_LaMa.json (4-node workflow)
+    const workflowPath = path.join(process.cwd(), 'src', 'workflows', 'Stage_FurnitureErase_LaMa.json');
+    const guiGraph = JSON.parse(await readFile(workflowPath, 'utf8'));
+    const apiGraph = guiToApiGraph(guiGraph);
+
+    // Inject filenames into LoadImage nodes
+    apiGraph['1'].inputs.image = comfyFilename;
+    apiGraph['2'].inputs.image = comfyMaskFilename;
+
+    const outputNodeId = '4';
+
+    const t0 = Date.now();
+    const outputs = await comfyBridge._submitStageAndWait(apiGraph);
+    const promptId = outputs._promptId || null;
+
+    console.log(`✅ Manual FurnitureRemover done in ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+
+    await _copyOutputsToPublic(outputs);
+
+    // Read output from the correct SaveImage node
+    const outputFilename = _firstImageFromNode(outputs, outputNodeId);
+
+    if (!outputFilename) {
+      const err = new Error('No output image was produced. Check VRAM and the workflow logs.');
+      err.code = 'FURNITURE_NOT_DETECTED';
+      throw err;
+    }
+
+    const outputImageUrl = `/renders/${_safe(outputFilename)}`;
+
+    await run.updateOne({
+      $set: { outputImageUrl },
+      ...(promptId && { $push: { comfyPromptIds: promptId } }),
+    });
+
+    await Project.findByIdAndUpdate(projectId, {
+      resultImage: outputImageUrl,
+      status: 'completed',
+      processingCompletedAt: new Date(),
+    });
+
+    onProgress({ stage: 1, percent: 100 });
+    comfyBridge.notifyFrontend('comfy:furniture-remover:done', {
+      projectId,
+      runId: String(run._id),
+      beforeUrl: inputImageUrl,
+      afterUrl: outputImageUrl,
+    });
+
+    return {
+      beforeUrl: inputImageUrl,
+      afterUrl: outputImageUrl,
+    };
+
+  } catch (error) {
+    console.error('❌ Manual FurnitureRemover failed:', error.message);
+
+    await Project.findByIdAndUpdate(projectId, {
+      status: 'failed',
+      errorMessage: `Furniture Remover error: ${error.message}`,
+      processingCompletedAt: new Date(),
+    }).catch(() => {});
+
+    comfyBridge.notifyFrontend('comfy:furniture-remover:error', {
+      projectId,
+      runId: run ? String(run._id) : null,
+      error: error.message,
+    });
+
+    throw error;
+
   } finally {
     comfyBridge._ultraProRunning = false;
     if (comfyBridge.queue?.length > 0) {

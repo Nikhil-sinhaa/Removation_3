@@ -23,9 +23,15 @@ const WIDGET_NAMES = {
   SAMLoader: ['model_name', 'device_mode'],
   CLIPSegDetectorProvider: ['text', 'blur', 'threshold', 'dilation_factor'],
   ImpactSimpleDetectorSEGS: [
-    'bbox_threshold', 'bbox_dilation', 'crop_factor', 'drop_size',
-    'sub_threshold', 'sub_dilation', 'sub_bbox_expansion',
-    'sam_mask_hint_threshold', 'post_dilation',
+    'bbox_threshold',
+    'bbox_dilation',
+    'crop_factor',
+    'drop_size',
+    'sub_threshold',
+    'sub_dilation',
+    'sub_bbox_expansion',
+    'sam_mask_hint_threshold',
+    'post_dilation',
   ],
   DepthAnythingV2Preprocessor: ['ckpt_name', 'resolution'],
   'SAMModelLoader (segment anything)': ['model_name'],
@@ -70,6 +76,8 @@ const WIDGET_NAMES = {
     'scale_by',
     'pad_color',
   ],
+  SegsToCombinedMask: [],
+  AILab_Preview: [],
 };
 
 /**
