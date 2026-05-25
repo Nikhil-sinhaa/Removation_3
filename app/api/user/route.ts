@@ -6,34 +6,18 @@ import User from "@/lib/db/models/User";
 export async function GET(req: Request) {
     try {
         const authUser = await getCurrentUser();
-  const userId = authUser?.id;
-        const user = await currentUser();
+        const userId = authUser?.id;
 
-        if (!userId || !user) {
+        if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
         await connectToDatabase();
 
-        const dbUser = await User.findOne({ clerkId: userId });
+        const dbUser = await User.findById(userId);
 
         if (!dbUser) {
-            // Sync user if not found
-            const newUser = await User.create({
-                clerkId: userId,
-                email: user.emailAddresses[0].emailAddress,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                imageUrl: user.imageUrl,
-                credits: 10,
-                subscription: {
-                    plan: 'free',
-                    status: 'active',
-                    credits: 10,
-                    creditsUsed: 0,
-                }
-            });
-            return NextResponse.json(newUser);
+            return new NextResponse("User not found", { status: 404 });
         }
 
         return NextResponse.json(dbUser);

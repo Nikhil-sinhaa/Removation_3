@@ -1,6 +1,9 @@
 // app/api/user/preferences/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { getCurrentUser } from "@/lib/auth/jwt";
+import { connectToDatabase } from "@/lib/db/mongodb";
+import User from "@/lib/db/models/User";
 
 const preferencesSchema = z.object({
     theme: z.enum(["light", "dark", "system"]).optional(),
@@ -22,12 +25,12 @@ const preferencesSchema = z.object({
 
 /**
  * PATCH /api/user/preferences
- * Persists user UI preferences to Clerk public metadata.
+ * Persists user UI preferences to MongoDB.
  */
 export async function PATCH(req: NextRequest) {
     try {
-        // TESTING: Bypass auth for development
-        const userId = "test-user-123";
+        const authUser = await getCurrentUser();
+        const userId = authUser?.id;
 
         if (!userId) {
             return new NextResponse("Unauthorized", { status: 401 });
@@ -36,15 +39,38 @@ export async function PATCH(req: NextRequest) {
         const body = await req.json();
         const data = preferencesSchema.parse(body);
 
-        // TESTING: Skip Clerk metadata update for now
-        // const client = await clerkClient();
-        // await client.users.updateUserMetadata(userId, {
-        //     publicMetadata: {
-        //         preferences: data,
-        //     },
-        // });
+        await connectToDatabase();
 
-        return NextResponse.json({ success: true, preferences: data });
+        const dbUser = await User.findById(userId);
+        if (!dbUser) {
+            return new NextResponse("User not found", { status: 404 });
+        }
+
+        // Initialize preferences if they don't exist
+        if (!dbUser.preferences) {
+            dbUser.preferences = {};
+        }
+
+        // Update preferences fields
+        if (data.theme) dbUser.preferences.theme = data.theme;
+        if (data.currency) dbUser.preferences.currency = data.currency;
+        if (data.measurementUnit) dbUser.preferences.measurementUnit = data.measurementUnit;
+        if (data.defaultStyle) dbUser.preferences.defaultStyle = data.defaultStyle;
+        if (data.autoVastu !== undefined) dbUser.preferences.autoVastu = data.autoVastu;
+        if (data.autoCost !== undefined) dbUser.preferences.autoCost = data.autoCost;
+        if (data.language) dbUser.preferences.language = data.language;
+
+        if (data.notifications) {
+            if (data.notifications.emailRenders !== undefined) dbUser.preferences.emailNotifications = data.notifications.emailRenders;
+            if (data.notifications.emailNewsletter !== undefined) dbUser.preferences.marketingEmails = data.notifications.emailNewsletter;
+            if (data.notifications.emailTips !== undefined) dbUser.preferences.showTips = data.notifications.emailTips;
+        }
+
+        // Save updated document to database
+        dbUser.markModified("preferences");
+        await dbUser.save();
+
+        return NextResponse.json({ success: true, preferences: dbUser.preferences });
     } catch (error: any) {
         console.error("[USER_PREFERENCES_PATCH]", error);
         if (error?.name === "ZodError") {

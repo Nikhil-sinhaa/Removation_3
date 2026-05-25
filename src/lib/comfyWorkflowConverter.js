@@ -78,6 +78,13 @@ const WIDGET_NAMES = {
   ],
   SegsToCombinedMask: [],
   AILab_Preview: [],
+  VAEDecode: [],
+  VAEEncode: [],
+  VAEEncodeForInpaint: ['grow_mask_by'],
+  MaskToImage: [],
+  ImageCompositeMasked: ['x', 'y', 'resize_source'],
+  ImageScaleBy: ['upscale_method', 'scale_by'],
+  ImageTransform: ['transform_type', 'angle', 'scale_x', 'scale_y', 'translate_x', 'translate_y'],
 };
 
 /**

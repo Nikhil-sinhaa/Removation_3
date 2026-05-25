@@ -29,6 +29,23 @@ const queryClient = new QueryClient({
 
 // REMOVE ALL Clerk appearance configuration
 
+import { useEffect } from 'react';
+import { useTheme as useNextTheme } from 'next-themes';
+import { useUserStore } from '@/stores/user-store';
+
+function PreferenceSync() {
+  const { setTheme, theme } = useNextTheme();
+  const dbTheme = useUserStore((state) => state.preferences?.theme);
+
+  useEffect(() => {
+    if (dbTheme && dbTheme !== theme) {
+      setTheme(dbTheme);
+    }
+  }, [dbTheme, theme, setTheme]);
+
+  return null;
+}
+
 interface ProvidersProps {
   children: React.ReactNode;
 }
@@ -45,6 +62,7 @@ export function Providers({ children }: ProvidersProps) {
         storageKey="removation-theme"
       >
         <TooltipProvider delayDuration={300}>
+          <PreferenceSync />
           {children}
 
           {/* Global Components */}

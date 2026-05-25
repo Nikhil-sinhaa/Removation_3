@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 import { issueJwt } from '@/lib/auth/jwt';
-import { generateOtp, hashOtp } from '@/lib/auth/otp';
-import { sendOtpEmail } from '@/lib/email';
 import bcrypt from 'bcryptjs';
 
 const MAX_FAILED_ATTEMPTS = 5;
@@ -50,23 +48,26 @@ export async function POST(req: Request) {
     // Reset failed attempts
     user.failedLoginAttempts = 0;
     user.lockoutUntil = undefined;
-
-    // Send OTP if 2FA/Verification required
-    const otp = generateOtp();
-    user.otp = await hashOtp(otp);
-    user.otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
     
     await user.save();
     
-    const emailSent = await sendOtpEmail(email, otp);
-    if (!emailSent) {
-      return NextResponse.json({ message: 'Error sending login verification email' }, { status: 500 });
-    }
+    const response = NextResponse.json({ 
+      message: 'Login successful', 
+      user: { 
+        id: user._id, 
+        email: user.email, 
+        firstName: user.firstName, 
+        lastName: user.lastName 
+      } 
+    }, { status: 200 });
 
-    return NextResponse.json({ message: 'OTP sent for verification', userId: user._id }, { status: 200 });
+    issueJwt(response, user);
+    
+    return response;
     
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+

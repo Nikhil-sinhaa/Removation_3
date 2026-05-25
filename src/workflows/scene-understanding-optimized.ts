@@ -239,7 +239,7 @@ function buildOptimizedWorkflowNodes(
     order: 5,
     mode: 0,
     inputs: [
-      {name: "grounding_dino_model", type: "GROUNDING_DINO_MODEL", link: 11],
+      {name: "grounding_dino_model", type: "GROUNDING_DINO_MODEL", link: 11},
       {name: "sam_model", type: "SAM_MODEL", link: 17},
       {name: "image", type: "IMAGE", link: 4}
     ],
@@ -455,7 +455,7 @@ function buildOptimizedWorkflowNodes(
 /**
  * Build optimized workflow links
  */
-function buildOptimizedWorkflowLinks(): number[][] {
+function buildOptimizedWorkflowLinks(): any[][] {
   const links = [
     // Input connections
     [1, 1, 0, 2, 0, "IMAGE"],           // LoadImage -> ImageScale

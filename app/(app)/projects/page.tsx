@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { BeforeAfterSlider } from '@/components/ui/before-after-slider';
+import { downloadMultiRoomZip } from '@/lib/ai/download-multi-room';
 import {
   Plus,
   Search,
@@ -159,7 +160,15 @@ interface Project {
   updatedAt: string;
   lastRenderAt: string | null;
   status: 'active' | 'processing' | 'completed';
+  processingType?: string;
   tags: string[];
+}
+
+function getProjectDetailUrl(project: Project): string {
+  if (project.processingType === 'multi-room-3d') {
+    return `/projects/${project.id}/multi-room-3d`;
+  }
+  return `/editor/${project.id}`;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -438,6 +447,8 @@ function ProjectCard({
   onToggleFavorite,
   onOpenMenu,
   onCompare,
+  downloadingProjectId,
+  onDownloadMultiRoom,
 }: {
   project: Project;
   index: number;
@@ -446,6 +457,8 @@ function ProjectCard({
   onToggleFavorite: (id: string) => void;
   onOpenMenu: (id: string, e: React.MouseEvent) => void;
   onCompare?: (project: Project) => void;
+  downloadingProjectId: string | null;
+  onDownloadMultiRoom: (id: string, name: string) => void;
 }) {
   const RoomIcon = roomTypeIcons[project.roomType] || Folder;
   const colors = roomTypeColors[project.roomType] || {
@@ -494,7 +507,7 @@ function ProjectCard({
       </div>
 
       {/* Thumbnail */}
-      <Link href={`/editor/${project.id}`}>
+      <Link href={getProjectDetailUrl(project)}>
         <div className="aspect-video relative overflow-hidden">
           {/* Thumbnail: real image or gradient fallback */}
           {project.thumbnail ? (
@@ -551,6 +564,19 @@ function ProjectCard({
             </div>
           )}
 
+          {/* Download Floating Button for Multi-Room-3D */}
+          {project.processingType === 'multi-room-3d' && project.status === 'completed' && (
+            <a
+              href={`/api/multi-room/download/${project.id}`}
+              download
+              onClick={(e) => e.stopPropagation()} // prevent card click
+              className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg transition-colors z-20 animate-fade-in"
+              title="Download all photos"
+            >
+              <Download size={16} />
+            </a>
+          )}
+
           {/* Badges Row */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
             {/* Vastu Score */}
@@ -584,7 +610,7 @@ function ProjectCard({
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-2">
           <div className="min-w-0 flex-1">
-            <Link href={`/editor/${project.id}`}>
+            <Link href={getProjectDetailUrl(project)}>
               <h3 className="font-semibold text-gray-900 truncate group-hover:text-violet-600 transition-colors">
                 {project.name}
               </h3>
@@ -627,9 +653,11 @@ function ProjectCard({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem>
-                  <Eye className="w-4 h-4 mr-2" />
-                  View Details
+                <DropdownMenuItem asChild>
+                  <Link href={getProjectDetailUrl(project)} className="flex items-center w-full cursor-pointer">
+                    <Eye className="w-4 h-4 mr-2" />
+                    View Details
+                  </Link>
                 </DropdownMenuItem>
                 {project.thumbnail && project.resultImage && onCompare && (
                   <DropdownMenuItem onClick={() => onCompare(project)}>
@@ -708,11 +736,15 @@ function ProjectListItem({
   isSelected,
   onSelect,
   onToggleFavorite,
+  downloadingProjectId,
+  onDownloadMultiRoom,
 }: {
   project: Project;
   isSelected: boolean;
   onSelect: (id: string) => void;
   onToggleFavorite: (id: string) => void;
+  downloadingProjectId: string | null;
+  onDownloadMultiRoom: (id: string, name: string) => void;
 }) {
   const RoomIcon = roomTypeIcons[project.roomType] || Folder;
   const colors = roomTypeColors[project.roomType] || {
@@ -753,7 +785,7 @@ function ProjectListItem({
       />
 
       {/* Thumbnail */}
-      <Link href={`/editor/${project.id}`}>
+      <Link href={getProjectDetailUrl(project)}>
         <div
           className={cn(
             'w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br',
@@ -766,7 +798,7 @@ function ProjectListItem({
 
       {/* Name & Style */}
       <div className="flex-1 min-w-0">
-        <Link href={`/editor/${project.id}`}>
+        <Link href={getProjectDetailUrl(project)}>
           <h3 className="font-semibold text-gray-900 truncate group-hover:text-violet-600 transition-colors">
             {project.name}
           </h3>
@@ -809,6 +841,18 @@ function ProjectListItem({
 
       {/* Actions */}
       <div className="flex items-center gap-1">
+        {project.processingType === 'multi-room-3d' && project.status === 'completed' && (
+          <a
+            href={`/api/multi-room/download/${project.id}`}
+            download
+            onClick={(e) => e.stopPropagation()} // prevent row click
+            className="p-2 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors z-10"
+            title="Download all photos"
+          >
+            <Download className="w-4 h-4" />
+          </a>
+        )}
+
         <button
           onClick={() => onToggleFavorite(project.id)}
           className={cn(
@@ -828,9 +872,11 @@ function ProjectListItem({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem>
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open
+            <DropdownMenuItem asChild>
+              <Link href={getProjectDetailUrl(project)} className="flex items-center w-full cursor-pointer">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Edit3 className="w-4 h-4 mr-2" />
@@ -870,6 +916,35 @@ export default function ProjectsPage() {
   const [tabFilter, setTabFilter] = useState<TabFilter>('all');
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
+  const [downloadingProjectId, setDownloadingProjectId] = useState<string | null>(null);
+
+  // Download Handler for Multi-Room
+  const handleDownloadMultiRoom = async (projectId: string, projectName: string) => {
+    setDownloadingProjectId(projectId);
+    toast({
+      title: 'Preparing Download',
+      description: `Gathering photos for "${projectName}"...`,
+    });
+    try {
+      const res = await fetch(`/api/multi-room/project-detail/${projectId}`);
+      if (!res.ok) throw new Error('Failed to fetch project details');
+      const data = await res.json();
+      await downloadMultiRoomZip(data.projectId, data.photos);
+      toast({
+        title: 'Success',
+        description: 'Photos downloaded successfully!',
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: 'Error',
+        description: 'Failed to download ZIP file.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloadingProjectId(null);
+    }
+  };
 
   // Modals
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
@@ -1400,6 +1475,8 @@ export default function ProjectsPage() {
                       onToggleFavorite={toggleFavorite}
                       onOpenMenu={() => {}}
                       onCompare={(p) => setCompareProject(p)}
+                      downloadingProjectId={downloadingProjectId}
+                      onDownloadMultiRoom={handleDownloadMultiRoom}
                     />
                   ))}
                 </AnimatePresence>
@@ -1451,6 +1528,8 @@ export default function ProjectsPage() {
                       isSelected={selectedProjects.has(project.id)}
                       onSelect={toggleSelection}
                       onToggleFavorite={toggleFavorite}
+                      downloadingProjectId={downloadingProjectId}
+                      onDownloadMultiRoom={handleDownloadMultiRoom}
                     />
                   ))}
                 </AnimatePresence>

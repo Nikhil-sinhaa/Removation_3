@@ -26,7 +26,7 @@ check_port() {
 wait_for_service() {
     local port=$1
     local name=$2
-    local max_attempts=30
+    local max_attempts=90
     local attempt=1
     
     echo -e "${BLUE}Waiting for $name to be ready...${NC}"

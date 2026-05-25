@@ -12,12 +12,13 @@
  */
 
 import { readFile } from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { buildCeilingPrompt, CEILING_NEGATIVE_PROMPT } from '../config/ceilingChangerPrompts.js';
 import CeilingChangerRun from '../models/CeilingChangerRun.js';
 import Project from '../models/Project.js';
-import comfyBridge from './comfyBridge.js';
+import comfyBridge, { transferComfyFile, ensureInputFile } from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
 const COMFY_OUTPUT = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
@@ -89,6 +90,12 @@ export async function runCeilingChanger({
     );
     const stage1 = JSON.parse(JSON.stringify(guiToApiGraph(stage1Json))); // deep clone
 
+    // Ensure the original room image is uploaded to cloud if running in cloud mode
+    await ensureInputFile({
+      filename: comfyFilename,
+      logPrefix: '[CeilingChanger] Original Image'
+    });
+
     // Inject uploaded image into node 1
     stage1['1'].inputs.image = comfyFilename;
 
@@ -100,18 +107,38 @@ export async function runCeilingChanger({
     // Copy outputs to ComfyUI/input so Stage 2 can load them
     await comfyBridge._copyOutputsToInput(outputs1);
 
-    // Extract filenames keyed by prefix
-    const stage1Filenames = comfyBridge._extractFilenames(outputs1, 'stage1/');
-    const ceilingMaskFilename = stage1Filenames.ceiling_mask;
-
-    console.log(`✅ Stage 1 done (${((Date.now() - t0) / 1000).toFixed(1)}s):`, stage1Filenames);
-
-    if (!ceilingMaskFilename) {
+    // Extract stage 1 output details from Node 7 (SaveImage)
+    const node7Output = outputs1['7'];
+    const stage1Image = node7Output?.images?.[0];
+    if (!stage1Image) {
       throw new Error('Stage 1 did not produce a ceiling_mask output');
     }
+    const stage1Filename = stage1Image.filename || stage1Image.name;
+    const stage1Subfolder = stage1Image.subfolder || 'ceiling-detect';
+
+    const ceilingMaskFilename = `ceiling_mask_${projectId}.png`;
+    await transferComfyFile({
+      sourceFilename: stage1Filename,
+      sourceSubfolder: stage1Subfolder,
+      destFilename: ceilingMaskFilename,
+      logPrefix: '[CeilingChanger] Mask Handoff',
+    });
+
+    console.log(`✅ Stage 1 done (${((Date.now() - t0) / 1000).toFixed(1)}s):`, ceilingMaskFilename);
 
     // Copy Stage 1 outputs to public/renders
     await _copyOutputsToPublic(outputs1);
+
+    // Copy the downloaded/copied original output to the predictable filename in public/renders
+    const fsMod = await import('fs/promises');
+    const originalLocalPath = path.join(PUBLIC_RENDERS, _safe(stage1Filename));
+    const persistentLocalPath = path.join(PUBLIC_RENDERS, _safe(ceilingMaskFilename));
+    try {
+      await fsMod.copyFile(originalLocalPath, persistentLocalPath);
+      console.log(`[CeilingChanger] Persistent mask saved to public/renders: ${ceilingMaskFilename}`);
+    } catch (e) {
+      console.warn(`[CeilingChanger] Could not copy mask to public/renders:`, e.message);
+    }
 
     const ceilingMaskUrl = `/renders/${_safe(ceilingMaskFilename)}`;
 
@@ -128,8 +155,7 @@ export async function runCeilingChanger({
     // user-facing error instead of running Stage 2 on a broken mask.
     try {
       const sharp = (await import('sharp')).default;
-      const comfyInput = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
-      const ceilingMaskPath = path.join(comfyInput, ceilingMaskFilename);
+      const ceilingMaskPath = path.join(PUBLIC_RENDERS, _safe(ceilingMaskFilename));
 
       const { data, info } = await sharp(ceilingMaskPath)
         .greyscale()
@@ -278,12 +304,15 @@ function _safe(filename) {
 
 /**
  * Copy all output images from ComfyUI/output/ to public/renders/.
- * Searches output subdirectories and flat output root.
+ * Downloads from cloud if in cloud mode, otherwise copies local files.
  */
 async function _copyOutputsToPublic(outputs) {
-  const { mkdir, copyFile, access } = await import('fs/promises');
+  const { mkdir, writeFile, copyFile, access } = await import('fs/promises');
   const pathMod = await import('path');
   await mkdir(PUBLIC_RENDERS, { recursive: true });
+
+  const { resolveComfyURL } = await import('@/lib/ai/gpu-mode-router');
+  const { url: comfyUrl, source } = await resolveComfyURL();
 
   for (const nodeId in outputs) {
     const images = outputs[nodeId]?.images;
@@ -292,17 +321,33 @@ async function _copyOutputsToPublic(outputs) {
       const filename = img.filename || img.name;
       if (!filename) continue;
       const subfolder = img.subfolder || '';
-      const candidates = [
-        pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
-        pathMod.default.join(COMFY_OUTPUT, filename),
-      ];
-      for (const src of candidates) {
+
+      if (source === 'cloud') {
         try {
-          await access(src);
-          const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
-          await copyFile(src, dest);
-          break;
-        } catch { /* try next */ }
+          const viewUrl = `${comfyUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=output`;
+          const res = await fetch(viewUrl, { headers: { 'bypass-tunnel-reminder': 'true' } });
+          if (res.ok) {
+            const buf = Buffer.from(await res.arrayBuffer());
+            const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
+            await writeFile(dest, buf);
+            console.log(`[CeilingChanger] Downloaded cloud stage output to public: ${filename}`);
+          }
+        } catch (e) {
+          console.warn(`[CeilingChanger] Could not download cloud stage output:`, e.message);
+        }
+      } else {
+        const candidates = [
+          pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
+          pathMod.default.join(COMFY_OUTPUT, filename),
+        ];
+        for (const src of candidates) {
+          try {
+            await access(src);
+            const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
+            await copyFile(src, dest);
+            break;
+          } catch { /* try next */ }
+        }
       }
     }
   }

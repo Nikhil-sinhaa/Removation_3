@@ -79,17 +79,17 @@ function VerifyOTPForm() {
   };
 
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-100 dark:border-gray-700 p-8">
+    <>
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Check your email</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
+        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Check your email</h2>
+        <p className="text-gray-600 dark:text-gray-400">
           We&apos;ve sent a 6-digit verification code to <span className="font-semibold text-gray-900 dark:text-white">{email}</span>
         </p>
       </div>
 
       <form onSubmit={handleVerify} className="space-y-6">
         {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200">{error}</div>}
-        {success && <div className="p-3 bg-green-50 text-green-600 text-sm rounded-lg border border-green-200">{success}</div>}
+        {success && <div className="p-3 bg-green-50 text-green-700 text-sm rounded-lg border border-green-200">{success}</div>}
 
         <div className="space-y-2">
           <Label htmlFor="otp">Verification Code</Label>
@@ -105,7 +105,7 @@ function VerifyOTPForm() {
           />
         </div>
 
-        <Button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white h-12 text-lg" disabled={isLoading || otp.length < 6}>
+        <Button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white h-12 text-lg animate-pulse-subtle" disabled={isLoading || otp.length < 6}>
           {isLoading ? 'Verifying...' : 'Verify Email'}
         </Button>
       </form>
@@ -120,16 +120,14 @@ function VerifyOTPForm() {
           {isResending ? 'Sending...' : 'Click to resend'}
         </button>
       </p>
-    </div>
+    </>
   );
 }
 
 export default function VerifyOTPPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-      <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
-        <VerifyOTPForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
+      <VerifyOTPForm />
+    </Suspense>
   );
 }

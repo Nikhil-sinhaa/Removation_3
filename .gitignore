@@ -77,8 +77,33 @@ pids
 .claude/
 .mcp.json
 
-# Graphify cache (auto-generated)
-graphify-out/cache/
+# Graphify cache and output (auto-generated)
+graphify-out/
+project_report/
+project_report.zip
+
+# Python virtual environments
+.venv-graphify/
+.venv/
+venv/
+
+# Clone repos and standalone tools
+tripoclonesr/
+standalone/
+
+# Scratch / debug scripts
+scratch/
+
+# Temp files
+tmp/
+
+# Canvas / artifact outputs
+canvas/
+artifacts/
+
+# rclone binary and config (binary + may contain credentials)
+scripts/rclone
+scripts/rclone.conf
 
 # Dev scratch files
 claude_prompt.txt

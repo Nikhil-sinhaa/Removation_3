@@ -24,8 +24,8 @@ const publicPaths = [
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // TESTING: Skip auth check in development
-  if (process.env.NODE_ENV === 'development') {
+  // Only bypass if explicitly set — not just because we're in dev
+  if (process.env.SKIP_AUTH === 'true') {
     return NextResponse.next();
   }
 

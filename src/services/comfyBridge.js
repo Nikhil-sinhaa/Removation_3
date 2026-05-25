@@ -3,7 +3,7 @@
  * Connects to ComfyUI WebSocket and manages FIFO queue processing
  *
  * GPU Mode Switch: Reads from lib/ai/gpu-mode-router to decide whether
- * to talk to local ComfyUI (127.0.0.1:8188) or a remote Cloud instance.
+ * to talk to local ComfyUI or a remote Cloud instance.
  */
 
 import WebSocket from 'ws';
@@ -11,7 +11,11 @@ import { Server } from 'socket.io';
 import http from 'http';
 import Project from '../models/Project.js';
 
-// ── GPU Mode helpers (lazy import — @/ alias works in Turbopack + CJS) ──────────
+const LOCAL_HOST = '127.0.0.1';
+const LOCAL_PORT = '8188';
+const LOCAL_URL  = `http://${LOCAL_HOST}:${LOCAL_PORT}`;
+
+// ── GPU Mode helpers (lazy import — use @/ alias for TS module resolution) ──────────
 let _gpuRouter = null;
 async function getGPURouter() {
   if (!_gpuRouter) {
@@ -19,6 +23,26 @@ async function getGPURouter() {
   }
   return _gpuRouter;
 }
+
+// ── Startup: apply persisted settings from MongoDB to runtime ─────────────────
+// Runs once on first load so the in-process router reflects the DB state.
+async function _syncSettingsFromDB() {
+  try {
+    const { getSetting } = await import('../lib/appSettings.js');
+    const [mode, cloudUrl] = await Promise.all([
+      getSetting('COMFYUI_MODE'),
+      getSetting('COMFYUI_CLOUD_URL'),
+    ]);
+    if (mode && mode !== 'local') {
+      const r = await getGPURouter();
+      r.setGPUModeRuntime(mode, cloudUrl ? { comfyUrl: cloudUrl } : undefined);
+      console.log(`[GPU] Restored persisted mode from DB: ${mode}${cloudUrl ? ` (${cloudUrl})` : ''}`);
+    }
+  } catch (e) {
+    console.warn('[GPU] Could not sync settings from DB (non-fatal):', e.message);
+  }
+}
+_syncSettingsFromDB();
 
 class ComfyBridgeService {
   constructor() {
@@ -40,13 +64,20 @@ class ComfyBridgeService {
     this.init();
   }
 
-  /** Active ComfyUI HTTP base URL (respects GPU mode switch). */
+  /**
+   * Active ComfyUI HTTP base URL (respects GPU mode switch).
+   * Uses resolveComfyURL() which performs a 3-second health-check in AUTO mode
+   * to route to cloud if available, otherwise falls back to local.
+   */
   async getComfyRestUrl() {
     try {
       const r = await getGPURouter();
-      return r.getActiveComfyBaseUrl();
-    } catch {
-      return process.env.COMFY_URL || 'http://127.0.0.1:8188';
+      const { url, source } = await r.resolveComfyURL();
+      console.log(`[GPU] Routing to ${source}: ${url}`);
+      return url;
+    } catch (err) {
+      console.warn(`[GPU] resolveComfyURL failed, using local fallback: ${err.message}`);
+      return process.env.COMFY_URL || LOCAL_URL;
     }
   }
 
@@ -56,7 +87,7 @@ class ComfyBridgeService {
       const r = await getGPURouter();
       return r.getActiveComfyWsUrl();
     } catch {
-      return process.env.COMFY_WS_URL || 'ws://127.0.0.1:8188/ws?clientId=removation_main';
+      return process.env.COMFY_WS_URL || `ws://${LOCAL_HOST}:${LOCAL_PORT}/ws?clientId=removation_main`;
     }
   }
 
@@ -72,7 +103,7 @@ class ComfyBridgeService {
 
   /** Lazy cloud-comfy adapter (only loaded when needed). */
   async _cloudAdapter() {
-    return import('@/lib/ai/cloud-comfy-adapter');
+    return import('../../lib/ai/cloud-comfy-adapter');
   }
 
   async init() {
@@ -661,9 +692,14 @@ class ComfyBridgeService {
    */
   static async checkHealth() {
     try {
-      const response = await fetch(`${process.env.COMFY_URL || 'http://127.0.0.1:8188'}/system_stats`, {
-        timeout: 5000
+      // Use the router's local URL (health check always targets local)
+      const localUrl = process.env.COMFY_URL || LOCAL_URL;
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 5000);
+      const response = await fetch(`${localUrl}/system_stats`, {
+        signal: controller.signal
       });
+      clearTimeout(timer);
       
       if (response.ok) {
         return { status: 'online', data: await response.json() };
@@ -1485,6 +1521,158 @@ class ComfyBridgeService {
     }
     return result;
   }
+}
+
+/**
+ * Transfers a file from ComfyUI output to ComfyUI input.
+ */
+export async function transferComfyFile({
+  sourceFilename,
+  sourceSubfolder,
+  destFilename,
+  logPrefix = '[ComfyTransfer]',
+}) {
+  const r = await getGPURouter();
+  const { url: comfyUrl, source } = await r.resolveComfyURL();
+  const fs = await import('fs');
+  const path = await import('path');
+
+  if (source === 'local') {
+    const COMFYUI_OUTPUT = process.env.COMFYUI_OUTPUT_DIR
+      || process.env.COMFY_OUTPUT
+      || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+    const COMFYUI_INPUT = process.env.COMFYUI_INPUT_DIR
+      || process.env.COMFY_INPUT
+      || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+
+    const srcPath = path.join(
+      COMFYUI_OUTPUT, sourceSubfolder, sourceFilename
+    );
+    const dstPath = path.join(COMFYUI_INPUT, destFilename);
+
+    if (!fs.existsSync(srcPath)) {
+      throw new Error(
+        `${logPrefix} Source file not found: ${srcPath}`
+      );
+    }
+
+    fs.copyFileSync(srcPath, dstPath);
+    console.log(`${logPrefix} Local copy: ${srcPath} → ${dstPath}`);
+
+  } else {
+    // Cloud: download from ComfyUI /view then upload to /upload/image
+    const viewUrl = `${comfyUrl}/view`
+      + `?filename=${encodeURIComponent(sourceFilename)}`
+      + `&subfolder=${encodeURIComponent(sourceSubfolder)}`
+      + `&type=output`;
+
+    console.log(`${logPrefix} Downloading from cloud: ${viewUrl}`);
+
+    const downloadRes = await fetch(viewUrl, {
+      headers: { 'bypass-tunnel-reminder': 'true' },
+    });
+
+    if (!downloadRes.ok) {
+      throw new Error(
+        `${logPrefix} Download failed (${downloadRes.status}): ${viewUrl}`
+      );
+    }
+
+    const arrayBuffer = await downloadRes.arrayBuffer();
+    const imageBuffer = Buffer.from(arrayBuffer);
+    console.log(
+      `${logPrefix} Downloaded ${imageBuffer.length} bytes`
+    );
+
+    // Upload to ComfyUI input using Node's global FormData/Blob
+    const formData = new FormData();
+    const blob = new Blob([imageBuffer], { type: 'image/png' });
+    formData.append('image', blob, destFilename);
+    formData.append('type', 'input');
+    formData.append('overwrite', 'true');
+
+    const uploadRes = await fetch(`${comfyUrl}/upload/image`, {
+      method: 'POST',
+      headers: { 'bypass-tunnel-reminder': 'true' },
+      body: formData,
+    });
+
+    if (!uploadRes.ok) {
+      const errText = await uploadRes.text();
+      throw new Error(
+        `${logPrefix} Upload failed (${uploadRes.status}): ${errText}`
+      );
+    }
+
+    console.log(`${logPrefix} Cloud transfer complete: ${destFilename}`);
+  }
+
+  return destFilename;
+}
+
+/**
+ * Ensures that an input file exists in the active ComfyUI input directory.
+ * If running on cloud, and the file is only available locally on the server
+ * (e.g. in public/uploads/ or ComfyUI/input/), it uploads the file to the cloud instance.
+ */
+export async function ensureInputFile({
+  filename,
+  logPrefix = '[ComfyEnsureInput]',
+}) {
+  const r = await getGPURouter();
+  const { url: comfyUrl, source } = await r.resolveComfyURL();
+  const fs = await import('fs');
+  const path = await import('path');
+
+  if (source === 'local') {
+    console.log(`${logPrefix} Local mode: assuming file exists in local input folder: ${filename}`);
+    return filename;
+  }
+
+  // Cloud mode: check if it needs to be uploaded
+  const localPaths = [
+    path.join(process.cwd(), 'public', 'uploads', filename),
+    path.join(process.cwd(), 'public', 'uploads', filename.replace(/\.png$/, '.jpg')),
+    path.join(process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input', filename),
+  ];
+
+  let foundPath = null;
+  for (const p of localPaths) {
+    if (fs.existsSync(p)) {
+      foundPath = p;
+      break;
+    }
+  }
+
+  if (!foundPath) {
+    console.warn(`${logPrefix} Local source not found for ${filename}, cannot ensure upload to cloud`);
+    return filename;
+  }
+
+  console.log(`${logPrefix} Uploading local source ${foundPath} to cloud ComfyUI`);
+  const imageBuffer = fs.readFileSync(foundPath);
+  
+  const formData = new FormData();
+  const blob = new Blob([imageBuffer], { type: 'image/png' });
+  formData.append('image', blob, filename);
+  formData.append('type', 'input');
+  formData.append('overwrite', 'true');
+
+  const uploadRes = await fetch(`${comfyUrl}/upload/image`, {
+    method: 'POST',
+    headers: { 'bypass-tunnel-reminder': 'true' },
+    body: formData,
+  });
+
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text();
+    throw new Error(
+      `${logPrefix} Upload failed (${uploadRes.status}): ${errText}`
+    );
+  }
+
+  console.log(`${logPrefix} Cloud upload complete for: ${filename}`);
+  return filename;
 }
 
 // Singleton instance — use Node.js `global` to survive Turbopack/HMR re-imports.

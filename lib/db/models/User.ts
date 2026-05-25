@@ -55,6 +55,20 @@ export interface IUser {
         createdAt: Date;
     }>;
 
+    // Preferences
+    preferences?: {
+        theme?: 'light' | 'dark' | 'system';
+        currency?: 'INR' | 'USD';
+        measurementUnit?: 'sqft' | 'sqm';
+        defaultStyle?: string;
+        autoVastu?: boolean;
+        autoCost?: boolean;
+        language?: 'en' | 'hi';
+        emailNotifications?: boolean;
+        marketingEmails?: boolean;
+        showTips?: boolean;
+    };
+
     // Metadata
     lastRenderAt?: Date;
     createdAt: Date;
@@ -112,13 +126,29 @@ const UserSchema = new Schema<IUser>({
         createdAt: { type: Date, default: Date.now },
     }],
 
+    preferences: {
+        theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+        currency: { type: String, enum: ['INR', 'USD'], default: 'INR' },
+        measurementUnit: { type: String, enum: ['sqft', 'sqm'], default: 'sqft' },
+        defaultStyle: { type: String, default: 'modern' },
+        autoVastu: { type: Boolean, default: true },
+        autoCost: { type: Boolean, default: true },
+        language: { type: String, enum: ['en', 'hi'], default: 'en' },
+        emailNotifications: { type: Boolean, default: true },
+        marketingEmails: { type: Boolean, default: false },
+        showTips: { type: Boolean, default: true },
+    },
+
     lastRenderAt: Date,
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });
 
-// Update the updatedAt timestamp on save
+// Update the clerkId and updatedAt timestamp on save
 UserSchema.pre('save', function (next) {
+    if (!this.clerkId && this._id) {
+        this.clerkId = this._id.toString();
+    }
     this.updatedAt = new Date();
     next();
 });

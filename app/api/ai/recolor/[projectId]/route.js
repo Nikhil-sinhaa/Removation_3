@@ -3,7 +3,7 @@
  * Handles GET /api/ai/recolor/[projectId] requests
  */
 
-import { getRecolorProject, getRecolorStatus, deleteRecolorProject } from '../../../../src/controllers/colorChange.js';
+import { getRecolorProject, getRecolorStatus, deleteRecolorProject } from '@/src/controllers/colorChange.js';
 
 export async function GET(request, { params }) {
   return await getRecolorProject({ params });

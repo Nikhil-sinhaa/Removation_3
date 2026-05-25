@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import * as React from "react"
 import Link from "next/link"
@@ -20,11 +20,10 @@ import {
   Calculator,
   Compass,
   LogOut,
-  Crown
+  Crown,
+  FileBox,
+  Cpu
 } from "lucide-react"
-import { useAuth } from '@/hooks/useAuth';
-// TODO: Remnant Clerk imports: useUser, useClerk
-
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Logo } from "@/components/shared/Logo"
@@ -33,6 +32,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { CreditBalance } from "@/components/payment/CreditBalance"
+import { useAuth } from '@/hooks/useAuth'
 
 interface SidebarProps {
   className?: string
@@ -80,6 +80,12 @@ const toolsNavItems = [
     href: "/editor?mode=fill",
     icon: Home,
   },
+  {
+    title: "Floor Plan",
+    href: "/floor-plan",
+    icon: FileBox,
+    badge: "3D",
+  },
 ]
 
 const libraryNavItems = [
@@ -102,6 +108,12 @@ const bottomNavItems = [
     icon: Settings,
   },
   {
+    title: "GPU Settings",
+    href: "/settings/gpu",
+    icon: Cpu,
+    badge: "GPU",
+  },
+  {
     title: "Billing",
     href: "/pricing",
     icon: CreditCard,
@@ -115,8 +127,7 @@ const bottomNavItems = [
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
-  const { user } = useUser()
-  const { signOut } = useClerk()
+  const { user, logout } = useAuth()
   const [isCollapsed, setIsCollapsed] = React.useState(false)
 
   const NavItem = ({
@@ -257,7 +268,7 @@ export function Sidebar({ className }: SidebarProps) {
 
         {/* Sign Out */}
         <button
-          onClick={() => signOut()}
+          onClick={() => logout()}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
             "text-muted-foreground hover:bg-destructive/10 hover:text-destructive",
@@ -274,13 +285,13 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="border-t p-3">
           <div className="flex items-center gap-3 rounded-lg bg-muted/50 p-3">
             <img
-              src={user.imageUrl}
-              alt={user.fullName || "User"}
+              src={user.imageUrl || "https://api.dicebear.com/7.x/avataaars/svg?seed=test"}
+              alt={`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || "User"}
               className="h-10 w-10 rounded-full"
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">
-                {user.fullName || user.emailAddresses[0]?.emailAddress}
+                {`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email}
               </p>
               <p className="text-xs text-muted-foreground flex items-center gap-1">
                 <Crown className="h-3 w-3 text-amber-500" />

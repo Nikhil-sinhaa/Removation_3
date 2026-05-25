@@ -1,0 +1,167 @@
+{
+  "last_node_id": 28,
+  "last_link_id": 14,
+  "nodes": [
+    {
+      "id": 20,
+      "type": "LoadImage",
+      "pos": [60, 80],
+      "size": [280, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [1]},
+        {"name": "MASK",  "type": "MASK",  "links": null}
+      ],
+      "widgets_values": ["composite_placeholder.png", "image"]
+    },
+    {
+      "id": 21,
+      "type": "LoadImage",
+      "pos": [60, 280],
+      "size": [280, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [2]},
+        {"name": "MASK",  "type": "MASK",  "links": null}
+      ],
+      "widgets_values": ["mask_placeholder.png", "image"]
+    },
+    {
+      "id": 29,
+      "type": "ImageToMask",
+      "pos": [400, 280],
+      "size": [220, 80],
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 2}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "links": [13]}
+      ],
+      "widgets_values": ["red"]
+    },
+    {
+      "id": 23,
+      "type": "CheckpointLoaderSimple",
+      "pos": [60, 460],
+      "size": [300, 100],
+      "inputs": [],
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [5]},
+        {"name": "CLIP",  "type": "CLIP",  "links": [6, 7]},
+        {"name": "VAE",   "type": "VAE",   "links": [8]}
+      ],
+      "widgets_values": ["sd_xl_base_1.0.safetensors"]
+    },
+    {
+      "id": 22,
+      "type": "VAEEncodeForInpaint",
+      "pos": [680, 100],
+      "size": [300, 100],
+      "inputs": [
+        {"name": "pixels", "type": "IMAGE", "link": 1},
+        {"name": "vae",    "type": "VAE",   "link": 8},
+        {"name": "mask",   "type": "MASK",  "link": 13}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [9]}
+      ],
+      "widgets_values": [6]
+    },
+    {
+      "id": 24,
+      "type": "CLIPTextEncode",
+      "pos": [420, 460],
+      "size": [380, 120],
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 6}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [10]}
+      ],
+      "widgets_values": ["furniture placed in room, natural lighting, realistic shadows, photorealistic, 8k, interior photography, perfect lighting, seamlessly integrated, professional interior design photo"]
+    },
+    {
+      "id": 25,
+      "type": "CLIPTextEncode",
+      "pos": [420, 620],
+      "size": [380, 120],
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 7}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [11]}
+      ],
+      "widgets_values": ["cartoon, illustration, painting, unrealistic, floating, no shadow, bad lighting, overexposed, underexposed, blurry, low quality, artifacts, cutout, pasted"]
+    },
+    {
+      "id": 26,
+      "type": "KSampler",
+      "pos": [860, 260],
+      "size": [340, 260],
+      "inputs": [
+        {"name": "model",            "type": "MODEL",       "link": 5},
+        {"name": "positive",         "type": "CONDITIONING","link": 10},
+        {"name": "negative",         "type": "CONDITIONING","link": 11},
+        {"name": "latent_image",     "type": "LATENT",      "link": 9}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [12]}
+      ],
+      "widgets_values": [
+        156680208700286,
+        "randomize",
+        25,
+        7.0,
+        "dpmpp_2m",
+        "karras",
+        0.75
+      ]
+    },
+    {
+      "id": 27,
+      "type": "VAEDecode",
+      "pos": [1260, 300],
+      "size": [240, 80],
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 12},
+        {"name": "vae",     "type": "VAE",    "link": 14}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [3]}
+      ],
+      "widgets_values": []
+    },
+    {
+      "id": 28,
+      "type": "SaveImage",
+      "pos": [1560, 300],
+      "size": [260, 100],
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 3}
+      ],
+      "outputs": [],
+      "widgets_values": ["furniture-blend/result"]
+    }
+  ],
+  "links": [
+    [1,  20, 0, 22, 0, "IMAGE"],
+    [2,  21, 0, 29, 0, "IMAGE"],
+    [3,  27, 0, 28, 0, "IMAGE"],
+    [5,  23, 0, 26, 0, "MODEL"],
+    [6,  23, 1, 24, 0, "CLIP"],
+    [7,  23, 1, 25, 0, "CLIP"],
+    [8,  23, 2, 22, 1, "VAE"],
+    [9,  22, 0, 26, 3, "LATENT"],
+    [10, 24, 0, 26, 1, "CONDITIONING"],
+    [11, 25, 0, 26, 2, "CONDITIONING"],
+    [12, 26, 0, 27, 0, "LATENT"],
+    [13, 29, 0, 22, 2, "MASK"],
+    [14, 23, 2, 27, 1, "VAE"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "info": "Stage 3 SDXL Inpainting for furniture blend. Node IDs: compositeLoadImage=20, maskLoadImage=21, ImageToMask=29, CheckpointLoader=23, VAEEncodeForInpaint=22, positiveCLIP=24, negativeCLIP=25, KSampler=26, VAEDecode=27, SaveImage=28. Orchestrator injects: node20.image=composite, node21.image=mask, node24.text=positive_prompt, node25.text=negative_prompt, node26.seed=random."
+  },
+  "version": 0.4
+}

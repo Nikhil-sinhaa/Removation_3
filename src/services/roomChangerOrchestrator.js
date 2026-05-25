@@ -17,7 +17,7 @@ import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { buildWallPrompt, NEGATIVE_PROMPT } from '../config/roomChangerPrompts.js';
 import RoomChangerRun from '../models/RoomChangerRun.js';
 import Project from '../models/Project.js';
-import comfyBridge from './comfyBridge.js';
+import comfyBridge, { ensureInputFile, transferComfyFile } from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
 const COMFY_OUTPUT = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
@@ -109,6 +109,12 @@ export async function runRoomChanger({
       );
       const stage1 = JSON.parse(JSON.stringify(guiToApiGraph(stage1Json))); // deep clone
 
+      // Ensure the original room image is uploaded to cloud if running in cloud mode
+      await ensureInputFile({
+        filename: finalComfyFilename,
+        logPrefix: '[RoomChanger] Original Image'
+      });
+
       // Inject uploaded image into node 1
       stage1['1'].inputs.image = finalComfyFilename;
 
@@ -188,8 +194,7 @@ export async function runRoomChanger({
     // clear user-facing error instead of running Stage 3 on a broken mask.
     try {
       const sharp = (await import('sharp')).default;
-      const comfyInput = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
-      const wallMaskPath = path.join(comfyInput, wallMaskFilename);
+      const wallMaskPath = path.join(PUBLIC_RENDERS, _safe(wallMaskFilename));
 
       const { data, info } = await sharp(wallMaskPath)
         .greyscale()
@@ -358,12 +363,15 @@ function _safe(filename) {
 
 /**
  * Copy all output images from ComfyUI/output/ to public/renders/.
- * Searches output subdirectories and flat output root.
+ * Downloads from cloud if in cloud mode, otherwise copies local files.
  */
 async function _copyOutputsToPublic(outputs) {
-  const { mkdir, copyFile, access } = await import('fs/promises');
+  const { mkdir, writeFile, copyFile, access } = await import('fs/promises');
   const pathMod = await import('path');
   await mkdir(PUBLIC_RENDERS, { recursive: true });
+
+  const { resolveComfyURL } = await import('@/lib/ai/gpu-mode-router');
+  const { url: comfyUrl, source } = await resolveComfyURL();
 
   for (const nodeId in outputs) {
     const images = outputs[nodeId]?.images;
@@ -372,17 +380,33 @@ async function _copyOutputsToPublic(outputs) {
       const filename = img.filename || img.name;
       if (!filename) continue;
       const subfolder = img.subfolder || '';
-      const candidates = [
-        pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
-        pathMod.default.join(COMFY_OUTPUT, filename),
-      ];
-      for (const src of candidates) {
+
+      if (source === 'cloud') {
         try {
-          await access(src);
-          const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
-          await copyFile(src, dest);
-          break;
-        } catch { /* try next */ }
+          const viewUrl = `${comfyUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=output`;
+          const res = await fetch(viewUrl, { headers: { 'bypass-tunnel-reminder': 'true' } });
+          if (res.ok) {
+            const buf = Buffer.from(await res.arrayBuffer());
+            const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
+            await writeFile(dest, buf);
+            console.log(`[RoomChanger] Downloaded cloud stage output to public: ${filename}`);
+          }
+        } catch (e) {
+          console.warn(`[RoomChanger] Could not download cloud stage output:`, e.message);
+        }
+      } else {
+        const candidates = [
+          pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
+          pathMod.default.join(COMFY_OUTPUT, filename),
+        ];
+        for (const src of candidates) {
+          try {
+            await access(src);
+            const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
+            await copyFile(src, dest);
+            break;
+          } catch { /* try next */ }
+        }
       }
     }
   }

@@ -36,6 +36,10 @@ import {
   Crown,
   IndianRupee,
   DollarSign,
+  Cpu,
+  Cloud,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +90,8 @@ import { toast } from "@/components/ui/use-toast";
 import { useLanguage } from "@/hooks/useLanguage";
 import { CreditBalance } from "@/components/payment/CreditBalance";
 import { cn } from "@/lib/utils";
+import { useTheme as useNextTheme } from "next-themes";
+import { useUserStore } from "@/stores/user-store";
 
 // Settings sections for navigation
 const settingsSections = [
@@ -97,6 +103,7 @@ const settingsSections = [
   { id: "security", label: "Security", labelHi: "सुरक्षा", icon: Shield },
   { id: "api", label: "API Access", labelHi: "API एक्सेस", icon: Key },
   { id: "data", label: "Data & Privacy", labelHi: "डेटा और गोपनीयता", icon: Download },
+  { id: "gpu", label: "GPU Mode", labelHi: "GPU मोड", icon: Cpu },
 ];
 
 // Theme options
@@ -144,10 +151,191 @@ const plans = [
   },
 ];
 
+// ── GPU Mode Panel ─────────────────────────────────────────────────────────────
+type GPUModeType = 'local' | 'auto' | 'cloud';
+interface GPUStatus {
+  mode: GPUModeType;
+  cloudUrl: string;
+  localAlive: boolean;
+  cloudAlive: boolean;
+  activeSource: 'local' | 'cloud' | 'none';
+  statusMessage: string;
+  localVramFree?: number;
+  cloudVramFree?: number;
+}
+
+function GPUModePanel() {
+  const [mode, setMode]         = useState<GPUModeType>('local');
+  const [cloudUrl, setCloudUrl] = useState('');
+  const [gpuStatus, setGPUStatus] = useState<GPUStatus | null>(null);
+  const [saving, setSaving]     = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [saved, setSaved]       = useState(false);
+
+  const checkStatus = async () => {
+    setChecking(true);
+    try {
+      const res  = await fetch('/api/settings/gpu/status');
+      const data = await res.json();
+      setGPUStatus(data);
+    } finally { setChecking(false); }
+  };
+
+  useEffect(() => {
+    fetch('/api/settings/gpu')
+      .then(r => r.json())
+      .then(d => { setMode(d.mode || 'local'); setCloudUrl(d.cloudUrl || ''); });
+    checkStatus();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await fetch('/api/settings/gpu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode, cloudUrl }),
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+      checkStatus();
+    } finally { setSaving(false); }
+  };
+
+  const needsUrl = mode === 'cloud' || mode === 'auto';
+  const bannerColor =
+    gpuStatus?.activeSource === 'cloud' ? 'text-green-400 bg-green-900/20 border-green-700' :
+    gpuStatus?.activeSource === 'local' ? 'text-yellow-400 bg-yellow-900/20 border-yellow-700' :
+    'text-red-400 bg-red-900/20 border-red-700';
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Cpu className="h-5 w-5" />
+          GPU Mode
+        </CardTitle>
+        <CardDescription>
+          Switch between your local RTX 4060 and Google Colab T4 cloud GPU.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+
+        {/* Live status banner */}
+        <div className={`rounded-lg px-4 py-3 border text-sm flex items-center justify-between ${bannerColor}`}>
+          <span>{checking ? '⏳ Checking…' : (gpuStatus?.statusMessage ?? 'Unknown')}</span>
+          <button onClick={checkStatus} disabled={checking} className="opacity-70 hover:opacity-100 ml-2">
+            <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
+          </button>
+        </div>
+
+        {/* Mode selector — 3 cards */}
+        <div>
+          <p className="text-sm font-medium mb-3">Select GPU Source</p>
+          <div className="grid grid-cols-3 gap-3">
+            {([
+              { id: 'local', label: 'Local Only', sub: 'RTX 4060 8GB', icon: Cpu, color: 'purple' },
+              { id: 'auto',  label: 'Auto',       sub: 'Cloud → Local', icon: Cloud, color: 'blue' },
+              { id: 'cloud', label: 'Cloud Only', sub: 'Colab T4 15GB', icon: Cloud, color: 'blue' },
+            ] as const).map(opt => {
+              const active = mode === opt.id;
+              const border = active
+                ? (opt.color === 'purple' ? 'border-purple-500 bg-purple-950/30' : 'border-blue-500 bg-blue-950/30')
+                : 'border-border hover:border-muted-foreground';
+              const stat = opt.id === 'local' ? gpuStatus?.localAlive
+                         : opt.id === 'cloud' ? gpuStatus?.cloudAlive : undefined;
+              return (
+                <button key={opt.id} onClick={() => setMode(opt.id)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${border}`}>
+                  <opt.icon size={18} className={active ? (opt.color === 'purple' ? 'text-purple-400' : 'text-blue-400') : 'text-muted-foreground'} />
+                  <div className="text-sm font-semibold mt-1">{opt.label}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{opt.sub}</div>
+                  {stat !== undefined && (
+                    <div className={`text-xs mt-1 flex items-center gap-1 ${stat ? 'text-green-400' : 'text-red-400'}`}>
+                      {stat ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                      {stat ? 'Online' : 'Offline'}
+                      {opt.id === 'local' && stat && gpuStatus?.localVramFree ? ` · ${gpuStatus.localVramFree}MB` : ''}
+                      {opt.id === 'cloud' && stat && gpuStatus?.cloudVramFree ? ` · ${gpuStatus.cloudVramFree}MB` : ''}
+                    </div>
+                  )}
+                  {opt.id === 'auto' && <div className="text-xs text-blue-400 mt-1">✨ Recommended</div>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Cloud URL input */}
+        {needsUrl && (
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Colab Tunnel URL</label>
+            <input
+              type="text"
+              value={cloudUrl}
+              onChange={e => setCloudUrl(e.target.value)}
+              placeholder="https://abc123.trycloudflare.com"
+              className="w-full rounded-lg border bg-muted px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <p className="text-xs text-muted-foreground">
+              Run your Colab notebook → copy the Cloudflare tunnel URL → paste here.
+            </p>
+            {mode === 'cloud' && cloudUrl && !gpuStatus?.cloudAlive && (
+              <p className="text-xs text-red-400 flex items-center gap-1 mt-1">
+                <XCircle size={12} /> Cloud URL not reachable — start your Colab notebook first.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Description */}
+        <div className="rounded-lg bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
+          {mode === 'local' && 'All AI uses your RTX 4060 (8GB VRAM). ComfyUI must be running at localhost:8188.'}
+          {mode === 'auto'  && 'Every job pings Colab first (3s timeout). Cloud if alive → 15GB. Otherwise → RTX 4060 automatically.'}
+          {mode === 'cloud' && 'All AI uses Google Colab T4 (15GB VRAM). Jobs fail if Colab is not running. Start your notebook first.'}
+        </div>
+
+        {/* Connection details */}
+        {gpuStatus && (
+          <div className="space-y-2 rounded-lg border p-4 text-sm">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Connection Details</p>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Local GPU</span>
+              <span className={gpuStatus.localAlive ? 'text-green-400' : 'text-red-400'}>
+                {gpuStatus.localAlive ? `🟢 localhost:8188${gpuStatus.localVramFree ? ` · ${gpuStatus.localVramFree}MB` : ''}` : '🔴 Not running'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Cloud GPU</span>
+              <span className={gpuStatus.cloudAlive ? 'text-green-400' : gpuStatus.cloudUrl ? 'text-red-400' : 'text-muted-foreground'}>
+                {gpuStatus.cloudAlive ? `🟢 Colab T4${gpuStatus.cloudVramFree ? ` · ${gpuStatus.cloudVramFree}MB` : ''}` : gpuStatus.cloudUrl ? '🔴 Not reachable' : '⚪ No URL set'}
+              </span>
+            </div>
+            <div className="flex justify-between border-t pt-2 mt-1">
+              <span className="text-muted-foreground">Currently routing to</span>
+              <span className="font-medium">
+                {gpuStatus.activeSource === 'cloud' ? '☁️ Cloud (T4 15GB)' : gpuStatus.activeSource === 'local' ? '💻 Local (RTX 4060)' : '❌ None'}
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+      <CardFooter>
+        <Button onClick={handleSave} disabled={saving}>
+          {saving  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</> :
+           saved   ? <><Check className="h-4 w-4 mr-2" /> Saved!</> :
+                     <><Check className="h-4 w-4 mr-2" /> Save GPU Settings</>}
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
-  const { user, isLoading: isLoaded, logout } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const isSignedIn = !!user;
   const { language, setLanguage, t } = useLanguage();
+  const { theme: nextTheme, setTheme: setNextTheme } = useNextTheme();
+  const userStore = useUserStore();
 
   const [activeSection, setActiveSection] = useState("profile");
   const [sectionRenderKey, setSectionRenderKey] = useState(0);
@@ -184,6 +372,28 @@ export default function SettingsPage() {
     pushUpdates: false,
     smsAlerts: false,
   });
+
+  // Load preferences from Zustand store on mount
+  useEffect(() => {
+    if (userStore.preferences) {
+      setPreferences({
+        theme: userStore.preferences.theme || "system",
+        currency: userStore.preferences.currency || "INR",
+        measurementUnit: "sqft",
+        defaultStyle: userStore.preferences.defaultStyle || "modern",
+        autoVastu: userStore.preferences.vastuEnabled ?? true,
+        autoCost: userStore.preferences.costPanelEnabled ?? true,
+      });
+      setNotifications({
+        emailRenders: userStore.preferences.emailNotifications ?? true,
+        emailNewsletter: userStore.preferences.marketingEmails ?? false,
+        emailTips: userStore.preferences.showTips ?? true,
+        pushRenders: true,
+        pushUpdates: false,
+        smsAlerts: false,
+      });
+    }
+  }, [userStore.preferences]);
 
   // Subscription info — loaded from /api/user
   const [subscription, setSubscription] = useState({
@@ -233,7 +443,7 @@ export default function SettingsPage() {
       .catch(() => {
         // Non-fatal — keep default state
       });
-  }, [user]);
+  }, [user?.id]); // ✅ stable string ID — avoids infinite re-renders from object reference inequality
 
   // Handle profile update
   const handleProfileUpdate = async () => {
@@ -273,6 +483,18 @@ export default function SettingsPage() {
   const handlePreferencesSave = async () => {
     setIsSaving(true);
     try {
+      // Update Zustand user store
+      userStore.setPreferences({
+        theme: preferences.theme as any,
+        currency: preferences.currency as any,
+        defaultStyle: preferences.defaultStyle,
+        vastuEnabled: preferences.autoVastu,
+        costPanelEnabled: preferences.autoCost,
+        emailNotifications: notifications.emailRenders,
+        marketingEmails: notifications.emailNewsletter,
+        showTips: notifications.emailTips,
+      });
+
       const response = await fetch("/api/user/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -379,7 +601,7 @@ export default function SettingsPage() {
     });
   };
 
-  if (!isLoaded) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -824,9 +1046,10 @@ export default function SettingsPage() {
                         </p>
                         <RadioGroup
                           value={preferences.theme}
-                          onValueChange={(value) =>
-                            setPreferences({ ...preferences, theme: value })
-                          }
+                          onValueChange={(value) => {
+                            setPreferences({ ...preferences, theme: value });
+                            setNextTheme(value);
+                          }}
                           className="grid grid-cols-3 gap-4"
                         >
                           {themeOptions.map((theme) => (
@@ -1438,6 +1661,10 @@ export default function SettingsPage() {
                     </Card>
                   </div>
                 )}
+
+                {/* GPU Mode Section */}
+                {activeSection === "gpu" && <GPUModePanel />}
+
               </motion.div>
             </AnimatePresence>
           </main>

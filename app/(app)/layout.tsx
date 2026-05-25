@@ -34,6 +34,8 @@ import {
   Eraser,
   Paintbrush,
   Layers,
+  Box,
+  Sofa,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -56,6 +58,8 @@ const sidebarNavigation = [
       { name: 'Furniture Remover', href: '/furniture-remover', icon: Eraser },
       { name: 'Room Changer', href: '/room-changer', icon: Paintbrush },
       { name: 'Ceiling Changer', href: '/ceiling-changer', icon: Layers },
+      { name: '3D Room View', href: '/room-3d', icon: Box },
+      { name: 'Furniture Placement', href: '/furniture-placement', icon: Sofa },
     ],
   },
   {
@@ -84,6 +88,17 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading: isLoaded } = useAuth();
+  const plan = user?.plan || user?.subscription?.plan || 'free';
+  const MAX_CREDITS = plan === 'pro' ? 500 : plan === 'team' ? 1000 : 50;
+  const usedPercent = Math.min(
+    100,
+    Math.round(((MAX_CREDITS - (user?.credits ?? 0)) / MAX_CREDITS) * 100)
+  );
+  const remainingPercent = Math.min(
+    100,
+    Math.max(0, Math.round(((user?.credits ?? 0) / MAX_CREDITS) * 100))
+  );
+
   const isSignedIn = !!user;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -270,18 +285,27 @@ export default function AppLayout({ children }: AppLayoutProps) {
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-sm font-medium text-white/80">Credits Left</span>
-                  <span className="text-lg font-bold">5</span>
+                  <span className="text-lg font-bold">{user?.credits !== undefined ? user.credits : 0} credits left</span>
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-2 mb-3">
-                  <div className="bg-white rounded-full h-2" style={{ width: '50%' }} />
+                  <div 
+                    className="bg-white rounded-full h-2 transition-all duration-500" 
+                    style={{ width: `${remainingPercent}%` }} 
+                  />
                 </div>
-                <Link
-                  href="/pricing"
-                  className="block w-full py-2 px-4 bg-white text-violet-600 rounded-lg font-semibold text-sm text-center hover:bg-white/90 transition-colors"
-                >
-                  <Zap className="w-4 h-4 inline mr-2" />
-                  Upgrade to Pro
-                </Link>
+                {user?.subscription?.plan !== 'pro' ? (
+                  <Link
+                    href="/pricing"
+                    className="block w-full py-2 px-4 bg-white text-violet-600 rounded-lg font-semibold text-sm text-center hover:bg-white/90 transition-colors"
+                  >
+                    <Zap className="w-4 h-4 inline mr-2 animate-pulse" />
+                    Upgrade to Pro
+                  </Link>
+                ) : (
+                  <div className="text-xs text-center text-white/80 font-medium py-1">
+                    ✨ Active Pro Subscription
+                  </div>
+                )}
               </motion.div>
             ) : (
               <motion.button
@@ -289,7 +313,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="w-full p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center"
+                onClick={() => router.push('/pricing')}
+                className="w-full p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center hover:shadow-md transition-shadow"
+                title={`${user?.credits !== undefined ? user.credits : 0} Credits Left`}
               >
                 <Zap className="w-5 h-5 text-white" />
               </motion.button>
@@ -439,7 +465,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
                       <p className="text-sm font-medium text-gray-900">
                         {user.firstName || 'User'}
                       </p>
-                      <p className="text-xs text-gray-500">Free Plan</p>
+                      <p className="text-xs text-gray-500">
+                        <span>
+                          {plan === 'pro' ? 'Pro Plan' :
+                           plan === 'team' ? 'Team Plan' :
+                           'Free Plan'}
+                        </span>
+                      </p>
                     </div>
                     <UserMenu />
                   </>

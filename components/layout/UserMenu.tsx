@@ -16,6 +16,7 @@ import {
   Monitor
 } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useUserStore } from "@/stores/user-store"
 
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -41,6 +42,21 @@ interface UserMenuProps {
 export function UserMenu({ className }: UserMenuProps) {
   const { user, isLoading, logout } = useAuth()
   const { theme, setTheme } = useTheme()
+
+  const handleThemeChange = async (newTheme: string) => {
+    setTheme(newTheme);
+    const store = useUserStore.getState();
+    store.setTheme(newTheme as any);
+    try {
+      await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme: newTheme }),
+      });
+    } catch (err) {
+      console.error("Failed to save theme preference:", err);
+    }
+  };
 
   if (isLoading || !user) {
     return (
@@ -142,17 +158,17 @@ export function UserMenu({ className }: UserMenuProps) {
             <span>Theme</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent>
-            <DropdownMenuItem onClick={() => setTheme("light")}>
+            <DropdownMenuItem onClick={() => handleThemeChange("light")}>
               <Sun className="mr-2 h-4 w-4" />
               <span>Light</span>
               {theme === "light" && <span className="ml-auto">✓</span>}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("dark")}>
+            <DropdownMenuItem onClick={() => handleThemeChange("dark")}>
               <Moon className="mr-2 h-4 w-4" />
               <span>Dark</span>
               {theme === "dark" && <span className="ml-auto">✓</span>}
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme("system")}>
+            <DropdownMenuItem onClick={() => handleThemeChange("system")}>
               <Monitor className="mr-2 h-4 w-4" />
               <span>System</span>
               {theme === "system" && <span className="ml-auto">✓</span>}
