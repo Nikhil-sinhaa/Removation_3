@@ -3,7 +3,7 @@
  * Handles GET /api/ai/remove-object/[projectId] requests
  */
 
-import { getRemovalProject, getRemovalStatus, deleteRemovalProject } from '../../../../src/controllers/removal.js';
+import { getRemovalProject, getRemovalStatus, deleteRemovalProject } from '../../../../../src/controllers/removal.js';
 
 export async function GET(request, { params }) {
   return await getRemovalProject({ params });

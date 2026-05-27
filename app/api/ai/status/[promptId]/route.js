@@ -3,7 +3,7 @@
  * Handles GET /api/ai/status/[promptId] requests
  */
 
-import Project from '../../../../../../src/models/Project.js';
+import Project from '../../../../../src/models/Project.js';
 
 export async function GET(request, { params }) {
   try {
