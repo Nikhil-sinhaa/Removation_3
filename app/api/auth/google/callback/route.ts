@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
+import jwt from 'jsonwebtoken';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 import { issueJwt } from '@/lib/auth/jwt';
+import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export async function GET(req: Request) {
   try {
@@ -9,7 +14,7 @@ export async function GET(req: Request) {
     const code = searchParams.get('code');
 
     if (!code) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-in?error=No+authorization+code+provided`);
+      return NextResponse.redirect(`${APP_URL}/sign-in?error=No+authorization+code+provided`);
     }
 
     // Exchange authorization code for access token
@@ -18,7 +23,7 @@ export async function GET(req: Request) {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID || '',
       client_secret: process.env.GOOGLE_CLIENT_SECRET || '',
-      redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/auth/google/callback`,
+      redirect_uri: `${APP_URL}/api/auth/google/callback`,
       grant_type: 'authorization_code',
     };
 
@@ -33,7 +38,7 @@ export async function GET(req: Request) {
     if (!tokenRes.ok) {
       const errText = await tokenRes.text();
       console.error('Failed to exchange code for tokens:', errText);
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-in?error=Failed+to+authenticate+with+Google`);
+      return NextResponse.redirect(`${APP_URL}/sign-in?error=Failed+to+authenticate+with+Google`);
     }
 
     const { access_token } = await tokenRes.json();
@@ -48,14 +53,14 @@ export async function GET(req: Request) {
 
     if (!userinfoRes.ok) {
       console.error('Failed to fetch userinfo from Google');
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-in?error=Failed+to+retrieve+Google+profile`);
+      return NextResponse.redirect(`${APP_URL}/sign-in?error=Failed+to+retrieve+Google+profile`);
     }
 
     const profile = await userinfoRes.json();
     const { email, given_name, family_name, picture } = profile;
 
     if (!email) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-in?error=Google+profile+did+not+contain+an+email`);
+      return NextResponse.redirect(`${APP_URL}/sign-in?error=Google+profile+did+not+contain+an+email`);
     }
 
     await connectToDatabase();
@@ -105,12 +110,34 @@ export async function GET(req: Request) {
       }
     }
 
-    const response = NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/`);
+    // Determine where to redirect after login.
+    // Default to '/' — the original hardcoded behavior.
+    let postLoginRedirect = '/';
+
+    // Read and verify the OAuth state JWT (CSRF + redirect).
+    // On any failure: still log the user in, just send them to '/'.
+    // On success: re-validate the redirect path as defense in depth.
+    const stateParam = searchParams.get('state');
+    if (stateParam) {
+      try {
+        const payload = jwt.verify(stateParam, JWT_SECRET) as { csrf?: string; redirect?: unknown };
+        // Re-validate redirect with isSafeRedirectPath (defense in depth).
+        if (isSafeRedirectPath(payload.redirect)) {
+          postLoginRedirect = payload.redirect;
+        }
+      } catch (err) {
+        // Verification failed (bad signature, expired, malformed) — fall back to '/'.
+        // This is expected for tampered or timed-out state params.
+        console.warn('OAuth state verification failed, redirecting to /:', (err as Error).message);
+      }
+    }
+
+    const response = NextResponse.redirect(`${APP_URL}${postLoginRedirect}`);
     issueJwt(response, user);
 
     return response;
   } catch (error) {
     console.error('Google OAuth callback error:', error);
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/sign-in?error=Internal+server+error`);
+    return NextResponse.redirect(`${APP_URL}/sign-in?error=Internal+server+error`);
   }
 }

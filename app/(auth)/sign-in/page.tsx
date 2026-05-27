@@ -1,18 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
 
-export default function SignInPage() {
+function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Read and validate the redirect_url on the client side (defense in depth)
+  const rawRedirect = searchParams?.get('redirect_url');
+  const redirectUrl = isSafeRedirectPath(rawRedirect) ? rawRedirect : '/';
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +38,8 @@ export default function SignInPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/');
+        // Redirect to the validated redirectUrl on success
+        router.push(redirectUrl);
         router.refresh();
       } else {
         setError(data.message || 'Invalid credentials');
@@ -55,7 +63,14 @@ export default function SignInPage() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => window.location.href = '/api/auth/google'}
+          onClick={() => {
+            const baseUrl = '/api/auth/google';
+            // If redirectUrl is set and is not the home page, forward it to the initiate route
+            const targetUrl = redirectUrl && redirectUrl !== '/' 
+              ? `${baseUrl}?redirect_url=${encodeURIComponent(redirectUrl)}` 
+              : baseUrl;
+            window.location.href = targetUrl;
+          }}
           className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg py-2.5 shadow-sm transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] font-medium"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -141,3 +156,10 @@ export default function SignInPage() {
   );
 }
 
+export default function SignInPage() {
+  return (
+    <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
+      <SignInForm />
+    </Suspense>
+  );
+}
