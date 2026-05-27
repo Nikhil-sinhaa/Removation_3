@@ -17,11 +17,14 @@ import {
   Clock,
   Edit3,
   Globe,
+  Image as ImageIcon,
   MapPin,
   Phone,
   Sparkles,
   Star,
   Loader2,
+  X,
+  Maximize2,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -118,6 +121,67 @@ function StatusBanner({ designer }: { designer: DesignerProfile }) {
         </p>
       </div>
     </motion.div>
+  );
+}
+
+// ── Portfolio grid with lightbox ───────────────────────────────────────────────
+function PortfolioGrid({ images }: { images: string[] }) {
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+
+  return (
+    <div className="px-6 pb-6 border-t border-gray-100 pt-6">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-gray-400 uppercase tracking-wider">Portfolio</p>
+        <span className="text-xs text-gray-400 tabular-nums">{images.length}/10 images</span>
+      </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        {images.map((url, i) => (
+          <button
+            key={i}
+            type="button"
+            id={`portfolio-thumb-${i}`}
+            className="group relative aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200 cursor-zoom-in"
+            onClick={() => setLightboxUrl(url)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={url}
+              alt={`Portfolio ${i + 1}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              onError={e => {
+                (e.target as HTMLImageElement).parentElement!.style.display = 'none';
+              }}
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200" />
+            <Maximize2 className="absolute bottom-1.5 right-1.5 w-3 h-3 text-white drop-shadow opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          </button>
+        ))}
+      </div>
+
+      {/* Lightbox */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors"
+            onClick={() => setLightboxUrl(null)}
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightboxUrl}
+            alt="Portfolio image"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -290,23 +354,7 @@ export default function DesignerDashboardPage() {
 
         {/* Portfolio */}
         {profile.portfolioImages.length > 0 && (
-          <div className="px-6 pb-6 border-t border-gray-100 pt-6">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-3">Portfolio</p>
-            <div className="grid grid-cols-3 gap-2">
-              {profile.portfolioImages.slice(0, 9).map((url, i) => (
-                <div key={i} className="aspect-square rounded-xl overflow-hidden bg-gray-100 border border-gray-200">
-                  <img
-                    src={url}
-                    alt={`Portfolio ${i + 1}`}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    onError={e => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          <PortfolioGrid images={profile.portfolioImages} />
         )}
       </motion.div>
     </div>

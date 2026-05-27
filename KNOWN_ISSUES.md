@@ -25,6 +25,19 @@
   In dev, optionally log a warning instead of throwing. Replace `.env` value with a long random string (`openssl rand -hex 32`).
 - **Security note:** Anyone who reads the source code can forge admin-level JWTs against any deployment that forgot to set this env var.
 
+### [ ] UploadThing routes have no auth (`imageUploader`, `projectImage`, `avatar`)
+- **Files:** `app/api/uploadthing/core.ts`
+- **Problem:** All three existing UploadThing file routes return a placeholder `userId: "anonymous"` or `userId: "user"` in their middleware. The JWT cookie check is commented out. Anyone with the route URL can upload files to the UploadThing bucket — no account required.
+- **Risk:** Storage bill abuse, malicious content upload, free phishing/image hosting.
+- **Fix:** Gate all three middleware functions with the same JWT cookie pattern used by the new `designerPortfolio` route:
+  ```ts
+  const token = req.headers.get('cookie')?.match(/auth_token=([^;]+)/)?.[1];
+  const user = token ? verifyJwt(token) : null;
+  if (!user) throw new UploadThingError('Unauthorized');
+  return { userId: user.id };
+  ```
+- **Note:** The `designerPortfolio` route added in Goal B gets this right from day one. Apply the same pattern to the three existing routes in a follow-up goal.
+
 ### [ ] `signOut` vs `logout` Naming Inconsistency
 - **Problem:** Custom `AuthProvider` exposes a `logout` function, but some components (originally written under Clerk auth) try to call `signOut`.
 - **Status:** Fixed in the main `app/admin/layout.tsx` Header, but may persist in other unmigrated clerk templates across the codebase.
@@ -46,7 +59,49 @@
 
 ## UX / Features
 
-### [ ] Image Upload for Registration Flow
-- **Problem:** The designer registration form currently takes a text URL input for design/portfolio images instead of an interactive file upload widget.
-- **Fix:** Integrate UploadThing or another storage service widget on the registration screen.
+### [x] Image Upload for Registration Flow *(Goal B — complete)*
+- **Completed:** `useUpload` hook wired to `designerPortfolio` UploadThing route on the register page.
+  Server-side URL allowlist validator (`lib/utils/isValidPortfolioImageUrl.ts`) added in Task 5.
+  `UPLOADTHING_TOKEN` set in `.env.local` (real credentials, app ID `gv9vbtzjt2`, region `sea1`).
+
+### [ ] Three legacy UploadThing routes still unauthenticated *(deferred from Goal B)*
+- **Files:** `app/api/uploadthing/core.ts` — `imageUploader`, `projectImage`, `avatar` endpoints
+- **Tracked above under Auth section.** Closing once those three get the JWT gate from `designerPortfolio`.
+
+### [ ] Test user passwords overwritten by debug script
+- **Accounts affected:** `nikhilkumarsinha4321@gmail.com`, `testuser1@example.com`
+- **What happened:** A scratch debugging script (`scratch/set_passwords.js`) set bcrypt password hashes
+  on both accounts during visual testing. The admin account was previously Google-OAuth-only (no password field).
+- **Current passwords set to:** admin → `AdminPassword123!`, customer → `CustomerPassword123!`
+- **Impact:** Password login now works for both. Google OAuth still works independently (callback
+  does `User.findOne({ email })` — it doesn't check for a password field, so OAuth is unaffected).
+- **Action:** If you want to clear the password from the admin account (back to OAuth-only):
+  ```js
+  db.users.updateOne({ email: "nikhilkumarsinha4321@gmail.com" }, { $unset: { password: "" } })
+  ```
+
+## Booking / Marketplace
+
+### [ ] Booking payments rely on client-side verify only (no webhook safety net)
+- **Files:** `app/api/bookings/[id]/payment-verify/route.ts`
+- **Problem:** If browser crashes/closes after Razorpay charge but before `/payment-verify` lands,
+  booking stays in `pending_payment` while Razorpay shows charged.
+- **Recovery:** Manual reconciliation via Razorpay dashboard (match `razorpayOrderId` in Booking doc).
+- **Fix:** Add booking-payment-captured handling to `app/api/webhook/razorpay/route.ts`.
+  Requires webhook to look at `order.notes` for `bookingId`, idempotent skip if booking is past `pending_payment`.
+
+### [ ] Auth identity inconsistency: clerkId (legacy) vs _id (new)
+- **Files:** `app/api/payment/verify/route.ts`, `app/api/payment/create-checkout/route.ts` (legacy) vs all designer/booking routes (new)
+- **Problem:** Old payment routes look up users by `clerkId` (`User.findOne({ clerkId })`).
+  New designer/booking routes look up by MongoDB `_id` via `requireRole`.
+  Users without a `clerkId` field may silently fail on credit purchases.
+- **Fix:** Migrate old payment routes to the `requireRole` pattern (look up by `_id`).
+
+### [ ] Test setup conflates admin and designer identities
+- **Files:** `scratch/booking_curl_tests.sh`
+- **Problem:** `scratch/booking_curl_tests.sh` uses `ADMIN_COOKIE` for designer actions.
+  Only "works" because the admin user happens to own Priya Interiors.
+  Real test setup needs two distinct accounts: a non-admin designer and a non-admin customer.
+- **Fix:** Fix later when real testing infra is set up.
+
 

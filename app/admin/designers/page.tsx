@@ -9,6 +9,7 @@ import {
   Clock,
   Loader2,
   MapPin,
+  Maximize2,
   Phone,
   RefreshCw,
   User,
@@ -91,6 +92,7 @@ function DesignerCard({
   onRejectClick: (designer: PendingDesigner) => void;
   actionLoading: string | null;
 }) {
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const isProcessing = actionLoading === designer._id;
   const initials = designer.displayName
     .split(' ')
@@ -169,23 +171,55 @@ function DesignerCard({
           </div>
         )}
 
-        {designer.portfolioImages.length > 0 && (
-          <div className="flex gap-2 flex-wrap">
-            {designer.portfolioImages.slice(0, 5).map((url, i) => (
-              <div key={i} className="w-16 h-12 rounded-lg overflow-hidden bg-neutral-800 border border-neutral-700">
+        {/* Portfolio thumbnails */}
+        {designer.portfolioImages.length === 0 ? (
+          <p className="text-xs text-neutral-600 italic">(no images)</p>
+        ) : (
+          <div className="flex gap-1.5 flex-wrap">
+            {designer.portfolioImages.map((url, i) => (
+              <button
+                key={i}
+                type="button"
+                id={`admin-portfolio-thumb-${designer._id}-${i}`}
+                className="group relative w-16 h-12 rounded-lg overflow-hidden bg-neutral-800 border border-neutral-700 flex-shrink-0 cursor-zoom-in hover:border-violet-500/50 transition-colors"
+                onClick={() => setLightboxUrl(url)}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={url}
                   alt={`Portfolio ${i + 1}`}
-                  className="w-full h-full object-cover"
-                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-200"
+                  onError={e => { (e.target as HTMLImageElement).parentElement!.style.display = 'none'; }}
                 />
-              </div>
+                <Maximize2 className="absolute bottom-0.5 right-0.5 w-2.5 h-2.5 text-white/70 drop-shadow opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
+              </button>
             ))}
-            {designer.portfolioImages.length > 5 && (
-              <div className="w-16 h-12 rounded-lg bg-neutral-800 border border-neutral-700 flex items-center justify-center">
-                <span className="text-xs text-neutral-500">+{designer.portfolioImages.length - 5}</span>
-              </div>
-            )}
+            <span className="self-center text-xs text-neutral-600 tabular-nums">
+              {designer.portfolioImages.length}/10
+            </span>
+          </div>
+        )}
+
+        {/* Lightbox */}
+        {lightboxUrl && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white transition-colors"
+              onClick={() => setLightboxUrl(null)}
+              aria-label="Close image"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={lightboxUrl}
+              alt="Portfolio image"
+              className="max-w-[90vw] max-h-[90vh] object-contain rounded-xl shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            />
           </div>
         )}
       </div>

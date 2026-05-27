@@ -21,6 +21,7 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Designer, DESIGNER_SPECIALTIES } from '@/lib/db/models/Designer';
 import { User } from '@/lib/db/models/User';
+import { isValidPortfolioImageUrl } from '@/lib/utils/isValidPortfolioImageUrl';
 
 export async function POST(req: NextRequest) {
     try {
@@ -77,6 +78,12 @@ export async function POST(req: NextRequest) {
             for (const img of portfolioImages) {
                 if (typeof img !== 'string') {
                     return NextResponse.json({ message: 'Portfolio image URLs must be strings' }, { status: 400 });
+                }
+                if (!isValidPortfolioImageUrl(img)) {
+                    return NextResponse.json(
+                        { message: 'Portfolio images must be uploaded via this platform. External URLs are not accepted.' },
+                        { status: 400 }
+                    );
                 }
             }
         }

@@ -24,6 +24,12 @@ export const DESIGNER_SPECIALTIES = [
 
 export type DesignerSpecialty = (typeof DESIGNER_SPECIALTIES)[number];
 
+// ── Money sub-type ────────────────────────────────────────────────────────────
+export interface IMoneyAmount {
+    amount: number;   // in paise (₹1 = 100 paise) — avoids float arithmetic issues
+    currency: string; // 'INR'
+}
+
 // ── Interface ─────────────────────────────────────────────────────────────────
 export interface IDesigner {
     // Ownership — unique per user
@@ -48,6 +54,15 @@ export interface IDesigner {
 
     // Soft-delete (separate from verification)
     isActive: boolean;
+
+    // ── Booking / pricing (added for Goal A) ──────────────────────────────────
+    // Amount stored in paise (Indian smallest unit) to avoid float-point issues.
+    // Razorpay also expects paise natively.
+    consultationFee: IMoneyAmount;      // per-session fee for 1-hour consultations
+    consultationDurationMinutes: number; // duration, default 60
+    projectMinFee: IMoneyAmount;         // designer's minimum quote for a project
+    acceptsConsultations: boolean;       // toggle — hides from consultation booking if false
+    acceptsProjects: boolean;            // toggle — hides from project booking if false
 
     // Timestamps (injected by Mongoose when timestamps: true)
     createdAt: Date;
@@ -136,6 +151,53 @@ const DesignerSchema = new Schema<IDesigner>(
             type: Boolean,
             default: true,
             index: true,
+        },
+
+        // ── Booking / pricing fields ──────────────────────────────────────────
+        // Snapshot-able: when a booking is created, these values are copied onto
+        // the Booking doc so retroactive price changes don't break old bookings.
+
+        consultationFee: {
+            amount: {
+                type: Number,
+                default: 0,
+                min: [0, 'Consultation fee cannot be negative'],
+                max: [10_000_000, 'Consultation fee cannot exceed ₹1,00,000'],
+            },
+            currency: {
+                type: String,
+                default: 'INR',
+            },
+        },
+
+        consultationDurationMinutes: {
+            type: Number,
+            default: 60,
+            min: [15, 'Consultation duration must be at least 15 minutes'],
+            max: [240, 'Consultation duration cannot exceed 240 minutes'],
+        },
+
+        projectMinFee: {
+            amount: {
+                type: Number,
+                default: 0,
+                min: [0, 'Project minimum fee cannot be negative'],
+                max: [10_000_000, 'Project minimum fee cannot exceed ₹1,00,000'],
+            },
+            currency: {
+                type: String,
+                default: 'INR',
+            },
+        },
+
+        acceptsConsultations: {
+            type: Boolean,
+            default: true,
+        },
+
+        acceptsProjects: {
+            type: Boolean,
+            default: true,
         },
     },
     {

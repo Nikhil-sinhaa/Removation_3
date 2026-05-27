@@ -23,8 +23,10 @@ import {
   Image as ImageIcon,
   ChevronRight,
   AlertCircle,
+  Plus,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import { useUpload } from '@/hooks/useUpload';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 const SPECIALTIES = [
@@ -92,11 +94,18 @@ export default function DesignerRegisterPage() {
     phone: '',
     city: '',
     yearsOfExperience: '',
-    portfolioImages: [''],
   });
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Portfolio upload — pointed at the auth-gated designerPortfolio UploadThing route
+  const portfolioUpload = useUpload({
+    endpoint: 'designerPortfolio',
+    maxFiles: 10,
+    maxSize: 4 * 1024 * 1024, // 4MB, matches core.ts
+    autoUpload: true,
+  });
   const [checkingProfile, setCheckingProfile] = useState(true);
 
   // Check if user already has a profile
@@ -121,7 +130,6 @@ export default function DesignerRegisterPage() {
             phone:            d.phone || '',
             city:             d.city || '',
             yearsOfExperience: d.yearsOfExperience?.toString() || '',
-            portfolioImages:  d.portfolioImages?.length ? d.portfolioImages : [''],
           });
           setSelectedSpecialties(d.specialties || []);
         }
@@ -144,8 +152,8 @@ export default function DesignerRegisterPage() {
       e.city = 'Enter your city';
     if (form.yearsOfExperience && (isNaN(Number(form.yearsOfExperience)) || Number(form.yearsOfExperience) < 0 || Number(form.yearsOfExperience) > 60))
       e.yearsOfExperience = 'Enter a number between 0 and 60';
-    const imgs = form.portfolioImages.filter(u => u.trim());
-    if (imgs.length > 10) e.portfolioImages = 'Maximum 10 portfolio images';
+    if (portfolioUpload.uploadedFiles.length === 0)
+      e.portfolioImages = 'Upload at least one portfolio image';
     return e;
   }
 
@@ -154,27 +162,6 @@ export default function DesignerRegisterPage() {
     setSelectedSpecialties(prev =>
       prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug]
     );
-  }
-
-  function updateImage(index: number, value: string) {
-    const imgs = [...form.portfolioImages];
-    imgs[index] = value;
-    setForm(f => ({ ...f, portfolioImages: imgs }));
-  }
-
-  function addImageField() {
-    if (form.portfolioImages.length < 10) {
-      setForm(f => ({ ...f, portfolioImages: [...f.portfolioImages, ''] }));
-    }
-  }
-
-  function removeImageField(index: number) {
-    if (form.portfolioImages.length > 1) {
-      setForm(f => ({
-        ...f,
-        portfolioImages: f.portfolioImages.filter((_, i) => i !== index),
-      }));
-    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -197,7 +184,7 @@ export default function DesignerRegisterPage() {
           phone:              form.phone.trim(),
           city:               form.city.trim(),
           specialties:        selectedSpecialties,
-          portfolioImages:    form.portfolioImages.filter(u => u.trim()),
+          portfolioImages:    portfolioUpload.uploadedFiles.map(f => f.url),
           yearsOfExperience:  form.yearsOfExperience ? Number(form.yearsOfExperience) : undefined,
         }),
       });
@@ -384,53 +371,102 @@ export default function DesignerRegisterPage() {
 
         <hr className="border-gray-100" />
 
-        {/* Portfolio Images */}
+        {/* Portfolio Images — real uploader via designerPortfolio UploadThing route */}
         <div>
-          <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-1 flex items-center gap-2">
-            <ImageIcon className="w-4 h-4 text-violet-600" />
-            Portfolio Images
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            Paste public image URLs (max 10).{' '}
-            {/* TODO: Replace with real uploader via Uploadthing once integrated */}
-            <span className="text-violet-500">Image upload coming soon.</span>
-          </p>
-          <div className="space-y-2">
-            {form.portfolioImages.map((url, idx) => (
-              <div key={idx} className="flex items-center gap-2">
-                <Input
-                  id={`portfolio-image-${idx}`}
-                  type="url"
-                  placeholder={`https://your-portfolio.com/image-${idx + 1}.jpg`}
-                  value={url}
-                  onChange={e => updateImage(idx, e.target.value)}
-                  className="border-gray-200 focus-visible:ring-violet-500"
-                />
-                {form.portfolioImages.length > 1 && (
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center gap-2">
+              <ImageIcon className="w-4 h-4 text-violet-600" />
+              Portfolio Images
+            </h2>
+            <span className={cn(
+              'text-xs font-medium tabular-nums',
+              portfolioUpload.uploadedFiles.length >= 10 ? 'text-amber-600' : 'text-gray-400'
+            )}>
+              {portfolioUpload.uploadedFiles.length}/10 images
+            </span>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">Upload up to 10 images (4 MB each). Files upload automatically when added.</p>
+
+          {/* Thumbnail grid of uploaded files */}
+          {portfolioUpload.uploadedFiles.length > 0 && (
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {portfolioUpload.uploadedFiles.map((file, idx) => (
+                <div key={file.id} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={file.url}
+                    alt={file.name}
+                    className="w-full h-full object-cover"
+                  />
                   <button
                     type="button"
-                    onClick={() => removeImageField(idx)}
-                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    id={`portfolio-remove-${idx}`}
+                    onClick={() => portfolioUpload.removeFile(idx)}
+                    className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
+                    aria-label={`Remove ${file.name}`}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                   </button>
-                )}
-              </div>
-            ))}
-            {form.portfolioImages.length < 10 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addImageField}
-                className="border-dashed border-gray-300 text-gray-500 hover:text-violet-600 hover:border-violet-300"
-              >
-                + Add another image
-              </Button>
-            )}
-          </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Drop zone / add button — hidden once at 10 */}
+          {portfolioUpload.uploadedFiles.length < 10 && (
+            <div
+              id="portfolio-dropzone"
+              onDragEnter={portfolioUpload.handleDragEnter}
+              onDragLeave={portfolioUpload.handleDragLeave}
+              onDragOver={portfolioUpload.handleDragOver}
+              onDrop={portfolioUpload.handleDrop}
+              className={cn(
+                'relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl py-6 transition-all duration-200 cursor-pointer',
+                portfolioUpload.isDragging
+                  ? 'border-violet-400 bg-violet-50'
+                  : 'border-gray-200 hover:border-violet-300 hover:bg-violet-50/50'
+              )}
+              onClick={portfolioUpload.openFileDialog}
+            >
+              {portfolioUpload.isUploading ? (
+                <>
+                  <Loader2 className="w-6 h-6 text-violet-500 animate-spin" />
+                  <p className="text-xs text-violet-600 font-medium">
+                    Uploading… {portfolioUpload.progress.percentage}%
+                  </p>
+                  <div className="w-32 h-1.5 bg-violet-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-violet-500 rounded-full transition-all duration-300"
+                      style={{ width: `${portfolioUpload.progress.percentage}%` }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-violet-600" />
+                  </div>
+                  <p className="text-sm text-gray-500">
+                    <span className="font-medium text-violet-600">Click to add</span> or drag &amp; drop
+                  </p>
+                  <p className="text-xs text-gray-400">JPEG · PNG · WebP · up to 4 MB each</p>
+                </>
+              )}
+              {/* Hidden file input wired to the hook */}
+              <input
+                ref={portfolioUpload.inputRef}
+                type="file"
+                id="portfolio-file-input"
+                multiple
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={portfolioUpload.handleFileChange}
+              />
+            </div>
+          )}
+
           {errors.portfolioImages && (
-            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+            <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
               {errors.portfolioImages}
             </p>
@@ -447,8 +483,8 @@ export default function DesignerRegisterPage() {
           <Button
             id="designer-register-submit"
             type="submit"
-            disabled={isSubmitting}
-            className="bg-violet-600 hover:bg-violet-700 text-white px-6 gap-2 rounded-xl"
+            disabled={isSubmitting || portfolioUpload.isUploading || portfolioUpload.uploadedFiles.length === 0}
+            className="bg-violet-600 hover:bg-violet-700 text-white px-6 gap-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
