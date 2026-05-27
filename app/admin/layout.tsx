@@ -294,6 +294,12 @@ const mainNavItems: NavItem[] = [
     ],
   },
   {
+    title: 'Designers',
+    href: '/admin/designers',
+    icon: Briefcase,
+    badge: null,
+  },
+  {
     title: 'Subscriptions',
     href: '/admin/subscriptions',
     icon: CreditCard,
@@ -919,9 +925,8 @@ function Header({
   sidebarCollapsed: boolean;
   onMenuClick: () => void;
 }) {
-  const { user, isLoading: isLoaded } = useAuth();
+  const { user, isLoading: isLoaded, logout } = useAuth();
   const isSignedIn = !!user;
-  const { signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -1171,7 +1176,7 @@ function Header({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() => signOut(() => router.push('/'))}
+                  onClick={() => logout()}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
@@ -1496,7 +1501,8 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading: isLoaded } = useAuth();
+  const { user, isLoading } = useAuth();
+  const isLoaded = !isLoading;
   const isSignedIn = !!user;
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -1507,16 +1513,15 @@ export default function AdminLayout({
 
   // Check authorization
   useEffect(() => {
-    if (isLoaded) {
-      // In production, check user's role/permissions from database
-      // For demo, we'll allow all authenticated users
-      const hasAdminAccess = !!user;
-      setIsAuthorized(hasAdminAccess);
+    if (!isLoaded) return;
 
-      if (!user) {
-        router.push('/sign-in?redirect_url=/admin/dashboard');
-      }
+    if (!user) {
+      router.push('/sign-in?redirect_url=/admin/dashboard');
+      return;
     }
+
+    const hasAdminAccess = user.role === 'admin';
+    setIsAuthorized(hasAdminAccess);
   }, [isLoaded, user, router]);
 
   // Load sidebar state from localStorage

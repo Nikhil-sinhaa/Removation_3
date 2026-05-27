@@ -15,6 +15,9 @@ export interface IUser {
     lockoutUntil?: Date;
     failedLoginAttempts?: number;
 
+    // Marketplace role — 'customer' is default, 'designer' set on registration, 'admin' set manually
+    role: 'customer' | 'designer' | 'admin';
+
     // Subscription info
     subscription: {
         plan: 'free' | 'pro' | 'team';
@@ -84,6 +87,7 @@ const UserSchema = new Schema<IUser>({
     isVerified: { type: Boolean, default: false },
     lockoutUntil: { type: Date },
     failedLoginAttempts: { type: Number, default: 0 },
+    role: { type: String, enum: ['customer', 'designer', 'admin'], default: 'customer' },
     firstName: String,
     lastName: String,
     imageUrl: String,

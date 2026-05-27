@@ -15,11 +15,25 @@ const LOCAL_HOST = '127.0.0.1';
 const LOCAL_PORT = '8188';
 const LOCAL_URL  = `http://${LOCAL_HOST}:${LOCAL_PORT}`;
 
-// ── GPU Mode helpers (lazy import — use @/ alias for TS module resolution) ──────────
 let _gpuRouter = null;
 async function getGPURouter() {
-  if (!_gpuRouter) {
+  if (_gpuRouter) return _gpuRouter;
+  // Next.js resolves '@/' to the project root at bundle time.
+  // If that fails (e.g. cold ESM start), fall back gracefully to local mock.
+  try {
     _gpuRouter = await import('@/lib/ai/gpu-mode-router');
+  } catch {
+    _gpuRouter = {
+      resolveComfyURL: async () => ({
+        url: process.env.COMFY_URL || 'http://127.0.0.1:8188',
+        source: 'local'
+      }),
+      isCloudMode: () => false,
+      getActiveComfyWsUrl: () => process.env.COMFY_WS_URL || 'ws://127.0.0.1:8188/ws?clientId=removation_main',
+      setGPUModeRuntime: (mode, opts) => {
+        console.warn(`[GPU] Attempted to set GPU mode to ${mode} but router alias not resolved. Fallback to local.`);
+      }
+    };
   }
   return _gpuRouter;
 }
@@ -209,12 +223,17 @@ class ComfyBridgeService {
     }
   }
 
-  /**
-   * Handle 'progress' message from ComfyUI
-   */
   handleProgressMessage(data) {
     const { node_id, value, max } = data;
     
+    if (this._activeProgressCallback) {
+      try {
+        this._activeProgressCallback({ value, max });
+      } catch (e) {
+        console.warn('Error in progress callback:', e.message);
+      }
+    }
+
     if (!this.currentProcessing) return;
 
     const progress = max > 0 ? (value / max) * 100 : 0;
@@ -406,6 +425,131 @@ class ComfyBridgeService {
       }
     }
     return null;
+  }
+
+  /**
+   * Extract all generated image URLs from ComfyUI outputs.
+   */
+  getAllOutputUrls(outputs) {
+    const list = [];
+    for (const nodeId in outputs) {
+      if (nodeId === '_promptId') continue;
+      const images = outputs[nodeId]?.images;
+      if (!images) continue;
+      for (const img of images) {
+        const filename = img._inputFilename || img.filename || img.name;
+        if (filename) {
+          const safeName = filename.replace(/\//g, '_');
+          list.push(`/renders/${safeName}`);
+        }
+      }
+    }
+    return list;
+  }
+
+  /**
+   * Copy all outputs to public renders and return their filenames and URLs.
+   */
+  async copyAllOutputsToPublic(outputs) {
+    const fs = await import('fs/promises');
+    const pathMod = await import('path');
+    const publicRendersDir = '/home/nikhil/Documents/Remo2/Removation_3/public/renders';
+    await fs.mkdir(publicRendersDir, { recursive: true });
+
+    // Use the shared getGPURouter() helper (handles resolution failures gracefully)
+    let comfyUrl = process.env.COMFY_URL || 'http://127.0.0.1:8188';
+    let source = 'local';
+    try {
+      const r = await getGPURouter();
+      if (r) {
+        const resolved = await r.resolveComfyURL();
+        comfyUrl = resolved.url;
+        source = resolved.source;
+      }
+    } catch {
+      // fallback to local already set above
+    }
+
+    const results = [];
+    const COMFY_OUTPUT = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
+
+    for (const nodeId in outputs) {
+      if (nodeId === '_promptId') continue;
+      const images = outputs[nodeId]?.images;
+      if (!images) continue;
+      for (const img of images) {
+        const filename = img.filename || img.name;
+        if (!filename) continue;
+
+        // Skip ComfyUI temp/preview outputs (PreviewImage node results)
+        // ComfyUI marks PreviewImage outputs with type='temp' and ComfyUI_temp_* filenames
+        const imgType = img.type || 'output';
+        if (imgType === 'temp' || filename.startsWith('ComfyUI_temp_')) {
+          console.log(`[comfyBridge] Skipping temp output: ${filename}`);
+          continue;
+        }
+
+        const subfolder = img.subfolder || '';
+        const safeName = filename.replace(/\//g, '_');
+        const dest = pathMod.default.join(publicRendersDir, safeName);
+
+        if (source === 'cloud') {
+          try {
+            const viewUrl = `${comfyUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=output`;
+            const res = await fetch(viewUrl, { headers: { 'bypass-tunnel-reminder': 'true' } });
+            if (res.ok) {
+              const buf = Buffer.from(await res.arrayBuffer());
+              await fs.writeFile(dest, buf);
+              console.log(`[comfyBridge] Downloaded cloud output: ${filename}`);
+            }
+          } catch (e) {
+            console.warn(`[comfyBridge] Could not download cloud output:`, e.message);
+          }
+        } else {
+          const candidates = [
+            pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
+            pathMod.default.join(COMFY_OUTPUT, filename),
+          ];
+          let copied = false;
+          for (const src of candidates) {
+            try {
+              await fs.access(src);
+              await fs.copyFile(src, dest);
+              copied = true;
+              console.log(`[comfyBridge] Copied local output: ${src} -> ${dest}`);
+              break;
+            } catch { /* try next */ }
+          }
+          if (!copied) {
+            console.warn(`[comfyBridge] Local output file not found for copying: ${filename}`);
+          }
+        }
+        results.push({
+          filename: safeName,
+          url: `/renders/${safeName}`,
+          type: imgType
+        });
+      }
+    }
+    console.log(`[comfyBridge] copyAllOutputsToPublic: ${results.length} actual SaveImage outputs copied`);
+    return results;
+  }
+
+  async submitAndWait(workflow, onProgress) {
+    this._activeProgressCallback = onProgress;
+    try {
+      const outputs = await this._submitStageAndWait(workflow);
+      return outputs;
+    } finally {
+      this._activeProgressCallback = null;
+    }
+  }
+
+  async getAllOutputUrls(outputs, saveFilename) {
+    const copied = await this.copyAllOutputsToPublic(outputs);
+    return copied
+      .filter(r => !r.filename.startsWith('ComfyUI_temp_'))
+      .map(r => r.url);
   }
 
   /**

@@ -107,7 +107,7 @@ const projectSchema = new mongoose.Schema({
       'tool-style-transfer', 'tool-collage',
       'tool-background', 'tool-view-extend', 'tool-lineart',
       'room-changer', 'furniture-remover', 'ceiling-changer', 'floor-plan',
-      'multi-room-3d', 'furniture-placement'
+      'multi-room-3d', 'furniture-placement', 'lighting'
     ],
     required: true
   },

@@ -240,6 +240,16 @@ const quickActions = [
     badge: null,
     badgeColor: '',
   },
+  {
+    title: 'AI Lighting Studio',
+    description: 'Cast professional shadows and lights',
+    icon: Lightbulb,
+    gradient: 'from-amber-500 to-orange-600',
+    bgGradient: 'from-amber-500/10 to-orange-600/10',
+    href: '/lighting',
+    badge: 'Beta',
+    badgeColor: 'bg-amber-100 text-amber-700',
+  },
 ];
 
 const roomTypes = [

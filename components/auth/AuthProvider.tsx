@@ -15,6 +15,7 @@ export interface User {
   plan?: string;
   createdAt?: string | Date;
   credits: number;
+  role?: 'customer' | 'designer' | 'admin';
   subscription?: any;
   preferences?: any;
 }

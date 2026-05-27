@@ -1,0 +1,435 @@
+{
+  "id": "texture-changer-sdxl-ipadapter-8gb",
+  "revision": 2,
+  "last_node_id": 22,
+  "last_link_id": 28,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [26, 100],
+      "size": [315, 314],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [1]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["room_image.png"],
+      "title": "📷 Load Room Image"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [26, 470],
+      "size": [315, 314],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [17]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["surface_mask.png"],
+      "title": "🎭 Surface Mask (wall/floor/ceiling)"
+    },
+    {
+      "id": 17,
+      "type": "LoadImage",
+      "pos": [26, 840],
+      "size": [315, 314],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [20]},
+        {"name": "MASK", "type": "MASK", "slot_index": 1, "links": null}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["texture_tile.png"],
+      "title": "🧱 Texture/Tile Reference Image"
+    },
+    {
+      "id": 15,
+      "type": "ImageToMask",
+      "pos": [420, 500],
+      "size": [210, 58],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {"name": "image", "type": "IMAGE", "link": 17}
+      ],
+      "outputs": [
+        {"name": "MASK", "type": "MASK", "slot_index": 0, "links": [3, 22]}
+      ],
+      "properties": {"Node name for S&R": "ImageToMask"},
+      "widgets_values": ["red"],
+      "title": "🎭 RGB Mask → MASK (red channel)"
+    },
+    {
+      "id": 3,
+      "type": "CheckpointLoaderSimple",
+      "pos": [420, 620],
+      "size": [315, 98],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "slot_index": 0, "links": [4]},
+        {"name": "CLIP", "type": "CLIP", "slot_index": 1, "links": [5, 6]},
+        {"name": "VAE", "type": "VAE", "slot_index": 2, "links": [7, 8]}
+      ],
+      "properties": {"Node name for S&R": "CheckpointLoaderSimple"},
+      "widgets_values": ["sd_xl_base_1.0.safetensors"],
+      "title": "🧠 SDXL Base Checkpoint"
+    },
+    {
+      "id": 18,
+      "type": "IPAdapterUnifiedLoader",
+      "pos": [420, 770],
+      "size": [315, 78],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 4}
+      ],
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "slot_index": 0, "links": [23]},
+        {"name": "ipadapter", "type": "IPADAPTER", "slot_index": 1, "links": [24]}
+      ],
+      "properties": {"Node name for S&R": "IPAdapterUnifiedLoader"},
+      "widgets_values": ["PLUS (high strength)"],
+      "title": "🔌 IPAdapter Loader (auto CLIP Vision)"
+    },
+    {
+      "id": 19,
+      "type": "IPAdapterAdvanced",
+      "pos": [420, 900],
+      "size": [315, 340],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 23},
+        {"name": "ipadapter", "type": "IPADAPTER", "link": 24},
+        {"name": "image", "type": "IMAGE", "link": 20},
+        {"name": "image_negative", "type": "IMAGE", "link": null},
+        {"name": "attn_mask", "type": "MASK", "link": 22},
+        {"name": "clip_vision", "type": "CLIP_VISION", "link": null}
+      ],
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "slot_index": 0, "links": [25]}
+      ],
+      "properties": {"Node name for S&R": "IPAdapterAdvanced"},
+      "widgets_values": [
+        0.85,
+        "style transfer",
+        "concat",
+        0.0,
+        1.0,
+        "K+V"
+      ],
+      "title": "🎨 IPAdapter — Apply Texture Style"
+    },
+    {
+      "id": 4,
+      "type": "CLIPTextEncode",
+      "pos": [820, 100],
+      "size": [420, 164],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 5}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [9]}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": [
+        "(tiled repeating texture pattern on wall:1.4), (seamless material surface:1.3), uniform repeating pattern, consistent tile layout, realistic surface texture, professional interior photography, natural soft lighting, sharp focus, realistic shadows, preserved original furniture and floor, 8k, ultra detailed"
+      ],
+      "title": "✅ POSITIVE — Texture Prompt"
+    },
+    {
+      "id": 5,
+      "type": "CLIPTextEncode",
+      "pos": [820, 320],
+      "size": [420, 164],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 6}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "slot_index": 0, "links": [10]}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": [
+        "flat painted wall, plain smooth color, blurry, low quality, distorted, watermark, text, deformed objects, changed floor, changed furniture, changed ceiling, wrong perspective, floating objects, irregular pattern, misaligned tiles"
+      ],
+      "title": "❌ NEGATIVE Prompt"
+    },
+    {
+      "id": 7,
+      "type": "VAEEncode",
+      "pos": [820, 540],
+      "size": [315, 74],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {"name": "pixels", "type": "IMAGE", "link": 1},
+        {"name": "vae", "type": "VAE", "link": 7}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [12]}
+      ],
+      "properties": {"Node name for S&R": "VAEEncode"},
+      "widgets_values": [],
+      "title": "🖼️→🔢 VAE Encode (geometry-preserving)"
+    },
+    {
+      "id": 16,
+      "type": "SetLatentNoiseMask",
+      "pos": [820, 660],
+      "size": [315, 74],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 12},
+        {"name": "mask", "type": "MASK", "link": 3}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [18]}
+      ],
+      "properties": {"Node name for S&R": "SetLatentNoiseMask"},
+      "widgets_values": [],
+      "title": "🎭 Apply Surface Mask to Latent"
+    },
+    {
+      "id": 8,
+      "type": "KSampler",
+      "pos": [820, 790],
+      "size": [315, 262],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 25},
+        {"name": "positive", "type": "CONDITIONING", "link": 9},
+        {"name": "negative", "type": "CONDITIONING", "link": 10},
+        {"name": "latent_image", "type": "LATENT", "link": 18}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "slot_index": 0, "links": [13]}
+      ],
+      "properties": {"Node name for S&R": "KSampler"},
+      "widgets_values": [
+        918026620137394,
+        "randomize",
+        30,
+        7.5,
+        "dpmpp_2m",
+        "karras",
+        0.88
+      ],
+      "title": "🎲 KSampler — Texture Inpaint"
+    },
+    {
+      "id": 9,
+      "type": "VAEDecode",
+      "pos": [1300, 790],
+      "size": [210, 46],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 13},
+        {"name": "vae", "type": "VAE", "link": 8}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [16]}
+      ],
+      "properties": {"Node name for S&R": "VAEDecode"},
+      "widgets_values": [],
+      "title": "🔢→🖼️ Decode to Image"
+    },
+    {
+      "id": 11,
+      "type": "SaveImage",
+      "pos": [1300, 890],
+      "size": [315, 270],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 16}
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": ["texture/result"],
+      "title": "💾 Save: Texture Result"
+    }
+  ],
+
+  "links": [
+    [1,  1,  0,  7,  0, "IMAGE"],
+    [3,  15, 0,  16, 1, "MASK"],
+    [4,  3,  0,  18, 0, "MODEL"],
+    [5,  3,  1,  4,  0, "CLIP"],
+    [6,  3,  1,  5,  0, "CLIP"],
+    [7,  3,  2,  7,  1, "VAE"],
+    [8,  3,  2,  9,  1, "VAE"],
+    [9,  4,  0,  8,  1, "CONDITIONING"],
+    [10, 5,  0,  8,  2, "CONDITIONING"],
+    [12, 7,  0,  16, 0, "LATENT"],
+    [13, 8,  0,  9,  0, "LATENT"],
+    [16, 9,  0,  11, 0, "IMAGE"],
+    [17, 2,  0,  15, 0, "IMAGE"],
+    [18, 16, 0,  8,  3, "LATENT"],
+    [20, 17, 0,  19, 2, "IMAGE"],
+    [22, 15, 0,  19, 4, "MASK"],
+    [23, 18, 0,  19, 0, "MODEL"],
+    [24, 18, 1,  19, 1, "IPADAPTER"],
+    [25, 19, 0,  8,  0, "MODEL"]
+  ],
+
+  "groups": [
+    {
+      "title": "INPUTS — Room Image + Mask + Texture Tile",
+      "bounding": [10, 50, 350, 1130],
+      "color": "#3f789e"
+    },
+    {
+      "title": "MASK + CHECKPOINT + IPADAPTER",
+      "bounding": [400, 450, 360, 830],
+      "color": "#8A2BE2"
+    },
+    {
+      "title": "PROMPTS — Texture Description",
+      "bounding": [800, 50, 440, 480],
+      "color": "#8B4513"
+    },
+    {
+      "title": "ENCODE + SAMPLING + OUTPUT",
+      "bounding": [800, 500, 740, 700],
+      "color": "#2a9d8f"
+    }
+  ],
+
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.50,
+      "offset": [50, 30]
+    },
+    "info": {
+      "name": "Texture Changer — IPAdapter Texture Transfer (SDXL 8GB)",
+      "description": "Applies material/texture from a user-uploaded tile/pattern image onto detected room surfaces using IPAdapter style transfer + masked SDXL inpainting. The uploaded texture image is used as IPAdapter reference with attn_mask so it ONLY affects the masked surface region. The text prompt reinforces the texture type. This creates a tiled/repeating pattern look because IPAdapter transfers the visual style (color, pattern, grain) while SDXL adapts it to the surface geometry and perspective.",
+      "author": "Removation Pipeline",
+      "version": "2.0",
+      "target_gpu": "RTX 4060 8GB (--lowvram --fp8_e4m3fn)",
+      "required_custom_nodes": [
+        "ComfyUI_IPAdapter_plus (IPAdapterUnifiedLoader, IPAdapterAdvanced)"
+      ],
+      "required_models": {
+        "sdxl_checkpoint": "sd_xl_base_1.0.safetensors → models/checkpoints/",
+        "ipadapter": "Auto-downloaded by IPAdapterUnifiedLoader (PLUS preset)",
+        "clip_vision": "Auto-downloaded by IPAdapterUnifiedLoader"
+      },
+      "inputs": {
+        "room_image": "Node 1 — Original room photo",
+        "surface_mask": "Node 2 — Binary mask (white = apply texture, black = preserve)",
+        "texture_tile": "Node 17 — User-uploaded texture/tile/pattern image (e.g. a single tile, carpet swatch, marble sample)"
+      },
+      "outputs": {
+        "texture/result": "Room image with texture applied to masked surface"
+      },
+      "dynamic_nodes": {
+        "node_1": "LoadImage — room image filename injected by orchestrator",
+        "node_2": "LoadImage — surface mask filename injected by orchestrator",
+        "node_17": "LoadImage — texture reference image injected by orchestrator",
+        "node_4": "CLIPTextEncode — positive texture prompt injected by orchestrator",
+        "node_5": "CLIPTextEncode — negative prompt injected by orchestrator",
+        "node_8": "KSampler — seed randomized, denoise/steps/cfg may be adjusted per preset",
+        "node_19": "IPAdapterAdvanced — weight adjusted per texture type (0.7-1.0)"
+      },
+      "ipadapter_settings": {
+        "weight": 0.85,
+        "weight_type": "style transfer",
+        "rationale": "Style transfer weight type ensures the texture pattern/color/grain is transferred without transferring spatial composition. Weight 0.85 gives strong texture adherence while letting SDXL handle perspective correction. For subtle textures (marble, concrete) lower to 0.70. For bold patterns (tiles, wallpaper) keep at 0.85-1.0.",
+        "attn_mask": "Surface mask is passed as attn_mask so IPAdapter ONLY influences the masked region — furniture/floor/ceiling outside mask stays untouched"
+      },
+      "sampling": {
+        "denoise": 0.88,
+        "steps": 30,
+        "cfg": 7.5,
+        "sampler": "dpmpp_2m",
+        "scheduler": "karras",
+        "rationale": "CFG lowered to 7.5 (from 8.0) because IPAdapter already provides strong visual guidance — high CFG + IPAdapter can cause oversaturation. Denoise 0.88 provides enough room for texture application while preserving room geometry."
+      },
+      "how_tiling_works": "IPAdapter transfers the visual STYLE (texture pattern, color, grain) from the reference tile image. SDXL then generates that style within the masked area, naturally adapting it to the surface geometry and perspective. The result looks like the texture was applied as repeating tiles because IPAdapter embeds the pattern at a high level — it doesn't care about tile boundaries, it transfers the overall visual character.",
+      "preset_prompt_examples": {
+        "brick_with_image": {
+          "positive": "(exposed brick wall:1.4), (realistic brick texture:1.3), repeating brick pattern, visible mortar joints, architectural brick interior, professional interior photography, 8k",
+          "negative": "flat painted wall, smooth surface, plain color, wallpaper",
+          "ipa_weight": 0.85,
+          "denoise": 0.90
+        },
+        "marble_with_image": {
+          "positive": "(polished marble surface:1.4), (marble veining pattern:1.3), smooth marble finish, luxurious marble wall, 8k",
+          "negative": "brick, wood, painted wall, matte rough surface",
+          "ipa_weight": 0.75,
+          "denoise": 0.85
+        },
+        "ceramic_tile_with_image": {
+          "positive": "(ceramic tile pattern:1.4), (tiled surface:1.3), repeating tile grid, clean grout lines, uniform tiles, 8k",
+          "negative": "wood floor, carpet, marble, plain wall",
+          "ipa_weight": 0.90,
+          "denoise": 0.88
+        },
+        "carpet_with_image": {
+          "positive": "(carpet texture:1.4), (soft carpet surface:1.3), dense carpet pile, wall-to-wall carpet, uniform carpet pattern, 8k",
+          "negative": "hard floor, tile, wood, marble, concrete",
+          "ipa_weight": 0.80,
+          "denoise": 0.85
+        },
+        "wallpaper_with_image": {
+          "positive": "(wallpaper pattern:1.4), (decorative wall covering:1.3), repeating wallpaper design, elegant wall pattern, 8k",
+          "negative": "painted wall, brick, concrete, plain surface",
+          "ipa_weight": 0.90,
+          "denoise": 0.90
+        }
+      },
+      "vram_budget": {
+        "sdxl_base": "~6.5GB (fp16, lowvram mode)",
+        "ipadapter_plus": "~300MB (ViT-H CLIP Vision model)",
+        "vae_encode_decode": "~0.5GB",
+        "peak_total": "~7.3GB — fits RTX 4060 8GB",
+        "note": "IPAdapterUnifiedLoader auto-downloads the correct IPAdapter + CLIP Vision models on first run. In --lowvram mode, models are loaded/unloaded from VRAM as needed."
+      },
+      "tuning_tips": {
+        "texture_not_matching_reference": "Increase IPAdapter weight (node 19) from 0.85 to 1.0-1.2",
+        "texture_too_aggressive": "Lower IPAdapter weight to 0.6-0.7 and/or reduce denoise to 0.75",
+        "colors_wrong": "Add specific color terms to positive prompt like '(warm honey brown:1.2)'",
+        "pattern_not_repeating_enough": "Add '(seamless repeating pattern:1.3), (tiled texture:1.2)' to prompt",
+        "geometry_distorted": "Lower denoise to 0.75-0.80",
+        "texture_bleeding_outside_mask": "Check mask quality — regenerate with tighter CLIPSeg threshold",
+        "oom_crash": "Try IPAdapterUnifiedLoader preset 'PLUS (high strength)' → 'LIGHT' for smaller model"
+      }
+    }
+  },
+  "version": 0.4
+}
