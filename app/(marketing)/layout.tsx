@@ -97,6 +97,7 @@ const navLinks = [
     ]
   },
   { name: "Pricing", href: "/pricing" },
+  { name: "Browse Designers", href: "/designers" },
   { name: "Blog", href: "/blog" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },

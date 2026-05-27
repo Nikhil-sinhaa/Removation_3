@@ -37,18 +37,36 @@ import {
   Box,
   Sofa,
   Lightbulb,
+  Users,
+  Calendar,
+  LayoutDashboard,
+  LucideIcon,
 } from 'lucide-react';
 
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-const sidebarNavigation = [
+type NavItem = {
+  name: string;
+  href: string;
+  icon: LucideIcon;
+  role?: string;
+};
+
+type NavSection = {
+  title: string;
+  role?: string;
+  items: NavItem[];
+};
+
+const sidebarNavigation: NavSection[] = [
   {
     title: 'Main',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Projects', href: '/projects', icon: FolderOpen },
+      { name: 'Browse Designers', href: '/designers', icon: Users },
       { name: 'AI Design Studio', href: '/ai-design', icon: Wand2 },
       { name: 'Master Design Studio', href: '/master-design', icon: Settings },
       { name: 'Professional Design Studio', href: '/professional-design', icon: Shield },
@@ -69,6 +87,16 @@ const sidebarNavigation = [
     items: [
       { name: 'History', href: '/history', icon: History },
       { name: 'Favorites', href: '/favorites', icon: Heart },
+      { name: 'My Bookings', href: '/my-bookings', icon: Calendar },
+    ],
+  },
+  {
+    title: 'Designer Portal',
+    role: 'designer',
+    items: [
+      { name: 'Designer Dashboard', href: '/designer/dashboard', icon: LayoutDashboard },
+      { name: 'Designer Bookings', href: '/designer/bookings', icon: Calendar },
+      { name: 'Designer Pricing', href: '/designer/pricing', icon: CreditCard },
     ],
   },
   {
@@ -76,6 +104,7 @@ const sidebarNavigation = [
     items: [
       { name: 'Pricing', href: '/pricing', icon: CreditCard },
       { name: 'Settings', href: '/settings', icon: Settings },
+      { name: 'Become a Designer', href: '/designer/register', icon: Sparkles, role: 'customer' },
     ],
   },
 ];
@@ -211,8 +240,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto py-4 px-3">
-          {sidebarNavigation.map((section) => (
-            <div key={section.title} className="mb-6">
+          {sidebarNavigation
+            .filter((section) => !section.role || section.role === user?.role)
+            .map((section) => (
+              <div key={section.title} className="mb-6">
               <AnimatePresence>
                 {sidebarOpen && (
                   <motion.h3
@@ -227,8 +258,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 )}
               </AnimatePresence>
               <div className="space-y-1">
-                {section.items.map((item) => {
-                  const active = isActive(item.href);
+                {section.items
+                  .filter((item) => !item.role || item.role === user?.role)
+                  .map((item) => {
+                    const active = isActive(item.href);
                   return (
                     <Link
                       key={item.name}
@@ -369,14 +402,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Mobile Navigation */}
             <nav className="flex-1 overflow-y-auto py-4 px-3">
-              {sidebarNavigation.map((section) => (
-                <div key={section.title} className="mb-6">
+              {sidebarNavigation
+                .filter((section) => !section.role || section.role === user?.role)
+                .map((section) => (
+                  <div key={section.title} className="mb-6">
                   <h3 className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                     {section.title}
                   </h3>
                   <div className="space-y-1">
-                    {section.items.map((item) => {
-                      const active = isActive(item.href);
+                    {section.items
+                      .filter((item) => !item.role || item.role === user?.role)
+                      .map((item) => {
+                        const active = isActive(item.href);
                       return (
                         <Link
                           key={item.name}

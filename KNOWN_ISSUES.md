@@ -42,6 +42,11 @@
 - **Problem:** Custom `AuthProvider` exposes a `logout` function, but some components (originally written under Clerk auth) try to call `signOut`.
 - **Status:** Fixed in the main `app/admin/layout.tsx` Header, but may persist in other unmigrated clerk templates across the codebase.
 
+### [ ] User.role is single-valued, can't express multi-role users
+- **Problem:** Admin user (`nikhilkumarsinha4321@gmail.com`) is also a designer (owns Priya Interiors). Single string role can be 'admin' OR 'designer', not both.
+- **Impact:** Admin can't see Designer Portal in sidebar if role='admin'; can't access /admin/* if role='designer'.
+- **Fix later:** Change User.role to User.roles (array of strings); update requireRole and sidebar filter to use array semantics.
+
 ## Code Quality & Technical Debt
 
 ### [ ] `tsc --noEmit` runs out of memory on full project
@@ -79,6 +84,11 @@
   ```js
   db.users.updateOne({ email: "nikhilkumarsinha4321@gmail.com" }, { $unset: { password: "" } })
   ```
+
+### [ ] Sidebar nav link "Professional Design Studio" → /design returns 404
+- **Surfaced during:** Goal A test runs
+- **Problem:** Clicking "Professional Design Studio" in the sidebar routes to `/design` which returns 404.
+- **Fix:** Locate the link in the sidebar/layout component, remove or repoint.
 
 ## Booking / Marketplace
 

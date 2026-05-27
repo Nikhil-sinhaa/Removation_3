@@ -146,6 +146,14 @@ export function UserMenu({ className }: UserMenuProps) {
               <span>Settings</span>
             </Link>
           </DropdownMenuItem>
+          {user?.role === 'customer' && (
+            <DropdownMenuItem asChild>
+              <Link href="/designer/register">
+                <Sparkles className="mr-2 h-4 w-4" />
+                <span>Become a Designer</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
