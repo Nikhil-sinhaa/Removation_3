@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
 
         // Fields always returned publicly (safe public profile)
         // Phone is conditionally included — not for unauthenticated callers
-        const publicSelect = 'displayName bio city specialties portfolioImages yearsOfExperience isVerified createdAt';
+        const publicSelect = 'displayName bio city specialties portfolioImages yearsOfExperience isVerified createdAt consultationFee acceptsConsultations acceptsProjects projectMinFee consultationDurationMinutes';
         const authedSelect = publicSelect + ' phone';
         const selectFields = isLoggedIn ? authedSelect : publicSelect;
 

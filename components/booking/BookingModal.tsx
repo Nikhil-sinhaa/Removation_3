@@ -67,6 +67,22 @@ interface BookingModalProps {
 type BookingType = 'consultation' | 'project';
 type ModalStep = 'select-type' | 'details' | 'processing' | 'success' | 'error';
 
+// ── Razorpay script loader ───────────────────────────────────────────────────
+
+function loadRazorpayScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+        if (typeof window !== 'undefined' && (window as any).Razorpay) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve();
+        script.onerror = () => reject(new Error('Failed to load Razorpay script'));
+        document.body.appendChild(script);
+    });
+}
+
 // ── Slot picker helpers ───────────────────────────────────────────────────────
 
 /** Generate 15-minute boundary slots for the next N days */
@@ -202,7 +218,9 @@ export function BookingModal({
 
             const { bookingId, razorpayOrderId, amount, currency, key } = createData;
 
-            // 2. Open Razorpay checkout — exact same pattern as CheckoutModal.tsx
+            // 2. Load Razorpay script (idempotent) then open checkout
+            await loadRazorpayScript();
+
             const options = {
                 key: key || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
                 amount,
