@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
     }
 }
 
-async function verifyStripePayment(clerkId: string, sessionId: string) {
+async function verifyStripePayment(userId: string, sessionId: string) {
     if (!sessionId) {
         return NextResponse.json(
             { error: 'Session ID is required' },
@@ -95,14 +95,16 @@ async function verifyStripePayment(clerkId: string, sessionId: string) {
     }
 
     // Verify the session belongs to this user
-    if (session.metadata?.clerkId !== clerkId) {
+    if (session.metadata?.clerkId !== userId) {
         return NextResponse.json(
             { error: 'Session does not belong to user' },
             { status: 403 }
         );
     }
 
-    const user = await User.findOne({ clerkId });
+    // Note: clerkId field holds MongoDB _id value via pre-save hook.
+    // userId here is the JWT payload id (= MongoDB _id string).
+    const user = await User.findOne({ clerkId: userId });
 
     if (!user) {
         return NextResponse.json(
@@ -118,7 +120,7 @@ async function verifyStripePayment(clerkId: string, sessionId: string) {
 
         // Update user subscription
         await User.findOneAndUpdate(
-            { clerkId },
+            { clerkId: userId },
             {
                 stripeCustomerId: session.customer as string,
                 stripeSubscriptionId: subscription.id,
@@ -144,7 +146,7 @@ async function verifyStripePayment(clerkId: string, sessionId: string) {
         const credits = parseInt(session.metadata?.credits || '0');
 
         await User.findOneAndUpdate(
-            { clerkId },
+            { clerkId: userId },
             {
                 $inc: { 'subscription.credits': credits },
                 $push: {
@@ -162,7 +164,9 @@ async function verifyStripePayment(clerkId: string, sessionId: string) {
             }
         );
 
-        const updatedUser = await User.findOne({ clerkId });
+        // Note: clerkId field holds MongoDB _id value via pre-save hook.
+        // userId here is the JWT payload id (= MongoDB _id string).
+        const updatedUser = await User.findOne({ clerkId: userId });
 
         return NextResponse.json({
             success: true,
@@ -174,7 +178,7 @@ async function verifyStripePayment(clerkId: string, sessionId: string) {
 }
 
 async function verifyRazorpayPayment(
-    clerkId: string,
+    userId: string,
     paymentId: string,
     orderId?: string,
     subscriptionId?: string,
@@ -227,14 +231,16 @@ async function verifyRazorpayPayment(
     }
 
     // Verify payment belongs to user
-    if ((payment.notes as any)?.clerkId !== clerkId) {
+    if ((payment.notes as any)?.clerkId !== userId) {
         return NextResponse.json(
             { error: 'Payment does not belong to user' },
             { status: 403 }
         );
     }
 
-    const user = await User.findOne({ clerkId });
+    // Note: clerkId field holds MongoDB _id value via pre-save hook.
+    // userId here is the JWT payload id (= MongoDB _id string).
+    const user = await User.findOne({ clerkId: userId });
 
     if (!user) {
         return NextResponse.json(
@@ -250,7 +256,7 @@ async function verifyRazorpayPayment(
         const credits = PLAN_CREDITS[plan] || 100;
 
         await User.findOneAndUpdate(
-            { clerkId },
+            { clerkId: userId },
             {
                 razorpayCustomerId: (payment as any).customer_id,
                 razorpaySubscriptionId: subscriptionId,
@@ -269,7 +275,7 @@ async function verifyRazorpayPayment(
         await Subscription.findOneAndUpdate(
             { razorpaySubscriptionId: subscriptionId },
             {
-                clerkId,
+                clerkId: userId,
                 razorpaySubscriptionId: subscriptionId,
                 plan: plan.includes('team') ? 'team' : 'pro',
                 status: 'active',
@@ -294,7 +300,7 @@ async function verifyRazorpayPayment(
         const credits = parseInt((payment.notes as any)?.credits || '0');
 
         await User.findOneAndUpdate(
-            { clerkId },
+            { clerkId: userId },
             {
                 $inc: { 'subscription.credits': credits },
                 $push: {
@@ -313,7 +319,9 @@ async function verifyRazorpayPayment(
             }
         );
 
-        const updatedUser = await User.findOne({ clerkId });
+        // Note: clerkId field holds MongoDB _id value via pre-save hook.
+        // userId here is the JWT payload id (= MongoDB _id string).
+        const updatedUser = await User.findOne({ clerkId: userId });
 
         return NextResponse.json({
             success: true,

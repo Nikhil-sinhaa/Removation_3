@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import FloorPlanProject from '@/src/models/FloorPlanProject';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 
 const execAsync = promisify(exec);
 

@@ -14,7 +14,7 @@
   (e.g. `?redirect_url=https://evil.com`).
 - **Workaround:** Direct-navigate to admin routes after logging in via `/`.
 
-### [ ] JWT_SECRET has insecure fallback default
+### [x] JWT_SECRET has insecure fallback default
 - **File:** `lib/auth/jwt.ts`
 - **Problem:** `const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production'` — if the env var is unset, the app silently signs all auth tokens with a publicly-known string, making every session forgeable. Currently `.env` sets it to `super_secret_jwt_key_here` which is also too weak.
 - **Fix:** Replace the fallback with a startup-time throw:
@@ -25,7 +25,7 @@
   In dev, optionally log a warning instead of throwing. Replace `.env` value with a long random string (`openssl rand -hex 32`).
 - **Security note:** Anyone who reads the source code can forge admin-level JWTs against any deployment that forgot to set this env var.
 
-### [ ] UploadThing routes have no auth (`imageUploader`, `projectImage`, `avatar`)
+### [x] UploadThing routes have no auth (`imageUploader`, `projectImage`, `avatar`)
 - **Files:** `app/api/uploadthing/core.ts`
 - **Problem:** All three existing UploadThing file routes return a placeholder `userId: "anonymous"` or `userId: "user"` in their middleware. The JWT cookie check is commented out. Anyone with the route URL can upload files to the UploadThing bucket — no account required.
 - **Risk:** Storage bill abuse, malicious content upload, free phishing/image hosting.
@@ -38,7 +38,7 @@
   ```
 - **Note:** The `designerPortfolio` route added in Goal B gets this right from day one. Apply the same pattern to the three existing routes in a follow-up goal.
 
-### [ ] `signOut` vs `logout` Naming Inconsistency
+### [x] `signOut` vs `logout` Naming Inconsistency
 - **Problem:** Custom `AuthProvider` exposes a `logout` function, but some components (originally written under Clerk auth) try to call `signOut`.
 - **Status:** Fixed in the main `app/admin/layout.tsx` Header, but may persist in other unmigrated clerk templates across the codebase.
 
@@ -49,7 +49,7 @@
 
 ## Code Quality & Technical Debt
 
-### [ ] `tsc --noEmit` runs out of memory on full project
+### [x] `tsc --noEmit` runs out of memory on full project
 - **Problem:** Running `npx tsc --noEmit` across the full project causes a V8 OOM crash (exit code 134). The project has ~1,196 files with heavy generic types.
 - **Workaround:** Run `tsc` on individual files. Works fine for per-file checks.
 - **Fix:** Add `NODE_OPTIONS=--max-old-space-size=8192` to the typecheck script, or set up incremental builds / project references to reduce single-pass memory pressure. Will eventually break CI if left unaddressed.
@@ -58,9 +58,11 @@
 - **Files:** `/app/api/ai/*`, `/app/api/auth/*`
 - **Problem:** Dynamic types and missing declarations causing compiler warnings/errors under strict strict mode configuration.
 
-### [ ] Duplicate Database Connectors
-- **Files:** `src/lib/mongodb.js` and `lib/db/mongodb.ts`
-- **Problem:** There are two database connection initializers running in the workspace (one JS, one TS). They should be unified to avoid duplicate mongoose pools.
+### [~] Duplicate Database Connectors
+- **Files:** `src/lib/mongodb.js` (old JS connector) and `lib/db/mongodb.ts` (new TS connector)
+- **Status:** 35/36 files migrated. All `app/api/` routes now import `{ connectDB }` from `@/lib/db/mongodb` or the equivalent relative path. `src/lib/appSettings.js` deferred — it uses `./mongodb.js` as a sibling import and is low-risk to migrate separately.
+- **Behavior change:** The old connector used a hardcoded `mongodb://127.0.0.1:27017/removation_ai`. The 35 migrated routes now use `process.env.MONGODB_URI` via the new connector. This is correct and intentional.
+- **Remaining:** `src/lib/appSettings.js` still uses `src/lib/mongodb.js`. Migrate in a separate pass.
 
 ## UX / Features
 
@@ -69,7 +71,7 @@
   Server-side URL allowlist validator (`lib/utils/isValidPortfolioImageUrl.ts`) added in Task 5.
   `UPLOADTHING_TOKEN` set in `.env.local` (real credentials, app ID `gv9vbtzjt2`, region `sea1`).
 
-### [ ] Three legacy UploadThing routes still unauthenticated *(deferred from Goal B)*
+### [x] Three legacy UploadThing routes still unauthenticated *(deferred from Goal B)*
 - **Files:** `app/api/uploadthing/core.ts` — `imageUploader`, `projectImage`, `avatar` endpoints
 - **Tracked above under Auth section.** Closing once those three get the JWT gate from `designerPortfolio`.
 
@@ -85,10 +87,8 @@
   db.users.updateOne({ email: "nikhilkumarsinha4321@gmail.com" }, { $unset: { password: "" } })
   ```
 
-### [ ] Sidebar nav link "Professional Design Studio" → /design returns 404
-- **Surfaced during:** Goal A test runs
-- **Problem:** Clicking "Professional Design Studio" in the sidebar routes to `/design` which returns 404.
-- **Fix:** Locate the link in the sidebar/layout component, remove or repoint.
+### [x] Sidebar nav link "Professional Design Studio" → /design returns 404
+- **Resolved:** The sidebar href is `/professional-design` and `app/(app)/professional-design/page.tsx` exists. No routing issue found. The bug description referenced `/design` but the href was already corrected in a prior session.
 
 ## Booking / Marketplace
 
@@ -100,12 +100,15 @@
 - **Fix:** Add booking-payment-captured handling to `app/api/webhook/razorpay/route.ts`.
   Requires webhook to look at `order.notes` for `bookingId`, idempotent skip if booking is past `pending_payment`.
 
-### [ ] Auth identity inconsistency: clerkId (legacy) vs _id (new)
+### [~] Auth identity inconsistency: clerkId (legacy) vs _id (new)
 - **Files:** `app/api/payment/verify/route.ts`, `app/api/payment/create-checkout/route.ts` (legacy) vs all designer/booking routes (new)
-- **Problem:** Old payment routes look up users by `clerkId` (`User.findOne({ clerkId })`).
-  New designer/booking routes look up by MongoDB `_id` via `requireRole`.
-  Users without a `clerkId` field may silently fail on credit purchases.
-- **Fix:** Migrate old payment routes to the `requireRole` pattern (look up by `_id`).
+- **Status:** Local variable `clerkId` renamed to `userId` in both files for clarity. `User.findOne({ clerkId: userId })` queries left intact — they work via the pre-save hook (`clerkId = _id.toString()`). Comments added at each lookup explaining the indirection.
+- **Remaining:** Routes still use `{ clerkId: userId }` pattern instead of `User.findById(userId)`. Safe until clerkId field is eventually removed.
+
+### [ ] CLAUDE.md line 690 contains stale Clerk-era advice
+- **Line:** `"Never query users by _id — always use { clerkId: userId }"`
+- **Problem:** This was correct when Clerk was the auth system. Now JWT `id` = MongoDB `_id`, so `User.findOne({ clerkId: userId })` works only via the pre-save hook that copies `_id → clerkId`. New routes (designer, booking) already use `User.findById` correctly via `requireRole`.
+- **Fix later:** Remove `clerkId` field, migrate the two payment routes to `User.findById(userId)` directly.
 
 ### [ ] Test setup conflates admin and designer identities
 - **Files:** `scratch/booking_curl_tests.sh`

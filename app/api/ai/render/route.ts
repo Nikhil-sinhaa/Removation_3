@@ -9,7 +9,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';

@@ -1,3 +1,6 @@
+// NOTE: This connector is kept for src/lib/appSettings.js only.
+// All other files should use lib/db/mongodb.ts via connectDB export.
+// Do not add new imports of this file.
 import mongoose from 'mongoose'
 const MONGODB_URI = 'mongodb://127.0.0.1:27017/removation_ai'
 let cached = global.mongoose

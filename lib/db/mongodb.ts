@@ -86,3 +86,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 }
 
 export default connectToDatabase;
+
+// NOTE: connectDB is a named alias for connectToDatabase, provided for
+// compatibility with the 35 migrated API routes.
+export const connectDB = connectToDatabase;

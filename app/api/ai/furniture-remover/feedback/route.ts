@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { connectDB } from '../../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../../lib/db/mongodb';
 import FurnitureRemoverRun from '../../../../../src/models/FurnitureRemoverRun.js';
 
 export const runtime = 'nodejs';

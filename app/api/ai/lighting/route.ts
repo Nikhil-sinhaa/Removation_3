@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/src/models/Project';
 import User from '@/lib/db/models/User';
 import LightingRun from '@/src/models/LightingRun';

@@ -18,10 +18,16 @@ export const ourFileRouter = {
       contentDisposition: "inline",
     },
   })
-    .middleware(async () => {
-      // TODO(security): No auth gate. See KNOWN_ISSUES.md → "UploadThing routes have no auth".
-      // Fix: apply the same JWT cookie verification pattern used by designerPortfolio.
-      return { userId: "anonymous" };
+    .middleware(async ({ req }) => {
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // Runs on server after successful upload
@@ -42,10 +48,16 @@ export const ourFileRouter = {
   // Endpoint for project cover images
   projectImage: f({
     image: { maxFileSize: "4MB", maxFileCount: 1 }
-  }).middleware(async () => {
-    // TODO(security): No auth gate. See KNOWN_ISSUES.md → "UploadThing routes have no auth".
-    // Fix: apply the same JWT cookie verification pattern used by designerPortfolio.
-    return { userId: "anonymous" };
+  }).middleware(async ({ req }) => {
+    const cookieName = process.env.COOKIE_NAME || 'auth_token';
+    const rawCookie = req.headers.get('cookie') ?? '';
+    const match = rawCookie.match(
+      new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+    );
+    const token = match?.[1] ?? null;
+    const user = token ? verifyJwt(token) : null;
+    if (!user) throw new UploadThingError('Unauthorized');
+    return { userId: user.id };
   }).onUploadComplete(async ({ file }) => {
     return { url: file.url, key: file.key };
   }),
@@ -53,10 +65,16 @@ export const ourFileRouter = {
   // Endpoint for user avatars
   avatar: f({
     image: { maxFileSize: "2MB", maxFileCount: 1 }
-  }).middleware(async () => {
-    // TODO(security): No auth gate. See KNOWN_ISSUES.md → "UploadThing routes have no auth".
-    // Fix: apply the same JWT cookie verification pattern used by designerPortfolio.
-    return { userId: "anonymous" };
+  }).middleware(async ({ req }) => {
+    const cookieName = process.env.COOKIE_NAME || 'auth_token';
+    const rawCookie = req.headers.get('cookie') ?? '';
+    const match = rawCookie.match(
+      new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+    );
+    const token = match?.[1] ?? null;
+    const user = token ? verifyJwt(token) : null;
+    if (!user) throw new UploadThingError('Unauthorized');
+    return { userId: user.id };
   }).onUploadComplete(async ({ file }) => {
     return { url: file.url, key: file.key };
   }),

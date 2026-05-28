@@ -26,7 +26,7 @@ import { NextResponse } from 'next/server';
 import { mkdir, copyFile } from 'fs/promises';
 import path from 'path';
 import fs from 'fs';
-import { connectDB }   from '@/src/lib/mongodb.js';
+import { connectDB }   from '@/lib/db/mongodb';
 import Project         from '@/src/models/Project.js';
 import FurniturePlacementRun from '@/src/models/FurniturePlacementRun.js';
 import comfyBridge     from '@/src/services/comfyBridge';

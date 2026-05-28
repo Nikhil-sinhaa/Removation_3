@@ -12,7 +12,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { connectDB } from '../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../lib/db/mongodb';
 import MultiRoomProject from '../../../../src/models/MultiRoomProject.js';
 import { generateMarbleView } from '../../../../src/services/multiRoomOrchestrator.js';
 

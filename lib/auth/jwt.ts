@@ -3,7 +3,13 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = process.env.COOKIE_NAME || 'auth_token';
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error(
+    'JWT_SECRET environment variable is required. ' +
+    'Generate one with: openssl rand -hex 32'
+  );
+}
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export interface JwtPayload {

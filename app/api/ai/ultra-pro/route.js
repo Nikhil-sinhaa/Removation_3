@@ -25,7 +25,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
-import { connectDB } from '../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../lib/db/mongodb';
 import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';

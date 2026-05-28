@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { connectDB } from '../../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../../lib/db/mongodb';
 import RoomChangerRun from '../../../../../src/models/RoomChangerRun.js';
 
 export const runtime = 'nodejs';

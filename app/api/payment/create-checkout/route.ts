@@ -130,6 +130,8 @@ export async function POST(req: NextRequest) {
         await connectToDatabase();
 
         // Get user from database
+        // Note: clerkId field holds MongoDB _id value via pre-save hook.
+        // userId here is the JWT payload id (= MongoDB _id string).
         const user = await User.findOne({ clerkId: userId });
 
         if (!user) {
@@ -165,7 +167,7 @@ export async function POST(req: NextRequest) {
 async function handleStripeCheckout(
     user: any,
     plan: PlanType,
-    clerkId: string,
+    userId: string,
     successUrl: string,
     cancelUrl: string
 ) {
@@ -186,14 +188,14 @@ async function handleStripeCheckout(
             email: user.email,
             name: `${user.firstName} ${user.lastName}`.trim() || undefined,
             metadata: {
-                clerkId,
+                clerkId: userId,
             },
         });
         customerId = customer.id;
 
         // Save customer ID
         await User.findOneAndUpdate(
-            { clerkId },
+            { clerkId: userId },
             { stripeCustomerId: customerId }
         );
     }
@@ -216,12 +218,12 @@ async function handleStripeCheckout(
             success_url: `${successUrl}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: cancelUrl,
             metadata: {
-                clerkId,
+                clerkId: userId,
                 plan,
             },
             subscription_data: {
                 metadata: {
-                    clerkId,
+                    clerkId: userId,
                     plan,
                 },
             },
@@ -256,7 +258,7 @@ async function handleStripeCheckout(
             success_url: `${successUrl}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: cancelUrl,
             metadata: {
-                clerkId,
+                clerkId: userId,
                 type: 'credits',
                 credits: String((pricing as any).credits),
             },
@@ -273,7 +275,7 @@ async function handleStripeCheckout(
 async function handleRazorpayCheckout(
     user: any,
     plan: PlanType,
-    clerkId: string
+    userId: string
 ) {
     const pricing = PRICING.razorpay[plan];
 
@@ -293,7 +295,7 @@ async function handleRazorpayCheckout(
             total_count: plan.includes('yearly') ? 1 : 12, // 1 for yearly, 12 for monthly
             quantity: 1,
             notes: {
-                clerkId,
+                clerkId: userId,
                 plan,
                 email: user.email,
             },
@@ -312,7 +314,7 @@ async function handleRazorpayCheckout(
                 email: user.email,
             },
             notes: {
-                clerkId,
+                clerkId: userId,
                 plan,
             },
         });
@@ -322,7 +324,7 @@ async function handleRazorpayCheckout(
             amount: pricing.amount,
             currency: pricing.currency,
             notes: {
-                clerkId,
+                clerkId: userId,
                 type: 'credits',
                 credits: String((pricing as any).credits),
             },
@@ -341,7 +343,7 @@ async function handleRazorpayCheckout(
                 email: user.email,
             },
             notes: {
-                clerkId,
+                clerkId: userId,
                 type: 'credits',
                 credits: String((pricing as any).credits),
             },

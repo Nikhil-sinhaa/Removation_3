@@ -10,7 +10,7 @@
 
 import { Readable } from 'stream';
 import { NextResponse } from 'next/server';
-import { connectDB } from '../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../lib/db/mongodb';
 import MultiRoomProject from '../../../../src/models/MultiRoomProject.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { paintAllPhotos } from '../../../../src/services/multiRoomOrchestrator.js';

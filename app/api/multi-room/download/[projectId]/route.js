@@ -3,7 +3,7 @@ import JSZip from 'jszip';
 import path from 'path';
 import fs from 'fs';
 import MultiRoomProject from '@/src/models/MultiRoomProject';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

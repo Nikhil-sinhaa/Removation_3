@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import FloorPlanProject from '@/src/models/FloorPlanProject';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 
 export async function GET(req, { params }) {
   await connectDB();

@@ -8,7 +8,7 @@
 
 import { Readable } from 'stream';
 import { NextResponse } from 'next/server';
-import { connectDB } from '../../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../../lib/db/mongodb';
 import Project from '../../../../../src/models/Project.js';
 import FurnitureRemoverRun from '../../../../../src/models/FurnitureRemoverRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
