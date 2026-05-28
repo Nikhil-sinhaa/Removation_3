@@ -41,7 +41,8 @@ export type BookingType = 'consultation' | 'project';
 export interface IBooking {
     // Parties
     customerId: Types.ObjectId;  // ref: 'User'
-    designerId: Types.ObjectId;  // ref: 'Designer'
+    designerId?: Types.ObjectId;  // ref: 'Designer'
+    contractorId?: Types.ObjectId; // ref: 'Contractor'
 
     // Type
     type: BookingType;
@@ -100,7 +101,13 @@ const BookingSchema = new Schema<IBooking>(
         designerId: {
             type: Schema.Types.ObjectId,
             ref: 'Designer',
-            required: true,
+            required: false,
+            index: true,
+        },
+        contractorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Contractor',
+            required: false,
             index: true,
         },
 
@@ -238,6 +245,16 @@ const BookingSchema = new Schema<IBooking>(
 // ── Cross-field validation (pre-validate hook) ─────────────────────────────────
 // Ensures consultation and project fields are only set for the correct booking type.
 BookingSchema.pre('validate', function (next) {
+    // Ensure exactly one of designerId or contractorId is set
+    const hasDesigner = !!this.designerId;
+    const hasContractor = !!this.contractorId;
+    if (hasDesigner && hasContractor) {
+        return next(new Error('A booking cannot have both designerId and contractorId'));
+    }
+    if (!hasDesigner && !hasContractor) {
+        return next(new Error('A booking must have either designerId or contractorId'));
+    }
+
     if (this.type === 'consultation') {
         if (!this.consultationSlot) {
             return next(new Error('consultationSlot is required for consultation bookings'));
@@ -265,6 +282,9 @@ BookingSchema.index({ customerId: 1, createdAt: -1 });
 
 // Designer's incoming queue filtered by status
 BookingSchema.index({ designerId: 1, status: 1, createdAt: -1 });
+
+// Contractor's incoming queue filtered by status
+BookingSchema.index({ contractorId: 1, status: 1, createdAt: -1 });
 
 // Webhook / payment-verify lookup by Razorpay order (sparse = skip null entries)
 BookingSchema.index({ razorpayOrderId: 1 }, { unique: true, sparse: true });

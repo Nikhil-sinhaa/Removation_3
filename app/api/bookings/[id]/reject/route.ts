@@ -34,6 +34,7 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Booking } from '@/lib/db/models/Booking';
 import { Designer } from '@/lib/db/models/Designer';
+import { Contractor } from '@/lib/db/models/Contractor';
 import { issueBookingRefund } from '@/lib/booking/refund';
 
 const MIN_REASON_LENGTH = 5;
@@ -41,16 +42,16 @@ const MAX_REASON_LENGTH = 500;
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // ── Auth ────────────────────────────────────────────────────────────────
-        const authResult = await requireRole(req, ['designer', 'admin']);
+        const authResult = await requireRole(req, ['designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
         // ── Validate booking ID ─────────────────────────────────────────────────
-        const { id } = params;
+        const { id } = await params;
         if (!id || !Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: 'Invalid booking ID' }, { status: 400 });
         }
@@ -91,14 +92,20 @@ export async function POST(
             return NextResponse.json({ message: 'Booking not found' }, { status: 404 });
         }
 
-        // ── Designer ownership: find designer profile linked to this user ───────
+        // ── Provider ownership ─────────────────────────────────────────────────
         if (user.role !== 'admin') {
-            const designer = await Designer.findOne({ userId: user._id });
-            if (!designer) {
-                return NextResponse.json({ message: 'Designer profile not found' }, { status: 404 });
-            }
-            if (booking.designerId.toString() !== designer._id.toString()) {
-                return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+            if (booking.designerId) {
+                const designer = await Designer.findOne({ userId: user._id });
+                if (!designer || booking.designerId.toString() !== designer._id.toString()) {
+                    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+                }
+            } else if (booking.contractorId) {
+                const contractor = await Contractor.findOne({ userId: user._id });
+                if (!contractor || booking.contractorId.toString() !== contractor._id.toString()) {
+                    return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
+                }
+            } else {
+                return NextResponse.json({ message: 'Invalid booking provider configuration' }, { status: 400 });
             }
         }
 

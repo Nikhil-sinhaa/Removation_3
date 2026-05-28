@@ -22,7 +22,7 @@ import { checkAndExpireBooking, findExpiredInList } from '@/lib/booking/expiry';
 export async function GET(req: NextRequest) {
     try {
         // ── Auth ────────────────────────────────────────────────────────────────
-        const authResult = await requireRole(req, ['customer', 'designer', 'admin']);
+        const authResult = await requireRole(req, ['customer', 'designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
@@ -41,8 +41,10 @@ export async function GET(req: NextRequest) {
                 .populate({
                     path: 'designerId',
                     select: 'displayName city portfolioImages',
-                    // Return only the first portfolio image for use as thumbnail
-                    // (slice is handled below after population)
+                })
+                .populate({
+                    path: 'contractorId',
+                    select: 'displayName city portfolioImages',
                 })
                 .sort({ createdAt: -1 })
                 .skip(skip)
@@ -93,6 +95,10 @@ export async function GET(req: NextRequest) {
             const designer = b.designerId as any;
             if (designer && Array.isArray(designer.portfolioImages)) {
                 designer.portfolioImages = designer.portfolioImages.slice(0, 1);
+            }
+            const contractor = b.contractorId as any;
+            if (contractor && Array.isArray(contractor.portfolioImages)) {
+                contractor.portfolioImages = contractor.portfolioImages.slice(0, 1);
             }
             return b;
         });

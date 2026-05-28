@@ -73,17 +73,37 @@ echo -e "${BLUE}🤖 Starting ComfyUI...${NC}"
 cd /home/nikhil/Documents/Remo2/ComfyUI
 source venv/bin/activate
 
-# ComfyUI optimized for RTX 4060 8GB
+# Detect if NVIDIA driver is loaded and working
+USE_CPU=""
+if ! nvidia-smi >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  NVIDIA driver is not responding or not loaded.${NC}"
+    echo -e "${YELLOW}   Current kernel ($(uname -r)) is missing NVIDIA modules, which are installed on 6.17.0-22-generic.${NC}"
+    echo -e "${YELLOW}   Falling back to CPU mode (--cpu) so the server can start. Note: Image generation will be slow.${NC}"
+    echo -e "${YELLOW}   👉 Tip: Reboot and select kernel '6.17.0-22-generic' from the GRUB advanced boot options to restore full GPU acceleration.${NC}"
+    USE_CPU="--cpu"
+fi
+
+# ComfyUI optimized for RTX 4060 8GB (or fallback to CPU)
 export XFORMERS_FORCE_DISABLE_TRITON=1
 export TORCH_CUDNN_V8_API_ENABLED=1
-python3 main.py \
-    --listen 0.0.0.0 \
-    --port 8188 \
-    --lowvram \
-    --preview-method auto \
-    --disable-metadata \
-    --disable-xformers \
-    > /tmp/logs/comfyui.log 2>&1 &
+
+if [ -n "$USE_CPU" ]; then
+    python3 main.py \
+        --listen 0.0.0.0 \
+        --port 8188 \
+        --cpu \
+        --disable-metadata \
+        > /tmp/logs/comfyui.log 2>&1 &
+else
+    python3 main.py \
+        --listen 0.0.0.0 \
+        --port 8188 \
+        --lowvram \
+        --preview-method auto \
+        --disable-metadata \
+        --disable-xformers \
+        > /tmp/logs/comfyui.log 2>&1 &
+fi
 
 COMFYUI_PID=$!
 echo "ComfyUI PID: $COMFYUI_PID"

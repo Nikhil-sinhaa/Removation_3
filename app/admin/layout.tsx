@@ -294,9 +294,9 @@ const mainNavItems: NavItem[] = [
     ],
   },
   {
-    title: 'Designers',
-    href: '/admin/designers',
-    icon: Briefcase,
+    title: 'Approvals',
+    href: '/admin/approvals',
+    icon: ShieldCheck,
     badge: null,
   },
   {

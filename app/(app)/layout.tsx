@@ -41,6 +41,7 @@ import {
   Calendar,
   LayoutDashboard,
   LucideIcon,
+  Store,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -67,6 +68,8 @@ const sidebarNavigation: NavSection[] = [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Projects', href: '/projects', icon: FolderOpen },
       { name: 'Browse Designers', href: '/designers', icon: Users },
+      { name: 'Browse Contractors', href: '/marketplace?tab=contractors', icon: Users },
+      { name: 'Browse Vendors', href: '/marketplace?tab=vendors', icon: Store },
       { name: 'AI Design Studio', href: '/ai-design', icon: Wand2 },
       { name: 'Master Design Studio', href: '/master-design', icon: Settings },
       { name: 'Professional Design Studio', href: '/professional-design', icon: Shield },
@@ -100,11 +103,28 @@ const sidebarNavigation: NavSection[] = [
     ],
   },
   {
+    title: 'Contractor Portal',
+    role: 'contractor',
+    items: [
+      { name: 'Contractor Dashboard', href: '/contractor/dashboard', icon: LayoutDashboard },
+      { name: 'Contractor Bookings', href: '/contractor/bookings', icon: Calendar },
+    ],
+  },
+  {
+    title: 'Vendor Portal',
+    role: 'vendor',
+    items: [
+      { name: 'Vendor Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
+    ],
+  },
+  {
     title: 'Account',
     items: [
       { name: 'Pricing', href: '/pricing', icon: CreditCard },
       { name: 'Settings', href: '/settings', icon: Settings },
       { name: 'Become a Designer', href: '/designer/register', icon: Sparkles, role: 'customer' },
+      { name: 'Become a Contractor', href: '/contractor/register', icon: Sparkles, role: 'customer' },
+      { name: 'Become a Vendor', href: '/vendor/register', icon: Sparkles, role: 'customer' },
     ],
   },
 ];

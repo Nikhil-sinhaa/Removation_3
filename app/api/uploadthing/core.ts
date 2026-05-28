@@ -120,6 +120,68 @@ export const ourFileRouter = {
       };
     }),
 
+  // ─── Contractor Portfolio Upload ───────────────────────────────────────────
+  contractorPortfolio: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 10,
+      contentDisposition: "inline",
+    },
+  })
+    .middleware(async ({ req }) => {
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Contractor portfolio upload complete:');
+      return {
+        url: file.url,
+        key: file.key,
+        name: file.name ?? 'unnamed',
+        size: file.size,
+      };
+    }),
+
+  // ─── Vendor Portfolio Upload ───────────────────────────────────────────────
+  vendorPortfolio: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 10,
+      contentDisposition: "inline",
+    },
+  })
+    .middleware(async ({ req }) => {
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Vendor portfolio upload complete:');
+      return {
+        url: file.url,
+        key: file.key,
+        name: file.name ?? 'unnamed',
+        size: file.size,
+      };
+    }),
+
 } satisfies FileRouter;
 
 

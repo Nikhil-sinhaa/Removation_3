@@ -21,7 +21,7 @@ interface UploadProgress {
 }
 
 interface UseUploadOptions {
-  endpoint?: 'imageUploader' | 'projectImage' | 'avatar' | 'designerPortfolio';
+  endpoint?: 'imageUploader' | 'projectImage' | 'avatar' | 'designerPortfolio' | 'contractorPortfolio' | 'vendorPortfolio';
   maxFiles?: number;
   maxSize?: number;
   acceptedTypes?: string[];

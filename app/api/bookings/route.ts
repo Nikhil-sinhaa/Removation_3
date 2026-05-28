@@ -34,6 +34,7 @@ import { Types } from 'mongoose';
 import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Designer } from '@/lib/db/models/Designer';
+import { Contractor } from '@/lib/db/models/Contractor';
 import { Booking, BOOKING_STATUSES, type BookingStatus } from '@/lib/db/models/Booking';
 import {
     isValidBookingType,
@@ -52,7 +53,7 @@ const razorpay = new Razorpay({
 export async function POST(req: NextRequest) {
     try {
         // ── Auth ────────────────────────────────────────────────────────────────
-        const authResult = await requireRole(req, ['customer', 'designer', 'admin']);
+        const authResult = await requireRole(req, ['customer', 'designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
@@ -64,11 +65,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 });
         }
 
-        const { designerId, type, consultationSlot, projectDescription, projectPreferredStartDate } = body;
+        const { designerId, contractorId, type, consultationSlot, projectDescription, projectPreferredStartDate } = body;
 
-        // ── Validation: designerId ─────────────────────────────────────────────
-        if (!designerId || typeof designerId !== 'string' || !Types.ObjectId.isValid(designerId)) {
+        // ── Validation: provider ID ─────────────────────────────────────────────
+        if ((!designerId && !contractorId) || (designerId && contractorId)) {
+            return NextResponse.json({ message: 'Provide either designerId or contractorId, not both' }, { status: 400 });
+        }
+
+        if (designerId && (typeof designerId !== 'string' || !Types.ObjectId.isValid(designerId))) {
             return NextResponse.json({ message: 'Invalid designerId' }, { status: 400 });
+        }
+
+        if (contractorId && (typeof contractorId !== 'string' || !Types.ObjectId.isValid(contractorId))) {
+            return NextResponse.json({ message: 'Invalid contractorId' }, { status: 400 });
         }
 
         // ── Validation: type ───────────────────────────────────────────────────
@@ -106,53 +115,77 @@ export async function POST(req: NextRequest) {
 
         await connectToDatabase();
 
-        // ── Fetch designer ────────────────────────────────────────────────────
-        // Return 404 regardless of whether it's "not found" vs "unverified" — don't leak state
-        const designer = await Designer.findOne({
-            _id: new Types.ObjectId(designerId),
-            isVerified: true,
-            isActive: true,
-        });
+        // ── Fetch provider ────────────────────────────────────────────────────
+        let designer = null;
+        let contractor = null;
 
-        if (!designer) {
-            return NextResponse.json({ message: 'Designer not found' }, { status: 404 });
+        if (designerId) {
+            designer = await Designer.findOne({
+                _id: new Types.ObjectId(designerId as string),
+                isVerified: true,
+                isActive: true,
+            });
+            if (!designer) {
+                return NextResponse.json({ message: 'Designer not found' }, { status: 404 });
+            }
+            if (designer.userId.toString() === user._id.toString()) {
+                return NextResponse.json({ message: "You can't book yourself" }, { status: 400 });
+            }
+            if (type === 'consultation' && !designer.acceptsConsultations) {
+                return NextResponse.json({ message: 'This designer is not accepting consultations' }, { status: 400 });
+            }
+            if (type === 'project' && !designer.acceptsProjects) {
+                return NextResponse.json({ message: 'This designer is not accepting project requests' }, { status: 400 });
+            }
+        } else {
+            contractor = await Contractor.findOne({
+                _id: new Types.ObjectId(contractorId as string),
+                isVerified: true,
+                isActive: true,
+            });
+            if (!contractor) {
+                return NextResponse.json({ message: 'Contractor not found' }, { status: 404 });
+            }
+            if (contractor.userId.toString() === user._id.toString()) {
+                return NextResponse.json({ message: "You can't book yourself" }, { status: 400 });
+            }
+            if (type === 'consultation' && !contractor.acceptsConsultations) {
+                return NextResponse.json({ message: 'This contractor is not accepting consultations' }, { status: 400 });
+            }
+            if (type === 'project' && !contractor.acceptsProjects) {
+                return NextResponse.json({ message: 'This contractor is not accepting project requests' }, { status: 400 });
+            }
         }
 
-        // ── Anti-self-booking ─────────────────────────────────────────────────
-        if (designer.userId.toString() === user._id.toString()) {
-            return NextResponse.json({ message: "You can't book yourself" }, { status: 400 });
-        }
-
-        // ── Type-specific designer capability checks ──────────────────────────
-        if (type === 'consultation' && !designer.acceptsConsultations) {
-            return NextResponse.json({ message: 'This designer is not accepting consultations' }, { status: 400 });
-        }
-
-        if (type === 'project' && !designer.acceptsProjects) {
-            return NextResponse.json({ message: 'This designer is not accepting project requests' }, { status: 400 });
-        }
+        const provider = designer || contractor;
 
         // ── Pricing check ─────────────────────────────────────────────────────
         const feeAmount = type === 'consultation'
-            ? designer.consultationFee?.amount ?? 0
-            : designer.projectMinFee?.amount ?? 0;
+            ? provider.consultationFee?.amount ?? 0
+            : provider.projectMinFee?.amount ?? 0;
 
         if (!feeAmount || feeAmount <= 0) {
-            return NextResponse.json({ message: "Designer hasn't set pricing for this service" }, { status: 400 });
+            return NextResponse.json({ message: "Provider hasn't set pricing for this service" }, { status: 400 });
         }
 
         const currency = type === 'consultation'
-            ? (designer.consultationFee?.currency || 'INR')
-            : (designer.projectMinFee?.currency || 'INR');
+            ? (provider.consultationFee?.currency || 'INR')
+            : (provider.projectMinFee?.currency || 'INR');
 
         // ── Slot conflict check (consultation only) ───────────────────────────
         if (type === 'consultation') {
             const slot = new Date(consultationSlot as string);
-            const conflict = await Booking.findOne({
-                designerId: designer._id,
+            const conflictQuery: Record<string, unknown> = {
                 consultationSlot: slot,
                 status: { $in: ['pending_designer', 'confirmed'] },
-            });
+            };
+            if (designer) {
+                conflictQuery.designerId = designer._id;
+            } else {
+                conflictQuery.contractorId = contractor!._id;
+            }
+
+            const conflict = await Booking.findOne(conflictQuery);
 
             if (conflict) {
                 return NextResponse.json(
@@ -163,8 +196,6 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Create Razorpay order ─────────────────────────────────────────────
-        // Pattern mirrors create-checkout/route.ts handleRazorpayCheckout one-time payments.
-        // Receipt must be ≤40 chars and unique per order.
         const shortId = new Types.ObjectId().toHexString().slice(-8); // last 8 hex chars
         const receipt = `bk_${shortId}`;
 
@@ -178,7 +209,8 @@ export async function POST(req: NextRequest) {
                     type: 'booking',
                     bookingType: type,
                     customerId: user._id.toString(),
-                    designerId: designer._id.toString(),
+                    designerId: designer ? designer._id.toString() : undefined,
+                    contractorId: contractor ? contractor._id.toString() : undefined,
                 },
             });
             if (!order || !order.id) {
@@ -191,13 +223,10 @@ export async function POST(req: NextRequest) {
         }
 
         // ── Create Booking document ───────────────────────────────────────────
-        // Only happens AFTER Razorpay order succeeds. If Booking creation fails here,
-        // the orphaned Razorpay order ID is logged for manual reconciliation.
         let booking;
         try {
             const bookingData: Record<string, unknown> = {
                 customerId: user._id,
-                designerId: designer._id,
                 type,
                 amount: feeAmount,
                 currency,
@@ -205,9 +234,15 @@ export async function POST(req: NextRequest) {
                 razorpayOrderId: razorpayOrderId,
             };
 
+            if (designer) {
+                bookingData.designerId = designer._id;
+            } else {
+                bookingData.contractorId = contractor!._id;
+            }
+
             if (type === 'consultation') {
                 bookingData.consultationSlot = new Date(consultationSlot as string);
-                bookingData.consultationDurationMinutes = designer.consultationDurationMinutes ?? 60;
+                bookingData.consultationDurationMinutes = provider.consultationDurationMinutes ?? 60;
             } else {
                 bookingData.projectDescription = (projectDescription as string).trim();
                 bookingData.projectPreferredStartDate =
@@ -216,7 +251,6 @@ export async function POST(req: NextRequest) {
 
             booking = await Booking.create(bookingData);
         } catch (dbErr) {
-            // Log the orphaned Razorpay order so a human can reconcile
             console.error(
                 '[bookings] Booking doc creation failed after Razorpay order created.',
                 'ORPHANED_RAZORPAY_ORDER_ID:', razorpayOrderId,
@@ -228,7 +262,6 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // ── Return data frontend needs to open Razorpay checkout ──────────────
         return NextResponse.json(
             {
                 bookingId: booking._id.toString(),
@@ -246,13 +279,10 @@ export async function POST(req: NextRequest) {
     }
 }
 
-// ── GET /api/bookings ─────────────────────────────────────────────────────────
-// Returns the calling user's booking history (as the customer who booked).
-
 export async function GET(req: NextRequest) {
     try {
         // ── Auth ────────────────────────────────────────────────────────────────
-        const authResult = await requireRole(req, ['customer', 'designer', 'admin']);
+        const authResult = await requireRole(req, ['customer', 'designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
@@ -282,6 +312,10 @@ export async function GET(req: NextRequest) {
                     path: 'designerId',
                     select: 'displayName city portfolioImages userId',
                 })
+                .populate({
+                    path: 'contractorId',
+                    select: 'displayName city portfolioImages userId',
+                })
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
@@ -289,10 +323,6 @@ export async function GET(req: NextRequest) {
             Booking.countDocuments(query),
         ]);
 
-        // ── On-read expiry check for list (Task 4.4) ────────────────────────────
-        // Find any pending_designer bookings that are past their deadline.
-        // Re-fetch each as a hydrated doc, run checkAndExpireBooking, then update
-        // the lean list so the response reflects the correct expired status.
         const expiredIds = findExpiredInList(bookings);
         const updatedBookingsMap = new Map<string, any>();
         if (expiredIds.length > 0) {
@@ -305,7 +335,6 @@ export async function GET(req: NextRequest) {
                     }
                 })
             );
-            // Patch the lean objects in place so the response is accurate
             for (const b of bookings) {
                 if (expiredIds.includes(b._id.toString())) {
                     const updated = updatedBookingsMap.get(b._id.toString());
@@ -320,7 +349,6 @@ export async function GET(req: NextRequest) {
             }
         }
 
-        // Add refundFailed flag to all bookings where applicable
         for (const b of bookings) {
             const isRefundState = ['rejected', 'cancelled_by_customer', 'expired'].includes(b.status);
             (b as any).refundFailed = !!(b.razorpayPaymentId && !b.refundId && isRefundState);

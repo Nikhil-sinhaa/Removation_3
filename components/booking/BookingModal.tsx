@@ -46,7 +46,8 @@ import { paiseToRupees } from '@/lib/booking/money';
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface DesignerPricingSnapshot {
-    designerId: string;          // Designer document _id
+    designerId?: string;          // Designer document _id
+    contractorId?: string;        // Contractor document _id
     displayName: string;
     city: string;
     consultationFee?: { amount: number; currency: string };
@@ -199,9 +200,13 @@ export function BookingModal({
         try {
             // 1. Create booking order
             const body: Record<string, unknown> = {
-                designerId: designer.designerId,
                 type: bookingType,
             };
+            if (designer.designerId) {
+                body.designerId = designer.designerId;
+            } else if (designer.contractorId) {
+                body.contractorId = designer.contractorId;
+            }
             if (bookingType === 'consultation' && selectedSlot) {
                 body.consultationSlot = selectedSlot.toISOString();
             }

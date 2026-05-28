@@ -35,16 +35,16 @@ import { Booking } from '@/lib/db/models/Booking';
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // ── Auth ────────────────────────────────────────────────────────────────
-        const authResult = await requireRole(req, ['customer', 'designer', 'admin']);
+        const authResult = await requireRole(req, ['customer', 'designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
         // ── Validate booking ID ─────────────────────────────────────────────────
-        const { id } = params;
+        const { id } = await params;
         if (!id || !Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: 'Invalid booking ID' }, { status: 400 });
         }

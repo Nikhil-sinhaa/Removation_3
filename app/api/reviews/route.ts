@@ -23,12 +23,13 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Booking } from '@/lib/db/models/Booking';
 import { Designer } from '@/lib/db/models/Designer';
+import { Contractor } from '@/lib/db/models/Contractor';
 import { Review } from '@/lib/db/models/Review';
 
 export async function POST(req: NextRequest) {
     try {
         // ── Auth Check ──────────────────────────────────────────────────────────
-        const authResult = await requireRole(req, ['customer', 'designer', 'admin']);
+        const authResult = await requireRole(req, ['customer', 'designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
@@ -79,10 +80,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'This booking has already been reviewed' }, { status: 409 });
         }
 
-        // Double check Review model by unique index just in case of concurrency
         const existingReview = await Review.findOne({ bookingId: booking._id });
         if (existingReview) {
-            // Self-heal: update booking reviewId link if somehow missing
             booking.reviewId = existingReview._id as Types.ObjectId;
             await booking.save();
             return NextResponse.json({ message: 'This booking has already been reviewed' }, { status: 409 });
@@ -92,7 +91,8 @@ export async function POST(req: NextRequest) {
         const review = new Review({
             bookingId: booking._id,
             customerId: booking.customerId,
-            designerId: booking.designerId,
+            designerId: booking.designerId || undefined,
+            contractorId: booking.contractorId || undefined,
             rating: ratingNum,
             title: title ? title.trim() : undefined,
             comment: comment.trim(),
@@ -101,38 +101,59 @@ export async function POST(req: NextRequest) {
 
         await review.save();
 
-        // ── Recalculate Designer Aggregates ─────────────────────────────────────
-        // We aggregate ratings only from visible reviews to keep metric accurate
-        const stats = await Review.aggregate([
-            { $match: { designerId: booking.designerId, isVisible: true } },
-            {
-                $group: {
-                    _id: '$designerId',
-                    averageRating: { $avg: '$rating' },
-                    totalReviews: { $sum: 1 },
-                },
-            },
-        ]);
-
+        // ── Recalculate aggregates ──────────────────────────────────────────────
         let averageRating = 0;
         let totalReviews = 0;
 
-        if (stats.length > 0) {
-            // Round to 1 decimal place: e.g. 4.6666 -> 4.7
-            averageRating = Math.round(stats[0].averageRating * 10) / 10;
-            totalReviews = stats[0].totalReviews;
-        }
+        if (booking.designerId) {
+            const stats = await Review.aggregate([
+                { $match: { designerId: booking.designerId, isVisible: true } },
+                {
+                    $group: {
+                        _id: '$designerId',
+                        averageRating: { $avg: '$rating' },
+                        totalReviews: { $sum: 1 },
+                    },
+                },
+            ]);
 
-        await Designer.findByIdAndUpdate(booking.designerId, {
-            averageRating,
-            totalReviews,
-        });
+            if (stats.length > 0) {
+                averageRating = Math.round(stats[0].averageRating * 10) / 10;
+                totalReviews = stats[0].totalReviews;
+            }
+
+            await Designer.findByIdAndUpdate(booking.designerId, {
+                averageRating,
+                totalReviews,
+            });
+        } else if (booking.contractorId) {
+            const stats = await Review.aggregate([
+                { $match: { contractorId: booking.contractorId, isVisible: true } },
+                {
+                    $group: {
+                        _id: '$contractorId',
+                        averageRating: { $avg: '$rating' },
+                        totalReviews: { $sum: 1 },
+                    },
+                },
+            ]);
+
+            if (stats.length > 0) {
+                averageRating = Math.round(stats[0].averageRating * 10) / 10;
+                totalReviews = stats[0].totalReviews;
+            }
+
+            await Contractor.findByIdAndUpdate(booking.contractorId, {
+                averageRating,
+                totalReviews,
+            });
+        }
 
         // ── Link Review to Booking ──────────────────────────────────────────────
         booking.reviewId = review._id as Types.ObjectId;
         await booking.save();
 
-        return NextResponse.json({
+        const responseData: any = {
             success: true,
             review: {
                 id: review._id.toString(),
@@ -140,12 +161,16 @@ export async function POST(req: NextRequest) {
                 title: review.title,
                 comment: review.comment,
                 createdAt: review.createdAt,
-            },
-            designerRating: {
-                averageRating,
-                totalReviews,
-            },
-        }, { status: 201 });
+            }
+        };
+
+        if (booking.designerId) {
+            responseData.designerRating = { averageRating, totalReviews };
+        } else if (booking.contractorId) {
+            responseData.contractorRating = { averageRating, totalReviews };
+        }
+
+        return NextResponse.json(responseData, { status: 201 });
 
     } catch (error) {
         console.error('[reviews] POST error:', error);

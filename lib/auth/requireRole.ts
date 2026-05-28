@@ -13,7 +13,7 @@ export type RequiredUserType = Document<unknown, {}, IUser> & IUser & { _id: Typ
  */
 export async function requireRole(
     req: NextRequest,
-    roles: Array<'customer' | 'designer' | 'admin'>
+    roles: Array<'customer' | 'designer' | 'contractor' | 'vendor' | 'admin'>
 ): Promise<{ user: RequiredUserType } | NextResponse> {
     try {
         const authUser = await getCurrentUser();

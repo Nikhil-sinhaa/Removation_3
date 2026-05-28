@@ -97,7 +97,9 @@ const navLinks = [
     ]
   },
   { name: "Pricing", href: "/pricing" },
-  { name: "Browse Designers", href: "/designers" },
+  { name: "Browse Designers", href: "/marketplace?tab=designers" },
+  { name: "Browse Contractors", href: "/marketplace?tab=contractors" },
+  { name: "Browse Vendors", href: "/marketplace?tab=vendors" },
   { name: "Blog", href: "/blog" },
   { name: "About", href: "/about" },
   { name: "Contact", href: "/contact" },

@@ -13,6 +13,7 @@ import {
     GraduationCap,
     Grid,
     Star,
+    Store,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,9 +22,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { paiseToRupees } from '@/lib/booking/money';
 import { useDebounce } from '@/hooks/useDebounce';
 
-// ── Specialty config ─────────────────────────────────────────────────────────
+// ── Specialty configs ────────────────────────────────────────────────────────
 
-const SPECIALTY_LABELS: Record<string, string> = {
+const DESIGNER_SPECIALTIES: Record<string, string> = {
     'modular-kitchen': 'Modular Kitchen',
     'bedroom': 'Bedroom',
     'living-room': 'Living Room',
@@ -41,22 +42,44 @@ const SPECIALTY_LABELS: Record<string, string> = {
     '3d-visualization': '3D Visualization',
 };
 
-const SPECIALTIES_LIST = Object.entries(SPECIALTY_LABELS);
+const CONTRACTOR_SPECIALTIES: Record<string, string> = {
+    'painter': 'Painter',
+    'carpenter': 'Carpenter',
+    'electrician': 'Electrician',
+    'plumber': 'Plumber',
+    'modular-kitchen-installer': 'Modular Kitchen Installer',
+};
+
+const VENDOR_SPECIALTIES: Record<string, string> = {
+    'tile-shop': 'Tile Shop',
+    'paint-store': 'Paint Store',
+    'furniture-seller': 'Furniture Seller',
+    'hardware-store': 'Hardware Store',
+};
+
+const ALL_SPECIALTIES: Record<string, string> = {
+    ...DESIGNER_SPECIALTIES,
+    ...CONTRACTOR_SPECIALTIES,
+    ...VENDOR_SPECIALTIES,
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface Designer {
+interface Provider {
     _id: string;
     displayName: string;
     bio?: string;
     city: string;
+    address?: string;
+    storeAddress?: string;
+    website?: string;
     specialties: string[];
     portfolioImages: string[];
     yearsOfExperience?: number;
     consultationFee?: { amount: number; currency: string };
     projectMinFee?: { amount: number; currency: string };
-    acceptsConsultations: boolean;
-    acceptsProjects: boolean;
+    acceptsConsultations?: boolean;
+    acceptsProjects?: boolean;
     averageRating?: number;
     totalReviews?: number;
     userId?: {
@@ -69,7 +92,7 @@ interface Designer {
 
 // ── Card Skeleton ─────────────────────────────────────────────────────────────
 
-function DesignerCardSkeleton() {
+function ProviderCardSkeleton() {
     return (
         <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm overflow-hidden flex flex-col h-full">
             <Skeleton className="aspect-[4/3] w-full rounded-t-2xl" />
@@ -95,68 +118,76 @@ function GridSkeleton() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-                <DesignerCardSkeleton key={i} />
+                <ProviderCardSkeleton key={i} />
             ))}
         </div>
     );
 }
 
-// ── Inner component (uses hooks that need Suspense) ───────────────────────────
+// ── Inner component ───────────────────────────
 
 function DesignersListingContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
     // Initial values from URL
+    const urlTab       = searchParams.get('tab')       || 'designers';
     const urlSearch    = searchParams.get('search')    || '';
     const urlCity      = searchParams.get('city')      || '';
     const urlSpecialty = searchParams.get('specialty') || '';
     const urlPage      = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
 
     // Input state (immediately reflects keystrokes)
+    const [activeTab,    setActiveTab]    = useState(urlTab);
     const [searchVal,    setSearchVal]    = useState(urlSearch);
     const [cityVal,      setCityVal]      = useState(urlCity);
     const [specialtyVal, setSpecialtyVal] = useState(urlSpecialty);
     const [pageVal,      setPageVal]      = useState(urlPage);
 
-    // Debounced values (300 ms — limits URL writes on every keystroke)
+    // Debounced values
     const debouncedSearch = useDebounce(searchVal, 300);
     const debouncedCity   = useDebounce(cityVal,   300);
 
     // Data state
-    const [designers, setDesigners] = useState<Designer[]>([]);
+    const [providers, setProviders] = useState<Provider[]>([]);
     const [total,     setTotal]     = useState(0);
     const [pageCount, setPageCount] = useState(1);
     const [loading,   setLoading]   = useState(true);
 
-    // ── Sync inputs when browser back/forward changes URL ─────────────────────
+    // Sync inputs when browser back/forward changes URL
     useEffect(() => {
+        setActiveTab(urlTab);
         setSearchVal(urlSearch);
         setCityVal(urlCity);
         setSpecialtyVal(urlSpecialty);
         setPageVal(urlPage);
-    }, [urlSearch, urlCity, urlSpecialty, urlPage]);
+    }, [urlTab, urlSearch, urlCity, urlSpecialty, urlPage]);
 
-    // ── URL sync + pagination reset in one effect ─────────────────────────────
-    // Tracking previous filter values via ref lets us detect a filter change vs
-    // a page change without needing a separate reset effect (which would cause two
-    // consecutive router.replace calls on filter change).
-    const prevFiltersRef = useRef({ search: debouncedSearch, city: debouncedCity, specialty: specialtyVal });
+    // Redirect to marketplace if contractors or vendors tab is requested
+    useEffect(() => {
+        if (urlTab === 'contractors' || urlTab === 'vendors') {
+            router.replace(`/marketplace?tab=${urlTab}`);
+        }
+    }, [urlTab, router]);
+
+    // URL sync + pagination reset
+    const prevFiltersRef = useRef({ tab: activeTab, search: debouncedSearch, city: debouncedCity, specialty: specialtyVal });
 
     useEffect(() => {
         const prev = prevFiltersRef.current;
         const filtersChanged =
+            prev.tab       !== activeTab       ||
             prev.search    !== debouncedSearch ||
             prev.city      !== debouncedCity   ||
             prev.specialty !== specialtyVal;
 
-        prevFiltersRef.current = { search: debouncedSearch, city: debouncedCity, specialty: specialtyVal };
+        prevFiltersRef.current = { tab: activeTab, search: debouncedSearch, city: debouncedCity, specialty: specialtyVal };
 
-        // When filters change, always reset to page 1 and use that for the URL
         const effectivePage = filtersChanged ? 1 : pageVal;
         if (filtersChanged && pageVal !== 1) setPageVal(1);
 
         const params = new URLSearchParams();
+        params.set('tab', activeTab);
         if (debouncedSearch.trim()) params.set('search',    debouncedSearch.trim());
         if (debouncedCity.trim())   params.set('city',      debouncedCity.trim());
         if (specialtyVal)           params.set('specialty', specialtyVal);
@@ -164,9 +195,9 @@ function DesignersListingContent() {
 
         const qs = params.toString();
         router.replace(`/designers${qs ? `?${qs}` : ''}`);
-    }, [debouncedSearch, debouncedCity, specialtyVal, pageVal, router]);
+    }, [activeTab, debouncedSearch, debouncedCity, specialtyVal, pageVal, router]);
 
-    // ── Fetch whenever URL-derived params change ───────────────────────────────
+    // Fetch whenever URL-derived params change
     useEffect(() => {
         let active = true;
 
@@ -180,15 +211,24 @@ function DesignersListingContent() {
                 q.set('page',  String(urlPage));
                 q.set('limit', '20');
 
-                const res = await fetch(`/api/designers?${q}`);
+                // Determine endpoint based on tab
+                const endpointMap: Record<string, string> = {
+                    designers: '/api/designers',
+                    contractors: '/api/contractors',
+                    vendors: '/api/vendors',
+                };
+                const endpoint = endpointMap[urlTab] || '/api/designers';
+
+                const res = await fetch(`${endpoint}?${q}`);
                 if (res.ok && active) {
                     const data = await res.json();
-                    setDesigners(data.designers  ?? []);
-                    setTotal(data.total          ?? 0);
-                    setPageCount(data.pageCount  ?? 1);
+                    const listKey = urlTab === 'designers' ? 'designers' : (urlTab === 'contractors' ? 'contractors' : 'vendors');
+                    setProviders(data[listKey] ?? []);
+                    setTotal(data.total ?? 0);
+                    setPageCount(data.pageCount ?? 1);
                 }
             } catch {
-                // network error — leave previous results visible
+                // network error
             } finally {
                 if (active) setLoading(false);
             }
@@ -196,7 +236,13 @@ function DesignersListingContent() {
 
         load();
         return () => { active = false; };
-    }, [urlSearch, urlCity, urlSpecialty, urlPage]);
+    }, [urlTab, urlSearch, urlCity, urlSpecialty, urlPage]);
+
+    const handleTabChange = (tabId: string) => {
+        setActiveTab(tabId);
+        setSpecialtyVal(''); // Reset specialty since options change
+        setPageVal(1);
+    };
 
     const clearFilters = () => {
         setSearchVal('');
@@ -207,6 +253,25 @@ function DesignersListingContent() {
 
     const hasActiveFilters = searchVal || cityVal || specialtyVal;
 
+    // Get list of specialties for the current active tab
+    const getSpecialtiesList = () => {
+        if (activeTab === 'contractors') return Object.entries(CONTRACTOR_SPECIALTIES);
+        if (activeTab === 'vendors') return Object.entries(VENDOR_SPECIALTIES);
+        return Object.entries(DESIGNER_SPECIALTIES);
+    };
+
+    const providerLabelMap: Record<string, string> = {
+        designers: 'Interior Designers',
+        contractors: 'Service Contractors',
+        vendors: 'Material Vendors',
+    };
+
+    const singleLabelMap: Record<string, string> = {
+        designers: 'Designer',
+        contractors: 'Contractor',
+        vendors: 'Vendor',
+    };
+
     return (
         <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
             {/* Header */}
@@ -216,10 +281,10 @@ function DesignersListingContent() {
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
                             <Compass className="w-5 h-5 text-white" />
                         </div>
-                        <span>Find Professional Designers</span>
+                        <span>Find professionals & materials</span>
                     </h1>
                     <p className="text-sm text-zinc-500 mt-1.5 leading-relaxed">
-                        Connect with verified interior designers, browse portfolios, and book consultations or project engagements.
+                        Connect with verified interior designers, skilled service contractors, and premium material stores.
                     </p>
                 </div>
                 {!loading && (
@@ -228,9 +293,44 @@ function DesignersListingContent() {
                         className="self-start md:self-center px-3 py-1 bg-violet-50 text-violet-700 border-violet-100 text-xs font-semibold rounded-lg flex items-center gap-1.5"
                     >
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-                        {total} Available Designer{total !== 1 ? 's' : ''}
+                        {total} Verified {singleLabelMap[activeTab]}{total !== 1 ? 's' : ''}
                     </Badge>
                 )}
+            </div>
+
+            {/* Role Tab Group */}
+            <div className="flex border-b border-zinc-100 mb-6 gap-6">
+                {(['designers', 'contractors', 'vendors'] as const).map((tabId) => {
+                    const isActive = activeTab === tabId;
+                    if (tabId === 'contractors' || tabId === 'vendors') {
+                        return (
+                            <Link
+                                key={tabId}
+                                href={`/marketplace?tab=${tabId}`}
+                                className="relative py-3.5 text-sm font-semibold transition-colors focus-visible:outline-none text-zinc-500 hover:text-zinc-800"
+                            >
+                                {providerLabelMap[tabId]}
+                            </Link>
+                        );
+                    }
+                    return (
+                        <button
+                            key={tabId}
+                            onClick={() => handleTabChange(tabId)}
+                            className="relative py-3.5 text-sm font-semibold transition-colors focus-visible:outline-none"
+                            style={{ color: isActive ? 'rgb(109, 40, 217)' : 'rgb(113, 113, 122)' }}
+                        >
+                            {providerLabelMap[tabId]}
+                            {isActive && (
+                                <motion.div
+                                    layoutId="activeTabUnderline"
+                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-full"
+                                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                                />
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Filter bar */}
@@ -239,7 +339,7 @@ function DesignersListingContent() {
                     <div className="relative">
                         <Search className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
                         <Input
-                            placeholder="Search by designer name..."
+                            placeholder={`Search by name...`}
                             value={searchVal}
                             onChange={(e) => setSearchVal(e.target.value)}
                             className="pl-10 h-11 border-zinc-200 rounded-xl focus-visible:ring-violet-500"
@@ -260,7 +360,7 @@ function DesignersListingContent() {
                         className="w-full h-11 px-3 border border-zinc-200 rounded-xl bg-white text-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent cursor-pointer"
                     >
                         <option value="">All Specialties</option>
-                        {SPECIALTIES_LIST.map(([slug, label]) => (
+                        {getSpecialtiesList().map(([slug, label]) => (
                             <option key={slug} value={slug}>{label}</option>
                         ))}
                     </select>
@@ -283,14 +383,14 @@ function DesignersListingContent() {
             {/* Results */}
             {loading ? (
                 <GridSkeleton />
-            ) : designers.length === 0 ? (
+            ) : providers.length === 0 ? (
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="text-center py-20 bg-white border border-zinc-100 rounded-2xl shadow-sm"
                 >
                     <Grid className="w-12 h-12 mx-auto text-zinc-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-zinc-900">No designers found</h3>
+                    <h3 className="text-lg font-semibold text-zinc-900">No {activeTab} found</h3>
                     <p className="text-zinc-500 text-sm mt-1 max-w-md mx-auto">
                         Try refining your search terms, removing city filters, or picking a different specialty.
                     </p>
@@ -306,14 +406,22 @@ function DesignersListingContent() {
             ) : (
                 <div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {designers.map((designer) => {
-                            const firstImage          = designer.portfolioImages?.[0] ?? '';
-                            const specialtiesToShow   = designer.specialties.slice(0, 2);
-                            const hiddenCount         = designer.specialties.length - specialtiesToShow.length;
+                        {providers.map((provider) => {
+                            const firstImage          = provider.portfolioImages?.[0] ?? '';
+                            const specialtiesToShow   = provider.specialties.slice(0, 2);
+                            const hiddenCount         = provider.specialties.length - specialtiesToShow.length;
+
+                            // Custom link path based on tab type
+                            const detailsPathMap: Record<string, string> = {
+                                designers: `/designers/${provider._id}`,
+                                contractors: `/marketplace/contractor/${provider._id}`,
+                                vendors: `/marketplace/vendor/${provider._id}`,
+                            };
+                            const detailsPath = detailsPathMap[activeTab] || `/designers/${provider._id}`;
 
                             return (
                                 <motion.div
-                                    key={designer._id}
+                                    key={provider._id}
                                     layout
                                     initial={{ opacity: 0, y: 12 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -321,14 +429,14 @@ function DesignersListingContent() {
                                 >
                                     {/* Portfolio thumbnail */}
                                     <Link
-                                        href={`/designers/${designer._id}`}
+                                        href={detailsPath}
                                         className="block relative aspect-[4/3] w-full overflow-hidden bg-zinc-50 border-b border-zinc-100"
                                     >
                                         {firstImage ? (
                                             /* eslint-disable-next-line @next/next/no-img-element */
                                             <img
                                                 src={firstImage}
-                                                alt={designer.displayName}
+                                                alt={provider.displayName}
                                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             />
                                         ) : (
@@ -336,10 +444,12 @@ function DesignersListingContent() {
                                                 <Sparkles className="w-10 h-10 text-violet-400 animate-pulse" />
                                             </div>
                                         )}
-                                        {designer.yearsOfExperience !== undefined && (
+                                        {provider.yearsOfExperience !== undefined && (
                                             <Badge className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-zinc-800 border border-zinc-200/50 hover:bg-white rounded-lg flex items-center gap-1">
                                                 <GraduationCap className="w-3.5 h-3.5 text-violet-600" />
-                                                <span>{designer.yearsOfExperience} yrs exp</span>
+                                                <span>
+                                                    {provider.yearsOfExperience} {activeTab === 'vendors' ? 'yrs in biz' : 'yrs exp'}
+                                                </span>
                                             </Badge>
                                         )}
                                     </Link>
@@ -348,33 +458,33 @@ function DesignersListingContent() {
                                     <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                                         <div className="space-y-1">
                                             <div className="flex items-start justify-between gap-2">
-                                                <Link href={`/designers/${designer._id}`} className="min-w-0 flex-1">
+                                                <Link href={detailsPath} className="min-w-0 flex-1">
                                                     <h3 className="font-bold text-zinc-900 text-lg group-hover:text-violet-600 transition-colors truncate">
-                                                        {designer.displayName}
+                                                        {provider.displayName}
                                                     </h3>
                                                 </Link>
-                                                {designer.averageRating !== undefined && designer.averageRating > 0 && (
+                                                {provider.averageRating !== undefined && provider.averageRating > 0 && (
                                                     <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-xs font-semibold flex-shrink-0 mt-0.5">
                                                         <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-500" />
-                                                        <span>{designer.averageRating.toFixed(1)}</span>
+                                                        <span>{provider.averageRating.toFixed(1)}</span>
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-3 text-xs text-zinc-500">
                                                 <span className="flex items-center gap-1 capitalize">
                                                     <MapPin className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-                                                    {designer.city}
+                                                    {provider.city}
                                                 </span>
-                                                {designer.totalReviews !== undefined && designer.totalReviews > 0 && (
+                                                {provider.totalReviews !== undefined && provider.totalReviews > 0 && (
                                                     <>
                                                         <span className="text-zinc-300">·</span>
-                                                        <span>{designer.totalReviews} review{designer.totalReviews === 1 ? '' : 's'}</span>
+                                                        <span>{provider.totalReviews} review{provider.totalReviews === 1 ? '' : 's'}</span>
                                                     </>
                                                 )}
                                             </div>
                                         </div>
 
-                                        {designer.specialties.length > 0 && (
+                                        {provider.specialties.length > 0 && (
                                             <div className="flex flex-wrap gap-1.5">
                                                 {specialtiesToShow.map((slug) => (
                                                     <Badge
@@ -382,7 +492,7 @@ function DesignersListingContent() {
                                                         variant="secondary"
                                                         className="bg-zinc-50 text-zinc-600 border border-zinc-100 font-normal rounded-lg text-xs"
                                                     >
-                                                        {SPECIALTY_LABELS[slug] ?? slug}
+                                                        {ALL_SPECIALTIES[slug] ?? slug}
                                                     </Badge>
                                                 ))}
                                                 {hiddenCount > 0 && (
@@ -396,28 +506,39 @@ function DesignersListingContent() {
                                             </div>
                                         )}
 
-                                        {/* Pricing row + CTA */}
+                                        {/* Pricing or Info row + CTA */}
                                         <div className="pt-3 border-t border-zinc-50 flex items-center justify-between">
-                                            <div>
-                                                <span className="text-[10px] text-zinc-400 block uppercase tracking-wider font-semibold">
-                                                    Consultation
-                                                </span>
-                                                {designer.acceptsConsultations && designer.consultationFee?.amount ? (
-                                                    <span className="font-extrabold text-zinc-800 text-sm">
-                                                        {paiseToRupees(designer.consultationFee.amount)}
+                                            {activeTab === 'vendors' ? (
+                                                <div className="min-w-0 flex-1 pr-2">
+                                                    <span className="text-[10px] text-zinc-400 block uppercase tracking-wider font-semibold">
+                                                        Store Address
                                                     </span>
-                                                ) : (
-                                                    <span className="text-xs text-zinc-400 italic">Not available</span>
-                                                )}
-                                            </div>
+                                                    <span className="text-xs text-zinc-600 truncate block">
+                                                        {provider.storeAddress || provider.address || 'Address on file'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <span className="text-[10px] text-zinc-400 block uppercase tracking-wider font-semibold">
+                                                        Consultation
+                                                    </span>
+                                                    {provider.acceptsConsultations && provider.consultationFee?.amount ? (
+                                                        <span className="font-extrabold text-zinc-800 text-sm">
+                                                            {paiseToRupees(provider.consultationFee.amount)}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-xs text-zinc-400 italic">Not available</span>
+                                                    )}
+                                                </div>
+                                            )}
                                             <Button
                                                 asChild
                                                 size="sm"
-                                                className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl text-xs gap-1.5 shadow-sm shadow-violet-500/10"
+                                                className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl text-xs gap-1.5 shadow-sm shadow-violet-500/10 flex-shrink-0"
                                             >
-                                                <Link href={`/designers/${designer._id}`}>
-                                                    <span>View Profile</span>
-                                                    <ChevronRight className="w-3.5 h-3.5" />
+                                                <Link href={detailsPath}>
+                                                    <span>{activeTab === 'vendors' ? 'View Store' : 'View Profile'}</span>
+                                                    {activeTab === 'vendors' ? <Store className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                                                 </Link>
                                             </Button>
                                         </div>
@@ -458,8 +579,6 @@ function DesignersListingContent() {
         </div>
     );
 }
-
-// ── Page export — Suspense required for useSearchParams in Next.js 15 ─────────
 
 export default function DesignersListingPage() {
     return (

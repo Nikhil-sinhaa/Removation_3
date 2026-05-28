@@ -54,7 +54,8 @@ import type { BookingStatus } from '@/lib/db/models/Booking';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface BookingDesigner {
+// Shared provider shape (populated designer OR contractor)
+interface BookingProvider {
     _id: string;
     displayName: string;
     city: string;
@@ -63,7 +64,8 @@ interface BookingDesigner {
 
 interface Booking {
     _id: string;
-    designerId: BookingDesigner | string;
+    designerId?: BookingProvider | string | null;
+    contractorId?: BookingProvider | string | null;
     type: 'consultation' | 'project';
     status: BookingStatus;
     amount: number;
@@ -140,7 +142,15 @@ function BookingCard({
     onCancel: (id: string) => void;
     onReview: (booking: Booking) => void;
 }) {
-    const designer = typeof booking.designerId === 'object' ? booking.designerId : null;
+    // Resolve provider — whichever of the two is populated
+    const provider: BookingProvider | null =
+        (typeof booking.designerId === 'object' && booking.designerId)
+            ? booking.designerId
+            : (typeof booking.contractorId === 'object' && booking.contractorId)
+                ? booking.contractorId
+                : null;
+    const isContractor = !booking.designerId && !!booking.contractorId;
+    const providerLabel = isContractor ? 'Contractor' : 'Designer';
     const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_payment;
     const canCancel = booking.status === 'pending_designer';
 
@@ -153,30 +163,40 @@ function BookingCard({
             {/* Header */}
             <div className="p-5 border-b border-zinc-50 flex items-start justify-between gap-4">
                 <div className="flex items-start gap-3">
-                    {/* Designer avatar */}
-                    {designer?.portfolioImages?.[0] ? (
+                    {/* Provider avatar */}
+                    {provider?.portfolioImages?.[0] ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                            src={designer.portfolioImages[0]}
-                            alt={designer.displayName}
+                            src={provider.portfolioImages[0]}
+                            alt={provider.displayName}
                             className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-zinc-100"
                         />
                     ) : (
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+                        <div className={cn(
+                            'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
+                            isContractor
+                                ? 'bg-gradient-to-br from-amber-500 to-orange-600'
+                                : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                        )}>
                             <span className="text-white font-bold text-lg">
-                                {designer?.displayName?.[0]?.toUpperCase() ?? '?'}
+                                {provider?.displayName?.[0]?.toUpperCase() ?? '?'}
                             </span>
                         </div>
                     )}
                     <div>
                         <p className="font-semibold text-zinc-800">
-                            {designer?.displayName ?? 'Unknown Designer'}
+                            {provider?.displayName ?? `Unknown ${providerLabel}`}
                         </p>
-                        {designer?.city && (
+                        {provider?.city && (
                             <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
                                 <MapPin className="w-3 h-3" />
-                                {designer.city}
+                                {provider.city}
                             </p>
+                        )}
+                        {isContractor && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md mt-1 inline-block">
+                                Contractor
+                            </span>
                         )}
                     </div>
                 </div>
@@ -239,12 +259,12 @@ function BookingCard({
                     </div>
                 )}
 
-                {/* Designer response deadline */}
+                {/* Provider response deadline */}
                 {booking.status === 'pending_designer' && booking.designerResponseDeadline && (
                     <div className="flex items-center gap-2 text-xs text-amber-600">
                         <Clock className="w-3.5 h-3.5" />
                         <span>
-                            Designer must respond by{' '}
+                            {providerLabel} must respond by{' '}
                             {new Date(booking.designerResponseDeadline).toLocaleString('en-IN', {
                                 day: 'numeric',
                                 month: 'short',
@@ -570,9 +590,13 @@ export default function MyBookingsPage() {
                             <DialogTitle>Leave a Review</DialogTitle>
                             <DialogDescription>
                                 Share your experience with{' '}
-                                {reviewTarget && typeof reviewTarget.designerId === 'object'
-                                    ? reviewTarget.designerId.displayName
-                                    : 'the designer'}
+                                {reviewTarget && (
+                                    typeof reviewTarget.designerId === 'object' && reviewTarget.designerId
+                                        ? reviewTarget.designerId.displayName
+                                        : typeof reviewTarget.contractorId === 'object' && reviewTarget.contractorId
+                                            ? reviewTarget.contractorId.displayName
+                                            : 'your service provider'
+                                )}
                                 .
                             </DialogDescription>
                         </DialogHeader>

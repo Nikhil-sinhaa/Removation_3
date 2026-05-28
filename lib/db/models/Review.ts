@@ -17,7 +17,8 @@ export interface IReview {
     // References
     bookingId:  Types.ObjectId;  // ref: 'Booking' — unique (one review per booking)
     customerId: Types.ObjectId;  // ref: 'User'    — the reviewer
-    designerId: Types.ObjectId;  // ref: 'Designer' — the reviewed designer
+    designerId?: Types.ObjectId;  // ref: 'Designer' — the reviewed designer
+    contractorId?: Types.ObjectId; // ref: 'Contractor' — the reviewed contractor
 
     // Review content
     rating:  number;        // integer 1–5, required
@@ -54,7 +55,12 @@ const ReviewSchema = new Schema<IReview>(
         designerId: {
             type: Schema.Types.ObjectId,
             ref: 'Designer',
-            required: true,
+            required: false,
+        },
+        contractorId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Contractor',
+            required: false,
         },
 
         rating: {
@@ -106,10 +112,26 @@ const ReviewSchema = new Schema<IReview>(
     }
 );
 
+// Cross-field validation (pre-validate hook)
+ReviewSchema.pre('validate', function (next) {
+    const hasDesigner = !!this.designerId;
+    const hasContractor = !!this.contractorId;
+    if (hasDesigner && hasContractor) {
+        return next(new Error('A review cannot target both a designer and a contractor'));
+    }
+    if (!hasDesigner && !hasContractor) {
+        return next(new Error('A review must target either a designer or a contractor'));
+    }
+    next();
+});
+
 // ── Indexes ───────────────────────────────────────────────────────────────────
 
 // Primary listing index: all visible reviews for a designer, newest first
 ReviewSchema.index({ designerId: 1, createdAt: -1 });
+
+// Primary listing index: all visible reviews for a contractor, newest first
+ReviewSchema.index({ contractorId: 1, createdAt: -1 });
 
 // Enforce one review per booking
 ReviewSchema.index({ bookingId: 1 }, { unique: true });
