@@ -9,3 +9,5 @@ export { Review, type IReview } from './Review';
 export { Contractor, type IContractor, CONTRACTOR_SPECIALTIES, type ContractorSpecialty } from './Contractor';
 export { Vendor, type IVendor, VENDOR_SPECIALTIES, type VendorSpecialty } from './Vendor';
 export { VendorInquiry, type IVendorInquiry, type InquiryStatus } from './VendorInquiry';
+export { ChatMessage, type IChatMessage } from './ChatMessage';
+export { Message, type IMessage } from './Message';

@@ -95,6 +95,8 @@
     "nuqs": "^2.0.4",
     "postcss-nested": "^7.0.2",
     "posthog-js": "^1.166.1",
+    "pusher": "^5.3.3",
+    "pusher-js": "^8.5.0",
     "razorpay": "^2.9.4",
     "react": "^18.3.1",
     "react-colorful": "^5.6.1",
