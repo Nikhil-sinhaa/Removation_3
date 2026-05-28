@@ -23,6 +23,7 @@ import {
   RefreshCw,
   BookmarkCheck,
 } from "lucide-react";
+import { MakeItReal } from "@/components/ai/MakeItReal";
 
 interface ProgressState {
   stage: number; // 1 = scene analysis, 2 = repainting
@@ -513,6 +514,12 @@ export default function RoomChangerPage() {
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another Color
                       </Button>
                     </div>
+
+                    {/* Make It Real — connect render to a real designer */}
+                    <MakeItReal
+                      roomType="living-room"
+                      afterImage={result.afterUrl}
+                    />
 
                     {/* Feedback */}
                     <div className="pt-3 border-t border-gray-100">

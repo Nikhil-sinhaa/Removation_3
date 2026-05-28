@@ -62,6 +62,12 @@ interface BookingModalProps {
     designer: DesignerPricingSnapshot;
     /** Called after payment is verified. bookingId is the Booking._id */
     onSuccess?: (bookingId: string) => void;
+    /**
+     * Optional pre-filled project description — used when opening the modal
+     * directly from an AI render (MakeItReal banner). Seeds the project
+     * description textarea so the user only needs to review and pay.
+     */
+    initialProjectDescription?: string;
 }
 
 type BookingType = 'consultation' | 'project';
@@ -132,6 +138,7 @@ export function BookingModal({
     onClose,
     designer,
     onSuccess,
+    initialProjectDescription,
 }: BookingModalProps) {
     const [step, setStep] = useState<ModalStep>('select-type');
     const [bookingType, setBookingType] = useState<BookingType>('consultation');
@@ -145,18 +152,19 @@ export function BookingModal({
     const slots = generateSlots(14);
 
     // Reset when modal opens
+    // When initialProjectDescription is provided, jump straight to project details
     useEffect(() => {
         if (isOpen) {
-            setStep('select-type');
-            setBookingType('consultation');
+            setStep(initialProjectDescription ? 'details' : 'select-type');
+            setBookingType(initialProjectDescription ? 'project' : 'consultation');
             setSelectedSlot(null);
-            setProjectDescription('');
+            setProjectDescription(initialProjectDescription ?? '');
             setPreferredStartDate('');
             setError(null);
             setSuccessBookingId(null);
             setIsLoading(false);
         }
-    }, [isOpen]);
+    }, [isOpen, initialProjectDescription]);
 
     // ── Validation ────────────────────────────────────────────────────────────
 

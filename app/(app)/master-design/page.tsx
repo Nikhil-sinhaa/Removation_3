@@ -21,6 +21,7 @@ import {
   Palette,
   Home
 } from "lucide-react";
+import { MakeItReal } from "@/components/ai/MakeItReal";
 
 const roomTypes = [
   { id: "living_room", name: "Living Room", icon: <Home className="w-4 h-4" /> },
@@ -360,6 +361,12 @@ export default function MasterDesignPage() {
                     />
                   </CardContent>
                 </Card>
+
+                {/* Make It Real — connect render to a real designer */}
+                <MakeItReal
+                  roomType={roomType}
+                  afterImage={result.generatedImage}
+                />
               </motion.div>
             ) : (
               <motion.div
