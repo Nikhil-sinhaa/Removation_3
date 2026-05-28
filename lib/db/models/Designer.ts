@@ -64,6 +64,12 @@ export interface IDesigner {
     acceptsConsultations: boolean;       // toggle — hides from consultation booking if false
     acceptsProjects: boolean;            // toggle — hides from project booking if false
 
+    // ── Reviews / ratings (added for Goal E) ──────────────────────────────────
+    // Denormalized counters — updated by POST /api/reviews on review creation.
+    // Avoids running aggregation on every listing/detail page load.
+    averageRating: number;  // 0 when no reviews; rounded to 1 decimal
+    totalReviews:  number;  // raw count of visible reviews
+
     // Timestamps (injected by Mongoose when timestamps: true)
     createdAt: Date;
     updatedAt: Date;
@@ -198,6 +204,22 @@ const DesignerSchema = new Schema<IDesigner>(
         acceptsProjects: {
             type: Boolean,
             default: true,
+        },
+
+        // ── Review counters ───────────────────────────────────────────────
+        // Updated atomically by POST /api/reviews via $avg aggregation.
+        // Do NOT edit these manually; they are recalculated on each new review.
+        averageRating: {
+            type: Number,
+            default: 0,
+            min: [0, 'Average rating cannot be negative'],
+            max: [5, 'Average rating cannot exceed 5'],
+        },
+
+        totalReviews: {
+            type: Number,
+            default: 0,
+            min: [0, 'Total reviews cannot be negative'],
         },
     },
     {

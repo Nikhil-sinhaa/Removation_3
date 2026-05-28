@@ -78,6 +78,10 @@ export interface IBooking {
     // Customer side
     customerCancelledAt: Date | null;
 
+    // Completion (added for Goal E)
+    completedAt: Date | null;             // set when designer marks booking done
+    reviewId: Types.ObjectId | null;      // ref: 'Review' — linked after customer reviews
+
     // Timestamps (Mongoose)
     createdAt: Date;
     updatedAt: Date;
@@ -211,6 +215,18 @@ const BookingSchema = new Schema<IBooking>(
         // ── Customer side ───────────────────────────────────────────────────────
         customerCancelledAt: {
             type: Date,
+            default: null,
+        },
+
+        // ── Completion (added for Goal E) ────────────────────────────────────────
+        completedAt: {
+            type: Date,
+            default: null,
+        },
+
+        reviewId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Review',
             default: null,
         },
     },
