@@ -45,7 +45,7 @@ export async function GET(
         const authUser   = await getCurrentUser();
         const isLoggedIn = !!authUser;
 
-        const publicSelect = 'displayName bio city specialties portfolioImages yearsOfExperience isVerified createdAt consultationFee acceptsConsultations acceptsProjects projectMinFee consultationDurationMinutes';
+        const publicSelect = 'displayName bio city specialties portfolioImages yearsOfExperience isVerified createdAt consultationFee acceptsConsultations acceptsProjects projectMinFee consultationDurationMinutes averageRating totalReviews';
         const authedSelect = publicSelect + ' phone';
         const selectFields = isLoggedIn ? authedSelect : publicSelect;
 

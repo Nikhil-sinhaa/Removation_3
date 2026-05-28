@@ -13,8 +13,10 @@ import {
     IndianRupee,
     MapPin,
     Maximize2,
+    MessageSquare,
     Phone,
     Sparkles,
+    Star,
     X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -71,6 +73,22 @@ interface Designer {
         firstName?: string;
         lastName?: string;
         imageUrl?: string;
+    };
+    averageRating?: number;
+    totalReviews?: number;
+}
+
+interface ReviewInfo {
+    id: string;
+    rating: number;
+    title?: string;
+    comment?: string;
+    designerReply?: string;
+    designerRepliedAt?: string;
+    createdAt: string;
+    reviewer: {
+        name: string;
+        imageUrl: string | null;
     };
 }
 
@@ -129,6 +147,37 @@ function DesignerDetailContent() {
     }, [id]);
 
     useEffect(() => { fetchDesigner(); }, [fetchDesigner]);
+
+    const [reviews, setReviews] = useState<ReviewInfo[]>([]);
+    const [reviewsLoading, setReviewsLoading] = useState(true);
+    const [reviewsPage, setReviewsPage] = useState(1);
+    const [hasMoreReviews, setHasMoreReviews] = useState(false);
+    const [totalReviewsCount, setTotalReviewsCount] = useState(0);
+
+    const fetchReviews = useCallback(async (pageNum: number, append = false) => {
+        if (!id) return;
+        if (pageNum === 1) setReviewsLoading(true);
+        try {
+            const res = await fetch(`/api/designers/${id}/reviews?page=${pageNum}&limit=10`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    setReviews(prev => append ? [...prev, ...data.reviews] : data.reviews);
+                    setTotalReviewsCount(data.pagination.total);
+                    setHasMoreReviews(data.pagination.page < data.pagination.pages);
+                    setReviewsPage(data.pagination.page);
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching reviews:', error);
+        } finally {
+            setReviewsLoading(false);
+        }
+    }, [id]);
+
+    useEffect(() => {
+        fetchReviews(1);
+    }, [fetchReviews]);
 
     // ── Lightbox keyboard nav ─────────────────────────────────────────────────
     useEffect(() => {
@@ -293,6 +342,21 @@ function DesignerDetailContent() {
                                 )}
                             </div>
 
+                            {designer.averageRating !== undefined && designer.totalReviews !== undefined && designer.totalReviews > 0 && (
+                                <div className="flex items-center gap-1.5 mt-2.5 text-sm text-zinc-600">
+                                    <div className="flex items-center text-amber-500">
+                                        <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                    </div>
+                                    <span className="font-bold text-zinc-900">{designer.averageRating.toFixed(1)}</span>
+                                    <span className="text-zinc-400">•</span>
+                                    <span className="font-medium text-violet-600 hover:text-violet-700 hover:underline cursor-pointer" onClick={() => {
+                                        document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
+                                    }}>
+                                        {designer.totalReviews} review{designer.totalReviews !== 1 ? 's' : ''}
+                                    </span>
+                                </div>
+                            )}
+
                             {designer.specialties.length > 0 && (
                                 <div className="flex flex-wrap gap-1.5 mt-4">
                                     {designer.specialties.map(slug => (
@@ -424,6 +488,150 @@ function DesignerDetailContent() {
                         <p className="text-sm text-zinc-400">No portfolio images uploaded yet.</p>
                     </div>
                 )}
+
+                {/* ── Reviews Section ────────────────────────────────────────────────── */}
+                <div id="reviews-section" className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-6 space-y-6">
+                    <div className="flex items-center justify-between border-b border-zinc-50 pb-4">
+                        <div className="flex items-center gap-2">
+                            <MessageSquare className="w-5 h-5 text-violet-600" />
+                            <h2 className="text-lg font-bold text-zinc-900">
+                                Client Reviews ({totalReviewsCount})
+                            </h2>
+                        </div>
+                        {designer.averageRating !== undefined && designer.totalReviews !== undefined && designer.totalReviews > 0 && (
+                            <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 fill-amber-500 text-amber-500" />
+                                <span className="font-extrabold text-zinc-900">{designer.averageRating.toFixed(1)}</span>
+                                <span className="text-zinc-400 text-xs">/ 5</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {reviewsLoading && reviews.length === 0 ? (
+                        <div className="space-y-4 py-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="flex gap-4 items-start animate-pulse">
+                                    <div className="w-10 h-10 rounded-full bg-zinc-100 flex-shrink-0" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 bg-zinc-100 rounded w-1/4" />
+                                        <div className="h-3 bg-zinc-100 rounded w-full" />
+                                        <div className="h-3 bg-zinc-100 rounded w-5/6" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : reviews.length === 0 ? (
+                        <div className="text-center py-8">
+                            <Star className="w-8 h-8 text-zinc-200 mx-auto mb-3" />
+                            <p className="text-zinc-500 text-sm">No reviews yet for this designer.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-6 divide-y divide-zinc-100">
+                            {reviews.map((review, idx) => {
+                                const reviewerInitials = review.reviewer.name
+                                    .split(' ')
+                                    .map(n => n[0])
+                                    .join('')
+                                    .toUpperCase();
+
+                                return (
+                                    <div key={review.id} className={`pt-6 ${idx === 0 ? 'pt-0' : ''}`}>
+                                        <div className="flex justify-between items-start gap-4">
+                                            {/* Reviewer Info */}
+                                            <div className="flex gap-3 items-center">
+                                                {review.reviewer.imageUrl ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img
+                                                        src={review.reviewer.imageUrl}
+                                                        alt={review.reviewer.name}
+                                                        className="w-10 h-10 rounded-full object-cover border border-zinc-100"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-100 to-purple-100 text-violet-700 flex items-center justify-center font-bold text-sm">
+                                                        {reviewerInitials}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <h4 className="font-semibold text-sm text-zinc-900">{review.reviewer.name}</h4>
+                                                    <span className="text-xs text-zinc-400">
+                                                        {new Date(review.createdAt).toLocaleDateString('en-IN', {
+                                                            month: 'short',
+                                                            day: 'numeric',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Review Rating stars */}
+                                            <div className="flex items-center gap-0.5">
+                                                {Array.from({ length: 5 }).map((_, i) => (
+                                                    <Star
+                                                        key={i}
+                                                        className={`w-3.5 h-3.5 ${
+                                                            i < review.rating
+                                                                ? 'fill-amber-400 text-amber-400'
+                                                                : 'text-zinc-200'
+                                                        }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        {/* Review text */}
+                                        <div className="mt-3 pl-13 space-y-1">
+                                            {review.title && (
+                                                <h5 className="font-semibold text-sm text-zinc-900">{review.title}</h5>
+                                            )}
+                                            {review.comment && (
+                                                <p className="text-zinc-600 text-sm leading-relaxed whitespace-pre-line">
+                                                    {review.comment}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Designer Reply */}
+                                        {review.designerReply && (
+                                            <div className="mt-4 ml-4 pl-4 border-l-2 border-violet-200 bg-zinc-50/50 rounded-r-xl p-3 space-y-1">
+                                                <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-semibold">
+                                                    <Clock className="w-3 h-3 text-violet-500" />
+                                                    <span>Reply from {designer.displayName}</span>
+                                                    {review.designerRepliedAt && (
+                                                        <span className="text-zinc-400 font-normal">
+                                                            on {new Date(review.designerRepliedAt).toLocaleDateString('en-IN', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                year: 'numeric',
+                                                            })}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-zinc-700 text-sm italic">
+                                                    "{review.designerReply}"
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Load More Button */}
+                    {hasMoreReviews && (
+                        <div className="pt-4 text-center border-t border-zinc-50">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={reviewsLoading}
+                                onClick={() => fetchReviews(reviewsPage + 1, true)}
+                                className="text-xs border-zinc-200 hover:bg-zinc-50 text-zinc-600 rounded-xl"
+                            >
+                                {reviewsLoading ? 'Loading...' : 'Load More Reviews'}
+                            </Button>
+                        </div>
+                    )}
+                </div>
 
             </motion.div>
 

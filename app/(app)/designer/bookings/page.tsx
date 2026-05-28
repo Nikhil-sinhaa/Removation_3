@@ -165,11 +165,13 @@ function DesignerBookingCard({
     booking,
     onAccept,
     onReject,
+    onComplete,
     actionLoading,
 }: {
     booking: DesignerBooking;
     onAccept: (id: string) => void;
     onReject: (id: string) => void;
+    onComplete: (id: string) => void;
     actionLoading: string | null;
 }) {
     const customer = typeof booking.customerId === 'object' ? booking.customerId : null;
@@ -328,6 +330,24 @@ function DesignerBookingCard({
                     </Button>
                 </div>
             )}
+
+            {booking.status === 'confirmed' && (
+                <div className="px-5 pb-5 flex gap-3">
+                    <Button
+                        id={`complete-booking-${booking._id}`}
+                        className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
+                        onClick={() => onComplete(booking._id)}
+                        disabled={!!actionLoading}
+                    >
+                        {isThisLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : (
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                        )}
+                        Mark as Complete
+                    </Button>
+                </div>
+            )}
         </motion.div>
     );
 }
@@ -392,6 +412,24 @@ export default function DesignerBookingsPage() {
             const res = await fetch(`/api/bookings/${id}/accept`, { method: 'POST' });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || 'Failed to accept booking');
+            fetchBookings(page);
+        } catch (err: any) {
+            setActionError(err.message);
+        } finally {
+            setActionLoading(null);
+        }
+    }
+
+    async function handleComplete(id: string) {
+        const confirm = window.confirm("Are you sure you want to mark this booking as complete? This will allow the customer to leave a review.");
+        if (!confirm) return;
+
+        setActionLoading(id);
+        setActionError(null);
+        try {
+            const res = await fetch(`/api/bookings/${id}/complete`, { method: 'POST' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to complete booking');
             fetchBookings(page);
         } catch (err: any) {
             setActionError(err.message);
@@ -533,6 +571,7 @@ export default function DesignerBookingsPage() {
                                 booking={b}
                                 onAccept={handleAccept}
                                 onReject={id => { setRejectTarget(id); setRejectError(null); }}
+                                onComplete={handleComplete}
                                 actionLoading={actionLoading}
                             />
                         ))}

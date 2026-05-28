@@ -12,6 +12,7 @@ import {
     Compass,
     GraduationCap,
     Grid,
+    Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,6 +57,8 @@ interface Designer {
     projectMinFee?: { amount: number; currency: string };
     acceptsConsultations: boolean;
     acceptsProjects: boolean;
+    averageRating?: number;
+    totalReviews?: number;
     userId?: {
         _id: string;
         firstName?: string;
@@ -344,15 +347,31 @@ function DesignersListingContent() {
                                     {/* Card body */}
                                     <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
                                         <div className="space-y-1">
-                                            <Link href={`/designers/${designer._id}`}>
-                                                <h3 className="font-bold text-zinc-900 text-lg group-hover:text-violet-600 transition-colors truncate">
-                                                    {designer.displayName}
-                                                </h3>
-                                            </Link>
-                                            <p className="text-xs text-zinc-500 flex items-center gap-1">
-                                                <MapPin className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-                                                <span className="capitalize">{designer.city}</span>
-                                            </p>
+                                            <div className="flex items-start justify-between gap-2">
+                                                <Link href={`/designers/${designer._id}`} className="min-w-0 flex-1">
+                                                    <h3 className="font-bold text-zinc-900 text-lg group-hover:text-violet-600 transition-colors truncate">
+                                                        {designer.displayName}
+                                                    </h3>
+                                                </Link>
+                                                {designer.averageRating !== undefined && designer.averageRating > 0 && (
+                                                    <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md text-xs font-semibold flex-shrink-0 mt-0.5">
+                                                        <Star className="w-3.5 h-3.5 fill-amber-400 stroke-amber-500" />
+                                                        <span>{designer.averageRating.toFixed(1)}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs text-zinc-500">
+                                                <span className="flex items-center gap-1 capitalize">
+                                                    <MapPin className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
+                                                    {designer.city}
+                                                </span>
+                                                {designer.totalReviews !== undefined && designer.totalReviews > 0 && (
+                                                    <>
+                                                        <span className="text-zinc-300">·</span>
+                                                        <span>{designer.totalReviews} review{designer.totalReviews === 1 ? '' : 's'}</span>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
 
                                         {designer.specialties.length > 0 && (

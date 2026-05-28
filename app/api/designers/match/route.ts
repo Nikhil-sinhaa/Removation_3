@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
         const authUser   = await getCurrentUser();
         const isLoggedIn = !!authUser;
 
-        const publicSelect = 'displayName bio city specialties portfolioImages yearsOfExperience isVerified createdAt consultationFee acceptsConsultations acceptsProjects projectMinFee consultationDurationMinutes';
+        const publicSelect = 'displayName bio city specialties portfolioImages yearsOfExperience isVerified createdAt consultationFee acceptsConsultations acceptsProjects projectMinFee consultationDurationMinutes averageRating totalReviews';
         const selectFields = isLoggedIn ? publicSelect + ' phone' : publicSelect;
 
         // ── Base filter (always applied) ──────────────────────────────────

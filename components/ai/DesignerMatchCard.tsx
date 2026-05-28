@@ -33,6 +33,8 @@ export interface MatchedDesigner {
     acceptsProjects: boolean;
     acceptsConsultations: boolean;
     consultationDurationMinutes?: number;
+    averageRating?: number;
+    totalReviews?: number;
     userId?: {
         firstName?: string;
         lastName?: string;
@@ -106,13 +108,23 @@ export function DesignerMatchCard({ designer, onBook, index = 0 }: DesignerMatch
                                 </span>
                             )}
                         </div>
-                        <div className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5">
+                        <div className="flex items-center gap-1 text-xs text-zinc-400 mt-0.5 flex-wrap">
                             <MapPin className="w-3 h-3 flex-shrink-0" />
                             <span className="truncate">{designer.city}</span>
                             {designer.yearsOfExperience != null && (
                                 <>
                                     <span className="text-zinc-300">·</span>
                                     <span>{designer.yearsOfExperience}y exp</span>
+                                </>
+                            )}
+                            {designer.averageRating !== undefined && designer.averageRating > 0 && (
+                                <>
+                                    <span className="text-zinc-300">·</span>
+                                    <span className="flex items-center gap-0.5 text-amber-500 font-semibold">
+                                        <Star className="w-3 h-3 fill-amber-400 stroke-amber-500" />
+                                        <span>{designer.averageRating.toFixed(1)}</span>
+                                        <span className="text-zinc-400 font-normal">({designer.totalReviews})</span>
+                                    </span>
                                 </>
                             )}
                         </div>

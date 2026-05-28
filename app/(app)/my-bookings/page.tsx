@@ -24,6 +24,7 @@ import {
     Loader2,
     MapPin,
     RefreshCw,
+    Star,
     X,
     XCircle,
 } from 'lucide-react';
@@ -37,6 +38,16 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { paiseToRupees } from '@/lib/booking/money';
 import { cn } from '@/lib/utils';
 import type { BookingStatus } from '@/lib/db/models/Booking';
@@ -71,6 +82,8 @@ interface Booking {
     designerResponseDeadline?: string;
     refundFailed?: boolean;
     createdAt: string;
+    completedAt?: string | null;
+    reviewId?: string | null;
 }
 
 // ── Status config ─────────────────────────────────────────────────────────────
@@ -121,9 +134,11 @@ const STATUS_CONFIG: Record<
 function BookingCard({
     booking,
     onCancel,
+    onReview,
 }: {
     booking: Booking;
     onCancel: (id: string) => void;
+    onReview: (booking: Booking) => void;
 }) {
     const designer = typeof booking.designerId === 'object' ? booking.designerId : null;
     const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_payment;
@@ -285,6 +300,28 @@ function BookingCard({
                     </Button>
                 </div>
             )}
+
+            {booking.status === 'completed' && !booking.reviewId && (
+                <div className="px-5 pb-5">
+                    <Button
+                        id={`review-booking-${booking._id}`}
+                        variant="outline"
+                        size="sm"
+                        className="text-violet-600 border-violet-200 hover:bg-violet-50"
+                        onClick={() => onReview(booking)}
+                    >
+                        <Star className="w-3.5 h-3.5 mr-1.5 fill-violet-600" />
+                        Leave a Review
+                    </Button>
+                </div>
+            )}
+
+            {booking.status === 'completed' && booking.reviewId && (
+                <div className="px-5 pb-5 text-xs text-green-600 flex items-center gap-1 font-medium">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Review submitted
+                </div>
+            )}
         </motion.div>
     );
 }
@@ -306,6 +343,13 @@ export default function MyBookingsPage() {
     const [cancelTarget, setCancelTarget] = useState<string | null>(null);
     const [cancelling, setCancelling] = useState(false);
     const [cancelError, setCancelError] = useState<string | null>(null);
+
+    // Review dialog
+    const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
+    const [rating, setRating] = useState<number>(5);
+    const [comment, setComment] = useState<string>('');
+    const [reviewing, setReviewing] = useState(false);
+    const [reviewError, setReviewError] = useState<string | null>(null);
 
     const fetchBookings = useCallback(async (p: number = 1) => {
         setFetching(true);
@@ -346,6 +390,34 @@ export default function MyBookingsPage() {
             setCancelError(err.message);
         } finally {
             setCancelling(false);
+        }
+    }
+
+    async function handleReviewSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!reviewTarget) return;
+        setReviewing(true);
+        setReviewError(null);
+        try {
+            const res = await fetch('/api/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bookingId: reviewTarget._id,
+                    rating,
+                    comment,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to submit review');
+            setReviewTarget(null);
+            setRating(5);
+            setComment('');
+            fetchBookings(page);
+        } catch (err: any) {
+            setReviewError(err.message);
+        } finally {
+            setReviewing(false);
         }
     }
 
@@ -422,6 +494,12 @@ export default function MyBookingsPage() {
                                 key={b._id}
                                 booking={b}
                                 onCancel={id => { setCancelTarget(id); setCancelError(null); }}
+                                onReview={b => {
+                                    setReviewTarget(b);
+                                    setRating(5);
+                                    setComment('');
+                                    setReviewError(null);
+                                }}
                             />
                         ))}
                     </div>
@@ -483,6 +561,95 @@ export default function MyBookingsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Review Dialog */}
+            <Dialog open={!!reviewTarget} onOpenChange={open => { if (!open) setReviewTarget(null); }}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <form onSubmit={handleReviewSubmit}>
+                        <DialogHeader>
+                            <DialogTitle>Leave a Review</DialogTitle>
+                            <DialogDescription>
+                                Share your experience with{' '}
+                                {reviewTarget && typeof reviewTarget.designerId === 'object'
+                                    ? reviewTarget.designerId.displayName
+                                    : 'the designer'}
+                                .
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {/* Interactive Star Selector */}
+                        <div className="flex flex-col items-center justify-center my-6 gap-2">
+                            <div className="flex gap-2">
+                                {[1, 2, 3, 4, 5].map(star => (
+                                    <button
+                                        key={star}
+                                        id={`star-rating-${star}`}
+                                        type="button"
+                                        onClick={() => setRating(star)}
+                                        className="p-1 hover:scale-110 active:scale-95 transition-transform"
+                                    >
+                                        <Star
+                                            className={cn(
+                                                'w-8 h-8 transition-colors',
+                                                star <= rating
+                                                    ? 'text-amber-400 fill-amber-400'
+                                                    : 'text-zinc-200 fill-transparent'
+                                            )}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                            <span className="text-xs font-semibold text-zinc-500 capitalize">
+                                {rating === 5 ? 'Excellent' : rating === 4 ? 'Very Good' : rating === 3 ? 'Good' : rating === 2 ? 'Fair' : 'Poor'}
+                            </span>
+                        </div>
+
+                        <div className="space-y-2 mb-4">
+                            <Label htmlFor="review-comment" className="text-sm font-medium text-zinc-700">
+                                Your Feedback
+                            </Label>
+                            <Textarea
+                                id="review-comment"
+                                placeholder="What went well? Any areas of improvement?"
+                                value={comment}
+                                onChange={e => setComment(e.target.value)}
+                                className="min-h-[100px] resize-none"
+                                required
+                            />
+                        </div>
+
+                        {reviewError && (
+                            <div className="flex items-center gap-2 text-xs text-red-600 mb-4 bg-red-50 p-2.5 rounded-lg">
+                                <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                                <span>{reviewError}</span>
+                            </div>
+                        )}
+
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setReviewTarget(null)}
+                                disabled={reviewing}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                id="submit-review-btn"
+                                type="submit"
+                                disabled={reviewing}
+                                className="bg-violet-600 hover:bg-violet-700 text-white"
+                            >
+                                {reviewing ? (
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting…</>
+                                ) : (
+                                    'Submit Review'
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
