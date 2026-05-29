@@ -451,7 +451,7 @@ export default function PricingPage() {
   // Handle plan selection
   const handleSelectPlan = async (planId: string) => {
     if (!isSignedIn) {
-      router.push('/sign-up?redirect=/pricing');
+      router.push('/sign-up?redirect=/billing');
       return;
     }
 

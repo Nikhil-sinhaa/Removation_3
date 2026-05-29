@@ -121,7 +121,7 @@ const sidebarNavigation: NavSection[] = [
   {
     title: 'Account',
     items: [
-      { name: 'Pricing', href: '/pricing', icon: CreditCard },
+      { name: 'Billing & Plans', href: '/billing', icon: CreditCard },
       { name: 'Settings', href: '/settings', icon: Settings },
       { name: 'Become a Designer', href: '/designer/register', icon: Sparkles, role: 'customer' },
       { name: 'Become a Contractor', href: '/contractor/register', icon: Sparkles, role: 'customer' },
@@ -351,7 +351,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 </div>
                 {user?.subscription?.plan !== 'pro' ? (
                   <Link
-                    href="/pricing"
+                    href="/billing"
                     className="block w-full py-2 px-4 bg-white text-violet-600 rounded-lg font-semibold text-sm text-center hover:bg-white/90 transition-colors"
                   >
                     <Zap className="w-4 h-4 inline mr-2 animate-pulse" />
@@ -369,7 +369,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                onClick={() => router.push('/pricing')}
+                onClick={() => router.push('/billing')}
                 className="w-full p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center hover:shadow-md transition-shadow"
                 title={`${user?.credits !== undefined ? user.credits : 0} Credits Left`}
               >

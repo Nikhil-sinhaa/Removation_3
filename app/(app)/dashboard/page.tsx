@@ -355,7 +355,7 @@ const tips = [
     description: 'Upgrade to Pro for high-resolution exports',
     icon: Download,
     action: 'Upgrade',
-    href: '/pricing',
+    href: '/billing',
   },
 ];
 
@@ -1380,7 +1380,7 @@ export default function DashboardPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <Link
-                    href="/pricing"
+                    href="/billing"
                     className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-violet-600 font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all group"
                   >
                     <Zap className="w-5 h-5" />
@@ -1393,7 +1393,7 @@ export default function DashboardPage() {
                 </motion.div>
 
                 <Link
-                  href="/pricing"
+                  href="/billing"
                   className="text-center text-white/70 text-sm hover:text-white transition-colors"
                 >
                   View all plans →
