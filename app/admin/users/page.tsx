@@ -200,21 +200,25 @@ interface UserStats {
   newThisMonth: number;
 }
 
-// Mock Data
-const mockStats: UserStats = {
-  total: 45892,
-  active: 38456,
-  inactive: 5234,
-  suspended: 1876,
-  banned: 326,
-  free: 32456,
-  pro: 10234,
-  teams: 2945,
-  enterprise: 257,
-  newToday: 234,
-  newThisWeek: 1567,
-  newThisMonth: 6789,
+// Mock stats fallback (used until API responds)
+const defaultStats: UserStats = {
+  total: 0,
+  active: 0,
+  inactive: 0,
+  suspended: 0,
+  banned: 0,
+  free: 0,
+  pro: 0,
+  teams: 0,
+  enterprise: 0,
+  newToday: 0,
+  newThisWeek: 0,
+  newThisMonth: 0,
 };
+
+// We keep generateMockUsers only as a fallback if API is unavailable
+const generateMockUsers = (count: number): User[] => [];
+const mockUsers: User[] = [];
 
 const countries = [
   { code: "IN", name: "India", flag: "🇮🇳" },
@@ -240,79 +244,6 @@ const favoriteStyles = [
 
 const devices = ["Desktop", "Mobile", "Tablet"];
 
-const generateMockUsers = (count: number): User[] => {
-  const users: User[] = [];
-  const statuses: User["status"][] = ["active", "active", "active", "active", "inactive", "suspended", "banned"];
-  const plans: User["plan"][] = ["free", "free", "free", "pro", "pro", "teams", "enterprise"];
-  const roles: User["role"][] = ["user", "user", "user", "user", "admin"];
-  const names = [
-    "Priya Sharma", "John Smith", "Rahul Verma", "Emma Wilson", "Amit Patel",
-    "Sarah Johnson", "Mike Chen", "Lisa Park", "Raj Malhotra", "Anna Schmidt",
-    "David Lee", "Neha Gupta", "Tom Brown", "Meera Singh", "Chris Evans",
-    "Aisha Khan", "James Wilson", "Kavya Nair", "Robert Taylor", "Sneha Reddy",
-    "Michael Davis", "Pooja Mehta", "William Anderson", "Divya Iyer", "Thomas Moore",
-  ];
-
-  for (let i = 0; i < count; i++) {
-    const name = names[Math.floor(Math.random() * names.length)];
-    const country = countries[Math.floor(Math.random() * countries.length)];
-    const plan = plans[Math.floor(Math.random() * plans.length)];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const hasSub = plan !== "free";
-
-    users.push({
-      id: `user_${i + 1}_${Date.now()}`,
-      clerkId: `clerk_${Math.random().toString(36).substr(2, 9)}`,
-      email: `${name.toLowerCase().replace(" ", ".")}${i}@email.com`,
-      name,
-      plan,
-      status,
-      role: roles[Math.floor(Math.random() * roles.length)],
-      credits: plan === "free" ? Math.floor(Math.random() * 5) : Math.floor(Math.random() * 100) + 50,
-      totalRenders: Math.floor(Math.random() * 500),
-      vastuScans: Math.floor(Math.random() * 50),
-      costCalculations: Math.floor(Math.random() * 100),
-      favoriteStyles: favoriteStyles.slice(0, Math.floor(Math.random() * 4) + 1),
-      country: country.name,
-      city: ["Mumbai", "Delhi", "New York", "London", "Sydney", "Berlin"][Math.floor(Math.random() * 6)],
-      language: country.code === "IN" ? (Math.random() > 0.5 ? "Hindi" : "English") : "English",
-      device: devices[Math.floor(Math.random() * devices.length)],
-      lastActive: new Date(Date.now() - Math.floor(Math.random() * 7 * 24 * 60 * 60 * 1000)).toISOString(),
-      createdAt: new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000)).toISOString(),
-      subscription: hasSub ? {
-        status: Math.random() > 0.1 ? "active" : (Math.random() > 0.5 ? "cancelled" : "expired"),
-        startDate: new Date(Date.now() - Math.floor(Math.random() * 180 * 24 * 60 * 60 * 1000)).toISOString(),
-        endDate: new Date(Date.now() + Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000)).toISOString(),
-        amount: plan === "pro" ? 29 : plan === "teams" ? 99 : 499,
-        currency: country.code === "IN" ? "INR" : "USD",
-        provider: country.code === "IN" ? "razorpay" : "stripe",
-      } : undefined,
-      activity: {
-        loginCount: Math.floor(Math.random() * 200) + 1,
-        lastLogin: new Date(Date.now() - Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000)).toISOString(),
-        projectsCreated: Math.floor(Math.random() * 20),
-        imagesUploaded: Math.floor(Math.random() * 100),
-      },
-      flags: {
-        isVerified: Math.random() > 0.3,
-        isEmailVerified: Math.random() > 0.1,
-        isTwoFactorEnabled: Math.random() > 0.7,
-        hasCompletedOnboarding: Math.random() > 0.2,
-        acceptedTerms: true,
-      },
-      metadata: {
-        referralSource: ["google", "twitter", "friend", "blog", "ads"][Math.floor(Math.random() * 5)],
-        utmSource: Math.random() > 0.5 ? "google" : undefined,
-        utmMedium: Math.random() > 0.5 ? "cpc" : undefined,
-        utmCampaign: Math.random() > 0.5 ? "launch2025" : undefined,
-      },
-    });
-  }
-
-  return users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-};
-
-const mockUsers = generateMockUsers(100);
 
 // Components
 const StatCard = ({ 
@@ -1245,14 +1176,59 @@ export default function AdminUsersPage() {
   const [isActionDialogOpen, setIsActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<string>("");
   const [actionUserId, setActionUserId] = useState<string>("");
+  const [stats, setStats] = useState<UserStats>(defaultStats);
   const itemsPerPage = viewMode === "grid" ? 12 : 15;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setUsers(mockUsers);
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    async function fetchUsers() {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/admin/users?limit=100');
+        if (res.ok) {
+          const data = await res.json();
+          // Map API users to the local User type
+          const mapped: User[] = (data.users ?? []).map((u: any) => ({
+            id: u._id,
+            clerkId: u.clerkId ?? u._id,
+            email: u.email,
+            name: [(u.firstName ?? ''), (u.lastName ?? '')].filter(Boolean).join(' ') || u.email,
+            avatar: u.imageUrl,
+            plan: (u.subscription?.plan ?? 'free') as User['plan'],
+            status: 'active' as User['status'],
+            role: (u.role === 'admin' ? 'admin' : 'user') as User['role'],
+            credits: u.credits ?? u.subscription?.credits ?? 0,
+            totalRenders: 0,
+            vastuScans: 0,
+            costCalculations: 0,
+            favoriteStyles: [],
+            country: '',
+            city: '',
+            language: 'en',
+            device: 'Desktop',
+            lastActive: u.updatedAt ?? u.createdAt,
+            createdAt: u.createdAt,
+            activity: { loginCount: 0, lastLogin: u.updatedAt ?? u.createdAt, projectsCreated: 0, imagesUploaded: 0 },
+            flags: { isVerified: u.isVerified ?? false, isEmailVerified: u.isVerified ?? false, isTwoFactorEnabled: false, hasCompletedOnboarding: false, acceptedTerms: true },
+            metadata: {},
+          }));
+          setUsers(mapped);
+          // Derive stats from the full set
+          setStats(prev => ({
+            ...prev,
+            total: data.total ?? mapped.length,
+            free: mapped.filter(u => u.plan === 'free').length,
+            pro: mapped.filter(u => u.plan === 'pro').length,
+            teams: mapped.filter(u => u.plan === 'teams').length,
+            enterprise: mapped.filter(u => u.plan === 'enterprise').length,
+          }));
+        }
+      } catch (e) {
+        // silently fall back to empty list
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchUsers();
   }, []);
 
   // Filter and sort users
@@ -1465,39 +1441,39 @@ export default function AdminUsersPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <StatCard
             title="Total Users"
-            value={mockStats.total}
+            value={stats.total}
             icon={<Users className="w-5 h-5 text-violet-500" />}
             color="bg-violet-500"
             trend="+12%"
           />
           <StatCard
             title="Active"
-            value={mockStats.active}
+            value={stats.active}
             icon={<CheckCircle2 className="w-5 h-5 text-green-500" />}
             color="bg-green-500"
           />
           <StatCard
             title="Pro Users"
-            value={mockStats.pro}
+            value={stats.pro}
             icon={<Zap className="w-5 h-5 text-amber-500" />}
             color="bg-amber-500"
           />
           <StatCard
             title="Teams"
-            value={mockStats.teams}
+            value={stats.teams}
             icon={<Users className="w-5 h-5 text-blue-500" />}
             color="bg-blue-500"
           />
           <StatCard
             title="New Today"
-            value={mockStats.newToday}
+            value={stats.newToday}
             icon={<UserPlus className="w-5 h-5 text-cyan-500" />}
             color="bg-cyan-500"
             trend="+8%"
           />
           <StatCard
             title="Suspended"
-            value={mockStats.suspended + mockStats.banned}
+            value={stats.suspended + stats.banned}
             icon={<Ban className="w-5 h-5 text-red-500" />}
             color="bg-red-500"
           />

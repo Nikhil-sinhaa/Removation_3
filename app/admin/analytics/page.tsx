@@ -418,20 +418,51 @@ const GeoTable = ({ data }: { data: GeoData[] }) => {
 
 // Main Component
 export default function AdminAnalyticsPage() {
-  const [isLoading, setIsLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState("7d");
+  const [timeRange, setTimeRange] = useState("30d");
+  const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [metrics, setMetrics] = useState(mockMetrics);
+  const [dailyRenders, setDailyRenders] = useState<ChartData[]>(mockDailyRenders);
+  const [revenueData, setRevenueData] = useState<ChartData[]>(mockRevenueData);
+  const [userGrowth, setUserGrowth] = useState<ChartData[]>(mockUserGrowth);
+  const [planDistribution, setPlanDistribution] = useState<ChartData[]>(mockPlanDistribution);
+  const [topStyles, setTopStyles] = useState<TopStyle[]>(mockTopStyles);
+  const [roomTypes, setRoomTypes] = useState<ChartData[]>(mockRoomTypes);
+  const [geoData, setGeoData] = useState<GeoData[]>(mockGeoData);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>(mockRecentActivity);
+  const [featureUsage, setFeatureUsage] = useState<ChartData[]>(mockFeatureUsage);
+
+  async function fetchAnalytics() {
+    try {
+      setIsLoading(true);
+      const res = await fetch(`/api/admin/analytics?range=${timeRange}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.metrics) setMetrics(data.metrics);
+        if (data.dailyRenders) setDailyRenders(data.dailyRenders);
+        if (data.revenueData) setRevenueData(data.revenueData);
+        if (data.userGrowth) setUserGrowth(data.userGrowth);
+        if (data.planDistribution) setPlanDistribution(data.planDistribution);
+        if (data.topStyles) setTopStyles(data.topStyles);
+        if (data.roomTypes) setRoomTypes(data.roomTypes);
+        if (data.geoData) setGeoData(data.geoData);
+        if (data.recentActivity) setRecentActivity(data.recentActivity);
+        if (data.featureUsage) setFeatureUsage(data.featureUsage);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1500);
-    return () => clearTimeout(timer);
-  }, []);
+    fetchAnalytics();
+  }, [timeRange]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Re-fetch analytics data when real API is available
-    // For now, briefly show spinner to acknowledge user action
-    await new Promise((r) => setTimeout(r, 300));
+    await fetchAnalytics();
     setIsRefreshing(false);
   };
 
@@ -533,74 +564,74 @@ export default function AdminAnalyticsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Total Users"
-            value={mockMetrics.totalUsers.value}
-            change={mockMetrics.totalUsers.change}
-            changeLabel={mockMetrics.totalUsers.changeLabel}
+            value={metrics.totalUsers.value}
+            change={metrics.totalUsers.change}
+            changeLabel={metrics.totalUsers.changeLabel}
             icon={<Users className="w-5 h-5 text-blue-500" />}
-            trend="up"
+            trend={metrics.totalUsers.change >= 0 ? "up" : "down"}
             color="bg-blue-500"
           />
           <MetricCard
             title="Total Renders"
-            value={mockMetrics.totalRenders.value}
-            change={mockMetrics.totalRenders.change}
-            changeLabel={mockMetrics.totalRenders.changeLabel}
+            value={metrics.totalRenders.value}
+            change={metrics.totalRenders.change}
+            changeLabel={metrics.totalRenders.changeLabel}
             icon={<ImageIcon className="w-5 h-5 text-violet-500" />}
-            trend="up"
+            trend={metrics.totalRenders.change >= 0 ? "up" : "down"}
             color="bg-violet-500"
           />
           <MetricCard
             title="Revenue"
-            value={mockMetrics.revenue.value}
-            change={mockMetrics.revenue.change}
-            changeLabel={mockMetrics.revenue.changeLabel}
+            value={metrics.revenue.value}
+            change={metrics.revenue.change}
+            changeLabel={metrics.revenue.changeLabel}
             icon={<DollarSign className="w-5 h-5 text-green-500" />}
-            trend="up"
+            trend={metrics.revenue.change >= 0 ? "up" : "down"}
             color="bg-green-500"
           />
           <MetricCard
             title="Conversion Rate"
-            value={mockMetrics.conversionRate.value}
-            change={mockMetrics.conversionRate.change}
-            changeLabel={mockMetrics.conversionRate.changeLabel}
+            value={metrics.conversionRate.value}
+            change={metrics.conversionRate.change}
+            changeLabel={metrics.conversionRate.changeLabel}
             icon={<TrendingUp className="w-5 h-5 text-amber-500" />}
-            trend="down"
+            trend={metrics.conversionRate.change >= 0 ? "up" : "down"}
             color="bg-amber-500"
           />
           <MetricCard
             title="Active Users"
-            value={mockMetrics.activeUsers.value}
-            change={mockMetrics.activeUsers.change}
-            changeLabel={mockMetrics.activeUsers.changeLabel}
+            value={metrics.activeUsers.value}
+            change={metrics.activeUsers.change}
+            changeLabel={metrics.activeUsers.changeLabel}
             icon={<Activity className="w-5 h-5 text-cyan-500" />}
-            trend="up"
+            trend={metrics.activeUsers.change >= 0 ? "up" : "down"}
             color="bg-cyan-500"
           />
           <MetricCard
             title="Avg. Session Time"
-            value={mockMetrics.avgSessionTime.value}
-            change={mockMetrics.avgSessionTime.change}
-            changeLabel={mockMetrics.avgSessionTime.changeLabel}
+            value={metrics.avgSessionTime.value}
+            change={metrics.avgSessionTime.change}
+            changeLabel={metrics.avgSessionTime.changeLabel}
             icon={<Clock className="w-5 h-5 text-rose-500" />}
-            trend="up"
+            trend={metrics.avgSessionTime.change >= 0 ? "up" : "down"}
             color="bg-rose-500"
           />
           <MetricCard
             title="Vastu Scans"
-            value={mockMetrics.vastuScans.value}
-            change={mockMetrics.vastuScans.change}
-            changeLabel={mockMetrics.vastuScans.changeLabel}
+            value={metrics.vastuScans.value}
+            change={metrics.vastuScans.change}
+            changeLabel={metrics.vastuScans.changeLabel}
             icon={<Home className="w-5 h-5 text-orange-500" />}
-            trend="up"
+            trend={metrics.vastuScans.change >= 0 ? "up" : "down"}
             color="bg-orange-500"
           />
           <MetricCard
             title="Cost Calculations"
-            value={mockMetrics.costCalculations.value}
-            change={mockMetrics.costCalculations.change}
-            changeLabel={mockMetrics.costCalculations.changeLabel}
+            value={metrics.costCalculations.value}
+            change={metrics.costCalculations.change}
+            changeLabel={metrics.costCalculations.changeLabel}
             icon={<IndianRupee className="w-5 h-5 text-emerald-500" />}
-            trend="up"
+            trend={metrics.costCalculations.change >= 0 ? "up" : "down"}
             color="bg-emerald-500"
           />
         </div>
@@ -627,7 +658,7 @@ export default function AdminAnalyticsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <BarChartSimple data={mockDailyRenders} maxValue={25000} />
+                <BarChartSimple data={dailyRenders} maxValue={25000} />
               </CardContent>
             </Card>
           </motion.div>
@@ -644,7 +675,7 @@ export default function AdminAnalyticsPage() {
                 <CardDescription>User subscription breakdown</CardDescription>
               </CardHeader>
               <CardContent>
-                <DonutChart data={mockPlanDistribution} />
+                <DonutChart data={planDistribution} />
               </CardContent>
             </Card>
           </motion.div>
@@ -676,7 +707,7 @@ export default function AdminAnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {mockFeatureUsage.map((feature, index) => (
+                  {featureUsage.map((feature, index) => (
                     <motion.div
                       key={feature.label}
                       initial={{ opacity: 0, x: -20 }}
@@ -691,7 +722,7 @@ export default function AdminAnalyticsPage() {
                           {feature.label}
                         </span>
                         <span className="text-neutral-400">
-                          {(feature.value / 1000).toFixed(0)}k ({feature.percentage}%)
+                          {feature.value} ({feature.percentage}%)
                         </span>
                       </div>
                       <Progress value={feature.percentage} className="h-2" />
@@ -724,7 +755,7 @@ export default function AdminAnalyticsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <ActivityFeed activities={mockRecentActivity} />
+                <ActivityFeed activities={recentActivity} />
               </CardContent>
             </Card>
           </motion.div>
@@ -752,7 +783,7 @@ export default function AdminAnalyticsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <TopStylesTable styles={mockTopStyles} />
+                <TopStylesTable styles={topStyles} />
               </CardContent>
             </Card>
           </motion.div>
@@ -776,7 +807,7 @@ export default function AdminAnalyticsPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <GeoTable data={mockGeoData} />
+                <GeoTable data={geoData} />
               </CardContent>
             </Card>
           </motion.div>
@@ -796,7 +827,7 @@ export default function AdminAnalyticsPage() {
                 <CardDescription>Renders by room type</CardDescription>
               </CardHeader>
               <CardContent>
-                <DonutChart data={mockRoomTypes} />
+                <DonutChart data={roomTypes} />
               </CardContent>
             </Card>
           </motion.div>
@@ -816,12 +847,12 @@ export default function AdminAnalyticsPage() {
                   </div>
                   <Badge variant="outline" className="bg-green-500/10 text-green-400 border-green-500/30">
                     <DollarSign className="w-3 h-3 mr-1" />
-                    $206,000 total
+                    {metrics.revenue.value} total
                   </Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <BarChartSimple data={mockRevenueData} maxValue={70000} color="bg-green-500" />
+                <BarChartSimple data={revenueData} maxValue={70000} color="bg-green-500" />
               </CardContent>
             </Card>
           </motion.div>
@@ -855,7 +886,7 @@ export default function AdminAnalyticsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <BarChartSimple data={mockUserGrowth} maxValue={50000} color="bg-gradient-to-t from-violet-600 to-violet-400" />
+              <BarChartSimple data={userGrowth} maxValue={50000} color="bg-gradient-to-t from-violet-600 to-violet-400" />
             </CardContent>
           </Card>
         </motion.div>

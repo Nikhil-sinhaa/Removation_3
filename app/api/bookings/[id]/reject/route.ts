@@ -40,6 +40,8 @@ import { issueBookingRefund } from '@/lib/booking/refund';
 const MIN_REASON_LENGTH = 5;
 const MAX_REASON_LENGTH = 500;
 
+import { sendSystemMessage } from '@/lib/messages/system';
+
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -161,6 +163,13 @@ export async function POST(
         booking.designerRejectionReason = reason;
 
         await booking.save();
+
+        // Send system message
+        try {
+            await sendSystemMessage(booking._id, `Booking declined. Reason: ${reason}`);
+        } catch (msgErr) {
+            console.error('[reject] Failed to send system message:', msgErr);
+        }
 
         return NextResponse.json({
             success: true,

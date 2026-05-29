@@ -1121,7 +1121,7 @@ function Header({
                   </Avatar>
                   <div className="hidden lg:flex flex-col items-start">
                     <span className="text-sm font-medium text-gray-900">
-                      {user?.fullName || 'Admin User'}
+                      {user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '') || 'Admin User'}
                     </span>
                     <span className="text-xs text-gray-500">Super Admin</span>
                   </div>
@@ -1139,10 +1139,10 @@ function Header({
                     </Avatar>
                     <div>
                       <p className="font-medium text-gray-900">
-                        {user?.fullName || 'Admin User'}
+                        {user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '') || 'Admin User'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user?.primaryEmailAddress?.emailAddress}
+                        {user?.email}
                       </p>
                     </div>
                   </div>

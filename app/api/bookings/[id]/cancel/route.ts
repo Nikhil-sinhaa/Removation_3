@@ -32,6 +32,8 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { Booking } from '@/lib/db/models/Booking';
 import { issueBookingRefund } from '@/lib/booking/refund';
 
+import { sendSystemMessage } from '@/lib/messages/system';
+
 export async function POST(
     req: NextRequest,
     { params }: { params: { id: string } }
@@ -114,6 +116,13 @@ export async function POST(
         booking.customerCancelledAt = new Date();
 
         await booking.save();
+
+        // Send system message
+        try {
+            await sendSystemMessage(booking._id, 'Booking cancelled by customer.');
+        } catch (msgErr) {
+            console.error('[cancel] Failed to send system message:', msgErr);
+        }
 
         return NextResponse.json({
             success: true,

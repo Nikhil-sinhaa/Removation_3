@@ -7,7 +7,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,6 +28,7 @@ import {
     User,
     X,
     XCircle,
+    MessageSquare,
 } from 'lucide-react';
 import {
     Dialog,
@@ -40,6 +41,8 @@ import {
 import { paiseToRupees } from '@/lib/booking/money';
 import { cn } from '@/lib/utils';
 import type { BookingStatus } from '@/lib/db/models/Booking';
+import { BookingChat } from '@/components/booking/BookingChat';
+import { getPusherClient } from '@/lib/pusherClient';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -167,12 +170,16 @@ function ContractorBookingCard({
     onReject,
     onComplete,
     actionLoading,
+    onChat,
+    unreadCount = 0,
 }: {
     booking: ContractorBooking;
     onAccept: (id: string) => void;
     onReject: (id: string) => void;
     onComplete: (id: string) => void;
     actionLoading: string | null;
+    onChat: (id: string, name: string) => void;
+    unreadCount?: number;
 }) {
     const customer = typeof booking.customerId === 'object' ? booking.customerId : null;
     const status = STATUS_CONFIG[booking.status];
@@ -348,6 +355,26 @@ function ContractorBookingCard({
                     </Button>
                 </div>
             )}
+
+            {['pending_designer', 'confirmed', 'completed'].includes(booking.status) && (
+                <div className="px-5 pb-5">
+                    <Button
+                        id={`chat-booking-${booking._id}`}
+                        variant="outline"
+                        size="sm"
+                        className="text-violet-600 border-violet-200 hover:bg-violet-50 w-full flex items-center justify-center gap-1.5 relative overflow-hidden"
+                        onClick={() => onChat(booking._id, customer ? `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim() || 'Customer' : 'Customer')}
+                    >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>Chat with Customer</span>
+                        {unreadCount > 0 && (
+                            <span className="ml-1.5 bg-violet-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </Button>
+                </div>
+            )}
         </motion.div>
     );
 }
@@ -375,6 +402,16 @@ export default function ContractorBookingsPage() {
     const [rejectLoading, setRejectLoading] = useState(false);
     const [rejectError, setRejectError] = useState<string | null>(null);
 
+    // Chat panel state
+    const [chatBookingId, setChatBookingId] = useState<string | null>(null);
+    const [chatCustomerName, setChatCustomerName] = useState<string>('');
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+    const chatBookingIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        chatBookingIdRef.current = chatBookingId;
+    }, [chatBookingId]);
+
     const fetchBookings = useCallback(async (p: number = 1, status: string = statusFilter) => {
         setFetching(true);
         setFetchError(null);
@@ -392,6 +429,20 @@ export default function ContractorBookingsPage() {
             setTotal(data.total);
             setPage(data.page);
             setPageCount(data.pageCount);
+
+            // Fetch initial unread counts
+            data.bookings.forEach((b: ContractorBooking) => {
+                if (['pending_designer', 'confirmed', 'completed'].includes(b.status)) {
+                    fetch(`/api/bookings/${b._id}/messages/unread-count`)
+                        .then(r => r.ok ? r.json() : null)
+                        .then(cntData => {
+                            if (cntData) {
+                                setUnreadCounts(prev => ({ ...prev, [b._id]: cntData.unreadCount }));
+                            }
+                        })
+                        .catch(err => console.error('Error fetching unread count:', err));
+                }
+            });
         } catch (err: any) {
             setFetchError(err.message);
         } finally {
@@ -404,6 +455,55 @@ export default function ContractorBookingsPage() {
         if (!user) { router.replace('/login'); return; }
         fetchBookings(1);
     }, [user, authLoading, router, fetchBookings]);
+
+    // Pusher channel subscription for booking cards real-time badges
+    useEffect(() => {
+        if (!bookings.length) return;
+
+        const pusher = getPusherClient();
+        if (!pusher) return;
+
+        const activeSubscribedChannels: string[] = [];
+        const currentUserId = user?.id || user?._id;
+
+        bookings.forEach(booking => {
+            if (!['pending_designer', 'confirmed', 'completed'].includes(booking.status)) return;
+
+            const channelName = `booking-${booking._id}`;
+            const channel = pusher.subscribe(channelName);
+            activeSubscribedChannels.push(channelName);
+
+            channel.bind('new-message', (data: any) => {
+                const senderIdStr = data.senderId && typeof data.senderId === 'object' ? data.senderId._id : data.senderId;
+                if (senderIdStr !== currentUserId) {
+                    setUnreadCounts(prev => {
+                        if (chatBookingIdRef.current === booking._id) {
+                            return prev;
+                        }
+                        return {
+                            ...prev,
+                            [booking._id]: (prev[booking._id] || 0) + 1
+                        };
+                    });
+                }
+            });
+
+            channel.bind('messages-read', (data: any) => {
+                if (data.readBy === currentUserId) {
+                    setUnreadCounts(prev => ({
+                        ...prev,
+                        [booking._id]: 0
+                    }));
+                }
+            });
+        });
+
+        return () => {
+            activeSubscribedChannels.forEach(name => {
+                pusher.unsubscribe(name);
+            });
+        };
+    }, [bookings, user]);
 
     async function handleAccept(id: string) {
         setActionLoading(id);
@@ -573,6 +673,12 @@ export default function ContractorBookingsPage() {
                                 onReject={id => { setRejectTarget(id); setRejectError(null); }}
                                 onComplete={handleComplete}
                                 actionLoading={actionLoading}
+                                onChat={(id, name) => {
+                                    setChatBookingId(id);
+                                    setChatCustomerName(name);
+                                    setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
+                                }}
+                                unreadCount={unreadCounts[b._id] || 0}
                             />
                         ))}
                     </div>
@@ -612,6 +718,17 @@ export default function ContractorBookingsPage() {
                 isLoading={rejectLoading}
                 error={rejectError}
             />
+
+            {/* Chat panel */}
+            {chatBookingId && user && (
+                <BookingChat
+                    open={!!chatBookingId}
+                    onClose={() => setChatBookingId(null)}
+                    bookingId={chatBookingId}
+                    currentUserId={user.id || user._id || ''}
+                    providerName={chatCustomerName}
+                />
+            )}
         </div>
     );
 }

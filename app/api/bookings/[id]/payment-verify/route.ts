@@ -33,6 +33,8 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Booking } from '@/lib/db/models/Booking';
 
+import { sendSystemMessage } from '@/lib/messages/system';
+
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -129,6 +131,13 @@ export async function POST(
         booking.designerResponseDeadline = designerResponseDeadline;
 
         await booking.save();
+
+        // Send system message
+        try {
+            await sendSystemMessage(booking._id, 'Payment verified. Booking is now awaiting response from the professional.');
+        } catch (msgErr) {
+            console.error('[payment-verify] Failed to send system message:', msgErr);
+        }
 
         return NextResponse.json({
             success: true,

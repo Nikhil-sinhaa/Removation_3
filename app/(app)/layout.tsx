@@ -79,6 +79,7 @@ const sidebarNavigation: NavSection[] = [
       { name: 'Object Removal', href: '/remove-object', icon: Eraser },
       { name: 'Furniture Remover', href: '/furniture-remover', icon: Eraser },
       { name: 'Room Changer', href: '/room-changer', icon: Paintbrush },
+      { name: 'Style Transfer', href: '/style-transfer', icon: Palette },
       { name: 'Ceiling Changer', href: '/ceiling-changer', icon: Layers },
       { name: 'AI Lighting Studio', href: '/lighting', icon: Lightbulb },
       { name: '3D Room View', href: '/room-3d', icon: Box },

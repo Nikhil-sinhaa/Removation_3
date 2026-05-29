@@ -118,3 +118,12 @@
 - **Fix:** Fix later when real testing infra is set up.
 
 
+
+## Admin Sub-route Tab Context (2026-05-29)
+- [ ] Admin sub-route pages redirect to parent without tab context
+  - `/admin/analytics/revenue` → `/admin/analytics` (no tab pre-selected)
+  - `/admin/analytics/usage` → `/admin/analytics`
+  - `/admin/analytics/retention` → `/admin/analytics`
+  - Same applies to settings sub-routes (security, api-keys, webhooks, audit-logs)
+  - **Fix:** Pass `?tab=<name>` in `router.replace()` URL; read `searchParams.tab` in parent
+    to pre-select the correct tab via `defaultValue={searchParams.tab ?? 'default'}`.

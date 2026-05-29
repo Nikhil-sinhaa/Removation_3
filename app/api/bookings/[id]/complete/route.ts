@@ -23,6 +23,8 @@ import { Booking } from '@/lib/db/models/Booking';
 import { Designer } from '@/lib/db/models/Designer';
 import { Contractor } from '@/lib/db/models/Contractor';
 
+import { sendSystemMessage } from '@/lib/messages/system';
+
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -81,6 +83,13 @@ export async function POST(
         booking.completedAt = new Date();
 
         await booking.save();
+
+        // Send system message
+        try {
+            await sendSystemMessage(booking._id, 'Booking completed. Thank you for working with us!');
+        } catch (msgErr) {
+            console.error('[complete] Failed to send system message:', msgErr);
+        }
 
         return NextResponse.json({
             success: true,

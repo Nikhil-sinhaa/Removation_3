@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
     // Only fetch completed projects
     const projects = await Project.find({
-      processingType: { $in: ['redesign', 'room-changer', 'furniture-remover', 'ceiling-changer', 'floor-plan', 'multi-room-3d', 'furniture-placement', 'lighting'] },
+      processingType: { $in: ['redesign', 'room-changer', 'furniture-remover', 'ceiling-changer', 'floor-plan', 'multi-room-3d', 'furniture-placement', 'lighting', 'tool-style-transfer'] },
       status: 'completed',
     })
       .sort({ createdAt: -1 })
@@ -33,6 +33,11 @@ export async function GET(request: Request) {
 
     // Build a human-readable description from aiConfig
     function buildDescription(cfg: any, processingType?: string): string {
+      if (processingType === 'tool-style-transfer') {
+        const styleName = cfg?.styleName || 'Custom';
+        return `Style Transfer — ${styleName}`;
+      }
+
       if (processingType === 'lighting') {
         const scene = cfg?.scene || 'Custom';
         // Make it Title Case

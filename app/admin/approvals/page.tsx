@@ -350,23 +350,31 @@ export default function AdminApprovalsPage() {
 
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  
+  const [errors, setErrors] = useState<Record<'designer' | 'contractor' | 'vendor', boolean>>({
+    designer: false,
+    contractor: false,
+    vendor: false,
+  });
+
   // Rejection Modal State
   const [rejectTarget, setRejectTarget] = useState<{ type: 'designer' | 'contractor' | 'vendor'; profile: any } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectError, setRejectError] = useState('');
 
   const fetchQueue = useCallback(async (type: 'designer' | 'contractor' | 'vendor') => {
+    // Clear any previous error for this tab before fetching
+    setErrors(prev => ({ ...prev, [type]: false }));
     try {
       const endpoint = `/api/admin/${type}s/pending`;
       const res = await fetch(endpoint);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      
+
       if (type === 'designer') setDesigners(data.designers || []);
       if (type === 'contractor') setContractors(data.contractors || []);
       if (type === 'vendor') setVendors(data.vendors || []);
     } catch {
+      setErrors(prev => ({ ...prev, [type]: true }));
       toast({
         title: 'Error',
         description: `Failed to load pending ${type}s`,
@@ -525,6 +533,27 @@ export default function AdminApprovalsPage() {
             <div className="space-y-4">
               {[1, 2, 3].map(i => <ProfileSkeleton key={i} />)}
             </div>
+          ) : errors[activeTab] ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-center py-20 bg-neutral-900/50 border border-neutral-800 rounded-xl"
+            >
+              <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <p className="text-lg font-semibold text-white">Failed to load.</p>
+              <p className="text-neutral-400 text-sm mt-1 mb-5">
+                Could not fetch pending {activeTab}s. Check your connection and try again.
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-neutral-700 text-neutral-300 hover:border-violet-500/50 gap-2"
+                onClick={() => fetchQueue(activeTab)}
+              >
+                <RefreshCw className="w-4 h-4" />
+                Try Again
+              </Button>
+            </motion.div>
           ) : activeList.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}

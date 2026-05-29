@@ -4,12 +4,14 @@ import { useEffect, useRef } from 'react';
 
 let pusherClient: PusherClient | null = null;
 
-function getPusherClient(): PusherClient {
+function getPusherClient(): PusherClient | null {
+  const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
+  const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+  if (!key || !cluster) {
+    return null;
+  }
   if (!pusherClient) {
-    pusherClient = new PusherClient(
-      process.env.NEXT_PUBLIC_PUSHER_KEY!,
-      { cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER! }
-    );
+    pusherClient = new PusherClient(key, { cluster });
   }
   return pusherClient;
 }
@@ -24,6 +26,7 @@ export function useBookingChannel(
   useEffect(() => {
     if (!bookingId) return;
     const client = getPusherClient();
+    if (!client) return;
     const channel = client.subscribe(`booking-${bookingId}`);
     channel.bind('new-message', (data: IMessagePayload) => {
       onMessageRef.current(data);

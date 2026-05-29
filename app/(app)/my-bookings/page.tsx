@@ -7,7 +7,8 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { getPusherClient } from '@/lib/pusherClient';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -23,6 +24,7 @@ import {
     IndianRupee,
     Loader2,
     MapPin,
+    MessageSquare,
     RefreshCw,
     Star,
     X,
@@ -51,6 +53,7 @@ import { Label } from '@/components/ui/label';
 import { paiseToRupees } from '@/lib/booking/money';
 import { cn } from '@/lib/utils';
 import type { BookingStatus } from '@/lib/db/models/Booking';
+import { BookingChat } from '@/components/booking/BookingChat';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -133,14 +136,20 @@ const STATUS_CONFIG: Record<
 
 // ── Booking card ──────────────────────────────────────────────────────────────
 
+const CHAT_STATUSES: BookingStatus[] = ['pending_designer', 'confirmed', 'completed'];
+
 function BookingCard({
     booking,
     onCancel,
     onReview,
+    onChat,
+    unreadCount = 0,
 }: {
     booking: Booking;
     onCancel: (id: string) => void;
     onReview: (booking: Booking) => void;
+    onChat: (id: string, providerName: string) => void;
+    unreadCount?: number;
 }) {
     // Resolve provider — whichever of the two is populated
     const provider: BookingProvider | null =
@@ -153,6 +162,7 @@ function BookingCard({
     const providerLabel = isContractor ? 'Contractor' : 'Designer';
     const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_payment;
     const canCancel = booking.status === 'pending_designer';
+    const canChat = CHAT_STATUSES.includes(booking.status);
 
     return (
         <motion.div
@@ -342,6 +352,26 @@ function BookingCard({
                     Review submitted
                 </div>
             )}
+
+            {canChat && (
+                <div className="px-5 pb-5">
+                    <Button
+                        id={`chat-booking-${booking._id}`}
+                        variant="outline"
+                        size="sm"
+                        className="text-violet-600 border-violet-200 hover:bg-violet-50 w-full flex items-center justify-center gap-1.5 relative overflow-hidden"
+                        onClick={() => onChat(booking._id, provider?.displayName ?? providerLabel)}
+                    >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>Chat with {providerLabel}</span>
+                        {unreadCount > 0 && (
+                            <span className="ml-1.5 bg-violet-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </Button>
+                </div>
+            )}
         </motion.div>
     );
 }
@@ -358,6 +388,16 @@ export default function MyBookingsPage() {
     const [page, setPage] = useState(1);
     const [pageCount, setPageCount] = useState(1);
     const [fetchError, setFetchError] = useState<string | null>(null);
+
+    // Chat panel
+    const [chatBookingId, setChatBookingId] = useState<string | null>(null);
+    const [chatProviderName, setChatProviderName] = useState<string>('');
+    const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+    const chatBookingIdRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        chatBookingIdRef.current = chatBookingId;
+    }, [chatBookingId]);
 
     // Cancel dialog
     const [cancelTarget, setCancelTarget] = useState<string | null>(null);
@@ -382,6 +422,20 @@ export default function MyBookingsPage() {
             setTotal(data.total);
             setPage(data.page);
             setPageCount(data.pageCount);
+
+            // Fetch initial unread counts
+            data.bookings.forEach((b: Booking) => {
+                if (CHAT_STATUSES.includes(b.status)) {
+                    fetch(`/api/bookings/${b._id}/messages/unread-count`)
+                        .then(r => r.ok ? r.json() : null)
+                        .then(cntData => {
+                            if (cntData) {
+                                setUnreadCounts(prev => ({ ...prev, [b._id]: cntData.unreadCount }));
+                            }
+                        })
+                        .catch(err => console.error('Error fetching unread count:', err));
+                }
+            });
         } catch (err: any) {
             setFetchError(err.message);
         } finally {
@@ -394,6 +448,55 @@ export default function MyBookingsPage() {
         if (!user) { router.replace('/login'); return; }
         fetchBookings(1);
     }, [user, authLoading, router, fetchBookings]);
+
+    // Pusher channel subscription for booking cards real-time badges
+    useEffect(() => {
+        if (!bookings.length) return;
+
+        const pusher = getPusherClient();
+        if (!pusher) return;
+
+        const activeSubscribedChannels: string[] = [];
+        const currentUserId = user?.id || user?._id;
+
+        bookings.forEach(booking => {
+            if (!CHAT_STATUSES.includes(booking.status)) return;
+
+            const channelName = `booking-${booking._id}`;
+            const channel = pusher.subscribe(channelName);
+            activeSubscribedChannels.push(channelName);
+
+            channel.bind('new-message', (data: any) => {
+                const senderIdStr = data.senderId && typeof data.senderId === 'object' ? data.senderId._id : data.senderId;
+                if (senderIdStr !== currentUserId) {
+                    setUnreadCounts(prev => {
+                        if (chatBookingIdRef.current === booking._id) {
+                            return prev;
+                        }
+                        return {
+                            ...prev,
+                            [booking._id]: (prev[booking._id] || 0) + 1
+                        };
+                    });
+                }
+            });
+
+            channel.bind('messages-read', (data: any) => {
+                if (data.readBy === currentUserId) {
+                    setUnreadCounts(prev => ({
+                        ...prev,
+                        [booking._id]: 0
+                    }));
+                }
+            });
+        });
+
+        return () => {
+            activeSubscribedChannels.forEach(name => {
+                pusher.unsubscribe(name);
+            });
+        };
+    }, [bookings, user]);
 
     async function handleCancel() {
         if (!cancelTarget) return;
@@ -520,6 +623,12 @@ export default function MyBookingsPage() {
                                     setComment('');
                                     setReviewError(null);
                                 }}
+                                onChat={(id, name) => {
+                                    setChatBookingId(id);
+                                    setChatProviderName(name);
+                                    setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
+                                }}
+                                unreadCount={unreadCounts[b._id] || 0}
                             />
                         ))}
                     </div>
@@ -581,6 +690,17 @@ export default function MyBookingsPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Chat panel */}
+            {chatBookingId && user && (
+                <BookingChat
+                    open={!!chatBookingId}
+                    onClose={() => setChatBookingId(null)}
+                    bookingId={chatBookingId}
+                    currentUserId={user.id || user._id || ''}
+                    providerName={chatProviderName}
+                />
+            )}
 
             {/* Review Dialog */}
             <Dialog open={!!reviewTarget} onOpenChange={open => { if (!open) setReviewTarget(null); }}>

@@ -13,11 +13,19 @@
  */
 
 const WIDGET_NAMES = {
+  IPAdapterUnifiedLoader: ['preset'],
   LoadImage: ['image', 'upload_type'],
   SaveImage: ['filename_prefix'],
   CheckpointLoaderSimple: ['ckpt_name'],
   CLIPTextEncode: ['text'],
   KSampler: ['seed', 'control_after_generate', 'steps', 'cfg', 'sampler_name', 'scheduler', 'denoise'],
+  EmptyLatentImage: ['width', 'height', 'batch_size'],
+  ControlNetLoader: ['control_net_name'],
+  IPAdapter: ['weight', 'start_at', 'end_at', 'weight_type'],
+  UpscaleModelLoader: ['model_name'],
+  M_LSD_Lines: ['score_threshold', 'dist_threshold', 'resolution'],
+  ControlNetApplyAdvanced: ['strength', 'start_percent', 'end_percent'],
+  CannyEdgePreprocessor: ['low_threshold', 'high_threshold', 'resolution'],
   ImageToMask: ['channel'],
   MaskComposite: ['x', 'y', 'operation'],
   SAMLoader: ['model_name', 'device_mode'],
