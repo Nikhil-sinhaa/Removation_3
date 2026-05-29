@@ -14,6 +14,9 @@ import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { getAppMode } from '@/lib/ai/appMode';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 // Force Node.js runtime (Turbopack edge runtime can't do formData)
 export const runtime = 'nodejs';
@@ -303,6 +306,39 @@ function buildRedesignWorkflow({
 export async function POST(request) {
   await connectDB();
   try {
+    const appMode = await getAppMode();
+    const authUser = await getCurrentUser();
+    let finalUserId = '000000000000000000000000';
+
+    if (appMode === 'production') {
+      if (!authUser) {
+        return Response.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      const deduction = await checkAndDeductCredits(authUser.id, 'redesign');
+      if (!deduction.success) {
+        if (deduction.code === 'INSUFFICIENT_CREDITS') {
+          return Response.json(
+            { error: "Insufficient credits. Please upgrade your plan." },
+            { status: 400 }
+          );
+        }
+        if (deduction.code === 'USER_NOT_FOUND') {
+          return Response.json({ error: 'User not found' }, { status: 404 });
+        }
+        return Response.json({ error: deduction.reason || 'Credit deduction failed' }, { status: 500 });
+      }
+
+      finalUserId = authUser.id;
+    } else {
+      if (authUser) {
+        finalUserId = authUser.id;
+        await checkAndDeductCredits(authUser.id, 'redesign').catch(err =>
+          console.error('Error updating lastRenderAt in dev mode:', err)
+        );
+      }
+    }
+
     console.log('🎨 Starting room redesign...');
 
     const formData = await safeParseFormData(request);
@@ -362,7 +398,7 @@ export async function POST(request) {
 
     const project = await Project.create({
       name:          projectName,
-      userId:        '000000000000000000000000',
+      userId:        finalUserId,
       originalImage: `/uploads/${uploadFilename}`,
       status:        'queued',
       processingType: 'redesign',

@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /api/
+Disallow: /dashboard/
+Disallow: /sign-in
+Disallow: /sign-up
+
+# Allow Google to crawl all public pages
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://removation.ai/sitemap.xml

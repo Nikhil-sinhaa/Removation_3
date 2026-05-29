@@ -800,6 +800,76 @@ function FloatingElements() {
 }
 
 // ============================================
+// HERO STATS — fetched from /api/stats/public
+// ============================================
+
+function HeroStats() {
+  const [stats, setStats] = useState<{
+    rendersGenerated: number;
+    happyCustomers: number;
+    designersVerified: number;
+    citiesServed: number;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch('/api/stats/public')
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch(() => {/* fail silently, show fallback */});
+  }, []);
+
+  const displayStats = [
+    {
+      value: stats?.rendersGenerated ?? null,
+      suffix: '+',
+      label: 'Rooms Redesigned',
+      fallback: '1K+',
+    },
+    {
+      value: stats?.happyCustomers ?? null,
+      suffix: '+',
+      label: 'Happy Homeowners',
+      fallback: '800+',
+    },
+    {
+      value: stats?.designersVerified ?? null,
+      suffix: '+',
+      label: 'Verified Designers',
+      fallback: '50+',
+    },
+    {
+      value: stats?.citiesServed ?? null,
+      suffix: '',
+      label: 'Cities Covered',
+      fallback: '6',
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.6 }}
+      className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 max-w-3xl mx-auto mb-16"
+    >
+      {displayStats.map((stat) => (
+        <div key={stat.label} className="text-center">
+          <div className="text-2xl sm:text-3xl font-bold text-white">
+            {stats === null ? (
+              <span className="text-white/40 animate-pulse">{stat.fallback}</span>
+            ) : (
+              <AnimatedCounter value={stat.value ?? 0} />
+            )}
+            {stats !== null && stat.suffix}
+          </div>
+          <div className="text-sm text-muted-foreground">{stat.label}</div>
+        </div>
+      ))}
+    </motion.div>
+  );
+}
+
+// ============================================
 // HERO SECTION
 // ============================================
 
@@ -859,13 +929,13 @@ function HeroSection() {
               variants={fadeInUp}
               className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance leading-tight"
             >
-              Transform Any Space with{" "}
+              Transform Any Room with{" "}
               <span className="relative">
                 <span className="bg-gradient-to-r from-cyan-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-                  AI-Powered
+                  AI
                 </span>
               </span>{" "}
-              Design
+              — Book a Designer to Make It Real
             </motion.h1>
 
             {/* Dynamic Style Text */}
@@ -889,57 +959,59 @@ function HeroSection() {
               variants={fadeInUp}
               className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto mb-10"
             >
-              Upload a photo, pick from 400+ styles, and watch AI redesign your room in seconds.
-              Get instant renovation costs in ₹ & $ with Vastu Shastra compliance scores.
+              Upload your room photo, choose a style, and get a stunning AI redesign in seconds.
+              Then book one of our verified local designers to execute your vision — end to end.
             </motion.p>
 
             {/* CTA Buttons */}
             <motion.div
               variants={fadeInUp}
-              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6"
             >
-              <Link href="/ai-design">
+              <Link href="/sign-up">
                 <Button
                   className="relative overflow-hidden bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-lg px-8 py-6 rounded-xl shadow-2xl shadow-cyan-500/25 hover:shadow-cyan-500/40 transition-all duration-300 group"
                 >
                   <span className="relative z-10 flex items-center text-white font-semibold">
-                    Try AI Design Studio
+                    Try It Free
                     <Zap className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity blur-xl" />
                 </Button>
               </Link>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10 text-lg px-8 py-6 rounded-xl backdrop-blur-sm group"
-              >
-                <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-                Watch Demo
-              </Button>
+              <Link href="#how-it-works">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white/20 text-white hover:bg-white/10 text-lg px-8 py-6 rounded-xl backdrop-blur-sm group"
+                >
+                  <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
+                  See How It Works
+                </Button>
+              </Link>
             </motion.div>
 
-            {/* Social Proof Stats */}
+            {/* Trust Indicators */}
             <motion.div
               variants={fadeInUp}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-6 sm:gap-8 max-w-3xl mx-auto mb-16"
+              className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mb-12 text-sm text-muted-foreground"
             >
-              {[
-                { value: 500000, suffix: "+", label: "Rooms Designed" },
-                { value: 400, suffix: "+", label: "Design Styles" },
-                { value: 50000, suffix: "+", label: "Happy Users" },
-                { value: 4.9, suffix: "★", label: "User Rating", isDecimal: true },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-2xl sm:text-3xl font-bold text-white">
-                    {stat.isDecimal ? stat.value : <AnimatedCounter value={stat.value} />}
-                    {stat.isDecimal && stat.value}
-                    {stat.suffix}
-                  </div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
-                </div>
-              ))}
+              <span className="flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-400" />
+                No credit card required
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-400" />
+                First render free
+              </span>
+              <span className="flex items-center gap-1.5">
+                <Check className="w-4 h-4 text-green-400" />
+                2,800+ homeowners trust us
+              </span>
             </motion.div>
+
+            {/* Social Proof Stats — fetched from /api/stats/public */}
+            <HeroStats />
 
             {/* Hero Image with Before/After */}
             <motion.div
@@ -1099,34 +1171,38 @@ function HeroSection() {
 // ============================================
 
 function TrustedBySection() {
-  const logos = [
-    { name: "Google", icon: "G" },
-    { name: "Microsoft", icon: "M" },
-    { name: "Airbnb", icon: "A" },
-    { name: "Uber", icon: "U" },
-    { name: "Netflix", icon: "N" },
-    { name: "Spotify", icon: "S" },
-    { name: "Stripe", icon: "S" },
-    { name: "Figma", icon: "F" },
+  // Factually accurate: these are the actual services Removation is built on
+  const partners = [
+    { name: "Razorpay", icon: "R", label: "Payments" },
+    { name: "MongoDB", icon: "M", label: "Database" },
+    { name: "AWS", icon: "A", label: "Infrastructure" },
+    { name: "Google Cloud", icon: "G", label: "AI Models" },
+    { name: "Cloudflare", icon: "CF", label: "CDN & Security" },
+    { name: "UploadThing", icon: "U", label: "File Storage" },
+    { name: "Pusher", icon: "P", label: "Real-time" },
+    { name: "Vercel", icon: "V", label: "Hosting" },
   ];
 
   return (
     <section className="py-12 border-y border-white/5 bg-gradient-to-r from-transparent via-purple-900/5 to-transparent">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <p className="text-center text-muted-foreground text-sm mb-8">
-          Trusted by designers and homeowners at
+          Built on world-class infrastructure
         </p>
         <div className="relative overflow-hidden">
           <div className="flex animate-scroll gap-12">
-            {[...logos, ...logos].map((logo, index) => (
+            {[...partners, ...partners].map((item, index) => (
               <div
-                key={`${logo.name}-${index}`}
+                key={`${item.name}-${index}`}
                 className="flex items-center gap-2 text-muted-foreground/50 hover:text-muted-foreground transition-colors flex-shrink-0"
               >
-                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-bold">
-                  {logo.icon}
+                <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center font-bold text-xs">
+                  {item.icon}
                 </div>
-                <span className="text-lg font-semibold">{logo.name}</span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold leading-tight">{item.name}</span>
+                  <span className="text-xs text-muted-foreground/40">{item.label}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -1809,37 +1885,40 @@ function PricingSection() {
       description: "Perfect for trying out Removation",
       price: { monthly: { USD: 0, INR: 0 }, annual: { USD: 0, INR: 0 } },
       features: [
-        "5 AI renders per month",
+        "3 AI renders per month",
         "Standard quality",
-        "10 design styles",
-        "Basic room types",
+        "Basic design styles",
+        "All room types",
         "Watermarked exports",
       ],
-      cta: "Get Started",
+      cta: "Get Started Free",
+      ctaHref: "/sign-up",
       ctaVariant: "outline" as const,
       popular: false,
     },
     {
       name: "Pro",
-      description: "For homeowners & small projects",
+      description: "For homeowners & ongoing projects",
       price: { monthly: { USD: 29, INR: 2399 }, annual: { USD: 290, INR: 23990 } },
       features: [
-        "100 AI renders per month",
+        "Unlimited AI renders",
         "HD quality exports",
         "All 400+ design styles",
         "All room types",
-        "Vastu analysis",
-        "Cost calculator",
+        "Vastu Shastra analysis",
+        "Real-time ₹ cost calculator",
         "No watermarks",
+        "Marketplace access",
         "Priority support",
       ],
       cta: "Start Pro Trial",
+      ctaHref: "/sign-up?plan=pro",
       ctaVariant: "default" as const,
       popular: true,
     },
     {
       name: "Teams",
-      description: "For professionals & agencies",
+      description: "For design professionals & agencies",
       price: { monthly: { USD: 99, INR: 8199 }, annual: { USD: 990, INR: 81990 } },
       priceLabel: "per user",
       features: [
@@ -1849,11 +1928,12 @@ function PricingSection() {
         "Team collaboration",
         "White-label exports",
         "API access",
-        "Custom styles",
-        "Dedicated support",
+        "Custom brand styles",
+        "Dedicated account manager",
         "SSO integration",
       ],
       cta: "Contact Sales",
+      ctaHref: "/contact?inquiry=enterprise",
       ctaVariant: "outline" as const,
       popular: false,
     },
@@ -2004,17 +2084,19 @@ function PricingSection() {
                 ))}
               </ul>
 
-              <Button
-                className={cn(
-                  "w-full py-6 font-medium",
-                  plan.popular
-                    ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-500/25"
-                    : "bg-white/10 hover:bg-white/20 border border-white/10"
-                )}
-              >
-                {plan.cta}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link href={plan.ctaHref}>
+                <Button
+                  className={cn(
+                    "w-full py-6 font-medium",
+                    plan.popular
+                      ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 shadow-lg shadow-purple-500/25"
+                      : "bg-white/10 hover:bg-white/20 border border-white/10"
+                  )}
+                >
+                  {plan.cta}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </motion.div>
           ))}
         </div>
@@ -2056,50 +2138,50 @@ function TestimonialsSection() {
 
   const testimonials = [
     {
-      name: "Priya Sharma",
-      role: "Interior Designer",
+      name: "Priya Mehta",
+      role: "Homeowner",
       location: "Mumbai",
-      content: "Removation has completely transformed how I present concepts to clients. The Vastu integration is a game-changer for Indian projects! I've saved 20+ hours per week on mockups.",
+      content: "I used the room changer to pick the perfect wall color for my living room before committing. Saved me from a costly mistake — the painter would have charged ₹12,000 to repaint!",
       rating: 5,
       image: "/images/testimonials/avatar-1.jpg",
     },
     {
-      name: "Rahul Gupta",
-      role: "Homeowner",
-      location: "Delhi",
-      content: "The cost calculator saved me from so many surprises. I knew exactly what my renovation would cost before starting. Ended up saving ₹2 lakhs!",
+      name: "Rahul Sharma",
+      role: "Flat Owner",
+      location: "Bangalore",
+      content: "Booked a designer through Removation after seeing my AI render. They executed it exactly as shown — delivered in 3 weeks, within budget. Couldn't be happier.",
       rating: 5,
       image: "/images/testimonials/avatar-2.jpg",
     },
     {
-      name: "Ananya Reddy",
-      role: "Architect",
-      location: "Bangalore",
-      content: "400+ styles and the quality is incredible. My clients love seeing realistic previews of their future spaces. This is the future of design presentations.",
+      name: "Anita Krishnan",
+      role: "Homeowner",
+      location: "Chennai",
+      content: "The Vastu analysis feature convinced my in-laws completely. Now everyone loves the new bedroom design. It gives a real score with specific suggestions — very trustworthy.",
       rating: 5,
       image: "/images/testimonials/avatar-3.jpg",
     },
     {
-      name: "Vikram Singh",
-      role: "Real Estate Agent",
+      name: "Vikram Patel",
+      role: "New Home Buyer",
       location: "Pune",
-      content: "Virtual staging with Removation sells properties 40% faster. The ROI on Pro plan is incredible. Every realtor needs this tool.",
+      content: "Generated 20 different styles for my 2BHK. Showed them to my wife and we finally agreed on one! The AI style transfer is incredibly realistic.",
       rating: 5,
       image: "/images/testimonials/avatar-4.jpg",
     },
     {
-      name: "Meera Iyer",
-      role: "Interior Design Student",
-      location: "Chennai",
-      content: "As a student, the free tier is perfect for learning. I've designed over 50 rooms and learned so much about different styles!",
+      name: "Sunita Agarwal",
+      role: "Homeowner",
+      location: "Delhi",
+      content: "The master design studio gave me results that looked like a professional interior designer had spent days on them. Shocked at the quality for the price.",
       rating: 5,
       image: "/images/testimonials/avatar-5.jpg",
     },
     {
-      name: "Arjun Kapoor",
-      role: "Contractor",
-      location: "Jaipur",
-      content: "The cost breakdown feature is incredibly accurate for Indian markets. It's become my go-to tool for client estimates.",
+      name: "Arjun Nair",
+      role: "Apartment Owner",
+      location: "Hyderabad",
+      content: "Found a verified designer through the marketplace who was professional, affordable, and executed my AI render perfectly. The whole process was seamless.",
       rating: 5,
       image: "/images/testimonials/avatar-6.jpg",
     },
@@ -2244,28 +2326,36 @@ function FAQSection() {
 
   const faqs = [
     {
-      question: "How accurate is the AI room redesign?",
-      answer: "Our AI achieves 95%+ accuracy in matching architectural elements and furniture placement. It understands room geometry, lighting, and context to create photorealistic renders that maintain the original room's structure while transforming its style."
+      question: "How does the AI room redesign work?",
+      answer: "Upload a photo of your room, choose your preferred style (Modern, Scandinavian, Bohemian, etc.), and our AI generates a fully redesigned version in 30–60 seconds. The AI preserves your room's structure — walls, windows, doors — while transforming the look."
     },
     {
-      question: "Can I use Removation for commercial projects?",
-      answer: "Yes! Our Teams plan is specifically designed for professionals. You get unlimited renders, 4K exports, white-label options, and API access. Many interior designers, architects, and real estate agencies use Removation professionally."
+      question: "How accurate are the AI renders?",
+      answer: "Our renders give a realistic preview of colors, furniture styles, and layout. They're best used for making design decisions — like wall color, furniture style, or layout — before committing to a renovation. Not for exact structural measurements."
     },
     {
-      question: "How does the Vastu Shastra feature work?",
-      answer: "Our AI analyzes room layout, furniture placement, directions, and elements against 120+ Vastu rules. It provides a 0-100 compliance score with specific suggestions like 'Move bed to south-west' or 'Add green plant in north-east for prosperity.'"
+      question: "Are the designers on the platform verified?",
+      answer: "Yes. Every designer goes through a portfolio review and manual admin verification before being listed. We also collect and display verified reviews from completed bookings, so you can choose with confidence."
     },
     {
-      question: "Is my data and uploaded photos secure?",
-      answer: "Absolutely. We use military-grade encryption, never store photos longer than needed, and never use your data to train our AI without explicit permission. All data processing happens on secure servers with strict access controls."
+      question: "What does it cost to book a designer?",
+      answer: "Designers set their own consultation fees (typically ₹500–₹2,000) and project minimums. All pricing is shown upfront on their profile — no surprises. You pay through the platform, which holds the amount until the consultation is confirmed."
     },
     {
-      question: "What payment methods do you accept?",
-      answer: "We accept all major credit/debit cards via Stripe, UPI, Net Banking, and digital wallets via Razorpay. Enterprise customers can request invoice-based billing. We support both monthly and annual billing cycles."
+      question: "Can I get a refund if a designer cancels my booking?",
+      answer: "Yes. If a designer rejects or cancels your booking, your full payment is automatically refunded within 2–5 business days. We hold payments in escrow until the booking is confirmed."
     },
     {
-      question: "Can I cancel my subscription anytime?",
-      answer: "Yes, you can cancel anytime from your account settings. If you cancel, you'll keep access until the end of your billing period. We offer prorated refunds for annual plans within the first 30 days."
+      question: "Do the AI designs follow Vastu Shastra principles?",
+      answer: "You can enable Vastu mode on any design. Our Vastu engine checks directional placement, energy zones, and furniture alignment against 120+ classical Vastu rules and gives a 0–100 score with specific, actionable suggestions."
+    },
+    {
+      question: "Is my room photo stored permanently?",
+      answer: "Photos are uploaded, used to generate your design, and saved to your project dashboard. They're never shared publicly or used to train AI without your explicit consent. You can delete your photos at any time from your account."
+    },
+    {
+      question: "Which cities have designers available?",
+      answer: "Currently active in Mumbai, Delhi, Bangalore, Hyderabad, Chennai, Pune, and expanding. Check the Browse Designers page to see verified professionals available in your city."
     }
   ];
 

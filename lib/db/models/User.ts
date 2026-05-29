@@ -113,7 +113,7 @@ const UserSchema = new Schema<IUser>({
 
     creditHistory: [{
         amount: Number,
-        type: String,
+        type: { type: String },
         description: String,
         createdAt: { type: Date, default: Date.now },
     }],
@@ -124,7 +124,7 @@ const UserSchema = new Schema<IUser>({
         orderId: String,
         amount: Number,
         currency: String,
-        type: String,
+        type: { type: String },
         credits: Number,
         status: String,
         createdAt: { type: Date, default: Date.now },

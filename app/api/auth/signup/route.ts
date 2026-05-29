@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 import { issueJwt } from '@/lib/auth/jwt';
 import bcrypt from 'bcryptjs';
+import { getFreeCreditsOnSignup } from '@/lib/ai/appMode';
 
 export async function POST(req: Request) {
   try {
@@ -27,6 +28,11 @@ export async function POST(req: Request) {
       );
     }
 
+    const signupCredits = await getFreeCreditsOnSignup().catch(err => {
+      console.error('Error fetching dynamic free credits on signup:', err);
+      return 10;
+    });
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     user = await User.create({
@@ -35,11 +41,11 @@ export async function POST(req: Request) {
       firstName,
       lastName,
       isVerified: true,
-      credits: 10,
+      credits: signupCredits,
       subscription: {
         plan: 'free',
         status: 'inactive',
-        credits: 10,
+        credits: signupCredits,
         creditsUsed: 0,
         cancelAtPeriodEnd: false,
         paymentMethod: 'none',

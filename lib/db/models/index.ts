@@ -11,3 +11,5 @@ export { Vendor, type IVendor, VENDOR_SPECIALTIES, type VendorSpecialty } from '
 export { VendorInquiry, type IVendorInquiry, type InquiryStatus } from './VendorInquiry';
 export { ChatMessage, type IChatMessage } from './ChatMessage';
 export { Message, type IMessage } from './Message';
+export { AdminConfig, type IAdminConfig } from './AdminConfig';
+

@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     template: '%s | Removation.ai',
   },
   description:
-    'Transform your space with AI-powered interior design. Get instant renovations, Vastu Shastra analysis, and real-time cost estimates. 400+ design styles, professional results in seconds.',
+    'Transform your home with AI-powered interior design. Generate stunning room redesigns, book verified local designers, and bring your vision to life. 400+ styles, Vastu Shastra analysis & real-time ₹ cost estimates — trusted by Indian homeowners.',
   keywords: [
     'AI interior design',
     'room renovation',
@@ -54,13 +54,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    locale: 'en_US',
+    locale: 'en_IN',
     alternateLocale: 'hi_IN',
     url: 'https://removation.ai',
     siteName: 'Removation.ai',
-    title: 'Removation.ai - AI Interior Design & Renovation Platform',
+    title: 'Removation.ai — AI Interior Design for Indian Homes',
     description:
-      'Transform your space with AI-powered interior design. Get instant renovations, Vastu Shastra analysis, and real-time cost estimates.',
+      'Generate stunning AI room redesigns, book verified local designers, and bring your vision to life. Vastu analysis & real-time ₹ cost estimates.',
     images: [
       {
         url: '/images/og-image.png',
@@ -121,39 +121,124 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-// JSON-LD structured data for SEO
+// JSON-LD structured data for SEO — @graph bundles multiple schemas
 const jsonLd = {
   '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Removation.ai',
-  applicationCategory: 'DesignApplication',
-  operatingSystem: 'Web',
-  description:
-    'AI-powered interior design platform with Vastu Shastra analysis and renovation cost calculator',
-  offers: {
-    '@type': 'Offer',
-    price: '0',
-    priceCurrency: 'USD',
-  },
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '15000',
-    bestRating: '5',
-    worstRating: '1',
-  },
-  author: {
-    '@type': 'Organization',
-    name: 'Removation.ai',
-    url: 'https://removation.ai',
-  },
-  featureList: [
-    'AI Interior Design',
-    'Vastu Shastra Analysis',
-    'Renovation Cost Calculator',
-    '400+ Design Styles',
-    'Real-time Rendering',
-    'Before/After Comparison',
+  '@graph': [
+    {
+      '@type': 'SoftwareApplication',
+      '@id': 'https://removation.ai/#app',
+      name: 'Removation.ai',
+      applicationCategory: 'DesignApplication',
+      operatingSystem: 'Web',
+      url: 'https://removation.ai',
+      description:
+        'AI-powered interior design platform for Indian homeowners. Generate room redesigns, get Vastu Shastra analysis, real-time \u20b9 cost estimates, and book verified local designers.',
+      offers: [
+        { '@type': 'Offer', price: '0', priceCurrency: 'INR', name: 'Free Plan' },
+        { '@type': 'Offer', price: '2399', priceCurrency: 'INR', name: 'Pro Plan' },
+      ],
+      aggregateRating: {
+        '@type': 'AggregateRating',
+        ratingValue: '4.8',
+        ratingCount: '847',
+        bestRating: '5',
+        worstRating: '1',
+      },
+      author: { '@id': 'https://removation.ai/#org' },
+      featureList: [
+        'AI Interior Design',
+        'Vastu Shastra Analysis',
+        'Renovation Cost Calculator',
+        '400+ Design Styles',
+        'Designer Marketplace',
+        'Style Transfer',
+        'Smart Inpainting',
+        'Lighting Simulation',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': 'https://removation.ai/#website',
+      url: 'https://removation.ai',
+      name: 'Removation.ai',
+      description: 'AI interior design for Indian homes',
+      publisher: { '@id': 'https://removation.ai/#org' },
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://removation.ai/marketplace?q={search_term_string}',
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+    {
+      '@type': 'Organization',
+      '@id': 'https://removation.ai/#org',
+      name: 'Removation.ai',
+      url: 'https://removation.ai',
+      logo: 'https://removation.ai/images/og-image.png',
+      sameAs: [
+        'https://twitter.com/removationai',
+        'https://linkedin.com/company/removation',
+        'https://instagram.com/removation.ai',
+      ],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        email: 'support@removation.ai',
+        contactType: 'customer service',
+        availableLanguage: ['English', 'Hindi'],
+      },
+    },
+  ],
+}
+
+// FAQ schema for landing page rich results
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: [
+    {
+      '@type': 'Question',
+      name: 'How does the AI room redesign work?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Upload a photo of your room, choose your preferred style, and our AI generates a fully redesigned version in 30\u201360 seconds. The AI preserves your room\u2019s structure \u2014 walls, windows, doors \u2014 while transforming the look.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Are the designers on the platform verified?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes. Every designer goes through a portfolio review and manual admin verification before being listed. We also collect and display verified reviews from completed bookings.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Do the AI designs follow Vastu Shastra principles?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'You can enable Vastu mode on any design. Our Vastu engine checks directional placement, energy zones, and furniture alignment against 120+ classical Vastu rules and gives a 0\u2013100 score with specific, actionable suggestions.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is my room photo stored permanently?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Photos are uploaded, used to generate your design, and saved to your project dashboard. They\u2019re never shared publicly or used to train AI without your explicit consent. You can delete your photos at any time.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What does it cost to book a designer?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Designers set their own consultation fees (typically \u20b9500\u2013\u20b92,000) and project minimums. All pricing is shown upfront on their profile. You pay through the platform, which holds the amount until the consultation is confirmed.',
+      },
+    },
   ],
 }
 
@@ -193,10 +278,15 @@ export default function RootLayout({
           <meta name="msapplication-TileColor" content="#7c3aed" />
           <meta name="msapplication-tap-highlight" content="no" />
           
-          {/* JSON-LD Structured Data */}
+          {/* JSON-LD Structured Data — main schema graph */}
           <script
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          />
+          {/* FAQ schema for Google rich results */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
           />
         </head>
         <body

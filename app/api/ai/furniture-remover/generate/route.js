@@ -13,6 +13,9 @@ import Project from '../../../../../src/models/Project.js';
 import FurnitureRemoverRun from '../../../../../src/models/FurnitureRemoverRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runFurnitureRemover, runManualFurnitureErase } from '../../../../../src/services/furnitureRemoverOrchestrator.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { getAppMode } from '@/lib/ai/appMode';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 
@@ -71,6 +74,39 @@ export async function POST(request) {
   await connectDB();
 
   try {
+    const appMode = await getAppMode();
+    const authUser = await getCurrentUser();
+    let finalUserId = '000000000000000000000000';
+
+    if (appMode === 'production') {
+      if (!authUser) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+
+      const deduction = await checkAndDeductCredits(authUser.id, 'furniture-remover');
+      if (!deduction.success) {
+        if (deduction.code === 'INSUFFICIENT_CREDITS') {
+          return NextResponse.json(
+            { error: "Insufficient credits. Please upgrade your plan." },
+            { status: 400 }
+          );
+        }
+        if (deduction.code === 'USER_NOT_FOUND') {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+        return NextResponse.json({ error: deduction.reason || 'Credit deduction failed' }, { status: 500 });
+      }
+
+      finalUserId = authUser.id;
+    } else {
+      if (authUser) {
+        finalUserId = authUser.id;
+        await checkAndDeductCredits(authUser.id, 'furniture-remover').catch(err =>
+          console.error('Error updating lastRenderAt in dev mode:', err)
+        );
+      }
+    }
+
     const formData = await safeParseFormData(request);
     const roomImageFile = formData.get('roomImage');
     const userMaskFile  = formData.get('userMask') || formData.get('maskImage');   // present if manual brush mode
@@ -86,7 +122,7 @@ export async function POST(request) {
     // ── Create Project document for status polling ────────────────────────────
     const project = await Project.create({
       name: 'Furniture Remover',
-      userId: '000000000000000000000000',
+      userId: finalUserId,
       originalImage: inputImageUrl || '',
       status: 'queued',
       processingType: 'furniture-remover',

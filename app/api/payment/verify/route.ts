@@ -130,6 +130,7 @@ async function verifyStripePayment(userId: string, sessionId: string) {
                 'subscription.creditsUsed': 0,
                 'subscription.currentPeriodEnd': new Date(subscription.current_period_end * 1000),
                 'subscription.paymentMethod': 'stripe',
+                credits: credits, // Sync legacy root field
                 updatedAt: new Date(),
             }
         );
@@ -148,7 +149,10 @@ async function verifyStripePayment(userId: string, sessionId: string) {
         await User.findOneAndUpdate(
             { clerkId: userId },
             {
-                $inc: { 'subscription.credits': credits },
+                $inc: { 
+                    'subscription.credits': credits,
+                    'credits': credits // Sync legacy root field
+                },
                 $push: {
                     paymentHistory: {
                         sessionId,
@@ -267,6 +271,7 @@ async function verifyRazorpayPayment(
                 'subscription.currentPeriodStart': new Date((subscription as any).current_start * 1000),
                 'subscription.currentPeriodEnd': new Date((subscription as any).current_end * 1000),
                 'subscription.paymentMethod': 'razorpay',
+                credits: credits, // Sync legacy root field
                 updatedAt: new Date(),
             }
         );
@@ -302,7 +307,10 @@ async function verifyRazorpayPayment(
         await User.findOneAndUpdate(
             { clerkId: userId },
             {
-                $inc: { 'subscription.credits': credits },
+                $inc: { 
+                    'subscription.credits': credits,
+                    'credits': credits // Sync legacy root field
+                },
                 $push: {
                     paymentHistory: {
                         paymentId,

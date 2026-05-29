@@ -5,6 +5,8 @@ import { User } from '@/lib/db/models/User';
 import { issueJwt } from '@/lib/auth/jwt';
 import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
 
+import { getFreeCreditsOnSignup } from '@/lib/ai/appMode';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
@@ -69,6 +71,11 @@ export async function GET(req: Request) {
     let user = await User.findOne({ email });
 
     if (!user) {
+      const signupCredits = await getFreeCreditsOnSignup().catch(err => {
+        console.error('Error fetching dynamic free credits on Google signup:', err);
+        return 10;
+      });
+
       // Create user
       user = await User.create({
         email,
@@ -76,11 +83,11 @@ export async function GET(req: Request) {
         lastName: family_name || '',
         imageUrl: picture || '',
         isVerified: true,
-        credits: 10,
+        credits: signupCredits,
         subscription: {
           plan: 'free',
           status: 'inactive',
-          credits: 10,
+          credits: signupCredits,
           creditsUsed: 0,
           cancelAtPeriodEnd: false,
           paymentMethod: 'none',
