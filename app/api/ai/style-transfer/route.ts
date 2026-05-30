@@ -13,19 +13,36 @@ import { runStyleTransfer } from '@/src/services/styleTransferOrchestrator';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { checkIPAdapterModels, IPADAPTER_MISSING_ERROR } from '@/lib/ai/preflight';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'style-transfer');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const formData = await request.formData();
     
     // Support both roomImage/styleImage and image/referenceImage for full backward compatibility
     const roomImageFile = (formData.get('roomImage') || formData.get('image')) as File;
     const styleImageFile = (formData.get('styleImage') || formData.get('referenceImage')) as File;
     const stylePreset = (formData.get('stylePreset') || 'japandi') as string;
-    const userId = (formData.get('userId') || '000000000000000000000000') as string;
 
     if (!roomImageFile || !styleImageFile) {
       return NextResponse.json(
@@ -80,7 +97,7 @@ export async function POST(request: Request) {
     // 3. Create Project record in MongoDB
     const project = await Project.create({
       name: `Style Transfer (${stylePreset})`,
-      userId,
+      userId: finalUserId,
       originalImage: `/uploads/${roomFn}`,
       status: 'queued',
       processingType: 'tool-style-transfer',
@@ -98,7 +115,7 @@ export async function POST(request: Request) {
       styleImageUrl: `/uploads/${styleFn}`,
       stylePresetId: stylePreset,
       projectId: project._id.toString(),
-      userId,
+      userId: finalUserId,
     }).catch((err) => {
       console.error(`[StyleTransferRoute] Background orchestration failed for project ${project._id}:`, err);
     });
@@ -122,12 +139,17 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const projectId = new URL(request.url).searchParams.get('projectId');
     if (!projectId) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
     }
 
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ _id: projectId, userId: authUser.id });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

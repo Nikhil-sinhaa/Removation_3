@@ -13,6 +13,8 @@ import Project from '../../../../../src/models/Project.js';
 import FurniturePlacementRun from '../../../../../src/models/FurniturePlacementRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runFurniturePlacement } from '../../../../../src/services/furniturePlacementOrchestrator.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 
@@ -69,6 +71,22 @@ export async function POST(request) {
   await connectDB();
 
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'furniture-placement/generate');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const formData       = await safeParseFormData(request);
     const roomFile       = formData.get('roomImage');
     const furnitureFile  = formData.get('furnitureImage');
@@ -100,7 +118,7 @@ export async function POST(request) {
     // ── Create Project + Run documents ────────────────────────────────────────
     const project = await Project.create({
       name:           'Furniture Placement',
-      userId:         '000000000000000000000000',
+      userId:         finalUserId,
       originalImage:  roomImageUrl,
       status:         'queued',
       processingType: 'furniture-placement',
@@ -108,7 +126,7 @@ export async function POST(request) {
     const projectId = String(project._id);
 
     const run = await FurniturePlacementRun.create({
-      userId:           '000000000000000000000000',
+      userId:           finalUserId,
       projectId:        project._id,
       roomImageUrl,
       furnitureImageUrl,
@@ -119,7 +137,7 @@ export async function POST(request) {
 
     // ── Fire-and-forget pipeline ──────────────────────────────────────────────
     runFurniturePlacement({
-      userId:                 '000000000000000000000000',
+      userId:                 finalUserId,
       runId,
       projectId,
       roomComfyFilename,
@@ -140,12 +158,17 @@ export async function POST(request) {
 // ── Polling fallback: GET ?runId=... ──────────────────────────────────────────
 export async function GET(request) {
   await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const runId = searchParams.get('runId');
   if (!runId) return NextResponse.json({ error: 'runId required' }, { status: 400 });
 
   try {
-    const run = await FurniturePlacementRun.findById(runId).lean();
+    const run = await FurniturePlacementRun.findOne({ _id: runId, userId: authUser.id }).lean();
     if (!run) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     return NextResponse.json({

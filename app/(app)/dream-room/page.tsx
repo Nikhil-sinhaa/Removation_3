@@ -16,6 +16,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
 import { Download, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { saveAs } from "file-saver";
+import { useLanguage } from "@/hooks/useLanguage";
 
 // Extracted from original utils/dropdownTypes.ts
 const themes = [
@@ -55,6 +56,7 @@ function StepIcon({ step, title }: StepIconProps) {
 }
 
 export default function DreamRoomPage() {
+    const { t } = useLanguage();
     const [imageUrl, setImageUrl] = useState<string>("");
     const [theme, setTheme] = useState<string>("Modern");
     const [room, setRoom] = useState<string>("Living Room");
@@ -87,13 +89,13 @@ export default function DreamRoomPage() {
                 setResultImageUrl(data.imageUrl);
                 toast({
                     title: "Success",
-                    description: "Dream room generated successfully!",
+                    description: t("dr_success"),
                 });
             } else {
                 console.error("Failed to generate image:", data.error);
                 toast({
-                    title: "Generation Failed",
-                    description: data.error || "Something went wrong, please try again later.",
+                    title: t("dr_gen_failed"),
+                    description: data.error || t("dr_gen_failed_desc"),
                     variant: "destructive",
                 });
             }
@@ -101,7 +103,7 @@ export default function DreamRoomPage() {
             console.error("Network or parsing error", e);
             toast({
                 title: "Error",
-                description: "Failed to connect to the generation service. Check your API key.",
+                description: t("dr_gen_error"),
                 variant: "destructive",
             });
         }
@@ -114,27 +116,27 @@ export default function DreamRoomPage() {
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <Wand2 className="w-8 h-8 text-violet-600" />
-                    Generate Your Dream Room
+                    {t("dr_title")}
                 </h1>
                 <p className="text-gray-500">
-                    Upload a photo of your current room, select a theme and room type, and let AI remaster it in seconds.
+                    {t("dr_subtitle")}
                 </p>
             </div>
 
             <div className="flex-1 space-y-12 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                 {/* Step 1 */}
                 <div className="flex flex-col gap-6 items-center">
-                    <StepIcon step={1} title="Choose your room theme" />
+                    <StepIcon step={1} title={t("dr_step1")} />
                     <Select
                         value={theme}
                         onValueChange={setTheme}
                     >
                         <SelectTrigger className="w-[250px]">
-                            <SelectValue placeholder="--- Select Theme ---" />
+                            <SelectValue placeholder={t("dr_theme_placeholder")} />
                         </SelectTrigger>
                         <SelectContent>
-                            {themes.map((t) => (
-                                <SelectItem key={t} value={t}>{t}</SelectItem>
+                            {themes.map((th) => (
+                                <SelectItem key={th} value={th}>{th}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -142,13 +144,13 @@ export default function DreamRoomPage() {
 
                 {/* Step 2 */}
                 <div className="flex flex-col gap-6 items-center">
-                    <StepIcon step={2} title="Choose your room type" />
+                    <StepIcon step={2} title={t("dr_step2")} />
                     <Select
                         value={room}
                         onValueChange={setRoom}
                     >
                         <SelectTrigger className="w-[250px]">
-                            <SelectValue placeholder="--- Select Room ---" />
+                            <SelectValue placeholder={t("dr_room_placeholder")} />
                         </SelectTrigger>
                         <SelectContent>
                             {rooms.map((r) => (
@@ -160,7 +162,7 @@ export default function DreamRoomPage() {
 
                 {/* Step 3 */}
                 <div className="flex flex-col gap-6 items-center">
-                    <StepIcon step={3} title="Upload a picture of your room" />
+                    <StepIcon step={3} title={t("dr_step3")} />
                     <div className="w-full max-w-[600px]">
                         <ImageUploader
                             onUpload={(url) => setImageUrl(url)}
@@ -183,7 +185,7 @@ export default function DreamRoomPage() {
                         ) : (
                             <Sparkles className="w-5 h-5 mr-2" />
                         )}
-                        {isLoading ? "Generating (~20 seconds)..." : "Generate Dream Room"}
+                        {isLoading ? t("dr_generating") : t("dr_generate_btn")}
                     </Button>
                 </div>
 
@@ -194,9 +196,9 @@ export default function DreamRoomPage() {
                             <div className="flex flex-col sm:flex-row gap-4 justify-between items-center mb-6">
                                 <div>
                                     <h3 className="text-xl font-semibold text-gray-900">
-                                        Your remastered {room.toLowerCase()}
+                                        {t("dr_result_title", { room: room.toLowerCase() })}
                                     </h3>
-                                    <p className="text-gray-500 text-sm">Theme: {theme}</p>
+                                    <p className="text-gray-500 text-sm">{t("dr_theme_label", { theme })}</p>
                                 </div>
 
                                 <div className="flex gap-6 items-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
@@ -206,7 +208,7 @@ export default function DreamRoomPage() {
                                             onCheckedChange={setIsCompare}
                                             id="compare-mode"
                                         />
-                                        <label htmlFor="compare-mode" className="text-sm font-medium text-gray-700 cursor-pointer">Compare</label>
+                                        <label htmlFor="compare-mode" className="text-sm font-medium text-gray-700 cursor-pointer">{t("dr_compare")}</label>
                                     </div>
                                     <div className="w-px h-6 bg-gray-200" />
                                     <Button
@@ -218,7 +220,7 @@ export default function DreamRoomPage() {
                                         }}
                                     >
                                         <Download className="w-4 h-4 mr-2" />
-                                        Download
+                                        {t("dr_download")}
                                     </Button>
                                 </div>
                             </div>
@@ -229,7 +231,7 @@ export default function DreamRoomPage() {
                                         src={resultImageUrl}
                                         alt="Restored Image"
                                         fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         style={{
                                             objectFit: "cover",
                                         }}

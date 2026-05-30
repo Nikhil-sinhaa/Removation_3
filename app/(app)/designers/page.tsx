@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { paiseToRupees } from '@/lib/booking/money';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Specialty configs ────────────────────────────────────────────────────────
 
@@ -127,6 +128,7 @@ function GridSkeleton() {
 // ── Inner component ───────────────────────────
 
 function DesignersListingContent() {
+    const { t } = useLanguage();
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -272,6 +274,24 @@ function DesignersListingContent() {
         vendors: 'Vendor',
     };
 
+    const getProviderLabel = (tabId: string) => {
+        switch (tabId) {
+            case 'designers': return t('dir_tab_designers');
+            case 'contractors': return t('dir_tab_contractors');
+            case 'vendors': return t('dir_tab_vendors');
+            default: return providerLabelMap[tabId] || tabId;
+        }
+    };
+
+    const getSingleRoleLabel = (tabId: string) => {
+        switch (tabId) {
+            case 'designers': return t('myb_designer');
+            case 'contractors': return t('myb_contractor', { defaultValue: 'Contractor' });
+            case 'vendors': return t('dir_vendor', { defaultValue: 'Vendor' });
+            default: return singleLabelMap[tabId] || tabId;
+        }
+    };
+
     return (
         <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
             {/* Header */}
@@ -281,10 +301,10 @@ function DesignersListingContent() {
                         <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-500/20">
                             <Compass className="w-5 h-5 text-white" />
                         </div>
-                        <span>Find professionals & materials</span>
+                        <span>{t('dir_find_pros')}</span>
                     </h1>
                     <p className="text-sm text-zinc-500 mt-1.5 leading-relaxed">
-                        Connect with verified interior designers, skilled service contractors, and premium material stores.
+                        {t('dir_find_pros_desc')}
                     </p>
                 </div>
                 {!loading && (
@@ -293,7 +313,9 @@ function DesignersListingContent() {
                         className="self-start md:self-center px-3 py-1 bg-violet-50 text-violet-700 border-violet-100 text-xs font-semibold rounded-lg flex items-center gap-1.5"
                     >
                         <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
-                        {total} Verified {singleLabelMap[activeTab]}{total !== 1 ? 's' : ''}
+                        {total === 1 
+                            ? t('dir_verified_count_single', { count: String(total), role: getSingleRoleLabel(activeTab) })
+                            : t('dir_verified_count', { count: String(total), role: getSingleRoleLabel(activeTab) })}
                     </Badge>
                 )}
             </div>
@@ -309,7 +331,7 @@ function DesignersListingContent() {
                                 href={`/marketplace?tab=${tabId}`}
                                 className="relative py-3.5 text-sm font-semibold transition-colors focus-visible:outline-none text-zinc-500 hover:text-zinc-800"
                             >
-                                {providerLabelMap[tabId]}
+                                {getProviderLabel(tabId)}
                             </Link>
                         );
                     }
@@ -320,7 +342,7 @@ function DesignersListingContent() {
                             className="relative py-3.5 text-sm font-semibold transition-colors focus-visible:outline-none"
                             style={{ color: isActive ? 'rgb(109, 40, 217)' : 'rgb(113, 113, 122)' }}
                         >
-                            {providerLabelMap[tabId]}
+                            {getProviderLabel(tabId)}
                             {isActive && (
                                 <motion.div
                                     layoutId="activeTabUnderline"
@@ -339,7 +361,7 @@ function DesignersListingContent() {
                     <div className="relative">
                         <Search className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
                         <Input
-                            placeholder={`Search by name...`}
+                            placeholder={t('dir_search_name')}
                             value={searchVal}
                             onChange={(e) => setSearchVal(e.target.value)}
                             className="pl-10 h-11 border-zinc-200 rounded-xl focus-visible:ring-violet-500"
@@ -348,7 +370,7 @@ function DesignersListingContent() {
                     <div className="relative">
                         <MapPin className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
                         <Input
-                            placeholder="Filter by city (e.g. Bangalore)..."
+                            placeholder={t('dir_filter_city')}
                             value={cityVal}
                             onChange={(e) => setCityVal(e.target.value)}
                             className="pl-10 h-11 border-zinc-200 rounded-xl focus-visible:ring-violet-500"
@@ -359,7 +381,7 @@ function DesignersListingContent() {
                         onChange={(e) => setSpecialtyVal(e.target.value)}
                         className="w-full h-11 px-3 border border-zinc-200 rounded-xl bg-white text-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent cursor-pointer"
                     >
-                        <option value="">All Specialties</option>
+                        <option value="">{t('dir_all_specialties')}</option>
                         {getSpecialtiesList().map(([slug, label]) => (
                             <option key={slug} value={slug}>{label}</option>
                         ))}
@@ -374,7 +396,7 @@ function DesignersListingContent() {
                             onClick={clearFilters}
                             className="text-zinc-500 hover:text-zinc-800 hover:bg-zinc-50 rounded-lg text-xs"
                         >
-                            Clear All Filters
+                            {t('dir_clear_all_filters')}
                         </Button>
                     </div>
                 )}
@@ -390,16 +412,16 @@ function DesignersListingContent() {
                     className="text-center py-20 bg-white border border-zinc-100 rounded-2xl shadow-sm"
                 >
                     <Grid className="w-12 h-12 mx-auto text-zinc-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-zinc-900">No {activeTab} found</h3>
+                    <h3 className="text-lg font-semibold text-zinc-900">{t('dir_no_pros_found', { role: getSingleRoleLabel(activeTab) })}</h3>
                     <p className="text-zinc-500 text-sm mt-1 max-w-md mx-auto">
-                        Try refining your search terms, removing city filters, or picking a different specialty.
+                        {t('dir_no_pros_found_desc')}
                     </p>
                     {hasActiveFilters && (
                         <Button
                             onClick={clearFilters}
                             className="mt-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl"
                         >
-                            Reset Filters
+                            {t('dir_reset_filters')}
                         </Button>
                     )}
                 </motion.div>
@@ -448,7 +470,9 @@ function DesignersListingContent() {
                                             <Badge className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm text-zinc-800 border border-zinc-200/50 hover:bg-white rounded-lg flex items-center gap-1">
                                                 <GraduationCap className="w-3.5 h-3.5 text-violet-600" />
                                                 <span>
-                                                    {provider.yearsOfExperience} {activeTab === 'vendors' ? 'yrs in biz' : 'yrs exp'}
+                                                    {activeTab === 'vendors' 
+                                                        ? t('dir_years_biz_short', { years: String(provider.yearsOfExperience) })
+                                                        : t('dir_years_exp_short', { years: String(provider.yearsOfExperience) })}
                                                 </span>
                                             </Badge>
                                         )}
@@ -478,7 +502,11 @@ function DesignersListingContent() {
                                                 {provider.totalReviews !== undefined && provider.totalReviews > 0 && (
                                                     <>
                                                         <span className="text-zinc-300">·</span>
-                                                        <span>{provider.totalReviews} review{provider.totalReviews === 1 ? '' : 's'}</span>
+                                                        <span>
+                                                            {provider.totalReviews === 1
+                                                                ? t('dir_review_count_single', { count: String(provider.totalReviews) })
+                                                                : t('dir_review_count', { count: String(provider.totalReviews) })}
+                                                        </span>
                                                     </>
                                                 )}
                                             </div>
@@ -500,7 +528,7 @@ function DesignersListingContent() {
                                                         variant="outline"
                                                         className="text-zinc-400 border-zinc-100 rounded-lg text-xs font-normal"
                                                     >
-                                                        +{hiddenCount} more
+                                                        {t('dir_more_specialties', { count: String(hiddenCount) })}
                                                     </Badge>
                                                 )}
                                             </div>
@@ -511,23 +539,23 @@ function DesignersListingContent() {
                                             {activeTab === 'vendors' ? (
                                                 <div className="min-w-0 flex-1 pr-2">
                                                     <span className="text-[10px] text-zinc-400 block uppercase tracking-wider font-semibold">
-                                                        Store Address
+                                                        {t('dir_store_address')}
                                                     </span>
                                                     <span className="text-xs text-zinc-600 truncate block">
-                                                        {provider.storeAddress || provider.address || 'Address on file'}
+                                                        {provider.storeAddress || provider.address || t('dir_address_on_file')}
                                                     </span>
                                                 </div>
                                             ) : (
                                                 <div>
                                                     <span className="text-[10px] text-zinc-400 block uppercase tracking-wider font-semibold">
-                                                        Consultation
+                                                        {t('dir_consultation')}
                                                     </span>
                                                     {provider.acceptsConsultations && provider.consultationFee?.amount ? (
                                                         <span className="font-extrabold text-zinc-800 text-sm">
                                                             {paiseToRupees(provider.consultationFee.amount)}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-xs text-zinc-400 italic">Not available</span>
+                                                        <span className="text-xs text-zinc-400 italic">{t('dir_not_available')}</span>
                                                     )}
                                                 </div>
                                             )}
@@ -537,7 +565,7 @@ function DesignersListingContent() {
                                                 className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl text-xs gap-1.5 shadow-sm shadow-violet-500/10 flex-shrink-0"
                                             >
                                                 <Link href={detailsPath}>
-                                                    <span>{activeTab === 'vendors' ? 'View Store' : 'View Profile'}</span>
+                                                    <span>{activeTab === 'vendors' ? t('dir_view_store') : t('dir_view_profile')}</span>
                                                     {activeTab === 'vendors' ? <Store className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                                                 </Link>
                                             </Button>
@@ -558,10 +586,10 @@ function DesignersListingContent() {
                                 onClick={() => setPageVal((p) => Math.max(1, p - 1))}
                                 className="rounded-xl border-zinc-200 text-zinc-600 text-xs"
                             >
-                                Previous
+                                {t('previous')}
                             </Button>
                             <span className="text-sm font-medium text-zinc-500 px-2 select-none">
-                                Page {pageVal} of {pageCount}
+                                {t('page_x_of_y', { current: String(pageVal), total: String(pageCount) })}
                             </span>
                             <Button
                                 variant="outline"
@@ -570,7 +598,7 @@ function DesignersListingContent() {
                                 onClick={() => setPageVal((p) => Math.min(pageCount, p + 1))}
                                 className="rounded-xl border-zinc-200 text-zinc-600 text-xs"
                             >
-                                Next
+                                {t('next')}
                             </Button>
                         </div>
                     )}

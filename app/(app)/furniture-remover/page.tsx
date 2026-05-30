@@ -26,6 +26,7 @@ import {
   Trash2,
   SlidersHorizontal,
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 
 interface ProgressState {
   stage: number;
@@ -117,6 +118,7 @@ async function exportMaskAsWhiteOnBlack(
 }
 
 export default function FurnitureRemoverPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   // ── Mode & Core State ──────────────────────────────────────────────────────
   const [activeTab, setActiveTab]       = useState<'auto' | 'manual'>('auto');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -423,6 +425,13 @@ export default function FurnitureRemoverPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {

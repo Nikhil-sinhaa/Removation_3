@@ -27,6 +27,7 @@ import {
   Layers,
   Sparkle
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 
 interface ResultImage {
   label: string;
@@ -193,6 +194,7 @@ export const LIGHTING_PRESETS: Record<string, {
 
 export default function LightingPage() {
   const { toast } = useToast();
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
 
   // ── Core Input State ────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -422,6 +424,12 @@ export default function LightingPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await res.json();
       if (!res.ok || !data.success) {

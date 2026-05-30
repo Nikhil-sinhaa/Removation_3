@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
+import { CreditSuccessHandler } from '@/components/payment/CreditSuccessHandler';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -471,6 +472,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </motion.aside>
         )}
       </AnimatePresence>
+
+      <CreditSuccessHandler />
 
       {/* Main Content */}
       <div

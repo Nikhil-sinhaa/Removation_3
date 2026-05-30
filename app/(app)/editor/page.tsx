@@ -123,6 +123,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 import { useUploadThing } from '@/lib/uploadthing';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/stores/user-store';
 import { DESIGN_STYLES } from '@/constants/styles-400';
 import { ROOM_TYPES } from '@/constants/room-types';
 import { TRANSFORMATION_MODES } from '@/constants/transformation-modes';
@@ -214,6 +215,7 @@ function StyleCard({
 }
 
 export default function EditorPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const router = useRouter();
   const { user, isLoading: isLoaded } = useAuth();
   const isSignedIn = !!user;
@@ -331,6 +333,12 @@ export default function EditorPage() {
           numberOfVariations,
         }),
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 

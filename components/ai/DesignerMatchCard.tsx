@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MapPin, Star, IndianRupee, Briefcase } from 'lucide-react';
 import { paiseToRupees } from '@/lib/booking/money';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Shape of what the match API returns ──────────────────────────────────────
 // The userId field is populated: { firstName, lastName, imageUrl }
@@ -67,6 +68,7 @@ function initials(name: string): string {
 }
 
 export function DesignerMatchCard({ designer, onBook, index = 0 }: DesignerMatchCardProps) {
+    const { t } = useLanguage();
     const avatarUrl = designer.userId?.imageUrl;
     const displayName = designer.displayName;
     const feeAmount = designer.projectMinFee?.amount;
@@ -114,7 +116,7 @@ export function DesignerMatchCard({ designer, onBook, index = 0 }: DesignerMatch
                             {designer.yearsOfExperience != null && (
                                 <>
                                     <span className="text-zinc-300">·</span>
-                                    <span>{designer.yearsOfExperience}y exp</span>
+                                    <span>{t('dmc_y_exp', { years: String(designer.yearsOfExperience) })}</span>
                                 </>
                             )}
                             {designer.averageRating !== undefined && designer.averageRating > 0 && (
@@ -152,13 +154,13 @@ export function DesignerMatchCard({ designer, onBook, index = 0 }: DesignerMatch
                         <div className="flex items-center gap-1 text-sm text-zinc-600">
                             <IndianRupee className="w-3.5 h-3.5 text-zinc-400" />
                             <span>
-                                From <span className="font-semibold text-zinc-800">{paiseToRupees(feeAmount)}</span>
+                                {t('dmc_from', { amount: paiseToRupees(feeAmount) })}
                             </span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-1 text-xs text-zinc-400">
                             <Briefcase className="w-3.5 h-3.5" />
-                            <span>Quote on request</span>
+                            <span>{t('dmc_quote_on_request')}</span>
                         </div>
                     )}
 
@@ -168,7 +170,7 @@ export function DesignerMatchCard({ designer, onBook, index = 0 }: DesignerMatch
                         onClick={() => onBook(designer)}
                         className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white text-xs px-3 py-1.5 h-auto rounded-xl"
                     >
-                        Book Project
+                        {t('dmc_book_project')}
                     </Button>
                 </div>
             </div>

@@ -13,6 +13,10 @@
  */
 
 const WIDGET_NAMES = {
+  UNETLoader: ['unet_name', 'weight_dtype'],
+  VAELoader: ['vae_name'],
+  CLIPLoader: ['clip_name', 'type', 'device'],
+  TextEncodeQwenImageEditPlus: ['prompt'],
   IPAdapterUnifiedLoader: ['preset'],
   LoadImage: ['image', 'upload_type'],
   SaveImage: ['filename_prefix'],
@@ -129,6 +133,7 @@ const WIDGET_NAMES = {
   BRIAAI_Matting: ['version', 'background_color'],
   DetailTransfer: ['mode', 'blur_sigma', 'blend_factor'],
   CalculateNormalsFromImages: ['sensitivity'],
+  LoraLoaderModelOnly: ['lora_name', 'strength_model'],
 };
 
 /**

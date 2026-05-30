@@ -24,11 +24,14 @@ import {
   BookmarkCheck,
 } from "lucide-react";
 import { MakeItReal } from "@/components/ai/MakeItReal";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useUserStore } from '@/stores/user-store';
 
 interface ProgressState {
   stage: number; // 1 = scene analysis, 2 = repainting
   percent: number;
-  label: string;
+  label?: string;
+  labelKey?: string;
 }
 
 interface ResultState {
@@ -46,6 +49,8 @@ interface FeedbackState {
 }
 
 export default function RoomChangerPage() {
+  const { t } = useLanguage();
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
@@ -82,7 +87,7 @@ export default function RoomChangerPage() {
     });
 
     socket.on("comfy:roomchanger:start", () => {
-      setProgress({ stage: 1, percent: 0, label: "Analyzing room…" });
+      setProgress({ stage: 1, percent: 0, labelKey: "rc_analyzing" });
     });
 
     socket.on("comfy:roomchanger:stage", (data: any) => {
@@ -90,17 +95,18 @@ export default function RoomChangerPage() {
         setProgress({
           stage: 1,
           percent: data.status === "done" || data.status === "skipped" ? 100 : 10,
-          label: data.status === "done" || data.status === "skipped"
-            ? "Room analyzed"
-            : "Analyzing room (detecting walls, floor, objects)…",
+          labelKey: data.status === "done" || data.status === "skipped"
+            ? "rc_analyzing_done"
+            : "rc_analyzing",
         });
       } else if (data.stage === 2) {
         setProgress({
           stage: 2,
           percent: data.status === "done" ? 100 : 20,
-          label: data.status === "done"
-            ? "Repainting complete"
-            : data.name || "Repainting walls…",
+          labelKey: data.status === "done"
+            ? "rc_repainting_done"
+            : undefined,
+          label: data.status === "done" ? undefined : data.name || undefined,
         });
       }
     });
@@ -115,7 +121,7 @@ export default function RoomChangerPage() {
 
     socket.on("comfy:roomchanger:done", (data: any) => {
       stopPolling();
-      setProgress({ stage: 2, percent: 100, label: "Done!" });
+      setProgress({ stage: 2, percent: 100, labelKey: "rc_done" });
       setResult({
         beforeUrl: data.beforeUrl + "?t=" + Date.now(),
         afterUrl:  data.afterUrl  + "?t=" + Date.now(),
@@ -128,7 +134,7 @@ export default function RoomChangerPage() {
 
     socket.on("comfy:roomchanger:error", (data: any) => {
       stopPolling();
-      setError(data.error || "Generation failed");
+      setError(data.error || t("rc_failed"));
       setIsGenerating(false);
       if (data.canRetryStage3 && data.runId) {
         setResult(prev => prev
@@ -166,13 +172,13 @@ export default function RoomChangerPage() {
 
   // ── Generate ───────────────────────────────────────────────────────────────
   const handleGenerate = async (opts: { retryRunId?: string } = {}) => {
-    if (!color.hex && !opts.retryRunId) { setError("Please select a wall color"); return; }
-    if (!selectedFile && !opts.retryRunId) { setError("Please upload a room photo"); return; }
+    if (!color.hex && !opts.retryRunId) { setError(t("select_wall_color")); return; }
+    if (!selectedFile && !opts.retryRunId) { setError(t("upload_room_photo")); return; }
 
     setIsGenerating(true);
     setError(null);
     setResult(null);
-    setProgress({ stage: 1, percent: 0, label: "Starting…" });
+    setProgress({ stage: 1, percent: 0, labelKey: "rc_starting" });
 
     try {
       const formData = new FormData();
@@ -185,10 +191,17 @@ export default function RoomChangerPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Submission failed");
+        throw new Error(data.error || t("rc_submission_failed"));
       }
 
       setProjectId(data.projectId);
@@ -209,18 +222,18 @@ export default function RoomChangerPage() {
               runId: proj.runId || "",
               canRetryStage3: false,
             });
-            setProgress({ stage: 2, percent: 100, label: "Done!" });
+            setProgress({ stage: 2, percent: 100, labelKey: "rc_done" });
             setIsGenerating(false);
           } else if (proj.status === "failed") {
             stopPolling();
-            setError(proj.errorMessage || "Pipeline failed");
+            setError(proj.errorMessage || t("rc_pipeline_failed"));
             setIsGenerating(false);
           }
         } catch { /* ignore poll errors */ }
       }, 3000);
 
     } catch (err: any) {
-      setError(err.message || "Network error");
+      setError(err.message || t("rc_network_error"));
       setIsGenerating(false);
     }
   };
@@ -260,15 +273,15 @@ export default function RoomChangerPage() {
       <div className="mb-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Room Changer
+            {t("rc_repaint_title")}
           </h1>
           <p className="text-lg text-gray-600 mb-3">
-            Repaint your walls in any color — furniture and floor stay untouched
+            {t("rc_repaint_desc")}
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Badge className="bg-violet-100 text-violet-800"><Wand2 className="w-3 h-3 mr-1" />SAM2 Wall Detection</Badge>
-            <Badge className="bg-purple-100 text-purple-800"><Paintbrush className="w-3 h-3 mr-1" />SDXL Inpainting</Badge>
-            <Badge className="bg-indigo-100 text-indigo-800"><CheckCircle className="w-3 h-3 mr-1" />12 Preset Colors</Badge>
+            <Badge className="bg-violet-100 text-violet-800"><Wand2 className="w-3 h-3 mr-1" />{t("rc_repaint_sam2")}</Badge>
+            <Badge className="bg-purple-100 text-purple-800"><Paintbrush className="w-3 h-3 mr-1" />{t("rc_repaint_sdxl")}</Badge>
+            <Badge className="bg-indigo-100 text-indigo-800"><CheckCircle className="w-3 h-3 mr-1" />{t("rc_repaint_preset")}</Badge>
           </div>
         </motion.div>
       </div>
@@ -280,7 +293,7 @@ export default function RoomChangerPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Upload className="w-4 h-4" />Upload Room Photo
+                <Upload className="w-4 h-4" />{t("rc_repaint_upload_title")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -299,8 +312,8 @@ export default function RoomChangerPage() {
                   onDragOver={e => e.preventDefault()}
                 >
                   <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">Drop photo here or click to browse</p>
-                  <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 20MB</p>
+                  <p className="text-sm text-gray-600 font-medium">{t("rc_repaint_drop_photo")}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("rc_repaint_max_size")}</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -314,7 +327,7 @@ export default function RoomChangerPage() {
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isGenerating}
                   >
-                    <RefreshCw className="w-3.5 h-3.5 mr-2" />Change image
+                    <RefreshCw className="w-3.5 h-3.5 mr-2" />{t("rc_repaint_change_image")}
                   </Button>
                 </div>
               )}
@@ -325,7 +338,7 @@ export default function RoomChangerPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Paintbrush className="w-4 h-4" />Choose Wall Color
+                <Paintbrush className="w-4 h-4" />{t("rc_repaint_choose_color")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -341,9 +354,9 @@ export default function RoomChangerPage() {
             size="lg"
           >
             {isGenerating ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("rc_repaint_generating")}</>
             ) : (
-              <><Wand2 className="w-4 h-4 mr-2" />Generate</>
+              <><Wand2 className="w-4 h-4 mr-2" />{t("rc_repaint_generate")}</>
             )}
           </Button>
 
@@ -366,7 +379,7 @@ export default function RoomChangerPage() {
                       className="mt-2 text-red-600 border-red-300 hover:bg-red-50"
                       onClick={() => handleGenerate({ retryRunId: result.runId })}
                     >
-                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />Retry with saved masks
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_retry_saved")}
                     </Button>
                   )}
                 </div>
@@ -380,7 +393,7 @@ export default function RoomChangerPage() {
           <Card className="h-full">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <ImageIcon className="w-4 h-4" />Result
+                <ImageIcon className="w-4 h-4" />{t("rc_repaint_result")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -390,8 +403,8 @@ export default function RoomChangerPage() {
                   <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center">
                     <Paintbrush className="w-10 h-10 text-gray-300" />
                   </div>
-                  <p className="text-sm font-medium text-gray-500">Your recolored room will appear here</p>
-                  <p className="text-xs text-gray-400">Upload a photo and pick a color to get started</p>
+                  <p className="text-sm font-medium text-gray-500">{t("rc_repaint_will_appear")}</p>
+                  <p className="text-xs text-gray-400">{t("rc_repaint_instructions")}</p>
                 </div>
               )}
 
@@ -407,8 +420,8 @@ export default function RoomChangerPage() {
                   >
                     {/* Two-step progress */}
                     {[
-                      { id: 1, label: "Analyzing room (detecting walls, floor, objects)…" },
-                      { id: 2, label: `Repainting walls in ${color.name || "chosen color"}…` },
+                      { id: 1, label: t("rc_repaint_analyzing") },
+                      { id: 2, label: t("rc_repaint_repainting", { color: color.name || t("rc_repaint_chosen_color_text") }) },
                     ].map(step => {
                       const isDone = progress.stage > step.id;
                       const isActive = progress.stage === step.id;
@@ -473,8 +486,8 @@ export default function RoomChangerPage() {
                     <BeforeAfterSlider
                       beforeImage={result.beforeUrl}
                       afterImage={result.afterUrl}
-                      beforeLabel="Original"
-                      afterLabel={color.name || "Recolored"}
+                      beforeLabel={t("rc_repaint_original")}
+                      afterLabel={color.name || t("rc_repaint_recolored")}
                     />
 
                     {/* Action buttons */}
@@ -490,20 +503,20 @@ export default function RoomChangerPage() {
                         }}
                         className="flex-1"
                       >
-                        <Download className="w-3.5 h-3.5 mr-1.5" />Download
+                        <Download className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_download")}
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => {
                           toast({
-                            title: "Saved to project",
-                            description: `${color.name} recolor saved successfully.`,
+                            title: t("rc_repaint_saved_title"),
+                            description: t("rc_repaint_saved_desc", { color: color.name }),
                           });
                         }}
                         className="flex-1"
                       >
-                        <BookmarkCheck className="w-3.5 h-3.5 mr-1.5" />Save to Project
+                        <BookmarkCheck className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_save_to_project")}
                       </Button>
                       <Button
                         size="sm"
@@ -511,7 +524,7 @@ export default function RoomChangerPage() {
                         onClick={handleTryAnother}
                         className="flex-1"
                       >
-                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another Color
+                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_try_another")}
                       </Button>
                     </div>
 
@@ -524,10 +537,10 @@ export default function RoomChangerPage() {
                     {/* Feedback */}
                     <div className="pt-3 border-t border-gray-100">
                       {feedback.submitted ? (
-                        <p className="text-center text-sm text-green-600 font-medium">Thanks for your feedback</p>
+                        <p className="text-center text-sm text-green-600 font-medium">{t("rc_repaint_thanks_feedback")}</p>
                       ) : (
                         <div className="space-y-3">
-                          <p className="text-sm font-medium text-gray-700 text-center">Happy with this result?</p>
+                          <p className="text-sm font-medium text-gray-700 text-center">{t("rc_repaint_happy_result")}</p>
                           <div className="flex gap-3 justify-center">
                             <button
                               onClick={() => handleFeedbackRating('up')}
@@ -565,14 +578,14 @@ export default function RoomChangerPage() {
                               className="space-y-2"
                             >
                               <p className="text-xs text-gray-500 text-center">
-                                {feedback.rating === 'up' ? 'Glad you liked it!' : 'Sorry — help us improve'}
+                                {feedback.rating === 'up' ? t("rc_repaint_glad_liked") : t("rc_repaint_sorry_improve")}
                               </p>
                               <textarea
                                 value={feedback.text}
                                 onChange={e => setFeedback(prev => ({ ...prev, text: e.target.value }))}
                                 maxLength={1000}
                                 rows={2}
-                                placeholder={feedback.rating === 'up' ? 'Tell us what worked (optional)' : 'What went wrong? (optional)'}
+                                placeholder={feedback.rating === 'up' ? t("rc_repaint_feedback_worked") : t("rc_repaint_feedback_wrong")}
                                 className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 placeholder:text-gray-400"
                               />
                               <Button
@@ -581,7 +594,7 @@ export default function RoomChangerPage() {
                                 disabled={feedback.submitting}
                                 className="w-full bg-violet-600 hover:bg-violet-700 text-white"
                               >
-                                {feedback.submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Submitting…</> : 'Submit'}
+                                {feedback.submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />{t("rc_repaint_submitting")}</> : t("rc_repaint_submit")}
                               </Button>
                             </motion.div>
                           )}

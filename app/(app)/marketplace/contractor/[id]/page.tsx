@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAuth } from '@/hooks/useAuth';
 import { paiseToRupees } from '@/lib/booking/money';
 import { BookingModal } from '@/components/booking/BookingModal';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ function ContractorDetailContent() {
     const pathname = usePathname();
     const id = params?.id as string;
 
+    const { t, language } = useLanguage();
     const { user, isLoading: authLoading } = useAuth();
 
     const [contractor, setContractor] = useState<Contractor | null>(null);
@@ -190,6 +192,13 @@ function ContractorDetailContent() {
         return () => window.removeEventListener('keydown', onKey);
     }, [lightboxUrl, lightboxIndex, contractor]);
 
+    // Helper to get translated contractor specialty label
+    const getContractorSpecialtyLabel = (slug: string) => {
+        const key = `specialty_${slug.replace(/-/g, '_')}`;
+        const translated = t(key);
+        return translated !== key ? translated : (CONTRACTOR_SPECIALTY_LABELS[slug] ?? slug);
+    };
+
     // ── Loading states ────────────────────────────────────────────────────────
     if (loading || authLoading) return <DetailSkeleton />;
 
@@ -199,12 +208,12 @@ function ContractorDetailContent() {
                 <div className="w-16 h-16 bg-zinc-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
                     <Sparkles className="w-8 h-8 text-zinc-400" />
                 </div>
-                <h1 className="text-xl font-bold text-zinc-900">Contractor not found</h1>
+                <h1 className="text-xl font-bold text-zinc-900">{t('det_contractor_not_found')}</h1>
                 <p className="text-zinc-500 text-sm mt-2">
-                    This profile may no longer be available or hasn't been verified yet.
+                    {t('det_contractor_not_found_desc')}
                 </p>
                 <Button asChild className="mt-6">
-                    <Link href="/designers?tab=contractors">Browse Contractors</Link>
+                    <Link href="/designers?tab=contractors">{t('det_browse_contractors')}</Link>
                 </Button>
             </div>
         );
@@ -231,7 +240,7 @@ function ContractorDetailContent() {
                 className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-2xl shadow-lg shadow-violet-500/20 gap-2"
             >
                 <Link href={`/sign-in?redirect_url=${redirectUrl}`}>
-                    Sign in to Book
+                    {t('det_sign_in_to_book')}
                 </Link>
             </Button>
         );
@@ -239,14 +248,14 @@ function ContractorDetailContent() {
         // State 2: own profile
         bookButton = (
             <Badge className="text-sm px-4 py-2 bg-zinc-100 text-zinc-500 border-zinc-200 rounded-2xl font-medium cursor-default">
-                This is your profile
+                {t('det_own_profile')}
             </Badge>
         );
     } else if (notAccepting || noFeeSet) {
         // State 3: not accepting or no fee configured
         bookButton = (
             <Badge className="text-sm px-4 py-2 bg-zinc-100 text-zinc-500 border-zinc-200 rounded-2xl font-medium cursor-default">
-                Not accepting bookings
+                {t('det_not_accepting_bookings')}
             </Badge>
         );
     } else {
@@ -259,7 +268,7 @@ function ContractorDetailContent() {
                 className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-2xl shadow-lg shadow-violet-500/20 gap-2"
             >
                 <Calendar className="w-4 h-4" />
-                Book this contractor
+                {t('det_book_contractor')}
             </Button>
         );
     }
@@ -273,10 +282,13 @@ function ContractorDetailContent() {
         .slice(0, 2)
         .toUpperCase();
 
-    const memberSince = new Date(contractor.createdAt).toLocaleDateString('en-IN', {
-        month: 'long',
-        year: 'numeric',
-    });
+    const memberSince = new Date(contractor.createdAt).toLocaleDateString(
+        language === 'hi' ? 'hi-IN' : 'en-IN',
+        {
+            month: 'long',
+            year: 'numeric',
+        }
+    );
 
     return (
         <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -286,7 +298,7 @@ function ContractorDetailContent() {
                 className="inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-violet-600 mb-7 transition-colors"
             >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                All Contractors
+                {t('det_all_contractors')}
             </Link>
 
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
@@ -320,7 +332,9 @@ function ContractorDetailContent() {
                                 {contractor.yearsOfExperience !== undefined && (
                                     <span className="flex items-center gap-1.5">
                                         <GraduationCap className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-                                        {contractor.yearsOfExperience} yr{contractor.yearsOfExperience !== 1 ? 's' : ''} experience
+                                        {contractor.yearsOfExperience === 1
+                                            ? t('det_years_experience_single')
+                                            : t('det_years_experience', { years: String(contractor.yearsOfExperience) })}
                                     </span>
                                 )}
                                 {contractor.phone && (
@@ -341,7 +355,9 @@ function ContractorDetailContent() {
                                     <span className="font-medium text-violet-600 hover:text-violet-700 hover:underline cursor-pointer" onClick={() => {
                                         document.getElementById('reviews-section')?.scrollIntoView({ behavior: 'smooth' });
                                     }}>
-                                        {contractor.totalReviews} review{contractor.totalReviews !== 1 ? 's' : ''}
+                                        {contractor.totalReviews === 1
+                                            ? t('dir_review_count_single', { count: String(contractor.totalReviews) })
+                                            : t('dir_review_count', { count: String(contractor.totalReviews) })}
                                     </span>
                                 </div>
                             )}
@@ -354,13 +370,15 @@ function ContractorDetailContent() {
                                             variant="secondary"
                                             className="bg-zinc-50 text-zinc-600 border border-zinc-100 rounded-lg text-xs font-normal"
                                         >
-                                            {CONTRACTOR_SPECIALTY_LABELS[slug] ?? slug}
+                                            {getContractorSpecialtyLabel(slug)}
                                         </Badge>
                                     ))}
                                 </div>
                             )}
 
-                            <p className="text-xs text-zinc-400 mt-3">Member since {memberSince}</p>
+                            <p className="text-xs text-zinc-400 mt-3">
+                                {t('det_member_since', { date: memberSince })}
+                            </p>
                         </div>
 
                         {/* Book button — desktop */}
@@ -378,7 +396,9 @@ function ContractorDetailContent() {
                 {/* ── Bio ──────────────────────────────────────────────────────────── */}
                 {contractor.bio && (
                     <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-6">
-                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">About</h2>
+                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-3">
+                            {t('det_about')}
+                        </h2>
                         <p className="text-zinc-700 leading-relaxed whitespace-pre-line text-sm">{contractor.bio}</p>
                     </div>
                 )}
@@ -386,15 +406,17 @@ function ContractorDetailContent() {
                 {/* ── Pricing ───────────────────────────────────────────────────────── */}
                 {(contractor.acceptsConsultations || contractor.acceptsProjects) && (
                     <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-6">
-                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">Pricing</h2>
+                        <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">
+                            {t('det_pricing')}
+                        </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             {/* Consultation */}
                             <div className={`rounded-xl p-4 border ${contractor.acceptsConsultations ? 'bg-violet-50 border-violet-100' : 'bg-zinc-50 border-zinc-100 opacity-60'}`}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <Calendar className={`w-4 h-4 ${contractor.acceptsConsultations ? 'text-violet-600' : 'text-zinc-400'}`} />
-                                    <span className="text-sm font-semibold text-zinc-700">Consultation</span>
+                                    <span className="text-sm font-semibold text-zinc-700">{t('det_consultation')}</span>
                                     {!contractor.acceptsConsultations && (
-                                        <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-200 ml-auto">Unavailable</Badge>
+                                        <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-200 ml-auto">{t('det_unavailable')}</Badge>
                                     )}
                                 </div>
                                 {contractor.acceptsConsultations && contractor.consultationFee?.amount ? (
@@ -404,12 +426,12 @@ function ContractorDetailContent() {
                                         </p>
                                         {contractor.consultationDurationMinutes && (
                                             <p className="text-xs text-violet-500 mt-0.5">
-                                                {contractor.consultationDurationMinutes} minute session
+                                                {t('det_minute_session', { minutes: String(contractor.consultationDurationMinutes) })}
                                             </p>
                                         )}
                                     </>
                                 ) : (
-                                    <p className="text-sm text-zinc-400 italic">Not available</p>
+                                    <p className="text-sm text-zinc-400 italic">{t('det_unavailable')}</p>
                                 )}
                             </div>
 
@@ -417,9 +439,9 @@ function ContractorDetailContent() {
                             <div className={`rounded-xl p-4 border ${contractor.acceptsProjects ? 'bg-emerald-50 border-emerald-100' : 'bg-zinc-50 border-zinc-100 opacity-60'}`}>
                                 <div className="flex items-center gap-2 mb-2">
                                     <FileText className={`w-4 h-4 ${contractor.acceptsProjects ? 'text-emerald-600' : 'text-zinc-400'}`} />
-                                    <span className="text-sm font-semibold text-zinc-700">Project</span>
+                                    <span className="text-sm font-semibold text-zinc-700">{t('det_project')}</span>
                                     {!contractor.acceptsProjects && (
-                                        <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-200 ml-auto">Unavailable</Badge>
+                                        <Badge variant="outline" className="text-xs text-zinc-400 border-zinc-200 ml-auto">{t('det_unavailable')}</Badge>
                                     )}
                                 </div>
                                 {contractor.acceptsProjects && contractor.projectMinFee?.amount ? (
@@ -427,10 +449,10 @@ function ContractorDetailContent() {
                                         <p className="text-xl font-extrabold text-emerald-900">
                                             {paiseToRupees(contractor.projectMinFee.amount)}
                                         </p>
-                                        <p className="text-xs text-emerald-600 mt-0.5">minimum fee</p>
+                                        <p className="text-xs text-emerald-600 mt-0.5">{t('det_minimum_fee')}</p>
                                     </>
                                 ) : (
-                                    <p className="text-sm text-zinc-400 italic">Not available</p>
+                                    <p className="text-sm text-zinc-400 italic">{t('det_unavailable')}</p>
                                 )}
                             </div>
                         </div>
@@ -441,9 +463,11 @@ function ContractorDetailContent() {
                 {contractor.portfolioImages.length > 0 && (
                     <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-6">
                         <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-4">
-                            Portfolio
+                            {t('det_portfolio')}
                             <span className="ml-2 font-normal text-zinc-300 text-xs">
-                                ({contractor.portfolioImages.length} image{contractor.portfolioImages.length !== 1 ? 's' : ''})
+                                ({contractor.portfolioImages.length === 1
+                                    ? t('det_images_count_single')
+                                    : t('det_images_count', { count: String(contractor.portfolioImages.length) })})
                             </span>
                         </h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -474,7 +498,7 @@ function ContractorDetailContent() {
                 {contractor.portfolioImages.length === 0 && (
                     <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-8 text-center">
                         <Sparkles className="w-8 h-8 text-zinc-300 mx-auto mb-3" />
-                        <p className="text-sm text-zinc-400">No portfolio images uploaded yet.</p>
+                        <p className="text-sm text-zinc-400">{t('det_no_images')}</p>
                     </div>
                 )}
 
@@ -484,7 +508,7 @@ function ContractorDetailContent() {
                         <div className="flex items-center gap-2">
                             <MessageSquare className="w-5 h-5 text-violet-600" />
                             <h2 className="text-lg font-bold text-zinc-900">
-                                Client Reviews ({totalReviewsCount})
+                                {t('det_client_reviews', { count: String(totalReviewsCount) })}
                             </h2>
                         </div>
                         {contractor.averageRating !== undefined && contractor.totalReviews !== undefined && contractor.totalReviews > 0 && (
@@ -512,7 +536,7 @@ function ContractorDetailContent() {
                     ) : reviews.length === 0 ? (
                         <div className="text-center py-8">
                             <Star className="w-8 h-8 text-zinc-200 mx-auto mb-3" />
-                            <p className="text-zinc-500 text-sm">No reviews yet for this contractor.</p>
+                            <p className="text-zinc-500 text-sm">{t('det_no_reviews_yet_contractor')}</p>
                         </div>
                     ) : (
                         <div className="space-y-6 divide-y divide-zinc-100">
@@ -522,6 +546,15 @@ function ContractorDetailContent() {
                                     .map(n => n[0])
                                     .join('')
                                     .toUpperCase();
+
+                                const reviewDate = new Date(review.createdAt).toLocaleDateString(
+                                    language === 'hi' ? 'hi-IN' : 'en-IN',
+                                    {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric',
+                                    }
+                                );
 
                                 return (
                                     <div key={review.id} className={`pt-6 ${idx === 0 ? 'pt-0' : ''}`}>
@@ -543,11 +576,7 @@ function ContractorDetailContent() {
                                                 <div>
                                                     <h4 className="font-semibold text-sm text-zinc-900">{review.reviewer.name}</h4>
                                                     <span className="text-xs text-zinc-400">
-                                                        {new Date(review.createdAt).toLocaleDateString('en-IN', {
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            year: 'numeric',
-                                                        })}
+                                                        {reviewDate}
                                                     </span>
                                                 </div>
                                             </div>
@@ -584,13 +613,18 @@ function ContractorDetailContent() {
                                             <div className="mt-4 ml-4 pl-4 border-l-2 border-violet-200 bg-zinc-50/50 rounded-r-xl p-3 space-y-1">
                                                 <div className="flex items-center gap-1.5 text-xs text-zinc-500 font-semibold">
                                                     <Clock className="w-3 h-3 text-violet-500" />
-                                                    <span>Reply from {contractor.displayName}</span>
+                                                    <span>{t('det_reply_from', { name: contractor.displayName })}</span>
                                                     {review.designerRepliedAt && (
                                                         <span className="text-zinc-400 font-normal">
-                                                            on {new Date(review.designerRepliedAt).toLocaleDateString('en-IN', {
-                                                                month: 'short',
-                                                                day: 'numeric',
-                                                                year: 'numeric',
+                                                            {t('det_on_date', {
+                                                                date: new Date(review.designerRepliedAt).toLocaleDateString(
+                                                                    language === 'hi' ? 'hi-IN' : 'en-IN',
+                                                                    {
+                                                                        month: 'short',
+                                                                        day: 'numeric',
+                                                                        year: 'numeric',
+                                                                    }
+                                                                )
                                                             })}
                                                         </span>
                                                     )}
@@ -616,7 +650,9 @@ function ContractorDetailContent() {
                                 onClick={() => fetchReviews(reviewsPage + 1, true)}
                                 className="text-xs border-zinc-200 hover:bg-zinc-50 text-zinc-600 rounded-xl"
                             >
-                                {reviewsLoading ? 'Loading...' : 'Load More Reviews'}
+                                {reviewsLoading
+                                    ? (language === 'hi' ? 'लोड हो रहा है...' : 'Loading...')
+                                    : t('det_load_more_reviews')}
                             </Button>
                         </div>
                     )}

@@ -9,11 +9,13 @@ import {
 import { BeforeAfterSlider } from '@/components/ui/before-after-slider';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
+import { useUserStore } from '@/stores/user-store';
 
 type Stage      = 'upload' | 'place' | 'done';
 type AsyncState = 'idle' | 'loading' | 'done' | 'error';
 
 export default function FurniturePlacementPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const { toast } = useToast();
   const [stage, setStage] = useState<Stage>('upload');
 
@@ -150,6 +152,13 @@ export default function FurniturePlacementPage() {
           },
         }),
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Generation failed');
       setResultUrl(data.resultUrl + '?t=' + Date.now());

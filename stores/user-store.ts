@@ -76,6 +76,7 @@ interface UserState {
   mobileMenuOpen: boolean;
   notificationsOpen: boolean;
   commandPaletteOpen: boolean;
+  insufficientCreditsModalOpen: boolean;
   
   // Onboarding
   onboardingComplete: boolean;
@@ -131,6 +132,9 @@ interface UserActions {
   // Command Palette
   toggleCommandPalette: () => void;
   
+  // Credits Modal
+  setInsufficientCreditsModalOpen: (open: boolean) => void;
+  
   // Onboarding
   setOnboardingComplete: (complete: boolean) => void;
   setOnboardingStep: (step: number) => void;
@@ -181,6 +185,7 @@ const initialState: UserState = {
   mobileMenuOpen: false,
   notificationsOpen: false,
   commandPaletteOpen: false,
+  insufficientCreditsModalOpen: false,
   onboardingComplete: false,
   onboardingStep: 0,
 };
@@ -238,6 +243,7 @@ export const useUserStore = create<UserStore>()(
             state.isAuthenticated = false;
             state.subscription = null;
             state.credits = null;
+            state.insufficientCreditsModalOpen = false;
             state.onboardingComplete = false;
             state.onboardingStep = 0;
           }),
@@ -411,6 +417,11 @@ export const useUserStore = create<UserStore>()(
         toggleCommandPalette: () =>
           set((state) => {
             state.commandPaletteOpen = !state.commandPaletteOpen;
+          }),
+
+        setInsufficientCreditsModalOpen: (open) =>
+          set((state) => {
+            state.insufficientCreditsModalOpen = open;
           }),
 
         // ============================================

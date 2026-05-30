@@ -25,6 +25,7 @@ import {
   Sliders,
   ArrowRight,
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 import { MakeItReal } from "@/components/ai/MakeItReal";
 import { TRANSFER_PRESETS, StylePreset } from "@/src/config/transferPresets";
 
@@ -41,6 +42,7 @@ interface ResultState {
 }
 
 export default function StyleTransferPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const [roomFile, setRoomFile] = useState<File | null>(null);
   const [roomPreview, setRoomPreview] = useState<string | null>(null);
   
@@ -192,6 +194,12 @@ export default function StyleTransferPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await res.json();
 

@@ -36,8 +36,8 @@ import {
   Bath,
   UtensilsCrossed,
   Briefcase,
-  Sofa,
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 
 // ─── Stage definitions for progress bar ──────────────────────────────
 const STAGES = [
@@ -59,6 +59,7 @@ const roomTypes = [
 ];
 
 export default function ProfessionalDesignPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   // ─── Core state ────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -333,6 +334,12 @@ export default function ProfessionalDesignPage() {
         method: 'POST',
         body: formData,
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 

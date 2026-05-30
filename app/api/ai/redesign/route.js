@@ -15,7 +15,6 @@ import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { getAppMode } from '@/lib/ai/appMode';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 // Force Node.js runtime (Turbopack edge runtime can't do formData)
@@ -306,38 +305,22 @@ function buildRedesignWorkflow({
 export async function POST(request) {
   await connectDB();
   try {
-    const appMode = await getAppMode();
     const authUser = await getCurrentUser();
-    let finalUserId = '000000000000000000000000';
-
-    if (appMode === 'production') {
-      if (!authUser) {
-        return Response.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const deduction = await checkAndDeductCredits(authUser.id, 'redesign');
-      if (!deduction.success) {
-        if (deduction.code === 'INSUFFICIENT_CREDITS') {
-          return Response.json(
-            { error: "Insufficient credits. Please upgrade your plan." },
-            { status: 400 }
-          );
-        }
-        if (deduction.code === 'USER_NOT_FOUND') {
-          return Response.json({ error: 'User not found' }, { status: 404 });
-        }
-        return Response.json({ error: deduction.reason || 'Credit deduction failed' }, { status: 500 });
-      }
-
-      finalUserId = authUser.id;
-    } else {
-      if (authUser) {
-        finalUserId = authUser.id;
-        await checkAndDeductCredits(authUser.id, 'redesign').catch(err =>
-          console.error('Error updating lastRenderAt in dev mode:', err)
-        );
-      }
+    if (!authUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const deductResult = await checkAndDeductCredits(authUser.id, 'redesign');
+    if (!deductResult.success) {
+      return Response.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
+    const finalUserId = authUser.id;
 
     console.log('🎨 Starting room redesign...');
 

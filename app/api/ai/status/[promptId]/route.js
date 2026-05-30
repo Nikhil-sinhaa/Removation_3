@@ -1,12 +1,15 @@
-/**
- * API Route for checking generation status by prompt ID
- * Handles GET /api/ai/status/[promptId] requests
- */
-
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '../../../../../src/models/Project.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function GET(request, { params }) {
+  await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { promptId } = params;
     
     if (!promptId) {
@@ -15,8 +18,8 @@ export async function GET(request, { params }) {
       }, { status: 400 });
     }
 
-    // Find project by ID (using promptId as projectId)
-    const project = await Project.findById(promptId);
+    // Find project by ID (using promptId as projectId) and verify ownership
+    const project = await Project.findOne({ _id: promptId, userId: authUser.id });
     
     if (!project) {
       return Response.json({ 

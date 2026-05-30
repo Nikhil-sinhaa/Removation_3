@@ -13,6 +13,7 @@ import { BookingChat } from '@/components/booking/BookingChat';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -99,6 +100,7 @@ function RejectDialog({
     isLoading: boolean;
     error: string | null;
 }) {
+    const { t } = useLanguage();
     const [reason, setReason] = useState('');
 
     useEffect(() => {
@@ -109,24 +111,23 @@ function RejectDialog({
         <Dialog open={isOpen} onOpenChange={v => { if (!v) onClose(); }}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Reject Booking</DialogTitle>
+                    <DialogTitle>{t('desb_reject_title')}</DialogTitle>
                     <DialogDescription>
-                        Please provide a reason for the customer. This will be shown to them
-                        and stored for audit purposes.
+                        {t('desb_reject_desc')}
                     </DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-3">
                     <Textarea
                         id="rejection-reason"
-                        placeholder="e.g. I'm fully booked during this period and unable to take on new clients right now."
+                        placeholder={t('desb_reject_placeholder')}
                         value={reason}
                         onChange={e => setReason(e.target.value)}
                         rows={4}
                         className="resize-none"
                     />
                     <p className="text-xs text-zinc-400">
-                        {reason.trim().length}/500 characters (min 5)
+                        {t('desb_char_count', { count: String(reason.trim().length) })}
                     </p>
 
                     {error && (
@@ -139,7 +140,7 @@ function RejectDialog({
 
                 <DialogFooter>
                     <Button variant="outline" onClick={onClose} disabled={isLoading}>
-                        Cancel
+                        {t('cancel')}
                     </Button>
                     <Button
                         id="confirm-reject-btn"
@@ -148,11 +149,11 @@ function RejectDialog({
                         disabled={isLoading || reason.trim().length < 5}
                     >
                         {isLoading ? (
-                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Rejecting…</>
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t('desb_rejecting')}</>
                         ) : (
                             <>
                                 <XCircle className="w-4 h-4 mr-2" />
-                                Reject &amp; Refund
+                                {t('desb_reject_btn')}
                             </>
                         )}
                     </Button>
@@ -181,10 +182,25 @@ function DesignerBookingCard({
     onChat: (id: string, customerName: string) => void;
     unreadCount?: number;
 }) {
+    const { t, language } = useLanguage();
     const customer = typeof booking.customerId === 'object' ? booking.customerId : null;
     const status = STATUS_CONFIG[booking.status];
     const isPending = booking.status === 'pending_designer';
     const isThisLoading = actionLoading === booking._id;
+
+    // Translate status dynamically
+    const getStatusLabel = (statusKey: BookingStatus) => {
+        switch (statusKey) {
+            case 'pending_designer': return t('desb_action_required');
+            case 'confirmed': return t('myb_status_confirmed');
+            case 'rejected': return t('myb_status_rejected');
+            case 'cancelled_by_customer': return t('myb_status_cancelled');
+            case 'expired': return t('myb_status_expired');
+            case 'completed': return t('myb_status_completed');
+            case 'pending_payment': return t('myb_status_pending_payment');
+            default: return statusKey;
+        }
+    };
 
     // Deadline countdown display
     let deadlineLabel = '';
@@ -193,9 +209,9 @@ function DesignerBookingCard({
         if (msLeft > 0) {
             const hLeft = Math.floor(msLeft / 3600000);
             const mLeft = Math.floor((msLeft % 3600000) / 60000);
-            deadlineLabel = `${hLeft}h ${mLeft}m left to respond`;
+            deadlineLabel = t('desb_time_left', { hours: String(hLeft), minutes: String(mLeft) });
         } else {
-            deadlineLabel = 'Response window expired';
+            deadlineLabel = t('desb_window_expired');
         }
     }
 
@@ -242,7 +258,7 @@ function DesignerBookingCard({
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
                     {status && (
                         <Badge className={cn('gap-1 border', status.color)}>
-                            {status.label}
+                            {getStatusLabel(booking.status)}
                         </Badge>
                     )}
                     <p className="text-xs font-semibold text-zinc-700">
@@ -261,9 +277,11 @@ function DesignerBookingCard({
                             : <FileText className="w-4 h-4 text-violet-600" />}
                     </div>
                     <div>
-                        <p className="text-sm font-medium capitalize text-zinc-700">{booking.type}</p>
+                        <p className="text-sm font-medium capitalize text-zinc-700">
+                            {booking.type === 'consultation' ? t('dir_consultation') : t('desb_project_brief')}
+                        </p>
                         <p className="text-xs text-zinc-400">
-                            {new Date(booking.createdAt).toLocaleDateString('en-IN', {
+                            {new Date(booking.createdAt).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', {
                                 day: 'numeric',
                                 month: 'short',
                                 year: 'numeric',
@@ -275,8 +293,8 @@ function DesignerBookingCard({
                 {/* Consultation slot */}
                 {booking.type === 'consultation' && booking.consultationSlot && (
                     <div className="text-sm text-zinc-600 bg-zinc-50 rounded-lg px-3 py-2">
-                        <span className="text-zinc-400 text-xs block mb-0.5">Requested Slot</span>
-                        {new Date(booking.consultationSlot).toLocaleString('en-IN', {
+                        <span className="text-zinc-400 text-xs block mb-0.5">{t('desb_requested_slot')}</span>
+                        {new Date(booking.consultationSlot).toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', {
                             weekday: 'short',
                             day: 'numeric',
                             month: 'short',
@@ -287,7 +305,7 @@ function DesignerBookingCard({
                             timeZone: 'Asia/Kolkata',
                         })}
                         {booking.consultationDurationMinutes && (
-                            <span className="text-zinc-400"> · {booking.consultationDurationMinutes}min</span>
+                            <span className="text-zinc-400"> · {booking.consultationDurationMinutes}{language === 'hi' ? ' मिनट' : 'min'}</span>
                         )}
                     </div>
                 )}
@@ -295,7 +313,7 @@ function DesignerBookingCard({
                 {/* Project description */}
                 {booking.type === 'project' && booking.projectDescription && (
                     <div className="text-sm text-zinc-600 bg-zinc-50 rounded-lg px-3 py-2">
-                        <span className="text-zinc-400 text-xs block mb-0.5">Project Brief</span>
+                        <span className="text-zinc-400 text-xs block mb-0.5">{t('desb_project_brief')}</span>
                         <p className="line-clamp-3">{booking.projectDescription}</p>
                     </div>
                 )}
@@ -323,7 +341,7 @@ function DesignerBookingCard({
                         ) : (
                             <CheckCircle2 className="w-4 h-4 mr-2" />
                         )}
-                        Accept
+                        {t('accept')}
                     </Button>
                     <Button
                         id={`reject-booking-${booking._id}`}
@@ -333,7 +351,7 @@ function DesignerBookingCard({
                         disabled={!!actionLoading}
                     >
                         <X className="w-4 h-4 mr-2" />
-                        Reject
+                        {t('reject')}
                     </Button>
                 </div>
             )}
@@ -351,7 +369,7 @@ function DesignerBookingCard({
                         ) : (
                             <CheckCircle2 className="w-4 h-4 mr-2" />
                         )}
-                        Mark as Complete
+                        {t('desb_mark_complete')}
                     </Button>
                 </div>
             )}
@@ -366,7 +384,7 @@ function DesignerBookingCard({
                         onClick={() => onChat(booking._id, customer ? `${customer.firstName ?? ''} ${customer.lastName ?? ''}`.trim() || 'Customer' : 'Customer')}
                     >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Chat with Customer</span>
+                        <span>{t('desb_chat_with_customer')}</span>
                         {unreadCount > 0 && (
                             <span className="ml-1.5 bg-violet-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
                                 {unreadCount}
@@ -382,6 +400,7 @@ function DesignerBookingCard({
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function DesignerBookingsPage() {
+    const { t } = useLanguage();
     const router = useRouter();
     const { user, isLoading: authLoading } = useAuth();
 
@@ -521,7 +540,7 @@ export default function DesignerBookingsPage() {
     }
 
     async function handleComplete(id: string) {
-        const confirm = window.confirm("Are you sure you want to mark this booking as complete? This will allow the customer to leave a review.");
+        const confirm = window.confirm(t('desb_confirm_complete'));
         if (!confirm) return;
 
         setActionLoading(id);
@@ -573,11 +592,11 @@ export default function DesignerBookingsPage() {
     }
 
     const filterOptions = [
-        { value: '', label: 'Active Queue' },
-        { value: 'confirmed', label: 'Confirmed' },
-        { value: 'rejected', label: 'Rejected' },
-        { value: 'cancelled_by_customer', label: 'Cancelled' },
-        { value: 'completed', label: 'Completed' },
+        { value: '', label: t('desb_active_queue') },
+        { value: 'confirmed', label: t('myb_status_confirmed') },
+        { value: 'rejected', label: t('myb_status_rejected') },
+        { value: 'cancelled_by_customer', label: t('myb_status_cancelled') },
+        { value: 'completed', label: t('myb_status_completed') },
     ];
 
     return (
@@ -589,12 +608,14 @@ export default function DesignerBookingsPage() {
                 className="mb-6 flex items-center justify-between"
             >
                 <div>
-                    <h1 className="text-2xl font-bold text-zinc-900">Booking Requests</h1>
+                    <h1 className="text-2xl font-bold text-zinc-900">{t('desb_booking_requests')}</h1>
                     <p className="text-sm text-zinc-500 mt-0.5">
-                        {total} booking{total !== 1 ? 's' : ''}
+                        {t('myb_total_count', { count: String(total) })}
                         {pendingCount > 0 && (
                             <span className="ml-2 text-amber-600 font-medium">
-                                · {pendingCount} need{pendingCount === 1 ? 's' : ''} action
+                                {pendingCount === 1 
+                                    ? t('desb_need_action') 
+                                    : t('desb_needs_action', { count: String(pendingCount) })}
                             </span>
                         )}
                     </p>
@@ -658,9 +679,9 @@ export default function DesignerBookingsPage() {
                         className="text-center py-20 text-zinc-400"
                     >
                         <IndianRupee className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                        <p className="font-medium text-zinc-500">No bookings here</p>
+                        <p className="font-medium text-zinc-500">{t('desb_no_bookings')}</p>
                         <p className="text-sm mt-1">
-                            When customers book you, they'll appear here.
+                            {t('desb_no_bookings_desc')}
                         </p>
                     </motion.div>
                 ) : (
@@ -694,10 +715,10 @@ export default function DesignerBookingsPage() {
                         disabled={page <= 1}
                         onClick={() => fetchBookings(page - 1)}
                     >
-                        Previous
+                        {t('previous')}
                     </Button>
                     <span className="text-sm text-zinc-500">
-                        Page {page} of {pageCount}
+                        {t('page_x_of_y', { current: String(page), total: String(pageCount) })}
                     </span>
                     <Button
                         variant="outline"
@@ -705,7 +726,7 @@ export default function DesignerBookingsPage() {
                         disabled={page >= pageCount}
                         onClick={() => fetchBookings(page + 1)}
                     >
-                        Next
+                        {t('next')}
                     </Button>
                 </div>
             )}

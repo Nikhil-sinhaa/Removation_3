@@ -10,11 +10,30 @@ import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'auto-edit');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;
     const rawData = formData.get('data') as string;
@@ -24,14 +43,13 @@ export async function POST(request: Request) {
     const { objectToEdit = 'wall', editDescription = 'white painted wall', denoise = 0.55, detectThreshold = 0.35 } = data;
     const comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
     await mkdir(comfyInputDir, { recursive: true });
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
     const fn = `auto_edit_${Date.now()}.png`;
     await sharp(buffer).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, fn));
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
-    const project = await Project.create({ name: `Auto Edit — ${objectToEdit}`, userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-auto-edit', aiConfig: { objectToEdit, editDescription, denoise } });
+    const project = await Project.create({ name: `Auto Edit — ${objectToEdit}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-auto-edit', aiConfig: { objectToEdit, editDescription, denoise } });
     comfyBridge.enqueueSmartTabJob(project._id.toString(), 'auto-edit', { imageFilename: fn, objectToEdit, editDescription, denoise, detectThreshold }).catch((e: any) => console.error('❌ Auto-edit error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'auto-edit', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Auto-edit failed', message: error.message }, { status: 500 }); }
@@ -39,8 +57,12 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findById(projectId);
+  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

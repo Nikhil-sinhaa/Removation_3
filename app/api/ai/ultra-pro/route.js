@@ -33,6 +33,8 @@ import sharp from 'sharp';
 // Cloud-aware image saving
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { getGPUMode } from '@/lib/ai/gpu-mode-router';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 

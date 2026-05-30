@@ -42,6 +42,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { paiseToRupees } from '@/lib/booking/money';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -120,8 +121,8 @@ function generateSlots(daysAhead: number = 14): Date[] {
     return slots.slice(0, 200); // cap for render performance
 }
 
-function formatSlot(date: Date): string {
-    return date.toLocaleString('en-IN', {
+function formatSlot(date: Date, language: string): string {
+    return date.toLocaleString(language === 'hi' ? 'hi-IN' : 'en-IN', {
         weekday: 'short',
         month: 'short',
         day: 'numeric',
@@ -141,6 +142,7 @@ export function BookingModal({
     onSuccess,
     initialProjectDescription,
 }: BookingModalProps) {
+    const { t, language } = useLanguage();
     const [step, setStep] = useState<ModalStep>('select-type');
     const [bookingType, setBookingType] = useState<BookingType>('consultation');
     const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
@@ -171,14 +173,14 @@ export function BookingModal({
 
     function validateDetails(): string | null {
         if (bookingType === 'consultation') {
-            if (!selectedSlot) return 'Please select a time slot';
+            if (!selectedSlot) return t('bk_err_select_slot');
         }
         if (bookingType === 'project') {
             if (projectDescription.trim().length < 20) {
-                return 'Project description must be at least 20 characters';
+                return t('bk_err_desc_min');
             }
             if (projectDescription.trim().length > 2000) {
-                return 'Project description cannot exceed 2000 characters';
+                return t('bk_err_desc_max');
             }
         }
         return null;
@@ -283,14 +285,14 @@ export function BookingModal({
 
             const rzp = new (window as any).Razorpay(options);
             rzp.on('payment.failed', function (response: any) {
-                setError(response.error?.description || 'Payment failed. Please try again.');
+                setError(response.error?.description || t('bk_err_payment_failed'));
                 setStep('error');
                 setIsLoading(false);
             });
             rzp.open();
 
         } catch (err: any) {
-            setError(err.message || 'Something went wrong. Please try again.');
+            setError(err.message || t('bk_something_went_wrong'));
             setStep('error');
         } finally {
             setIsLoading(false);
@@ -315,7 +317,7 @@ export function BookingModal({
                 className="space-y-4"
             >
                 <p className="text-sm text-zinc-500">
-                    Choose how you'd like to work with <span className="font-medium text-zinc-800">{designer.displayName}</span>
+                    {t('bk_choose_work_style', { name: designer.displayName })}
                 </p>
 
                 <div className="space-y-3">
@@ -334,14 +336,13 @@ export function BookingModal({
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                    <p className="font-semibold text-zinc-800">Consultation</p>
+                                    <p className="font-semibold text-zinc-800">{t('det_consultation')}</p>
                                     <Badge className="bg-violet-100 text-violet-700 border-none">
                                         {paiseToRupees(designer.consultationFee.amount)}
                                     </Badge>
                                 </div>
                                 <p className="text-sm text-zinc-500 mt-0.5">
-                                    {designer.consultationDurationMinutes || 60}-minute 1:1 session
-                                    · Book a specific time slot
+                                    {t('bk_consultation_desc', { minutes: String(designer.consultationDurationMinutes || 60) })}
                                 </p>
                             </div>
                             <ChevronRight className="w-4 h-4 text-zinc-400 self-center flex-shrink-0" />
@@ -363,13 +364,13 @@ export function BookingModal({
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center justify-between">
-                                    <p className="font-semibold text-zinc-800">Project</p>
+                                    <p className="font-semibold text-zinc-800">{t('det_project')}</p>
                                     <Badge className="bg-indigo-100 text-indigo-700 border-none">
-                                        From {paiseToRupees(designer.projectMinFee.amount)}
+                                        {t('bk_project_from_amount', { amount: paiseToRupees(designer.projectMinFee.amount) })}
                                     </Badge>
                                 </div>
                                 <p className="text-sm text-zinc-500 mt-0.5">
-                                    Full interior design engagement · Designer will review and confirm
+                                    {t('bk_project_desc')}
                                 </p>
                             </div>
                             <ChevronRight className="w-4 h-4 text-zinc-400 self-center flex-shrink-0" />
@@ -380,7 +381,7 @@ export function BookingModal({
                         <Alert>
                             <Info className="h-4 w-4" />
                             <AlertDescription>
-                                This designer is not currently accepting bookings.
+                                {t('bk_not_accepting_bookings')}
                             </AlertDescription>
                         </Alert>
                     )}
@@ -405,17 +406,17 @@ export function BookingModal({
                         onClick={() => setStep('select-type')}
                         className="text-sm text-violet-600 hover:underline"
                     >
-                        ← Back
+                        ← {t('bk_back')}
                     </button>
                     <Badge variant="secondary" className="capitalize">
-                        {bookingType} · {feeDisplay}
+                        {bookingType === 'consultation' ? t('det_consultation') : t('det_project')} · {feeDisplay}
                     </Badge>
                 </div>
 
                 {/* Consultation: slot picker */}
                 {bookingType === 'consultation' && (
                     <div className="space-y-3">
-                        <p className="text-sm font-medium text-zinc-700">Select a time slot (IST)</p>
+                        <p className="text-sm font-medium text-zinc-700">{t('bk_select_slot')}</p>
                         <div className="max-h-52 overflow-y-auto space-y-1.5 pr-1">
                             {slots.map((slot, i) => (
                                 <button
@@ -430,7 +431,7 @@ export function BookingModal({
                                             : 'border-zinc-200 hover:border-violet-300 hover:bg-violet-50 text-zinc-700'
                                     )}
                                 >
-                                    {formatSlot(slot)}
+                                    {formatSlot(slot, language)}
                                 </button>
                             ))}
                         </div>
@@ -442,24 +443,24 @@ export function BookingModal({
                     <div className="space-y-3">
                         <div>
                             <label className="text-sm font-medium text-zinc-700 block mb-1.5">
-                                Describe your project *
+                                {t('bk_describe_project')}
                             </label>
                             <Textarea
                                 id="project-description"
-                                placeholder="Tell the designer about your space, style preferences, budget range, and what you'd like to achieve. Include room type, approximate area, and any specific requirements..."
+                                placeholder={t('bk_describe_project_placeholder')}
                                 value={projectDescription}
                                 onChange={e => setProjectDescription(e.target.value)}
                                 rows={5}
                                 className="resize-none"
                             />
                             <p className="text-xs text-zinc-400 mt-1">
-                                {projectDescription.trim().length}/2000 characters (min 20)
+                                {t('bk_character_count', { count: String(projectDescription.trim().length) })}
                             </p>
                         </div>
 
                         <div>
                             <label className="text-sm font-medium text-zinc-700 block mb-1.5">
-                                Preferred start date <span className="text-zinc-400 font-normal">(optional)</span>
+                                {t('bk_preferred_start_date')}
                             </label>
                             <input
                                 id="preferred-start-date"
@@ -478,7 +479,7 @@ export function BookingModal({
                     <div className="flex items-center justify-between p-3 bg-violet-50 rounded-xl">
                         <div className="flex items-center gap-2 text-sm text-violet-700">
                             <IndianRupee className="w-4 h-4" />
-                            <span>Payment required upfront</span>
+                            <span>{t('bk_payment_upfront')}</span>
                         </div>
                         <span className="font-bold text-violet-800">{feeDisplay}</span>
                     </div>
@@ -498,11 +499,11 @@ export function BookingModal({
                     disabled={isLoading || (bookingType === 'consultation' && !selectedSlot)}
                 >
                     <IndianRupee className="w-4 h-4 mr-2" />
-                    Pay {feeDisplay} &amp; Book
+                    {t('bk_pay_and_book', { fee: feeDisplay || '' })}
                 </Button>
 
                 <p className="text-xs text-center text-zinc-400">
-                    The designer has 48 hours to accept. You'll get a full refund if they decline.
+                    {t('bk_decline_refund_notice')}
                 </p>
             </motion.div>
         );
@@ -519,8 +520,8 @@ export function BookingModal({
                 <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-violet-100 flex items-center justify-center">
                     <Loader2 className="w-8 h-8 text-violet-600 animate-spin" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Creating your booking…</h3>
-                <p className="text-sm text-zinc-500">Opening payment. Please don't close this window.</p>
+                <h3 className="text-lg font-semibold mb-2">{t('bk_creating_booking')}</h3>
+                <p className="text-sm text-zinc-500">{t('bk_opening_payment_notice')}</p>
             </motion.div>
         );
     }
@@ -536,10 +537,9 @@ export function BookingModal({
                 <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-green-100 flex items-center justify-center">
                     <Check className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Booking Confirmed!</h3>
+                <h3 className="text-xl font-semibold mb-2">{t('bk_confirmed')}</h3>
                 <p className="text-sm text-zinc-500 mb-6">
-                    Payment received. {designer.displayName} has 48 hours to accept your booking.
-                    We'll notify you by email.
+                    {t('bk_confirmed_desc', { name: designer.displayName })}
                 </p>
                 <Button
                     id="booking-view-bookings-btn"
@@ -548,7 +548,7 @@ export function BookingModal({
                         window.location.href = '/my-bookings';
                     }}
                 >
-                    View My Bookings
+                    {t('bk_view_bookings')}
                 </Button>
             </motion.div>
         );
@@ -565,10 +565,10 @@ export function BookingModal({
                 <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
                     <X className="w-8 h-8 text-red-600" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Something went wrong</h3>
-                <p className="text-sm text-zinc-500 mb-6">{error || 'Payment could not be processed.'}</p>
+                <h3 className="text-xl font-semibold mb-2">{t('bk_something_went_wrong')}</h3>
+                <p className="text-sm text-zinc-500 mb-6">{error || t('bk_err_payment_failed')}</p>
                 <Button variant="outline" onClick={() => setStep('details')}>
-                    Try Again
+                    {t('bk_try_again')}
                 </Button>
             </motion.div>
         );
@@ -583,12 +583,12 @@ export function BookingModal({
                             <Calendar className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <span>Book {designer.displayName}</span>
+                            <span>{t('bk_book_designer', { name: designer.displayName })}</span>
                             <p className="text-sm font-normal text-zinc-500">{designer.city}</p>
                         </div>
                     </DialogTitle>
                     <DialogDescription className="sr-only">
-                        Book a designer consultation or project
+                        {t('bk_book_desc')}
                     </DialogDescription>
                 </DialogHeader>
 

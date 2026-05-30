@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Upload, Camera, CheckCircle, AlertCircle, Loader2, FileBox } from 'lucide-react';
+import { useLanguage } from '@/hooks/useLanguage';
 
 type UploadStatus = 'idle' | 'uploading' | 'processing' | 'done' | 'error';
 
@@ -20,6 +21,7 @@ interface ProjectStatus {
 }
 
 export default function FloorPlanPage() {
+  const { t } = useLanguage();
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [roomName, setRoomName] = useState('Living Room');
@@ -35,11 +37,11 @@ export default function FloorPlanPage() {
     if (selected.length === 0) return;
     
     if (selected.length < 3) {
-      setErrorMsg('Please select at least 3 photos');
+      setErrorMsg(t('fp_min_3'));
       return;
     }
     if (selected.length > 20) {
-      setErrorMsg('Maximum 20 photos allowed');
+      setErrorMsg(t('fp_max_20'));
       return;
     }
     
@@ -85,7 +87,7 @@ export default function FloorPlanPage() {
 
   const handleUpload = async () => {
     if (files.length < 3) {
-      setErrorMsg('Please select at least 3 photos');
+      setErrorMsg(t('fp_min_3'));
       return;
     }
     
@@ -134,11 +136,10 @@ export default function FloorPlanPage() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">
-          Floor Plan Generator
+          {t('fp_title')}
         </h1>
         <p className="text-gray-400">
-          Upload 5-12 photos of your room from different angles.
-          We'll reconstruct a 3D model and generate a floor plan.
+          {t('fp_subtitle')}
         </p>
       </div>
 
@@ -146,7 +147,7 @@ export default function FloorPlanPage() {
       <div className="bg-gray-800 rounded-xl p-4 mb-6 border border-gray-700">
         <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
           <Camera size={18} />
-          Photo Requirements
+          {t('fp_photo_req')}
         </h3>
         <div className="grid grid-cols-2 gap-3 text-sm text-gray-300">
           <div>✅ Minimum 3 photos (5-12 ideal)</div>
@@ -162,7 +163,7 @@ export default function FloorPlanPage() {
         <>
           {/* Room Name */}
           <div className="mb-4">
-            <label className="text-gray-300 text-sm mb-1 block">Room Name</label>
+            <label className="text-gray-300 text-sm mb-1 block">{t('fp_room_name')}</label>
             <input
               type="text"
               value={roomName}
@@ -179,10 +180,10 @@ export default function FloorPlanPage() {
           >
             <Upload className="mx-auto mb-4 text-gray-400" size={48} />
             <p className="text-white font-medium mb-1">
-              Click to upload room photos
+              {t('fp_upload_click')}
             </p>
             <p className="text-gray-400 text-sm">
-              JPG, PNG — 3 to 20 photos
+              {t('fp_upload_types')}
             </p>
           </div>
 
@@ -199,7 +200,7 @@ export default function FloorPlanPage() {
           {previews.length > 0 && (
             <div className="mb-6">
               <p className="text-gray-300 text-sm mb-3">
-                {files.length} photos selected
+                {t('fp_photos_selected', { count: String(files.length) })}
               </p>
               <div className="grid grid-cols-4 gap-2">
                 {previews.map((preview, i) => (
@@ -229,7 +230,7 @@ export default function FloorPlanPage() {
               onClick={handleUpload}
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl transition-colors"
             >
-              Start 3D Reconstruction
+              {t('fp_start_reconstruction')}
             </button>
           )}
         </>
@@ -240,10 +241,10 @@ export default function FloorPlanPage() {
         <div className="bg-gray-800 rounded-xl p-8 text-center border border-gray-700">
           <Loader2 className="mx-auto mb-4 text-purple-400 animate-spin" size={48} />
           <h3 className="text-white font-semibold text-lg mb-2">
-            {status === 'uploading' ? 'Uploading photos...' : 'Reconstructing 3D model...'}
+            {status === 'uploading' ? t('fp_uploading') : t('fp_reconstructing')}
           </h3>
           <p className="text-gray-400 text-sm mb-6">
-            {status === 'processing' && 'This takes 1-3 minutes depending on photo count'}
+            {status === 'processing' && t('fp_takes_time')}
           </p>
 
           {/* Processing Log */}
@@ -266,7 +267,7 @@ export default function FloorPlanPage() {
             <div className="flex items-center gap-3 mb-4">
               <CheckCircle className="text-green-400" size={28} />
               <h3 className="text-white font-semibold text-lg">
-                3D Reconstruction Complete!
+                {t('fp_done_title')}
               </h3>
             </div>
 
@@ -275,21 +276,21 @@ export default function FloorPlanPage() {
                 <div className="text-2xl font-bold text-white">
                   {projectData.pointCloud?.pointCount?.toLocaleString()}
                 </div>
-                <div className="text-gray-400 text-xs mt-1">3D Points</div>
+                <div className="text-gray-400 text-xs mt-1">{t('fp_3d_points')}</div>
               </div>
               <div className="bg-gray-800 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-white">
                   {projectData.pointCloud?.cameraCount}
                 </div>
                 <div className="text-gray-400 text-xs mt-1">
-                  Cameras Registered
+                  {t('fp_cameras')}
                 </div>
               </div>
               <div className="bg-gray-800 rounded-lg p-3 text-center">
                 <div className="text-2xl font-bold text-white">
                   {projectData.photoCount}
                 </div>
-                <div className="text-gray-400 text-xs mt-1">Photos Used</div>
+                <div className="text-gray-400 text-xs mt-1">{t('fp_photos_used')}</div>
               </div>
             </div>
 
@@ -299,8 +300,7 @@ export default function FloorPlanPage() {
             </div>
 
             <div className="mt-4 p-3 bg-blue-900/30 border border-blue-500/30 rounded-lg text-blue-300 text-sm">
-              ✅ Phase 1 complete. Point cloud saved.
-              Phase 2 will extract the floor outline from this point cloud.
+              {t('fp_phase1_done')}
             </div>
           </div>
 
@@ -308,7 +308,7 @@ export default function FloorPlanPage() {
             onClick={reset}
             className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl transition-colors"
           >
-            Start New Room
+            {t('fp_start_new')}
           </button>
         </div>
       )}
@@ -318,7 +318,7 @@ export default function FloorPlanPage() {
         <div className="bg-red-900/30 border border-red-500 rounded-xl p-6">
           <div className="flex items-center gap-3 mb-3">
             <AlertCircle className="text-red-400" size={28} />
-            <h3 className="text-white font-semibold">Reconstruction Failed</h3>
+            <h3 className="text-white font-semibold">{t('fp_failed_title')}</h3>
           </div>
           <p className="text-red-300 text-sm mb-4">{errorMsg}</p>
 
@@ -338,7 +338,7 @@ export default function FloorPlanPage() {
             onClick={reset}
             className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-xl transition-colors"
           >
-            Try Again
+            {t('fp_try_again')}
           </button>
         </div>
       )}

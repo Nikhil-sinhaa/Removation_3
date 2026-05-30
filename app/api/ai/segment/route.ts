@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 // Mock SAM 2 segmentation API
 // In production, this would integrate with the actual SAM 2 model
 export async function POST(request: NextRequest) {
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const deductResult = await checkAndDeductCredits(authUser.id, 'segment');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const { imageUrl, point } = await request.json();
 
     if (!imageUrl || !point) {

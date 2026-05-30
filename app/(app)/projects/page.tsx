@@ -100,6 +100,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // Animation variants
 const containerVariants = {
@@ -335,22 +336,22 @@ const sampleProjects: Project[] = [
 ];
 
 const roomTypeFilters = [
-  { label: 'All Rooms', value: 'all', icon: LayoutGrid },
-  { label: 'Living Room', value: 'Living Room', icon: Home },
-  { label: 'Bedroom', value: 'Bedroom', icon: Bed },
-  { label: 'Kitchen', value: 'Kitchen', icon: ChefHat },
-  { label: 'Bathroom', value: 'Bathroom', icon: Bath },
-  { label: 'Office', value: 'Office', icon: Briefcase },
-  { label: 'Dining', value: 'Dining Room', icon: Utensils },
-  { label: 'Outdoor', value: 'Outdoor', icon: TreePine },
+  { label: 'All Rooms', value: 'all', icon: LayoutGrid, key: 'all_rooms' },
+  { label: 'Living Room', value: 'Living Room', icon: Home, key: 'room_living_room' },
+  { label: 'Bedroom', value: 'Bedroom', icon: Bed, key: 'room_bedroom' },
+  { label: 'Kitchen', value: 'Kitchen', icon: ChefHat, key: 'room_kitchen' },
+  { label: 'Bathroom', value: 'Bathroom', icon: Bath, key: 'room_bathroom' },
+  { label: 'Office', value: 'Office', icon: Briefcase, key: 'room_office' },
+  { label: 'Dining', value: 'Dining Room', icon: Utensils, key: 'room_dining_room' },
+  { label: 'Outdoor', value: 'Outdoor', icon: TreePine, key: 'outdoor_rooms' },
 ];
 
-const sortOptions: { label: string; value: SortOption; icon: React.ElementType }[] = [
-  { label: 'Last Modified', value: 'updatedAt', icon: Clock },
-  { label: 'Date Created', value: 'createdAt', icon: Calendar },
-  { label: 'Name A-Z', value: 'name', icon: SortAsc },
-  { label: 'Most Renders', value: 'rendersCount', icon: Layers },
-  { label: 'Vastu Score', value: 'vastuScore', icon: Compass },
+const sortOptions: { label: string; value: SortOption; icon: React.ElementType; key: string }[] = [
+  { label: 'Last Modified', value: 'updatedAt', icon: Clock, key: 'proj_sort_modified' },
+  { label: 'Date Created', value: 'createdAt', icon: Calendar, key: 'proj_sort_created' },
+  { label: 'Name A-Z', value: 'name', icon: SortAsc, key: 'proj_sort_name' },
+  { label: 'Most Renders', value: 'rendersCount', icon: Layers, key: 'proj_sort_renders' },
+  { label: 'Vastu Score', value: 'vastuScore', icon: Compass, key: 'proj_sort_vastu' },
 ];
 
 // Skeleton Components
@@ -387,6 +388,7 @@ function ProjectListSkeleton() {
 
 // Stats Bar Component
 function StatsBar({ projects }: { projects: Project[] }) {
+  const { t } = useLanguage();
   const totalProjects = projects.filter((p) => !p.isArchived).length;
   const totalRenders = projects.reduce((acc, p) => acc + p.rendersCount, 0);
   const avgVastuScore = Math.round(
@@ -398,13 +400,13 @@ function StatsBar({ projects }: { projects: Project[] }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       {[
-        { label: 'Total Projects', value: totalProjects, icon: Folder, color: 'violet' },
-        { label: 'AI Renders', value: totalRenders, icon: Sparkles, color: 'pink' },
-        { label: 'Avg Vastu Score', value: avgVastuScore, icon: Compass, color: 'orange' },
-        { label: 'Favorites', value: favoriteCount, icon: Heart, color: 'red' },
+        { label: t('proj_total_projects_count'), key: 'total', value: totalProjects, icon: Folder, color: 'violet' },
+        { label: t('proj_ai_renders_count'), key: 'renders', value: totalRenders, icon: Sparkles, color: 'pink' },
+        { label: t('proj_avg_vastu_score'), key: 'vastu', value: avgVastuScore, icon: Compass, color: 'orange' },
+        { label: t('proj_favorites_count'), key: 'favorites', value: favoriteCount, icon: Heart, color: 'red' },
       ].map((stat) => (
         <motion.div
-          key={stat.label}
+          key={stat.key}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-xl border border-gray-100 p-4 flex items-center gap-3"
@@ -438,6 +440,26 @@ function StatsBar({ projects }: { projects: Project[] }) {
   );
 }
 
+const translateRoomType = (roomType: string, t: any) => {
+  const mapping: Record<string, string> = {
+    'Living Room': 'room_living_room',
+    'Bedroom': 'room_bedroom',
+    'Kitchen': 'room_kitchen',
+    'Bathroom': 'room_bathroom',
+    'Office': 'room_office',
+    'Dining Room': 'room_dining_room',
+    'Outdoor': 'outdoor_rooms',
+  };
+  const key = mapping[roomType];
+  return key ? t(key) : roomType;
+};
+
+const translateStyle = (style: string, t: any) => {
+  const normalized = `style_${style.toLowerCase().replace(/[\s-]/g, '_')}`;
+  const translation = t(normalized);
+  return translation !== normalized ? translation : style;
+};
+
 // Project Card Component
 function ProjectCard({
   project,
@@ -449,6 +471,9 @@ function ProjectCard({
   onCompare,
   downloadingProjectId,
   onDownloadMultiRoom,
+  onRename,
+  onDuplicate,
+  onDelete,
 }: {
   project: Project;
   index: number;
@@ -459,7 +484,11 @@ function ProjectCard({
   onCompare?: (project: Project) => void;
   downloadingProjectId: string | null;
   onDownloadMultiRoom: (id: string, name: string) => void;
+  onRename?: (project: Project) => void;
+  onDuplicate?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
+  const { t, language } = useLanguage();
   const RoomIcon = roomTypeIcons[project.roomType] || Folder;
   const colors = roomTypeColors[project.roomType] || {
     bg: 'bg-gray-100',
@@ -474,6 +503,12 @@ function ProjectCard({
   };
 
   const formatCost = (cost: number) => {
+    if (language === 'hi') {
+      if (cost >= 10000000) return `₹${(cost / 10000000).toFixed(1)} करोड़`;
+      if (cost >= 100000) return `₹${(cost / 100000).toFixed(1)} लाख`;
+      if (cost >= 1000) return `₹${(cost / 1000).toFixed(1)} हज़ार`;
+      return `₹${cost}`;
+    }
     if (cost >= 100000) return `₹${(cost / 100000).toFixed(1)}L`;
     if (cost >= 1000) return `₹${(cost / 1000).toFixed(0)}K`;
     return `₹${cost}`;
@@ -560,7 +595,7 @@ function ProjectCard({
           {project.status === 'processing' && (
             <div className="absolute top-3 right-3 flex items-center gap-1.5 px-2 py-1 bg-violet-500 text-white rounded-lg text-xs font-medium">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Processing
+              {t('proj_processing')}
             </div>
           )}
 
@@ -571,7 +606,7 @@ function ProjectCard({
               download
               onClick={(e) => e.stopPropagation()} // prevent card click
               className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-lg transition-colors z-20 animate-fade-in"
-              title="Download all photos"
+              title={t('proj_download_tooltip')}
             >
               <Download size={16} />
             </a>
@@ -593,7 +628,7 @@ function ProjectCard({
                     {project.vastuScore}
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>Vastu Score</TooltipContent>
+                <TooltipContent>{t('proj_vastu_score_tooltip')}</TooltipContent>
               </Tooltip>
             )}
 
@@ -620,10 +655,10 @@ function ProjectCard({
             )}
             <div className="flex items-center gap-2 mt-1">
               <span className={cn('px-2 py-0.5 rounded text-xs font-medium', colors.bg, colors.text)}>
-                {project.roomType}
+                {translateRoomType(project.roomType, t)}
               </span>
               <span className="text-xs text-gray-400">•</span>
-              <span className="text-xs text-gray-500 truncate">{project.style}</span>
+              <span className="text-xs text-gray-500 truncate">{translateStyle(project.style, t)}</span>
             </div>
           </div>
 
@@ -643,7 +678,7 @@ function ProjectCard({
                   <Heart className={cn('w-4 h-4', project.isFavorite && 'fill-current')} />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>{project.isFavorite ? 'Remove from favorites' : 'Add to favorites'}</TooltipContent>
+              <TooltipContent>{project.isFavorite ? t('proj_remove_fav') : t('proj_add_fav')}</TooltipContent>
             </Tooltip>
 
             <DropdownMenu>
@@ -656,40 +691,40 @@ function ProjectCard({
                 <DropdownMenuItem asChild>
                   <Link href={getProjectDetailUrl(project)} className="flex items-center w-full cursor-pointer">
                     <Eye className="w-4 h-4 mr-2" />
-                    View Details
+                    {t('proj_view_details')}
                   </Link>
                 </DropdownMenuItem>
                 {project.thumbnail && project.resultImage && onCompare && (
                   <DropdownMenuItem onClick={() => onCompare(project)}>
                     <SlidersHorizontal className="w-4 h-4 mr-2" />
-                    Compare Before/After
+                    {t('proj_compare')}
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onRename?.(project)}>
                   <Edit3 className="w-4 h-4 mr-2" />
-                  Rename
+                  {t('proj_action_rename')}
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDuplicate?.(project.id)}>
                   <Copy className="w-4 h-4 mr-2" />
-                  Duplicate
+                  {t('proj_action_duplicate')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Share2 className="w-4 h-4 mr-2" />
-                  Share
+                  {t('proj_action_share')}
                 </DropdownMenuItem>
                 <DropdownMenuItem>
                   <Download className="w-4 h-4 mr-2" />
-                  Export All
+                  {t('proj_action_export_all')}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <Archive className="w-4 h-4 mr-2" />
-                  Archive
+                  {t('proj_action_archive')}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-red-600" onClick={() => onDelete?.(project.id)}>
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete
+                  {t('proj_action_delete')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -700,7 +735,7 @@ function ProjectCard({
         {project.estimatedCost && (
           <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
             <IndianRupee className="w-3.5 h-3.5" />
-            <span>Est. {formatCost(project.estimatedCost)}</span>
+            <span>{t('proj_estimated_cost_prefix', { cost: formatCost(project.estimatedCost) })}</span>
           </div>
         )}
 
@@ -738,6 +773,9 @@ function ProjectListItem({
   onToggleFavorite,
   downloadingProjectId,
   onDownloadMultiRoom,
+  onRename,
+  onDuplicate,
+  onDelete,
 }: {
   project: Project;
   isSelected: boolean;
@@ -745,7 +783,11 @@ function ProjectListItem({
   onToggleFavorite: (id: string) => void;
   downloadingProjectId: string | null;
   onDownloadMultiRoom: (id: string, name: string) => void;
+  onRename?: (project: Project) => void;
+  onDuplicate?: (id: string) => void;
+  onDelete?: (id: string) => void;
 }) {
+  const { t, language } = useLanguage();
   const RoomIcon = roomTypeIcons[project.roomType] || Folder;
   const colors = roomTypeColors[project.roomType] || {
     bg: 'bg-gray-100',
@@ -760,6 +802,12 @@ function ProjectListItem({
   };
 
   const formatCost = (cost: number) => {
+    if (language === 'hi') {
+      if (cost >= 10000000) return `₹${(cost / 10000000).toFixed(1)} करोड़`;
+      if (cost >= 100000) return `₹${(cost / 100000).toFixed(1)} लाख`;
+      if (cost >= 1000) return `₹${(cost / 1000).toFixed(1)} हज़ार`;
+      return `₹${cost}`;
+    }
     if (cost >= 100000) return `₹${(cost / 100000).toFixed(1)}L`;
     if (cost >= 1000) return `₹${(cost / 1000).toFixed(0)}K`;
     return `₹${cost}`;
@@ -803,13 +851,13 @@ function ProjectListItem({
             {project.name}
           </h3>
         </Link>
-        <p className="text-sm text-gray-500 truncate">{project.style}</p>
+        <p className="text-sm text-gray-500 truncate">{translateStyle(project.style, t)}</p>
       </div>
 
       {/* Room Type */}
       <div className="hidden md:block">
         <span className={cn('px-2 py-1 rounded text-xs font-medium', colors.bg, colors.text)}>
-          {project.roomType}
+          {translateRoomType(project.roomType, t)}
         </span>
       </div>
 
@@ -847,7 +895,7 @@ function ProjectListItem({
             download
             onClick={(e) => e.stopPropagation()} // prevent row click
             className="p-2 text-violet-600 hover:bg-violet-50 rounded-lg transition-colors z-10"
-            title="Download all photos"
+            title={t('proj_download_tooltip')}
           >
             <Download className="w-4 h-4" />
           </a>
@@ -875,21 +923,21 @@ function ProjectListItem({
             <DropdownMenuItem asChild>
               <Link href={getProjectDetailUrl(project)} className="flex items-center w-full cursor-pointer">
                 <ExternalLink className="w-4 h-4 mr-2" />
-                Open
+                {t('proj_action_open')}
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onRename?.(project)}>
               <Edit3 className="w-4 h-4 mr-2" />
-              Rename
+              {t('proj_action_rename')}
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDuplicate?.(project.id)}>
               <Copy className="w-4 h-4 mr-2" />
-              Duplicate
+              {t('proj_action_duplicate')}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
+            <DropdownMenuItem className="text-red-600" onClick={() => onDelete?.(project.id)}>
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete
+              {t('proj_action_delete')}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -903,6 +951,7 @@ export default function ProjectsPage() {
   const { user, isLoading: isLoaded } = useAuth();
   const isSignedIn = !!user;
   const { toast } = useToast();
+  const { t, language } = useLanguage();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // State
@@ -922,8 +971,8 @@ export default function ProjectsPage() {
   const handleDownloadMultiRoom = async (projectId: string, projectName: string) => {
     setDownloadingProjectId(projectId);
     toast({
-      title: 'Preparing Download',
-      description: `Gathering photos for "${projectName}"...`,
+      title: t('proj_preparing_download'),
+      description: t('proj_gathering_photos', { name: projectName }),
     });
     try {
       const res = await fetch(`/api/multi-room/project-detail/${projectId}`);
@@ -931,14 +980,14 @@ export default function ProjectsPage() {
       const data = await res.json();
       await downloadMultiRoomZip(data.projectId, data.photos);
       toast({
-        title: 'Success',
-        description: 'Photos downloaded successfully!',
+        title: t('proj_download_success_title'),
+        description: t('proj_download_success_desc'),
       });
     } catch (err) {
       console.error(err);
       toast({
-        title: 'Error',
-        description: 'Failed to download ZIP file.',
+        title: t('proj_download_error_title'),
+        description: t('proj_download_error_desc'),
         variant: 'destructive',
       });
     } finally {
@@ -1094,10 +1143,10 @@ export default function ProjectsPage() {
       prev.map((p) => (p.id === id ? { ...p, isFavorite: !p.isFavorite } : p))
     );
     toast({
-      title: 'Updated',
-      description: 'Favorite status changed',
+      title: t('proj_updated_toast_title'),
+      description: t('proj_updated_toast_desc'),
     });
-  }, [toast]);
+  }, [toast, t]);
 
   // Delete project
   const deleteProject = useCallback(
@@ -1111,23 +1160,24 @@ export default function ProjectsPage() {
       setShowDeleteDialog(false);
       setProjectToDelete(null);
       toast({
-        title: 'Deleted',
-        description: 'Project has been deleted',
+        title: t('proj_deleted_toast_title'),
+        description: t('proj_deleted_toast_desc_single'),
       });
     },
-    [toast]
+    [toast, t]
   );
 
   // Delete selected projects
   const deleteSelectedProjects = useCallback(() => {
+    const deletedCount = selectedProjects.size;
     setProjects((prev) => prev.filter((p) => !selectedProjects.has(p.id)));
     setSelectedProjects(new Set());
     setShowDeleteDialog(false);
     toast({
-      title: 'Deleted',
-      description: `${selectedProjects.size} projects have been deleted`,
+      title: t('proj_deleted_toast_title'),
+      description: t('proj_deleted_toast_desc_multiple', { count: deletedCount.toString() }),
     });
-  }, [selectedProjects, toast]);
+  }, [selectedProjects, toast, t]);
 
   // Duplicate project
   const duplicateProject = useCallback(
@@ -1137,19 +1187,19 @@ export default function ProjectsPage() {
         const newProject: Project = {
           ...project,
           id: Date.now().toString(),
-          name: `${project.name} (Copy)`,
+          name: `${project.name} (${language === 'hi' ? 'कॉपी' : 'Copy'})`,
           createdAt: new Date().toISOString(),
-          updatedAt: 'Just now',
+          updatedAt: language === 'hi' ? 'अभी-अभी' : 'Just now',
           isFavorite: false,
         };
         setProjects((prev) => [newProject, ...prev]);
         toast({
-          title: 'Duplicated',
-          description: 'Project has been duplicated',
+          title: t('proj_duplicated_toast_title'),
+          description: t('proj_duplicated_toast_desc'),
         });
       }
     },
-    [projects, toast]
+    [projects, toast, t, language]
   );
 
   // Rename project
@@ -1165,10 +1215,10 @@ export default function ProjectsPage() {
     setProjectToRename(null);
     setNewProjectName('');
     toast({
-      title: 'Renamed',
-      description: 'Project has been renamed',
+      title: t('proj_renamed_toast_title'),
+      description: t('proj_renamed_toast_desc'),
     });
-  }, [projectToRename, newProjectName, toast]);
+  }, [projectToRename, newProjectName, toast, t]);
 
   return (
     <TooltipProvider>
@@ -1184,9 +1234,9 @@ export default function ProjectsPage() {
           className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6"
         >
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('proj_title')}</h1>
             <p className="text-gray-500 mt-1">
-              Manage and organize your interior design projects
+              {t('proj_subtitle')}
             </p>
           </div>
 
@@ -1196,10 +1246,10 @@ export default function ProjectsPage() {
               <TooltipTrigger asChild>
                 <div className="hidden lg:flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg text-sm text-gray-500">
                   <span className="font-mono text-xs bg-white px-1.5 py-0.5 rounded border">N</span>
-                  <span>New</span>
+                  <span>{t('proj_new')}</span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>Press N to create new project</TooltipContent>
+              <TooltipContent>{language === 'hi' ? 'नया प्रोजेक्ट बनाने के लिए N दबाएं' : 'Press N to create new project'}</TooltipContent>
             </Tooltip>
 
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -1208,7 +1258,7 @@ export default function ProjectsPage() {
                 className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-violet-600/25 hover:shadow-xl hover:shadow-violet-600/30 transition-all duration-300"
               >
                 <Plus className="w-5 h-5" />
-                <span>New Project</span>
+                <span>{t('proj_new_project')}</span>
               </Link>
             </motion.div>
           </div>
@@ -1227,25 +1277,25 @@ export default function ProjectsPage() {
           <Tabs value={tabFilter} onValueChange={(v) => setTabFilter(v as TabFilter)}>
             <TabsList className="bg-gray-100/80 p-1">
               <TabsTrigger value="all" className="data-[state=active]:bg-white">
-                All Projects
+                {t('proj_tab_all')}
                 <Badge variant="secondary" className="ml-2 bg-gray-200">
                   {projects.filter((p) => !p.isArchived).length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="favorites" className="data-[state=active]:bg-white">
                 <Heart className="w-4 h-4 mr-1.5" />
-                Favorites
+                {t('proj_tab_favorites')}
                 <Badge variant="secondary" className="ml-2 bg-gray-200">
                   {projects.filter((p) => p.isFavorite).length}
                 </Badge>
               </TabsTrigger>
               <TabsTrigger value="recent" className="data-[state=active]:bg-white">
                 <Clock className="w-4 h-4 mr-1.5" />
-                Recent
+                {t('proj_tab_recent')}
               </TabsTrigger>
               <TabsTrigger value="archived" className="data-[state=active]:bg-white">
                 <Archive className="w-4 h-4 mr-1.5" />
-                Archived
+                {t('proj_tab_archived')}
                 <Badge variant="secondary" className="ml-2 bg-gray-200">
                   {projects.filter((p) => p.isArchived).length}
                 </Badge>
@@ -1268,7 +1318,7 @@ export default function ProjectsPage() {
               <Input
                 ref={searchInputRef}
                 type="text"
-                placeholder="Search projects, styles, tags... (⌘K)"
+                placeholder={t('proj_search_placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-12 pr-10 py-2.5 bg-gray-50 border-gray-200 rounded-xl focus:ring-2 focus:ring-violet-500"
@@ -1300,10 +1350,10 @@ export default function ProjectsPage() {
                         )}
                       >
                         <Icon className="w-4 h-4" />
-                        <span className="hidden sm:inline">{type.label}</span>
+                        <span className="hidden sm:inline">{t(type.key as any) || type.label}</span>
                       </button>
                     </TooltipTrigger>
-                    <TooltipContent className="sm:hidden">{type.label}</TooltipContent>
+                    <TooltipContent className="sm:hidden">{t(type.key as any) || type.label}</TooltipContent>
                   </Tooltip>
                 );
               })}
@@ -1317,7 +1367,10 @@ export default function ProjectsPage() {
                   <Button variant="outline" className="gap-2">
                     <ArrowUpDown className="w-4 h-4" />
                     <span className="hidden sm:inline">
-                      {sortOptions.find((o) => o.value === sortBy)?.label}
+                      {(() => {
+                        const currentOption = sortOptions.find((o) => o.value === sortBy);
+                        return currentOption ? (t(currentOption.key as any) || currentOption.label) : '';
+                      })()}
                     </span>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
@@ -1339,7 +1392,7 @@ export default function ProjectsPage() {
                         className={cn(sortBy === option.value && 'bg-violet-50 text-violet-700')}
                       >
                         <Icon className="w-4 h-4 mr-2" />
-                        {option.label}
+                        {t(option.key as any) || option.label}
                         {sortBy === option.value && (
                           <span className="ml-auto text-xs">
                             {sortOrder === 'desc' ? '↓' : '↑'}
@@ -1367,7 +1420,7 @@ export default function ProjectsPage() {
                       <Grid3X3 className="w-5 h-5" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>Grid view (V)</TooltipContent>
+                  <TooltipContent>{language === 'hi' ? 'ग्रिड दृश्य (V)' : 'Grid view (V)'}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -1383,7 +1436,7 @@ export default function ProjectsPage() {
                       <List className="w-5 h-5" />
                     </button>
                   </TooltipTrigger>
-                  <TooltipContent>List view (V)</TooltipContent>
+                  <TooltipContent>{language === 'hi' ? 'सूची दृश्य (V)' : 'List view (V)'}</TooltipContent>
                 </Tooltip>
               </div>
             </div>
@@ -1406,24 +1459,24 @@ export default function ProjectsPage() {
                     onCheckedChange={selectAll}
                   />
                   <span className="text-sm font-medium text-violet-700">
-                    {selectedProjects.size} selected
+                    {language === 'hi' ? `${selectedProjects.size} चयनित` : `${selectedProjects.size} selected`}
                   </span>
                   <button
                     onClick={() => setSelectedProjects(new Set())}
                     className="text-sm text-violet-600 hover:text-violet-700 underline"
                   >
-                    Clear
+                    {language === 'hi' ? 'साफ़ करें' : 'Clear'}
                   </button>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" className="gap-2">
                     <Download className="w-4 h-4" />
-                    Export
+                    {language === 'hi' ? 'निर्यात करें' : 'Export'}
                   </Button>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Archive className="w-4 h-4" />
-                    Archive
+                    {language === 'hi' ? 'संग्रह करें' : 'Archive'}
                   </Button>
                   <Button
                     variant="destructive"
@@ -1432,7 +1485,7 @@ export default function ProjectsPage() {
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete
+                    {language === 'hi' ? 'हटाएं' : 'Delete'}
                   </Button>
                 </div>
               </div>
@@ -1499,22 +1552,22 @@ export default function ProjectsPage() {
                   />
                   <div className="w-12" />
                   <div className="flex-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Name
+                    {language === 'hi' ? 'नाम' : 'Name'}
                   </div>
                   <div className="hidden md:block w-24 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Room
+                    {language === 'hi' ? 'कमरा' : 'Room'}
                   </div>
                   <div className="hidden lg:block w-16 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Vastu
+                    {language === 'hi' ? 'वास्तु' : 'Vastu'}
                   </div>
                   <div className="hidden xl:block w-20 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Est. Cost
+                    {language === 'hi' ? 'अनुमानित लागत' : 'Est. Cost'}
                   </div>
                   <div className="hidden sm:block w-16 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Renders
+                    {language === 'hi' ? 'रेंडर्स' : 'Renders'}
                   </div>
                   <div className="hidden md:block w-24 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Modified
+                    {language === 'hi' ? 'संशोधित' : 'Modified'}
                   </div>
                   <div className="w-20" />
                 </div>
@@ -1523,13 +1576,13 @@ export default function ProjectsPage() {
                 <AnimatePresence mode="popLayout">
                   {filteredProjects.map((project) => (
                     <ProjectListItem
-                      key={project.id}
-                      project={project}
-                      isSelected={selectedProjects.has(project.id)}
-                      onSelect={toggleSelection}
-                      onToggleFavorite={toggleFavorite}
-                      downloadingProjectId={downloadingProjectId}
-                      onDownloadMultiRoom={handleDownloadMultiRoom}
+                       key={project.id}
+                       project={project}
+                       isSelected={selectedProjects.has(project.id)}
+                       onSelect={toggleSelection}
+                       onToggleFavorite={toggleFavorite}
+                       downloadingProjectId={downloadingProjectId}
+                       onDownloadMultiRoom={handleDownloadMultiRoom}
                     />
                   ))}
                 </AnimatePresence>
@@ -1555,22 +1608,22 @@ export default function ProjectsPage() {
 
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
                 {searchQuery
-                  ? 'No matching projects'
+                  ? (language === 'hi' ? 'कोई मेल खाने वाले प्रोजेक्ट नहीं' : 'No matching projects')
                   : tabFilter === 'favorites'
-                  ? 'No favorites yet'
+                  ? (language === 'hi' ? 'अभी तक कोई पसंदीदा नहीं' : 'No favorites yet')
                   : tabFilter === 'archived'
-                  ? 'No archived projects'
-                  : 'No projects yet'}
+                  ? (language === 'hi' ? 'कोई संग्रहीत प्रोजेक्ट नहीं' : 'No archived projects')
+                  : (language === 'hi' ? 'अभी तक कोई प्रोजेक्ट नहीं' : 'No projects yet')}
               </h3>
 
               <p className="text-gray-500 mb-8 max-w-md mx-auto">
                 {searchQuery
-                  ? `No projects matching "${searchQuery}". Try a different search term.`
+                  ? (language === 'hi' ? `कोई प्रोजेक्ट "${searchQuery}" से मेल नहीं खाता। कोई दूसरा शब्द खोजें।` : `No projects matching "${searchQuery}". Try a different search term.`)
                   : tabFilter === 'favorites'
-                  ? 'Mark your favorite projects with a heart to see them here.'
+                  ? (language === 'hi' ? 'अपने पसंदीदा प्रोजेक्ट्स को दिल के निशान से चिह्नित करें ताकि वे यहाँ दिखाई दे सकें।' : 'Mark your favorite projects with a heart to see them here.')
                   : tabFilter === 'archived'
-                  ? 'Archived projects will appear here.'
-                  : 'Create your first project and start transforming spaces with AI-powered interior design.'}
+                  ? (language === 'hi' ? 'संग्रहीत प्रोजेक्ट यहाँ दिखाई देंगे।' : 'Archived projects will appear here.')
+                  : (language === 'hi' ? 'अपना पहला प्रोजेक्ट बनाएं और एआई-संचालित इंटीरियर डिज़ाइन के साथ स्थानों को बदलना शुरू करें।' : 'Create your first project and start transforming spaces with AI-powered interior design.')}
               </p>
 
               {!searchQuery && tabFilter === 'all' && (
@@ -1580,7 +1633,7 @@ export default function ProjectsPage() {
                     className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl shadow-lg shadow-violet-600/25 hover:shadow-xl hover:shadow-violet-600/30 transition-all"
                   >
                     <Plus className="w-5 h-5" />
-                    Create Your First Project
+                    {language === 'hi' ? 'अपना पहला प्रोजेक्ट बनाएं' : 'Create Your First Project'}
                   </Link>
                 </motion.div>
               )}
@@ -1588,7 +1641,7 @@ export default function ProjectsPage() {
               {searchQuery && (
                 <Button variant="outline" onClick={() => setSearchQuery('')} className="gap-2">
                   <RotateCcw className="w-4 h-4" />
-                  Clear Search
+                  {language === 'hi' ? 'खोज साफ़ करें' : 'Clear Search'}
                 </Button>
               )}
             </motion.div>
@@ -1602,8 +1655,16 @@ export default function ProjectsPage() {
             animate={{ opacity: 1 }}
             className="mt-6 text-center text-sm text-gray-500"
           >
-            Showing {filteredProjects.length} of {projects.filter((p) => !p.isArchived).length}{' '}
-            projects
+            {language === 'hi' ? (
+              <>
+                {projects.filter((p) => !p.isArchived).length} प्रोजेक्ट्स में से {filteredProjects.length} दिखा रहा है
+              </>
+            ) : (
+              <>
+                Showing {filteredProjects.length} of {projects.filter((p) => !p.isArchived).length}{' '}
+                projects
+              </>
+            )}
           </motion.div>
         )}
 
@@ -1613,24 +1674,40 @@ export default function ProjectsPage() {
             <AlertDialogHeader>
               <AlertDialogTitle className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 text-red-500" />
-                Delete {selectedProjects.size > 1 ? 'Projects' : 'Project'}?
+                {language === 'hi' ? (
+                  <>क्या {selectedProjects.size > 1 ? 'प्रोजेक्ट्स' : 'प्रोजेक्ट'} हटाना चाहते हैं?</>
+                ) : (
+                  <>Delete {selectedProjects.size > 1 ? 'Projects' : 'Project'}?</>
+                )}
               </AlertDialogTitle>
               <AlertDialogDescription>
-                This action cannot be undone. This will permanently delete{' '}
-                {selectedProjects.size > 1
-                  ? `${selectedProjects.size} projects`
-                  : 'this project'}{' '}
-                and all associated renders.
+                {language === 'hi' ? (
+                  <>
+                    यह क्रिया पूर्ववत नहीं की जा सकती। इससे{' '}
+                    {selectedProjects.size > 1
+                      ? `${selectedProjects.size} प्रोजेक्ट्स`
+                      : 'इस प्रोजेक्ट'}{' '}
+                    और सभी संबद्ध रेंडर स्थायी रूप से हटा दिए जाएंगे।
+                  </>
+                ) : (
+                  <>
+                    This action cannot be undone. This will permanently delete{' '}
+                    {selectedProjects.size > 1
+                      ? `${selectedProjects.size} projects`
+                      : 'this project'}{' '}
+                    and all associated renders.
+                  </>
+                )}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>{language === 'hi' ? 'रद्द करें' : 'Cancel'}</AlertDialogCancel>
               <AlertDialogAction
                 onClick={deleteSelectedProjects}
                 className="bg-red-600 hover:bg-red-700"
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete
+                {language === 'hi' ? 'हटाएं' : 'Delete'}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -1640,25 +1717,27 @@ export default function ProjectsPage() {
         <Dialog open={showRenameModal} onOpenChange={setShowRenameModal}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Rename Project</DialogTitle>
-              <DialogDescription>Enter a new name for your project.</DialogDescription>
+              <DialogTitle>{language === 'hi' ? 'प्रोजेक्ट का नाम बदलें' : 'Rename Project'}</DialogTitle>
+              <DialogDescription>
+                {language === 'hi' ? 'अपने प्रोजेक्ट के लिए एक नया नाम दर्ज करें।' : 'Enter a new name for your project.'}
+              </DialogDescription>
             </DialogHeader>
             <div className="py-4">
               <Input
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="Project name"
+                placeholder={language === 'hi' ? 'प्रोजेक्ट का नाम' : 'Project name'}
                 className="w-full"
                 autoFocus
               />
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowRenameModal(false)}>
-                Cancel
+                {language === 'hi' ? 'रद्द करें' : 'Cancel'}
               </Button>
               <Button onClick={renameProject} disabled={!newProjectName.trim()}>
                 <Check className="w-4 h-4 mr-2" />
-                Save
+                {language === 'hi' ? 'सहेजें' : 'Save'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -1670,7 +1749,7 @@ export default function ProjectsPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <SlidersHorizontal className="w-5 h-5 text-violet-600" />
-                {compareProject?.name} — Before / After
+                {compareProject?.name} — {language === 'hi' ? 'पहले / बाद में' : 'Before / After'}
               </DialogTitle>
               <DialogDescription>
                 {compareProject?.description}
@@ -1680,8 +1759,8 @@ export default function ProjectsPage() {
               <BeforeAfterSlider
                 beforeImage={compareProject.thumbnail}
                 afterImage={compareProject.resultImage}
-                beforeLabel="Original"
-                afterLabel="AI Redesigned"
+                beforeLabel={language === 'hi' ? 'मूल' : 'Original'}
+                afterLabel={language === 'hi' ? 'एआई पुनर्रेखांकित' : 'AI Redesigned'}
               />
             )}
           </DialogContent>
@@ -1696,17 +1775,17 @@ export default function ProjectsPage() {
         >
           <div className="flex items-center gap-1.5">
             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">⌘K</kbd>
-            <span>Search</span>
+            <span>{language === 'hi' ? 'खोजें' : 'Search'}</span>
           </div>
           <div className="w-px h-4 bg-gray-200" />
           <div className="flex items-center gap-1.5">
             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">N</kbd>
-            <span>New</span>
+            <span>{t('proj_new')}</span>
           </div>
           <div className="w-px h-4 bg-gray-200" />
           <div className="flex items-center gap-1.5">
             <kbd className="px-1.5 py-0.5 bg-gray-100 rounded font-mono">V</kbd>
-            <span>View</span>
+            <span>{language === 'hi' ? 'देखें' : 'View'}</span>
           </div>
         </motion.div>
       </motion.div>

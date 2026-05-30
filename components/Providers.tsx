@@ -10,7 +10,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { CrispChat } from './CrispChat';
 import { PWAPrompt } from './PWAPrompt';
-
+import { InsufficientCreditsModal } from '@/components/payment/InsufficientCreditsModal';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -46,9 +46,7 @@ function PreferenceSync() {
   return null;
 }
 
-interface ProvidersProps {
-  children: React.ReactNode;
-}
+import { LanguageProvider } from '@/components/LanguageProvider';
 
 export function Providers({ children }: ProvidersProps) {
   return (
@@ -61,16 +59,19 @@ export function Providers({ children }: ProvidersProps) {
         disableTransitionOnChange={false}
         storageKey="removation-theme"
       >
-        <TooltipProvider delayDuration={300}>
-          <PreferenceSync />
-          {children}
+        <LanguageProvider>
+          <TooltipProvider delayDuration={300}>
+            <PreferenceSync />
+            <InsufficientCreditsModal />
+            {children}
 
-          {/* Global Components */}
-          <Toaster />
-          <CrispChat />
-          <PWAPrompt />
-          <AnalyticsProvider />
-        </TooltipProvider>
+            {/* Global Components */}
+            <Toaster />
+            <CrispChat />
+            <PWAPrompt />
+            <AnalyticsProvider />
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
 
       {/* React Query DevTools - only in development */}

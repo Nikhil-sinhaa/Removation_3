@@ -36,6 +36,7 @@ import {
   Star,
   ArrowRight
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 
 const roomTypes = [
   { id: "living_room", name: "Living Room", icon: <Sofa className="w-4 h-4" /> },
@@ -64,6 +65,7 @@ const defaultStylePresets = [
 ];
 
 export default function AIDesignPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   // const { user } = useAuth(); // Bypassed for testing
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedStyle, setSelectedStyle] = useState(defaultStylePresets[0]);
@@ -136,6 +138,12 @@ export default function AIDesignPage() {
         method: 'POST',
         body: formData,
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 

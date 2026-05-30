@@ -28,7 +28,7 @@ else
     fi
     
     # Start ComfyUI in background
-    python main.py --listen 127.0.0.1 --port 8188 &
+    python main.py --listen 127.0.0.1 --port 8188 --enable-manager &
     COMFY_PID=$!
     
     # Wait for ComfyUI to start

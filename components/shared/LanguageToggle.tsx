@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -173,18 +173,8 @@ export function LanguageToggle({
   );
 }
 
-// Language context provider component
-interface LanguageProviderProps {
-  children: React.ReactNode;
-  defaultLanguage?: Language;
-}
-
-export function LanguageProvider({
-  children,
-  defaultLanguage = "en",
-}: LanguageProviderProps) {
-  return <>{children}</>;
-}
+export { LanguageProvider } from "@/hooks/useLanguage";
+export type { LanguageProviderProps } from "@/hooks/useLanguage";
 
 // Auto-detect language banner
 interface LanguageDetectionBannerProps {

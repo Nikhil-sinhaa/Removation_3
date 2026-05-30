@@ -11,6 +11,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send, AlertCircle, MessageSquare, Check, CheckCheck, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getPusherClient } from '@/lib/pusherClient';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface ChatMessage {
     _id: string;
@@ -31,13 +32,6 @@ interface BookingChatProps {
     currentUserId: string;
     providerName?: string;
 }
-
-const ROLE_LABELS: Record<string, string> = {
-    customer: 'Client',
-    designer: 'Designer',
-    contractor: 'Contractor',
-    admin: 'System',
-};
 
 const getSenderIdString = (msg: ChatMessage): string => {
     if (!msg.senderId) return '';
@@ -62,6 +56,7 @@ const getSenderAvatar = (msg: ChatMessage): string | null => {
 };
 
 export function BookingChat({ open, onClose, bookingId, currentUserId, providerName }: BookingChatProps) {
+    const { t } = useLanguage();
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [loading, setLoading] = useState(false);
     const [loadError, setLoadError] = useState<string | null>(null);
@@ -218,9 +213,9 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                         </div>
                         <div>
                             <span className="block text-sm font-bold text-zinc-100">
-                                {providerName ? `Chat with ${providerName}` : 'Booking Chat'}
+                                {providerName ? t('chat_with', { name: providerName }) : t('chat_booking')}
                             </span>
-                            <span className="text-[10px] font-normal text-zinc-400">Real-time collaboration</span>
+                            <span className="text-[10px] font-normal text-zinc-400">{t('chat_realtime')}</span>
                         </div>
                     </SheetTitle>
                 </SheetHeader>
@@ -230,7 +225,7 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-full text-zinc-400 gap-3">
                             <Loader2 className="w-6 h-6 animate-spin text-violet-500" />
-                            <span className="text-xs tracking-wide">Loading chat thread...</span>
+                            <span className="text-xs tracking-wide">{t('chat_loading')}</span>
                         </div>
                     ) : loadError ? (
                         <div className="flex flex-col items-center justify-center h-full gap-3 px-6 text-center">
@@ -239,7 +234,7 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                             </div>
                             <p className="text-sm font-semibold text-red-400">{loadError}</p>
                             <p className="text-xs text-zinc-400 max-w-[280px]">
-                                Chat becomes active once the booking is verified.
+                                {t('chat_err_verify')}
                             </p>
                         </div>
                     ) : (
@@ -249,9 +244,9 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                                     <div className="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center border border-zinc-800">
                                         <MessageSquare className="w-5 h-5 text-zinc-400 opacity-60" />
                                     </div>
-                                    <p className="text-sm font-medium">No messages in this booking yet</p>
+                                    <p className="text-sm font-medium">{t('chat_booking_no_messages')}</p>
                                     <p className="text-xs text-zinc-600 text-center max-w-[240px]">
-                                        Send a message to start discussing requirements.
+                                        {t('chat_booking_no_messages_desc')}
                                     </p>
                                 </div>
                             )}
@@ -311,8 +306,8 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                                                     {!isMine && (
                                                         <span className="text-[10px] text-zinc-500 font-semibold mb-0.5 ml-1 flex items-center gap-1">
                                                             {senderName}
-                                                            <span className="text-[9px] font-normal text-zinc-600 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-850">
-                                                                {ROLE_LABELS[msg.senderRole] || msg.senderRole}
+                                                            <span className="text-[9px] font-normal text-zinc-650 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-850">
+                                                                {t('chat_role_' + msg.senderRole) || msg.senderRole}
                                                             </span>
                                                         </span>
                                                     )}
@@ -343,7 +338,7 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                                                                 {msg.readAt ? (
                                                                     <CheckCheck className="w-3.5 h-3.5 text-violet-400" />
                                                                 ) : (
-                                                                    <Check className="w-3.5 h-3.5 text-zinc-650" />
+                                                                    <Check className="w-3.5 h-3.5 text-zinc-600" />
                                                                 )}
                                                             </span>
                                                         )}
@@ -372,7 +367,7 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
                             value={text}
                             onChange={e => setText(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder="Type a message... (Enter to send)"
+                            placeholder={t('chat_type_placeholder')}
                             rows={2}
                             disabled={sending || !!loadError}
                             className={cn(

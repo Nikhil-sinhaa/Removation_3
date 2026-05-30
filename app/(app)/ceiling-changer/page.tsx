@@ -22,6 +22,7 @@ import {
   RefreshCw,
   BookmarkCheck,
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 
 interface ProgressState {
   stage: number; // 1 = ceiling detection, 2 = repainting
@@ -43,6 +44,7 @@ interface FeedbackState {
 }
 
 export default function CeilingChangerPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
@@ -175,6 +177,13 @@ export default function CeilingChangerPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {

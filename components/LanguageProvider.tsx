@@ -1,7 +1,4 @@
 'use client';
 
-import React from 'react';
+export { LanguageProvider } from '@/hooks/useLanguage';
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-    return <>{children}</>;
-}

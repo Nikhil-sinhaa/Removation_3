@@ -93,6 +93,7 @@ if [ -n "$USE_CPU" ]; then
         --port 8188 \
         --cpu \
         --disable-metadata \
+        --enable-manager \
         > /tmp/logs/comfyui.log 2>&1 &
 else
     python3 main.py \
@@ -102,6 +103,7 @@ else
         --preview-method auto \
         --disable-metadata \
         --disable-xformers \
+        --enable-manager \
         > /tmp/logs/comfyui.log 2>&1 &
 fi
 

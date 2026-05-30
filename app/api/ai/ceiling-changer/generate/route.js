@@ -13,6 +13,8 @@ import Project from '../../../../../src/models/Project.js';
 import CeilingChangerRun from '../../../../../src/models/CeilingChangerRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runCeilingChanger } from '../../../../../src/services/ceilingChangerOrchestrator.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 
@@ -53,6 +55,21 @@ export async function POST(request) {
   await connectDB();
 
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const deductResult = await checkAndDeductCredits(authUser.id, 'ceiling-changer');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const formData = await safeParseFormData(request);
     const imageFile = formData.get('roomImage');
     const colorName = formData.get('colorName') || '';
@@ -87,7 +104,7 @@ export async function POST(request) {
     // ── Create Project document for status polling ──────────────────────────
     const project = await Project.create({
       name: `Ceiling Changer — ${colorName}`,
-      userId: '000000000000000000000000',
+      userId: finalUserId,
       originalImage: inputImageUrl || '',
       status: 'queued',
       processingType: 'ceiling-changer',
@@ -103,7 +120,7 @@ export async function POST(request) {
       colorName,
       hex,
       projectId: projId,
-      userId: null,
+      userId: finalUserId,
     }).catch(err => {
       // CEILING_MASK_INSUFFICIENT_COVERAGE is a user-recoverable input error, not a
       // system fault. The orchestrator already wrote the clean message to
@@ -127,13 +144,17 @@ export async function POST(request) {
 // ── Polling fallback: GET ?projectId=... ─────────────────────────────────────
 export async function GET(request) {
   await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   if (!projectId) {
     return NextResponse.json({ error: 'projectId required' }, { status: 400 });
   }
   try {
-    const project = await Project.findById(projectId).lean();
+    const project = await Project.findOne({ _id: projectId, userId: authUser.id }).lean();
     if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     // Also fetch the latest run for this project

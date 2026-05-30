@@ -14,7 +14,6 @@ import RoomChangerRun from '../../../../../src/models/RoomChangerRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runRoomChanger } from '../../../../../src/services/roomChangerOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
-import { getAppMode } from '@/lib/ai/appMode';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
@@ -56,38 +55,24 @@ export async function POST(request) {
   await connectDB();
 
   try {
-    const appMode = await getAppMode();
     const authUser = await getCurrentUser();
-    let finalUserId = '000000000000000000000000';
-
-    if (appMode === 'production') {
-      if (!authUser) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-
-      const deduction = await checkAndDeductCredits(authUser.id, 'room-changer');
-      if (!deduction.success) {
-        if (deduction.code === 'INSUFFICIENT_CREDITS') {
-          return NextResponse.json(
-            { error: "Insufficient credits. Please upgrade your plan." },
-            { status: 400 }
-          );
-        }
-        if (deduction.code === 'USER_NOT_FOUND') {
-          return NextResponse.json({ error: 'User not found' }, { status: 404 });
-        }
-        return NextResponse.json({ error: deduction.reason || 'Credit deduction failed' }, { status: 500 });
-      }
-
-      finalUserId = authUser.id;
-    } else {
-      if (authUser) {
-        finalUserId = authUser.id;
-        await checkAndDeductCredits(authUser.id, 'room-changer').catch(err =>
-          console.error('Error updating lastRenderAt in dev mode:', err)
-        );
-      }
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const formDataEarly = await safeParseFormData(request.clone ? request.clone() : request);
+    const source = formDataEarly.get('source') || '';
+    const deductResult = await checkAndDeductCredits(authUser.id, 'room-changer', { source });
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
+    const finalUserId = authUser.id;
 
     const formData = await safeParseFormData(request);
     const imageFile  = formData.get('roomImage');

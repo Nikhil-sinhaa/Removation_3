@@ -12,6 +12,7 @@ import { getPusherClient } from '@/lib/pusherClient';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import { useLanguage } from '@/hooks/useLanguage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -95,40 +96,40 @@ interface Booking {
 
 const STATUS_CONFIG: Record<
     BookingStatus,
-    { label: string; color: string; icon: React.ReactNode }
+    { labelKey: string; color: string; icon: React.ReactNode }
 > = {
     pending_payment: {
-        label: 'Awaiting Payment',
+        labelKey: 'myb_status_pending_payment',
         color: 'bg-yellow-100 text-yellow-700 border-yellow-200',
         icon: <Clock className="w-3 h-3" />,
     },
     pending_designer: {
-        label: 'Awaiting Designer',
+        labelKey: 'myb_status_pending_designer',
         color: 'bg-blue-100 text-blue-700 border-blue-200',
         icon: <Clock className="w-3 h-3" />,
     },
     confirmed: {
-        label: 'Confirmed',
+        labelKey: 'myb_status_confirmed',
         color: 'bg-green-100 text-green-700 border-green-200',
         icon: <CheckCircle2 className="w-3 h-3" />,
     },
     rejected: {
-        label: 'Rejected',
+        labelKey: 'myb_status_rejected',
         color: 'bg-red-100 text-red-700 border-red-200',
         icon: <XCircle className="w-3 h-3" />,
     },
     cancelled_by_customer: {
-        label: 'Cancelled',
+        labelKey: 'myb_status_cancelled',
         color: 'bg-zinc-100 text-zinc-600 border-zinc-200',
         icon: <X className="w-3 h-3" />,
     },
     expired: {
-        label: 'Expired',
+        labelKey: 'myb_status_expired',
         color: 'bg-orange-100 text-orange-700 border-orange-200',
         icon: <AlertCircle className="w-3 h-3" />,
     },
     completed: {
-        label: 'Completed',
+        labelKey: 'myb_status_completed',
         color: 'bg-violet-100 text-violet-700 border-violet-200',
         icon: <CheckCircle2 className="w-3 h-3" />,
     },
@@ -151,6 +152,8 @@ function BookingCard({
     onChat: (id: string, providerName: string) => void;
     unreadCount?: number;
 }) {
+    const { t } = useLanguage();
+
     // Resolve provider — whichever of the two is populated
     const provider: BookingProvider | null =
         (typeof booking.designerId === 'object' && booking.designerId)
@@ -159,8 +162,8 @@ function BookingCard({
                 ? booking.contractorId
                 : null;
     const isContractor = !booking.designerId && !!booking.contractorId;
-    const providerLabel = isContractor ? 'Contractor' : 'Designer';
-    const status = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_payment;
+    const providerLabel = isContractor ? t('myb_contractor') : t('myb_designer');
+    const statusConfig = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.pending_payment;
     const canCancel = booking.status === 'pending_designer';
     const canChat = CHAT_STATUSES.includes(booking.status);
 
@@ -195,7 +198,7 @@ function BookingCard({
                     )}
                     <div>
                         <p className="font-semibold text-zinc-800">
-                            {provider?.displayName ?? `Unknown ${providerLabel}`}
+                            {provider?.displayName ?? t('unknown_provider', { role: providerLabel })}
                         </p>
                         {provider?.city && (
                             <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
@@ -205,16 +208,16 @@ function BookingCard({
                         )}
                         {isContractor && (
                             <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md mt-1 inline-block">
-                                Contractor
+                                {t('myb_contractor')}
                             </span>
                         )}
                     </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <Badge className={cn('gap-1 border', status.color)}>
-                        {status.icon}
-                        {status.label}
+                    <Badge className={cn('gap-1 border', statusConfig.color)}>
+                        {statusConfig.icon}
+                        {t(statusConfig.labelKey)}
                     </Badge>
                     <span className="text-xs text-zinc-400">
                         {new Date(booking.createdAt).toLocaleDateString('en-IN', {
@@ -236,7 +239,9 @@ function BookingCard({
                             : <FileText className="w-4 h-4 text-violet-600" />}
                     </div>
                     <div>
-                        <p className="text-sm font-medium capitalize text-zinc-700">{booking.type}</p>
+                        <p className="text-sm font-medium capitalize text-zinc-700">
+                            {booking.type === 'consultation' ? t('myb_type_consultation') : t('myb_type_project')}
+                        </p>
                         <p className="text-xs text-zinc-400">{paiseToRupees(booking.amount)}</p>
                     </div>
                 </div>
@@ -244,7 +249,7 @@ function BookingCard({
                 {/* Consultation slot */}
                 {booking.type === 'consultation' && booking.consultationSlot && (
                     <div className="text-sm text-zinc-600 bg-zinc-50 rounded-lg px-3 py-2">
-                        <span className="text-zinc-400 text-xs block mb-0.5">Slot</span>
+                        <span className="text-zinc-400 text-xs block mb-0.5">{t('myb_slot')}</span>
                         {new Date(booking.consultationSlot).toLocaleString('en-IN', {
                             weekday: 'short',
                             day: 'numeric',
@@ -264,7 +269,7 @@ function BookingCard({
                 {/* Project description */}
                 {booking.type === 'project' && booking.projectDescription && (
                     <div className="text-sm text-zinc-600 bg-zinc-50 rounded-lg px-3 py-2">
-                        <span className="text-zinc-400 text-xs block mb-0.5">Description</span>
+                        <span className="text-zinc-400 text-xs block mb-0.5">{t('myb_description')}</span>
                         <p className="line-clamp-2">{booking.projectDescription}</p>
                     </div>
                 )}
@@ -274,14 +279,15 @@ function BookingCard({
                     <div className="flex items-center gap-2 text-xs text-amber-600">
                         <Clock className="w-3.5 h-3.5" />
                         <span>
-                            {providerLabel} must respond by{' '}
-                            {new Date(booking.designerResponseDeadline).toLocaleString('en-IN', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true,
-                                timeZone: 'Asia/Kolkata',
+                            {providerLabel} {t('myb_deadline', {
+                                date: new Date(booking.designerResponseDeadline).toLocaleString('en-IN', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true,
+                                    timeZone: 'Asia/Kolkata',
+                                })
                             })}
                         </span>
                     </div>
@@ -290,7 +296,7 @@ function BookingCard({
                 {/* Rejection reason */}
                 {booking.status === 'rejected' && booking.designerRejectionReason && (
                     <div className="bg-red-50 rounded-lg px-3 py-2 text-xs text-red-700">
-                        <span className="font-medium">Reason: </span>
+                        <span className="font-medium">{t('myb_rejection_reason')}: </span>
                         {booking.designerRejectionReason}
                     </div>
                 )}
@@ -301,15 +307,17 @@ function BookingCard({
                         <IndianRupee className="w-3.5 h-3.5" />
                         {booking.refundFailed ? (
                             <span className="text-red-600 font-medium">
-                                Refund failed. Please contact support.
+                                {t('myb_refund_failed')}
                             </span>
                         ) : booking.refundedAt ? (
                             <span className="text-green-600">
-                                Refund of {paiseToRupees(booking.amount)} initiated on{' '}
-                                {new Date(booking.refundedAt).toLocaleDateString('en-IN')}
+                                {t('myb_refund_initiated', {
+                                    amount: paiseToRupees(booking.amount),
+                                    date: new Date(booking.refundedAt).toLocaleDateString('en-IN')
+                                })}
                             </span>
                         ) : (
-                            <span className="text-zinc-500">Refund processing (2–5 business days)</span>
+                            <span className="text-zinc-500">{t('myb_refund_processing')}</span>
                         )}
                     </div>
                 )}
@@ -326,7 +334,7 @@ function BookingCard({
                         onClick={() => onCancel(booking._id)}
                     >
                         <X className="w-3.5 h-3.5 mr-1.5" />
-                        Cancel Booking
+                        {t('myb_cancel_booking')}
                     </Button>
                 </div>
             )}
@@ -341,7 +349,7 @@ function BookingCard({
                         onClick={() => onReview(booking)}
                     >
                         <Star className="w-3.5 h-3.5 mr-1.5 fill-violet-600" />
-                        Leave a Review
+                        {t('myb_review_btn')}
                     </Button>
                 </div>
             )}
@@ -349,7 +357,7 @@ function BookingCard({
             {booking.status === 'completed' && booking.reviewId && (
                 <div className="px-5 pb-5 text-xs text-green-600 flex items-center gap-1 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    Review submitted
+                    {t('myb_review_submitted')}
                 </div>
             )}
 
@@ -363,7 +371,7 @@ function BookingCard({
                         onClick={() => onChat(booking._id, provider?.displayName ?? providerLabel)}
                     >
                         <MessageSquare className="w-3.5 h-3.5" />
-                        <span>Chat with {providerLabel}</span>
+                        <span>{t('myb_chat_btn', { name: providerLabel })}</span>
                         {unreadCount > 0 && (
                             <span className="ml-1.5 bg-violet-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">
                                 {unreadCount}
@@ -381,6 +389,7 @@ function BookingCard({
 export default function MyBookingsPage() {
     const router = useRouter();
     const { user, isLoading: authLoading } = useAuth();
+    const { t } = useLanguage();
 
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [fetching, setFetching] = useState(true);
@@ -566,9 +575,9 @@ export default function MyBookingsPage() {
                 className="mb-6 flex items-center justify-between"
             >
                 <div>
-                    <h1 className="text-2xl font-bold text-zinc-900">My Bookings</h1>
+                    <h1 className="text-2xl font-bold text-zinc-900">{t('myb_title')}</h1>
                     <p className="text-sm text-zinc-500 mt-0.5">
-                        {total} booking{total !== 1 ? 's' : ''}
+                        {t('myb_total_count', { count: String(total) })}
                     </p>
                 </div>
                 <Button
@@ -599,15 +608,15 @@ export default function MyBookingsPage() {
                         className="text-center py-20 text-zinc-400"
                     >
                         <Calendar className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                        <p className="font-medium text-zinc-500">No bookings yet</p>
+                        <p className="font-medium text-zinc-500">{t('myb_no_bookings')}</p>
                         <p className="text-sm mt-1">
-                            Browse designers and book a consultation or project.
+                            {t('myb_no_bookings_desc')}
                         </p>
                         <Button
                             className="mt-5"
                             onClick={() => router.push('/designers')}
                         >
-                            Browse Designers
+                            {t('myb_browse_experts')}
                         </Button>
                     </motion.div>
                 ) : (
@@ -644,10 +653,10 @@ export default function MyBookingsPage() {
                         disabled={page <= 1}
                         onClick={() => fetchBookings(page - 1)}
                     >
-                        Previous
+                        {t('previous')}
                     </Button>
                     <span className="text-sm text-zinc-500">
-                        Page {page} of {pageCount}
+                        {t('page_x_of_y', { current: String(page), total: String(pageCount) })}
                     </span>
                     <Button
                         variant="outline"
@@ -655,7 +664,7 @@ export default function MyBookingsPage() {
                         disabled={page >= pageCount}
                         onClick={() => fetchBookings(page + 1)}
                     >
-                        Next
+                        {t('next')}
                     </Button>
                 </div>
             )}
@@ -664,17 +673,16 @@ export default function MyBookingsPage() {
             <AlertDialog open={!!cancelTarget} onOpenChange={open => { if (!open) setCancelTarget(null); }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
+                        <AlertDialogTitle>{t('myb_cancel_confirm_title')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Your payment will be refunded within 2–5 business days.
-                            This cannot be undone.
+                            {t('myb_cancel_confirm_desc')}
                             {cancelError && (
                                 <span className="block mt-2 text-red-600 font-medium">{cancelError}</span>
                             )}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={cancelling}>Keep Booking</AlertDialogCancel>
+                        <AlertDialogCancel disabled={cancelling}>{t('myb_cancel_keep')}</AlertDialogCancel>
                         <AlertDialogAction
                             id="confirm-cancel-btn"
                             onClick={handleCancel}
@@ -682,9 +690,9 @@ export default function MyBookingsPage() {
                             className="bg-red-600 hover:bg-red-700"
                         >
                             {cancelling ? (
-                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Cancelling…</>
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t('myb_cancelling')}</>
                             ) : (
-                                'Yes, Cancel'
+                                t('myb_cancel_yes')
                             )}
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -707,17 +715,17 @@ export default function MyBookingsPage() {
                 <DialogContent className="sm:max-w-[425px]">
                     <form onSubmit={handleReviewSubmit}>
                         <DialogHeader>
-                            <DialogTitle>Leave a Review</DialogTitle>
+                            <DialogTitle>{t('rev_title')}</DialogTitle>
                             <DialogDescription>
-                                Share your experience with{' '}
-                                {reviewTarget && (
-                                    typeof reviewTarget.designerId === 'object' && reviewTarget.designerId
-                                        ? reviewTarget.designerId.displayName
-                                        : typeof reviewTarget.contractorId === 'object' && reviewTarget.contractorId
-                                            ? reviewTarget.contractorId.displayName
-                                            : 'your service provider'
-                                )}
-                                .
+                                {t('rev_desc', {
+                                    name: reviewTarget
+                                        ? (typeof reviewTarget.designerId === 'object' && reviewTarget.designerId
+                                            ? (reviewTarget.designerId.displayName || '')
+                                            : typeof reviewTarget.contractorId === 'object' && reviewTarget.contractorId
+                                                ? (reviewTarget.contractorId.displayName || '')
+                                                : t('unknown_provider', { role: '' }))
+                                        : ''
+                                })}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -744,17 +752,17 @@ export default function MyBookingsPage() {
                                 ))}
                             </div>
                             <span className="text-xs font-semibold text-zinc-500 capitalize">
-                                {rating === 5 ? 'Excellent' : rating === 4 ? 'Very Good' : rating === 3 ? 'Good' : rating === 2 ? 'Fair' : 'Poor'}
+                                {rating === 5 ? t('rev_rating_5') : rating === 4 ? t('rev_rating_4') : rating === 3 ? t('rev_rating_3') : rating === 2 ? t('rev_rating_2') : t('rev_rating_1')}
                             </span>
                         </div>
 
                         <div className="space-y-2 mb-4">
                             <Label htmlFor="review-comment" className="text-sm font-medium text-zinc-700">
-                                Your Feedback
+                                {t('rev_feedback_label')}
                             </Label>
                             <Textarea
                                 id="review-comment"
-                                placeholder="What went well? Any areas of improvement?"
+                                placeholder={t('rev_feedback_placeholder')}
                                 value={comment}
                                 onChange={e => setComment(e.target.value)}
                                 className="min-h-[100px] resize-none"
@@ -776,7 +784,7 @@ export default function MyBookingsPage() {
                                 onClick={() => setReviewTarget(null)}
                                 disabled={reviewing}
                             >
-                                Cancel
+                                {t('cancel')}
                             </Button>
                             <Button
                                 id="submit-review-btn"
@@ -785,9 +793,9 @@ export default function MyBookingsPage() {
                                 className="bg-violet-600 hover:bg-violet-700 text-white"
                             >
                                 {reviewing ? (
-                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Submitting…</>
+                                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t('rev_submitting')}</>
                                 ) : (
-                                    'Submit Review'
+                                    t('rev_submit_btn')
                                 )}
                             </Button>
                         </DialogFooter>

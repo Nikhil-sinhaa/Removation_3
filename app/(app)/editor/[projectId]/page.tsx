@@ -195,6 +195,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 import { useUploadThing } from '@/lib/uploadthing';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/stores/user-store';
 import { DESIGN_STYLES } from '@/constants/styles-400';
 import { ROOM_TYPES } from '@/constants/room-types';
 
@@ -269,6 +270,7 @@ interface HistoryEntry {
 type ToolType = 'select' | 'pan' | 'brush' | 'eraser' | 'crop' | 'text' | 'shape' | 'eyedropper';
 
 export default function ProjectEditorPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
@@ -595,6 +597,12 @@ export default function ProjectEditorPage() {
           numberOfVariations,
         }),
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 

@@ -10,6 +10,7 @@ import LightingRun from '@/src/models/LightingRun';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runLightingWorkflow, LIGHTING_PRESETS } from '@/src/services/lightingOrchestrator';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 
@@ -61,6 +62,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     const userId = String(user._id);
+
+    const deductResult = await checkAndDeductCredits(clerkId, 'lighting');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
 
     // ── Parse Body ───────────────────────────────────────────────────────────
     const formData = await safeParseFormData(request);
@@ -203,6 +214,14 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const user = await User.findOne({ clerkId: authUser.id });
+  if (!user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
 
@@ -211,7 +230,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const project = await Project.findById(projectId).lean();
+    const project = await Project.findOne({ _id: projectId, userId: user._id }).lean();
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

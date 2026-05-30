@@ -22,6 +22,7 @@ import { Sparkles, MapPin, Loader2, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button';
 import { DesignerMatchCard, MatchedDesigner } from '@/components/ai/DesignerMatchCard';
 import { BookingModal } from '@/components/booking/BookingModal';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -52,27 +53,25 @@ async function fetchUserCity(): Promise<string | null> {
 function buildProjectDescription(
     roomType: string,
     style: string | undefined,
-    afterImage: string | undefined
+    afterImage: string | undefined,
+    t: (key: string, params?: any) => string
 ): string {
     const roomLabel = roomType
         .split('-')
         .map(w => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
     const styleLabel = style
-        ? style.charAt(0).toUpperCase() + style.slice(1) + ' style '
+        ? style.charAt(0).toUpperCase() + style.slice(1) + ' '
         : '';
-    const imageRef = afterImage ? `\n\nRender reference: ${afterImage}` : '';
-    return (
-        `I used Removation AI to generate a ${styleLabel}${roomLabel} design ` +
-        `and would like a designer to help make it a reality. ` +
-        `Please review my render and provide a quote for the full project.` +
-        imageRef
-    );
+    const desc = t('mir_project_desc_template', { styleLabel, roomLabel });
+    const imageRef = afterImage ? `\n\n${t('mir_render_ref', { url: afterImage })}` : '';
+    return desc + imageRef;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function MakeItReal({ roomType = 'living-room', style, afterImage }: MakeItRealProps) {
+    const { t } = useLanguage();
     const [city, setCity] = useState<string>('');
     const [cityInput, setCityInput] = useState<string>('');
     const [needsCityInput, setNeedsCityInput] = useState(false);
@@ -142,7 +141,7 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
 
     // ── Book button ─────────────────────────────────────────────────────────
     function handleBook(designer: MatchedDesigner) {
-        setInitialDesc(buildProjectDescription(roomType, style, afterImage));
+        setInitialDesc(buildProjectDescription(roomType, style, afterImage, t));
         setBookingTarget(designer);
     }
 
@@ -177,10 +176,10 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                         </div>
                         <div>
                             <p className="font-semibold text-zinc-900 text-sm leading-tight">
-                                Make It Real
+                                {t('mir_title')}
                             </p>
                             <p className="text-xs text-zinc-500 mt-0.5">
-                                Hire a verified designer to execute this render
+                                {t('mir_subtitle')}
                             </p>
                         </div>
                     </div>
@@ -189,6 +188,7 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                         : <ChevronDown className="w-4 h-4 text-zinc-400" />
                     }
                 </button>
+
 
                 {/* ── Body ────────────────────────────────────────────────── */}
                 <AnimatePresence initial={false}>
@@ -213,7 +213,7 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                                 type="text"
                                                 value={cityInput}
                                                 onChange={e => setCityInput(e.target.value)}
-                                                placeholder="Your city (e.g. Bangalore)"
+                                                placeholder={t('mir_placeholder')}
                                                 className="w-full h-10 pl-9 pr-3 rounded-xl border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
                                             />
                                         </div>
@@ -222,7 +222,7 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                             size="sm"
                                             className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
                                         >
-                                            Find Designers
+                                            {t('mir_find_designers')}
                                         </Button>
                                     </form>
                                 )}
@@ -232,10 +232,14 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-1.5 text-xs text-zinc-500">
                                             <MapPin className="w-3.5 h-3.5 text-violet-400" />
-                                            <span>Designers near <span className="font-medium text-zinc-700">{city}</span></span>
+                                            <span>
+                                                {t('mir_designers_near', { city })}
+                                            </span>
                                             {matchedOn?.specialties?.length ? (
                                                 <span className="text-violet-500">
-                                                    · matched on {matchedOn.specialties.length} specialt{matchedOn.specialties.length === 1 ? 'y' : 'ies'}
+                                                    · {matchedOn.specialties.length === 1
+                                                        ? t('mir_matched_on_specialty', { count: String(matchedOn.specialties.length) })
+                                                        : t('mir_matched_on_specialties', { count: String(matchedOn.specialties.length) })}
                                                 </span>
                                             ) : null}
                                         </div>
@@ -250,7 +254,7 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                             }}
                                             className="text-xs text-violet-500 hover:underline"
                                         >
-                                            Change city
+                                            {t('mir_change_city')}
                                         </button>
                                     </div>
                                 )}
@@ -259,7 +263,7 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                 {isFetching && (
                                     <div className="flex items-center gap-2 text-sm text-zinc-500 py-3">
                                         <Loader2 className="w-4 h-4 animate-spin text-violet-500" />
-                                        <span>Finding designers in {city}…</span>
+                                        <span>{t('mir_finding_in', { city })}</span>
                                     </div>
                                 )}
 
@@ -285,9 +289,9 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                 {/* ── Empty state ─────────────────────────────── */}
                                 {!isFetching && cityResolved && designers.length === 0 && !fetchError && (
                                     <p className="text-sm text-zinc-500 text-center py-3">
-                                        No verified designers found in {city} yet.{' '}
+                                        {t('mir_no_verified', { city })}{' '}
                                         <a href="/designers" className="text-violet-500 hover:underline">
-                                            Browse all designers →
+                                            {t('mir_browse_all')}
                                         </a>
                                     </p>
                                 )}
