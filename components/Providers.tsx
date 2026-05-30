@@ -12,6 +12,10 @@ import { CrispChat } from './CrispChat';
 import { PWAPrompt } from './PWAPrompt';
 import { InsufficientCreditsModal } from '@/components/payment/InsufficientCreditsModal';
 
+interface ProvidersProps {
+  children: React.ReactNode;
+}
+
 // Create a client
 const queryClient = new QueryClient({
   defaultOptions: {

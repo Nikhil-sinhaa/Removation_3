@@ -483,26 +483,46 @@ export default function PricingPage() {
 
       if (data.url) {
         window.location.href = data.url;
-      } else if (data.razorpayOrderId) {
+      } else if (data.orderId || data.subscriptionId || data.razorpayOrderId) {
         // Handle Razorpay
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        const options: any = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || data.keyId,
           amount: data.amount,
           currency: 'INR',
           name: 'Removation.ai',
           description: `${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan - ${billingCycle}`,
-          order_id: data.razorpayOrderId,
           handler: async (response: any) => {
-            await fetch('/api/payment/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
-            router.push('/dashboard?upgrade=success');
+            try {
+              const verifyRes = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  paymentMethod: 'razorpay',
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id || data.orderId || data.razorpayOrderId,
+                  razorpaySubscriptionId: response.razorpay_subscription_id || data.subscriptionId,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                router.push('/dashboard?upgrade=success');
+              } else {
+                toast({
+                  title: 'Verification Failed',
+                  description: verifyData.error || 'Failed to verify your payment.',
+                  variant: 'destructive',
+                  duration: 5000,
+                });
+              }
+            } catch (err) {
+              toast({
+                title: 'Error',
+                description: 'An error occurred while verifying payment.',
+                variant: 'destructive',
+                duration: 5000,
+              });
+            }
           },
           prefill: {
             email: user?.email,
@@ -512,6 +532,12 @@ export default function PricingPage() {
             color: '#7C3AED',
           },
         };
+
+        if (data.subscriptionId) {
+          options.subscription_id = data.subscriptionId;
+        } else if (data.orderId || data.razorpayOrderId) {
+          options.order_id = data.orderId || data.razorpayOrderId;
+        }
         // @ts-ignore
         const razorpay = new window.Razorpay(options);
         razorpay.open();

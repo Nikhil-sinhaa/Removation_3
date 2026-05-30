@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { downloadMultiRoomZip } from '@/lib/ai/download-multi-room';
 import RatingFeedback from '@/src/components/RatingFeedback';
+import { useToast } from '@/components/ui/use-toast';
 
 type PaintStage = 'upload' | 'painting' | 'painted' | 'generating3d' | 'done' | 'cancelled' | 'error';
 
@@ -54,6 +55,7 @@ interface ProjectData {
 }
 
 export default function Room3DPage() {
+  const { toast } = useToast();
   const [stage, setStage]             = useState<PaintStage>('upload');
   const [files, setFiles]             = useState<File[]>([]);
   const [previews, setPreviews]       = useState<string[]>([]);
@@ -194,6 +196,36 @@ export default function Room3DPage() {
       setError(err.message || 'Network error');
       setStage('error');
     }
+  };
+
+  // ── Open Marble AI with auto-download ─────────────────────────────────────
+  const handleOpenMarble = async () => {
+    const paintedImages = projectData?.photos
+      .map(p => p.paintedUrl)
+      .filter((u): u is string => Boolean(u)) ?? [];
+
+    if (paintedImages.length > 0) {
+      for (let i = 0; i < paintedImages.length; i++) {
+        const url = paintedImages[i];
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `room-painted-${i + 1}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+    }
+    window.open('https://marble.worldlabs.ai', '_blank');
+    toast({
+      title: '🎮 Opening Marble AI',
+      description: 'Your painted room photos are downloading. Upload them to Marble AI to explore in 3D!',
+      duration: 6000,
+    });
   };
 
   // ── Trigger Marble 3D ───────────────────────────────────────────────────────
@@ -576,12 +608,12 @@ export default function Room3DPage() {
 
           <Button
             id="generate-3d-button"
-            onClick={handleGenerate3D}
+            onClick={handleOpenMarble}
             className="w-full bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 text-white py-6 text-lg"
             size="lg"
           >
             <Box className="w-5 h-5 mr-2" />
-            Generate 3D Walkthrough (~5 minutes)
+            Open in Marble AI 3D
           </Button>
           <Button variant="outline" className="w-full" onClick={reset}>
             <RefreshCw className="w-4 h-4 mr-2" />Start Over

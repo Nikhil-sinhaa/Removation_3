@@ -18,7 +18,15 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { useUserStore } from '@/stores/user-store';
 import { useAuth } from '@/components/auth/AuthProvider';
 
-const CREDIT_PACKAGES = {
+interface CreditPackage {
+  id: string;
+  credits: number;
+  usd: number;
+  inr: number;
+  popular?: boolean;
+}
+
+const CREDIT_PACKAGES: Record<string, CreditPackage> = {
   small: { id: 'small', credits: 25, usd: 9.99, inr: 799 },
   medium: { id: 'medium', credits: 50, usd: 17.99, inr: 1499 },
   large: { id: 'large', credits: 100, usd: 29.99, inr: 2499, popular: true },
