@@ -14,7 +14,7 @@ export async function GET() {
     await connectToDatabase();
     // Only return safe user info
     const dbUser = await User.findById(authUser.id).select(
-      '_id email firstName lastName imageUrl credits subscription plan status stripeCustomerId preferences role onboardingCompleted'
+      '_id email firstName lastName imageUrl credits subscription plan status stripeCustomerId preferences role onboardingCompleted tourCompleted'
     );
 
     if (!dbUser) {
@@ -33,7 +33,8 @@ export async function GET() {
         role: dbUser.role,
         subscription: dbUser.subscription,
         preferences: dbUser.preferences,
-        onboardingCompleted: dbUser.onboardingCompleted ?? true
+        onboardingCompleted: dbUser.onboardingCompleted ?? true,
+        tourCompleted: dbUser.tourCompleted ?? false
       }
     }, { status: 200 });
 

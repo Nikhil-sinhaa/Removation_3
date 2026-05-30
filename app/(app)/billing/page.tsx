@@ -505,8 +505,8 @@ export default function PricingPage() {
             router.push('/dashboard?upgrade=success');
           },
           prefill: {
-            email: user?.emailAddresses[0]?.emailAddress,
-            name: user?.fullName,
+            email: user?.email,
+            name: user?.firstName ? `${user.firstName} ${user.lastName || ''}` : user?.name || '',
           },
           theme: {
             color: '#7C3AED',

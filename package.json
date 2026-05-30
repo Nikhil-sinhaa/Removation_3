@@ -69,6 +69,7 @@
     "comfyui-node": "^1.8.4",
     "crisp-sdk-web": "^1.0.25",
     "date-fns": "^3.6.0",
+    "driver.js": "^1.4.0",
     "embla-carousel-react": "^8.3.0",
     "fabric": "^7.4.0",
     "file-saver": "^2.0.5",
@@ -136,6 +137,7 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "@tailwindcss/nesting": "^0.0.0-insiders.565cd3e",
+    "@types/busboy": "^1.5.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/jszip": "^3.4.1",
     "@types/lodash": "^4.17.9",

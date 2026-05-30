@@ -54,6 +54,7 @@ type NavItem = {
   href: string;
   icon: LucideIcon;
   role?: string;
+  tourId?: string;
 };
 
 type NavSection = {
@@ -68,10 +69,10 @@ const sidebarNavigation: NavSection[] = [
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: Home },
       { name: 'Projects', href: '/projects', icon: FolderOpen },
-      { name: 'Browse Designers', href: '/designers', icon: Users },
+      { name: 'Browse Designers', href: '/designers', icon: Users, tourId: 'sidebar-browse-designers' },
       { name: 'Browse Contractors', href: '/marketplace?tab=contractors', icon: Users },
       { name: 'Browse Vendors', href: '/marketplace?tab=vendors', icon: Store },
-      { name: 'AI Design Studio', href: '/ai-design', icon: Wand2 },
+      { name: 'AI Design Studio', href: '/ai-design', icon: Wand2, tourId: 'sidebar-ai-studio' },
       { name: 'Master Design Studio', href: '/master-design', icon: Settings },
       { name: 'Professional Design Studio', href: '/professional-design', icon: Shield },
       { name: 'Editor', href: '/editor', icon: Palette },
@@ -92,7 +93,7 @@ const sidebarNavigation: NavSection[] = [
     items: [
       { name: 'History', href: '/history', icon: History },
       { name: 'Favorites', href: '/favorites', icon: Heart },
-      { name: 'My Bookings', href: '/my-bookings', icon: Calendar },
+      { name: 'My Bookings', href: '/my-bookings', icon: Calendar, tourId: 'sidebar-my-bookings' },
     ],
   },
   {
@@ -292,17 +293,18 @@ export default function AppLayout({ children }: AppLayoutProps) {
                   .filter((item) => !item.role || item.role === user?.role)
                   .map((item) => {
                     const active = isActive(item.href);
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
-                        active
-                          ? 'bg-violet-50 text-violet-700'
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                      )}
-                    >
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        {...(item.tourId ? { 'data-tour': item.tourId } : {})}
+                        className={cn(
+                          'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
+                          active
+                            ? 'bg-violet-50 text-violet-700'
+                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        )}
+                      >
                       <item.icon
                         className={cn(
                           'w-5 h-5 flex-shrink-0 transition-colors',
@@ -338,7 +340,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </nav>
 
         {/* Credits & Upgrade */}
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100" data-tour="dashboard-credits">
           <AnimatePresence>
             {sidebarOpen ? (
               <motion.div
@@ -448,6 +450,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                         <Link
                           key={item.name}
                           href={item.href}
+                          {...(item.tourId ? { 'data-tour': item.tourId } : {})}
                           className={cn(
                             'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
                             active

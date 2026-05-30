@@ -3717,3 +3717,65 @@
 /* ============================================
    REMOVATION.AI - END OF STYLES
    ============================================ */
+/* Driver.js tour customization for Removation.ai dark theme */
+.removation-tour-popover {
+  background: #1a1a2e !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important;
+  border-radius: 12px !important;
+  color: #fff !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(124, 58, 237, 0.2) !important;
+  max-width: 320px !important;
+}
+
+.removation-tour-popover .driver-popover-title {
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+.removation-tour-popover .driver-popover-description {
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+}
+
+.removation-tour-popover .driver-popover-progress-text {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 12px !important;
+}
+
+.removation-tour-popover .driver-popover-prev-btn,
+.removation-tour-popover .driver-popover-next-btn {
+  background: #7c3aed !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 8px 16px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+}
+
+.removation-tour-popover .driver-popover-prev-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.removation-tour-popover .driver-popover-prev-btn:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.removation-tour-popover .driver-popover-next-btn:hover {
+  background: #6d28d9 !important;
+}
+
+.removation-tour-popover .driver-popover-close-btn {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+.removation-tour-popover .driver-popover-close-btn:hover {
+  color: #fff !important;
+}
+
+/* Override overlay color */
+.driver-overlay {
+  background: rgba(0, 0, 0, 0.75) !important;
+}

@@ -36,6 +36,7 @@ import {
   Bath,
   UtensilsCrossed,
   Briefcase,
+  Sofa,
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
 

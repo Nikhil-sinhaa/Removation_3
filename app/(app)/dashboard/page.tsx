@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useDashboardTour } from '@/hooks/useDashboardTour';
 // TODO: Remnant Clerk imports: useUser
 import {
   Plus,
@@ -470,6 +471,9 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [showWelcome, setShowWelcome] = useState(false);
 
+  const shouldShowTour = user?.onboardingCompleted === true && user?.tourCompleted === false;
+  useDashboardTour(shouldShowTour);
+
   // Set greeting based on time
   useEffect(() => {
     const hour = new Date().getHours();
@@ -700,6 +704,7 @@ export default function DashboardPage() {
                 variants={cardHoverVariants}
                 initial="rest"
                 whileHover="hover"
+                data-tour="dashboard-credits"
                 className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm cursor-pointer"
               >
                 <div className="flex items-start justify-between">
@@ -760,7 +765,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Quick Actions */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} data-tour="dashboard-quick-actions">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900">{t('db_quick_actions')}</h2>
           </div>
@@ -899,7 +904,7 @@ export default function DashboardPage() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Projects - Takes 2 columns */}
-          <motion.div variants={itemVariants} className="lg:col-span-2">
+          <motion.div variants={itemVariants} className="lg:col-span-2" data-tour="dashboard-recent-projects">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-900">{t('db_recent_projects')}</h2>
               <Link

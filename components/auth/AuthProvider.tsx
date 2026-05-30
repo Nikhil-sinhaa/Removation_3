@@ -19,6 +19,8 @@ export interface User {
   subscription?: any;
   preferences?: any;
   onboardingCompleted?: boolean;
+  tourCompleted?: boolean;
+  tourCompletedAt?: string | Date;
 }
 
 interface AuthContextType {

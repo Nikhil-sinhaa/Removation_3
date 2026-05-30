@@ -76,6 +76,10 @@ export interface IUser {
     onboardingCompleted?: boolean;
     onboardingCompletedAt?: Date;
 
+    // Tour
+    tourCompleted?: boolean;
+    tourCompletedAt?: Date;
+
     // Metadata
     lastRenderAt?: Date;
     createdAt: Date;
@@ -149,6 +153,9 @@ const UserSchema = new Schema<IUser>({
 
     onboardingCompleted: { type: Boolean, default: false },
     onboardingCompletedAt: Date,
+
+    tourCompleted: { type: Boolean, default: false },
+    tourCompletedAt: { type: Date, default: null },
 
     lastRenderAt: Date,
     createdAt: { type: Date, default: Date.now },
