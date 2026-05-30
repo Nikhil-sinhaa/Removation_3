@@ -24,8 +24,13 @@ import {
   BookmarkCheck,
 } from "lucide-react";
 import { MakeItReal } from "@/components/ai/MakeItReal";
+import { AIResultPanel } from "@/components/ai/AIResultPanel";
+import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
+import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUserStore } from '@/stores/user-store';
+import { useAuth } from '@/hooks/useAuth';
+import { usePageTour } from '@/hooks/usePageTour';
 
 interface ProgressState {
   stage: number; // 1 = scene analysis, 2 = repainting
@@ -49,8 +54,50 @@ interface FeedbackState {
 }
 
 export default function RoomChangerPage() {
+  const { user } = useAuth();
   const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+
+  usePageTour({
+    tourKey: 'room_changer_tour',
+    completed: !user || user.onboardingCompleted === false || (user.completedTours?.includes('room_changer_tour') ?? false),
+    steps: [
+      {
+        element: '[data-tour="rc-uploader"]',
+        popover: {
+          title: '📸 Upload Photo',
+          description: 'Upload a clear photo of the room you want to repaint. For best results, ensure the walls are well-lit.',
+          side: 'bottom',
+          align: 'center'
+        }
+      },
+      {
+        element: '[data-tour="rc-color-picker"]',
+        popover: {
+          title: '🎨 Choose Color',
+          description: 'Select your preferred paint color from our curated presets, or use the custom color picker.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        element: '[data-tour="rc-generate-btn"]',
+        popover: {
+          title: '⚡ Repaint Wall',
+          description: 'Click this button to start the AI repaint. The AI will analyze the walls and apply the new color seamlessly.',
+          side: 'top',
+          align: 'center'
+        }
+      },
+      {
+        popover: {
+          title: '✨ Ready to design?',
+          description: 'Select a color, upload a photo, and watch the AI repaint the walls. Your first render is on us!',
+          align: 'center'
+        }
+      }
+    ]
+  });
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
@@ -61,6 +108,99 @@ export default function RoomChangerPage() {
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
+  const [isEnhancing, setIsEnhancing]   = useState(false);
+  const [enhancedUrl, setEnhancedUrl]   = useState<string | null>(null);
+
+  // ── Paint Selection mode (mask editor) ────────────────────────────────────
+  const [paintMode, setPaintMode]       = useState<'whole' | 'selection'>('whole');
+  const [maskIsGenerating, setMaskIsGenerating] = useState(false);
+  const [maskResult, setMaskResult]     = useState<string | null>(null);
+  const [brushSize, setBrushSize]       = useState(30);
+  const maskCanvasRef = useRef<ReactSketchCanvasRef>(null);
+
+  const handleEnhance = async () => {
+    const imageUrl = result?.afterUrl;
+    if (!imageUrl) return;
+    setIsEnhancing(true);
+    try {
+      const res = await fetch('/api/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
+      });
+      const data = await res.json();
+      if (data.outputImage) {
+        setEnhancedUrl(data.outputImage);
+        toast({ title: t("rc_enhance_done") || '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
+      } else {
+        throw new Error(data.error || 'Enhancement failed');
+      }
+    } catch {
+      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleMaskRepaint = async () => {
+    if (!maskCanvasRef.current || !previewUrl) return;
+    setMaskIsGenerating(true);
+    setMaskResult(null);
+    try {
+      const maskDataUrl = await maskCanvasRef.current.exportImage('png');
+
+      // Fetch the blob image and convert to File
+      const imgRes = await fetch(previewUrl);
+      const imgBlob = await imgRes.blob();
+      const imageFile = new File([imgBlob], 'room.png', { type: 'image/png' });
+
+      // Convert mask data URL to File
+      const maskRes = await fetch(maskDataUrl);
+      const maskBlob = await maskRes.blob();
+      const maskFile = new File([maskBlob], 'mask.png', { type: 'image/png' });
+
+      const form = new FormData();
+      form.append('image', imageFile);
+      form.append('mask', maskFile);
+      form.append('data', JSON.stringify({
+        prompt: color.name ? `repaint the selected area in ${color.name}, photorealistic interior` : 'high quality interior, photorealistic',
+        roomType: 'living room',
+        denoise: 0.75,
+      }));
+
+      const res = await fetch('/api/ai/edit', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Inpaint failed');
+
+      const editProjectId = data.projectId;
+
+      // Poll for result
+      const poll = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/ai/edit?projectId=${editProjectId}`);
+          if (!pollRes.ok) return;
+          const proj = await pollRes.json();
+          if (proj.status === 'completed' && proj.resultImage) {
+            clearInterval(poll);
+            setMaskResult(proj.resultImage + '?t=' + Date.now());
+            setResult({ beforeUrl: previewUrl, afterUrl: proj.resultImage + '?t=' + Date.now(), runId: editProjectId, canRetryStage3: false });
+            setMaskIsGenerating(false);
+          } else if (proj.status === 'failed') {
+            clearInterval(poll);
+            toast({ title: 'Inpaint failed', description: proj.error || 'Generation failed', variant: 'destructive' });
+            setMaskIsGenerating(false);
+          }
+        } catch { /* ignore poll errors */ }
+      }, 3000);
+
+      // Timeout after 5 min
+      setTimeout(() => { clearInterval(poll); if (maskIsGenerating) { setMaskIsGenerating(false); toast({ title: 'Timed out', description: 'Try again', variant: 'destructive' }); } }, 300000);
+
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      setMaskIsGenerating(false);
+    }
+  };
 
   const isGeneratingRef = useRef(isGenerating);
   useEffect(() => {
@@ -243,6 +383,9 @@ export default function RoomChangerPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
+    setEnhancedUrl(null);
+    setPaintMode('whole');
+    setMaskResult(null);
     setFeedback({ rating: null, text: "", submitted: false, submitting: false });
   };
 
@@ -290,7 +433,7 @@ export default function RoomChangerPage() {
         {/* ─── Left Panel: Inputs ──────────────────────────────────────────── */}
         <div className="space-y-4">
           {/* Image Upload */}
-          <Card>
+          <Card data-tour="rc-uploader">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Upload className="w-4 h-4" />{t("rc_repaint_upload_title")}
@@ -316,16 +459,77 @@ export default function RoomChangerPage() {
                   <p className="text-xs text-gray-400 mt-1">{t("rc_repaint_max_size")}</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                    <img src={previewUrl} alt="Room preview" className="w-full h-52 object-cover" />
+                <div className="space-y-3">
+                  {/* Repaint Mode toggle */}
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+                    <button
+                      onClick={() => setPaintMode('whole')}
+                      className={`flex-1 px-3 py-2 transition-colors ${paintMode === 'whole' ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      disabled={isGenerating}
+                    >
+                      Repaint Whole Room
+                    </button>
+                    <button
+                      onClick={() => setPaintMode('selection')}
+                      className={`flex-1 px-3 py-2 transition-colors ${paintMode === 'selection' ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      disabled={isGenerating}
+                    >
+                      Paint Selection
+                    </button>
                   </div>
+
+                  {/* Standard preview OR mask canvas */}
+                  {paintMode === 'whole' ? (
+                    <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                      <img src={previewUrl} alt="Room preview" className="w-full h-52 object-cover" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Canvas with image background */}
+                      <div className="relative rounded-xl overflow-hidden border-2 border-violet-300 bg-gray-100" style={{ minHeight: 240 }}>
+                        {/* Background image */}
+                        <img
+                          src={previewUrl}
+                          alt="Room"
+                          className="w-full object-contain pointer-events-none select-none"
+                          style={{ display: 'block' }}
+                        />
+                        {/* Sketch canvas overlay */}
+                        <div className="absolute inset-0 opacity-60" style={{ cursor: 'crosshair' }}>
+                          <ReactSketchCanvas
+                            ref={maskCanvasRef}
+                            width="100%"
+                            height="100%"
+                            strokeWidth={brushSize}
+                            strokeColor="#ffffff"
+                            canvasColor="transparent"
+                            style={{ border: 'none' }}
+                          />
+                        </div>
+                      </div>
+                      {/* Brush controls */}
+                      <div className="flex items-center gap-3 px-1">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">Brush {brushSize}px</span>
+                        <Slider
+                          value={[brushSize]}
+                          onValueChange={v => setBrushSize(v[0])}
+                          min={5} max={100} step={5}
+                          className="flex-1"
+                          disabled={maskIsGenerating}
+                        />
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => maskCanvasRef.current?.undo()} disabled={maskIsGenerating}>Undo</Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => maskCanvasRef.current?.clearCanvas()} disabled={maskIsGenerating}>Clear</Button>
+                      </div>
+                      <p className="text-xs text-gray-400 text-center">Paint white over the area you want to repaint</p>
+                    </div>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
                     className="w-full"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isGenerating}
+                    disabled={isGenerating || maskIsGenerating}
                   >
                     <RefreshCw className="w-3.5 h-3.5 mr-2" />{t("rc_repaint_change_image")}
                   </Button>
@@ -335,7 +539,7 @@ export default function RoomChangerPage() {
           </Card>
 
           {/* Color Selection */}
-          <Card>
+          <Card data-tour="rc-color-picker">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <Paintbrush className="w-4 h-4" />{t("rc_repaint_choose_color")}
@@ -346,19 +550,35 @@ export default function RoomChangerPage() {
             </CardContent>
           </Card>
 
-          {/* Generate Button */}
-          <Button
-            onClick={() => handleGenerate()}
-            disabled={!canGenerate}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
-            size="lg"
-          >
-            {isGenerating ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("rc_repaint_generating")}</>
-            ) : (
-              <><Wand2 className="w-4 h-4 mr-2" />{t("rc_repaint_generate")}</>
-            )}
-          </Button>
+          {/* Generate Button — whole room or paint selection */}
+          {paintMode === 'whole' ? (
+            <Button
+              data-tour="rc-generate-btn"
+              onClick={() => handleGenerate()}
+              disabled={!canGenerate}
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+              size="lg"
+            >
+              {isGenerating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("rc_repaint_generating")}</>
+              ) : (
+                <><Wand2 className="w-4 h-4 mr-2" />{t("rc_repaint_generate")}</>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleMaskRepaint}
+              disabled={!previewUrl || maskIsGenerating}
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+              size="lg"
+            >
+              {maskIsGenerating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Repainting Selected Area...</>
+              ) : (
+                <><Paintbrush className="w-4 h-4 mr-2" />Repaint Selected Area</>
+              )}
+            </Button>
+          )}
 
           {/* Error */}
           <AnimatePresence>
@@ -483,56 +703,29 @@ export default function RoomChangerPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="space-y-4"
                   >
-                    <BeforeAfterSlider
-                      beforeImage={result.beforeUrl}
-                      afterImage={result.afterUrl}
+                    <AIResultPanel
+                      originalImageUrl={result.beforeUrl}
+                      resultImageUrl={result.afterUrl}
+                      enhancedImageUrl={enhancedUrl}
+                      isEnhancing={isEnhancing}
+                      onEnhance={handleEnhance}
+                      onDownload={() => {
+                        const a = document.createElement("a");
+                        a.href = enhancedUrl || result.afterUrl;
+                        a.download = `room-changer-${color.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}.png`;
+                        a.click();
+                      }}
+                      onSave={() => toast({ title: t("rc_repaint_saved_title"), description: t("rc_repaint_saved_desc", { color: color.name }) })}
+                      toolName="Room Changer"
                       beforeLabel={t("rc_repaint_original")}
                       afterLabel={color.name || t("rc_repaint_recolored")}
-                    />
-
-                    {/* Action buttons */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = result.afterUrl;
-                          a.download = `room-changer-${color.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}.png`;
-                          a.click();
-                        }}
-                        className="flex-1"
-                      >
-                        <Download className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_download")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: t("rc_repaint_saved_title"),
-                            description: t("rc_repaint_saved_desc", { color: color.name }),
-                          });
-                        }}
-                        className="flex-1"
-                      >
-                        <BookmarkCheck className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_save_to_project")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleTryAnother}
-                        className="flex-1"
-                      >
+                    >
+                      <Button size="sm" variant="outline" onClick={handleTryAnother} className="w-full">
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_try_another")}
                       </Button>
-                    </div>
-
-                    {/* Make It Real — connect render to a real designer */}
-                    <MakeItReal
-                      roomType="living-room"
-                      afterImage={result.afterUrl}
-                    />
+                      {/* Make It Real — connect render to a real designer */}
+                      <MakeItReal roomType="living-room" afterImage={enhancedUrl || result.afterUrl} />
+                    </AIResultPanel>
 
                     {/* Feedback */}
                     <div className="pt-3 border-t border-gray-100">

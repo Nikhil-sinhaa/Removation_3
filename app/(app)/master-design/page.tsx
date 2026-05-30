@@ -22,6 +22,8 @@ import {
   Home
 } from "lucide-react";
 import { MakeItReal } from "@/components/ai/MakeItReal";
+import { AIResultPanel } from "@/components/ai/AIResultPanel";
+import { useToast } from "@/components/ui/use-toast";
 
 const roomTypes = [
   { id: "living_room", name: "Living Room", icon: <Home className="w-4 h-4" /> },
@@ -34,6 +36,7 @@ const roomTypes = [
 ];
 
 export default function MasterDesignPage() {
+  const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [roomType, setRoomType] = useState("living_room");
@@ -43,6 +46,32 @@ export default function MasterDesignPage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [masterSelector, setMasterSelector] = useState<any>(null);
   const [masterToggles, setMasterToggles] = useState<any>(null);
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [enhancedUrl, setEnhancedUrl] = useState<string | null>(null);
+
+  const handleEnhance = async () => {
+    const imageUrl = result?.generatedImage;
+    if (!imageUrl) return;
+    setIsEnhancing(true);
+    try {
+      const res = await fetch('/api/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
+      });
+      const data = await res.json();
+      if (data.outputImage) {
+        setEnhancedUrl(data.outputImage);
+        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
+      } else {
+        throw new Error(data.error || 'Enhancement failed');
+      }
+    } catch {
+      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -59,6 +88,7 @@ export default function MasterDesignPage() {
       setPreviewUrl(URL.createObjectURL(file));
       setResult(null);
       setError(null);
+      setEnhancedUrl(null);
       addLog(`Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     }
   };
@@ -353,9 +383,14 @@ export default function MasterDesignPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <BeforeAfterSlider
-                      beforeImage={result.originalPreview || "/images/hero-before.jpg"}
-                      afterImage={result.generatedImage}
+                    <AIResultPanel
+                      originalImageUrl={result.originalPreview || "/images/hero-before.jpg"}
+                      resultImageUrl={result.generatedImage}
+                      enhancedImageUrl={enhancedUrl}
+                      isEnhancing={isEnhancing}
+                      onEnhance={handleEnhance}
+                      onSave={() => toast({ title: 'Saved to project', description: 'Design saved.' })}
+                      toolName="Master Design"
                       beforeLabel="Original Room"
                       afterLabel="AI Redesigned"
                     />

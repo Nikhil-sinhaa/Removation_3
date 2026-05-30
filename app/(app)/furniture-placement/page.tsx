@@ -7,17 +7,56 @@ import {
   Image as ImageIcon, Sofa, CheckCircle, AlertCircle, RefreshCw, BookmarkCheck,
 } from 'lucide-react';
 import { BeforeAfterSlider } from '@/components/ui/before-after-slider';
+import { AIResultPanel } from '@/components/ai/AIResultPanel';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { useUserStore } from '@/stores/user-store';
+import { useAuth } from '@/hooks/useAuth';
+import { usePageTour } from '@/hooks/usePageTour';
 
 type Stage      = 'upload' | 'place' | 'done';
 type AsyncState = 'idle' | 'loading' | 'done' | 'error';
 
 export default function FurniturePlacementPage() {
+  const { user } = useAuth();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const { toast } = useToast();
   const [stage, setStage] = useState<Stage>('upload');
+
+  // Initialize Product Tour
+  usePageTour({
+    tourKey: 'furniture_placement_tour',
+    completed: user?.completedTours?.includes('furniture_placement_tour') ?? false,
+    steps: [
+      {
+        element: '[data-tour="fp-upload-room"]',
+        popover: {
+          title: '🖼️ Room Photo',
+          description: 'Upload a picture of the room where you want to place new furniture.',
+          side: 'bottom',
+          align: 'center',
+        },
+      },
+      {
+        element: '[data-tour="fp-upload-furniture"]',
+        popover: {
+          title: '🛋️ Furniture Photo',
+          description: 'Upload an image of the furniture. We will automatically remove its background so it fits cleanly into the room!',
+          side: 'bottom',
+          align: 'center',
+        },
+      },
+      {
+        element: '[data-tour="fp-continue-btn"]',
+        popover: {
+          title: '➡️ Next Step',
+          description: 'Once both photos are successfully uploaded, click this button to proceed to the position and sizing workbench!',
+          side: 'top',
+          align: 'center',
+        },
+      },
+    ],
+  });
 
   // Room
   const [roomPreview,       setRoomPreview]       = useState('');  // blob URL for live preview
@@ -45,6 +84,31 @@ export default function FurniturePlacementPage() {
   // Flow
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultUrl,    setResultUrl]    = useState('');
+  const [isEnhancing,  setIsEnhancing]  = useState(false);
+  const [enhancedUrl,  setEnhancedUrl]  = useState<string | null>(null);
+
+  const handleEnhance = async () => {
+    if (!resultUrl) return;
+    setIsEnhancing(true);
+    try {
+      const res = await fetch('/api/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: resultUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
+      });
+      const data = await res.json();
+      if (data.outputImage) {
+        setEnhancedUrl(data.outputImage);
+        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
+      } else {
+        throw new Error(data.error || 'Enhancement failed');
+      }
+    } catch {
+      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   const fileRoomRef      = useRef<HTMLInputElement>(null);
   const fileFurnitureRef = useRef<HTMLInputElement>(null);
@@ -171,7 +235,7 @@ export default function FurniturePlacementPage() {
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
-  const handleTryAnother = () => { setResultUrl(''); setStage('place'); };
+  const handleTryAnother = () => { setResultUrl(''); setEnhancedUrl(null); setStage('place'); };
 
   const handleStartOver = () => {
     setStage('upload');
@@ -183,6 +247,7 @@ export default function FurniturePlacementPage() {
     setFurNatW(0);             setFurNatH(0);
     setBgState('idle');
     setIsGenerating(false);    setResultUrl('');
+    setEnhancedUrl(null);
     setPosX(50); setPosY(60); setScalePct(30); setRotation(0);
   };
 
@@ -239,6 +304,7 @@ export default function FurniturePlacementPage() {
 
               {/* Room photo */}
               <div
+                data-tour="fp-upload-room"
                 onClick={() => fileRoomRef.current?.click()}
                 className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 group ${
                   roomPreview
@@ -283,6 +349,7 @@ export default function FurniturePlacementPage() {
 
               {/* Furniture photo */}
               <div
+                data-tour="fp-upload-furniture"
                 onClick={() => fileFurnitureRef.current?.click()}
                 className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 group ${
                   furniturePreview
@@ -344,6 +411,7 @@ export default function FurniturePlacementPage() {
 
             <div className="flex justify-center">
               <button
+                data-tour="fp-continue-btn"
                 onClick={handleContinue}
                 disabled={!canContinue}
                 className="inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl shadow-md shadow-violet-600/20 transition-all text-base"
@@ -491,40 +559,40 @@ export default function FurniturePlacementPage() {
               </p>
             </div>
 
-            <BeforeAfterSlider
-              beforeImage={roomPreviewUrl || roomPreview}
-              afterImage={resultUrl}
+            <AIResultPanel
+              originalImageUrl={roomPreviewUrl || roomPreview}
+              resultImageUrl={resultUrl}
+              enhancedImageUrl={enhancedUrl}
+              isEnhancing={isEnhancing}
+              onEnhance={handleEnhance}
+              onDownload={() => {
+                const a = document.createElement('a');
+                a.href = enhancedUrl || resultUrl;
+                a.download = 'furnished-room.png';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+              }}
+              onSave={() => toast({ title: 'Saved to project', description: 'Furniture placement saved.' })}
+              toolName="Furniture Placement"
               beforeLabel="Original"
               afterLabel="Furnished"
-            />
-
-            <div className="flex flex-wrap gap-3">
-              <a
-                href={resultUrl}
-                download="furnished-room.png"
-                className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold px-5 py-3 rounded-xl transition-colors shadow-sm"
-              >
-                <Download className="w-4 h-4" /> Download
-              </a>
-              <button
-                onClick={() => toast({ title: 'Saved to project', description: 'Furniture placement saved.' })}
-                className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold px-5 py-3 rounded-xl transition-colors shadow-sm"
-              >
-                <BookmarkCheck className="w-4 h-4" /> Save to Project
-              </button>
-              <button
-                onClick={handleTryAnother}
-                className="flex items-center gap-2 border border-violet-200 text-violet-700 hover:bg-violet-50 font-semibold px-5 py-3 rounded-xl transition-colors"
-              >
-                <Wand2 className="w-4 h-4" /> Try Different Position
-              </button>
-              <button
-                onClick={handleStartOver}
-                className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-semibold px-5 py-3 rounded-xl shadow-md shadow-violet-600/20 transition-all"
-              >
-                <RotateCcw className="w-4 h-4" /> Start Over
-              </button>
-            </div>
+            >
+              <div className="flex flex-wrap gap-3">
+                <button
+                  onClick={handleTryAnother}
+                  className="flex items-center gap-2 border border-violet-200 text-violet-700 hover:bg-violet-50 font-semibold px-5 py-3 rounded-xl transition-colors"
+                >
+                  <Wand2 className="w-4 h-4" /> Try Different Position
+                </button>
+                <button
+                  onClick={handleStartOver}
+                  className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-semibold px-5 py-3 rounded-xl shadow-md shadow-violet-600/20 transition-all"
+                >
+                  <RotateCcw className="w-4 h-4" /> Start Over
+                </button>
+              </div>
+            </AIResultPanel>
           </motion.div>
         )}
 

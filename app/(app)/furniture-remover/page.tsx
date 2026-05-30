@@ -27,6 +27,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
+import { AIResultPanel } from '@/components/ai/AIResultPanel';
 
 interface ProgressState {
   stage: number;
@@ -129,6 +130,31 @@ export default function FurnitureRemoverPage() {
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
+  const [isEnhancing, setIsEnhancing]   = useState(false);
+  const [enhancedUrl, setEnhancedUrl]   = useState<string | null>(null);
+
+  const handleEnhance = async () => {
+    if (!result?.afterUrl) return;
+    setIsEnhancing(true);
+    try {
+      const res = await fetch('/api/enhance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: result.afterUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
+      });
+      const data = await res.json();
+      if (data.outputImage) {
+        setEnhancedUrl(data.outputImage);
+        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
+      } else {
+        throw new Error(data.error || 'Enhancement failed');
+      }
+    } catch {
+      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
 
   // ── Auto Mode Parameters ───────────────────────────────────────────────────
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["sofa", "chair", "table", "bed", "cabinet", "lamp"]);
@@ -476,6 +502,7 @@ export default function FurnitureRemoverPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
+    setEnhancedUrl(null);
     setFeedback({ rating: null, text: "", submitted: false, submitting: false });
     setCanvasHistory([]);
   };
@@ -901,50 +928,27 @@ export default function FurnitureRemoverPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="space-y-4 my-auto"
                   >
-                    <BeforeAfterSlider
-                      beforeImage={result.beforeUrl}
-                      afterImage={result.afterUrl}
+                    <AIResultPanel
+                      originalImageUrl={result.beforeUrl}
+                      resultImageUrl={result.afterUrl}
+                      enhancedImageUrl={enhancedUrl}
+                      isEnhancing={isEnhancing}
+                      onEnhance={handleEnhance}
+                      onDownload={() => {
+                        const a = document.createElement("a");
+                        a.href = enhancedUrl || result.afterUrl;
+                        a.download = `furniture-remover-${activeTab}-${Date.now()}.png`;
+                        a.click();
+                      }}
+                      onSave={() => toast({ title: "Saved successfully", description: "Generation saved to your user history dashboard." })}
+                      toolName="Furniture Remover"
                       beforeLabel="Original Room"
                       afterLabel="Furniture Erased"
-                    />
-
-                    {/* Actions Panel */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = result.afterUrl;
-                          a.download = `furniture-remover-${activeTab}-${Date.now()}.png`;
-                          a.click();
-                        }}
-                        className="flex-1 py-5 border-gray-200"
-                      >
-                        <Download className="w-3.5 h-3.5 mr-1.5" />Download
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: "Saved successfully",
-                            description: "Generation saved to your user history dashboard.",
-                          });
-                        }}
-                        className="flex-1 py-5 border-gray-200"
-                      >
-                        <BookmarkCheck className="w-3.5 h-3.5 mr-1.5" />Save to Project
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleTryAnother}
-                        className="flex-1 py-5 border-gray-200"
-                      >
+                    >
+                      <Button size="sm" variant="outline" onClick={handleTryAnother} className="w-full border-gray-200">
                         <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another
                       </Button>
-                    </div>
+                    </AIResultPanel>
 
                     {/* Feedback Rating Module */}
                     <div className="pt-4 border-t border-gray-100">
