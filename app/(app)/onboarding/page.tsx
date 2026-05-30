@@ -168,8 +168,8 @@ export default function OnboardingPage() {
 
   const navigateTo = useCallback(async (path: string) => {
     await completeOnboarding();
-    router.push(path);
-  }, [completeOnboarding, router]);
+    window.location.href = path;
+  }, [completeOnboarding]);
 
   // ── Image upload/select ────────────────────────────────────────────────────
   const handleFile = (file: File) => {
@@ -316,7 +316,14 @@ export default function OnboardingPage() {
 
   // ── Skip ───────────────────────────────────────────────────────────────────
   const handleSkip = async () => {
-    await navigateTo('/dashboard');
+    // 1. Mark onboarding complete in DB
+    await fetch('/api/user/complete-onboarding', { method: 'POST' });
+    
+    // 2. Clear localStorage onboarding state using the helper
+    lsClear();
+    
+    // 3. Hard redirect to dashboard (not router.push — use window.location)
+    window.location.href = '/dashboard';
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────
