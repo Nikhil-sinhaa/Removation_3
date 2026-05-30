@@ -31,7 +31,7 @@ export default function SignUpPage() {
       const data = await res.json();
 
       if (res.ok) {
-        router.push('/');
+        router.push(data.redirectTo || '/onboarding');
         router.refresh();
       } else {
         setError(data.message || 'Error creating account');

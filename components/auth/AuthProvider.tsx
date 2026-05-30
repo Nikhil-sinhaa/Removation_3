@@ -18,6 +18,7 @@ export interface User {
   role?: 'customer' | 'designer' | 'admin';
   subscription?: any;
   preferences?: any;
+  onboardingCompleted?: boolean;
 }
 
 interface AuthContextType {

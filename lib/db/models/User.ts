@@ -72,6 +72,10 @@ export interface IUser {
         showTips?: boolean;
     };
 
+    // Onboarding
+    onboardingCompleted?: boolean;
+    onboardingCompletedAt?: Date;
+
     // Metadata
     lastRenderAt?: Date;
     createdAt: Date;
@@ -142,6 +146,9 @@ const UserSchema = new Schema<IUser>({
         marketingEmails: { type: Boolean, default: false },
         showTips: { type: Boolean, default: true },
     },
+
+    onboardingCompleted: { type: Boolean, default: false },
+    onboardingCompletedAt: Date,
 
     lastRenderAt: Date,
     createdAt: { type: Date, default: Date.now },

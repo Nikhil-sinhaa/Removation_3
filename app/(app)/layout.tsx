@@ -156,6 +156,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState(3);
 
+  // Redirect incomplete onboarding users to the wizard
+  useEffect(() => {
+    if (isLoaded) return; // still loading
+    if (user && user.onboardingCompleted === false && !pathname.startsWith('/onboarding')) {
+      router.push('/onboarding');
+    }
+  }, [user, isLoaded, pathname, router]);
+
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);

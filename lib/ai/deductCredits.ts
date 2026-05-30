@@ -12,17 +12,25 @@ export interface DeductionResult {
     code?: 'USER_NOT_FOUND' | 'INSUFFICIENT_CREDITS' | 'ERROR';
 }
 
+export interface DeductOptions {
+    source?: string;
+}
+
 /**
  * Validates and atomically deducts credits for a user's AI action.
- * Bypasses deduction if the application is in development mode.
- * 
+ * Bypasses deduction if the application is in development mode or if the
+ * action is tagged as an onboarding render for a user who hasn't yet completed
+ * onboarding (first-run free transform).
+ *
  * @param userId - The Clerk ID or Mongoose ObjectId of the user.
- * @param actionKey - The AI action type (e.g., 'room-changer', 'furniture-remover', 'redesign').
+ * @param actionKey - The AI action type (e.g., 'room-changer', 'furniture-remover').
+ * @param options - Optional flags; source='onboarding' triggers free-render bypass.
  * @returns DeductionResult
  */
 export async function checkAndDeductCredits(
     userId: string,
-    actionKey: string
+    actionKey: string,
+    options?: DeductOptions
 ): Promise<DeductionResult> {
     try {
         await connectToDatabase();
@@ -44,7 +52,17 @@ export async function checkAndDeductCredits(
             };
         }
 
-        // 2. Fetch app mode config
+        // 2. Onboarding bypass — first render is free while onboarding is incomplete
+        if (options?.source === 'onboarding' && user.onboardingCompleted === false) {
+            await User.updateOne(
+                { _id: user._id },
+                { $set: { lastRenderAt: new Date() } }
+            );
+            const remaining = user.subscription.credits - user.subscription.creditsUsed;
+            return { success: true, mode: 'development', cost: 0, remaining };
+        }
+
+        // 3. Fetch app mode config
         const mode = await getAppMode();
 
         // 3. Handle Development Mode (Bypass deductions)
@@ -64,8 +82,34 @@ export async function checkAndDeductCredits(
         }
 
         // 4. Handle Production Mode (Enforce and deduct)
+        const DEFAULT_TOOL_COSTS: Record<string, number> = {
+            'auto-edit': 1,
+            'background': 1,
+            'ceiling-changer': 1,
+            'collage': 1,
+            'edit': 1,
+            'recolor': 1,
+            'segment': 1,
+            'remove-object': 1,
+            'lineart': 1,
+            'postprocess': 1,
+            'view-extend': 1,
+            'furniture-placement/generate': 2,
+            'furnish': 2,
+            'empty-room': 2,
+            'landscape': 2,
+            'lighting': 2,
+            'style-transfer': 2,
+            'render': 2,
+            'interior-render': 3,
+            'exterior-render': 3,
+            'ultra-pro': 3,
+            'redesign': 3,
+            'furniture-placement/remove-bg': 0
+        };
+
         const creditCosts = await getCreditCosts();
-        const cost = creditCosts[actionKey] ?? 1;
+        const cost = creditCosts[actionKey] ?? DEFAULT_TOOL_COSTS[actionKey] ?? 1;
 
         const remainingBefore = user.subscription.credits - user.subscription.creditsUsed;
 

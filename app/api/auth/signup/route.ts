@@ -53,14 +53,16 @@ export async function POST(req: Request) {
     });
 
     const response = NextResponse.json(
-      { 
-        message: 'Signup successful', 
-        user: { 
-          id: user._id, 
-          email: user.email, 
-          firstName: user.firstName, 
-          lastName: user.lastName 
-        } 
+      {
+        message: 'Signup successful',
+        isNewUser: true,
+        redirectTo: '/onboarding',
+        user: {
+          id: user._id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName
+        }
       },
       { status: 201 }
     );

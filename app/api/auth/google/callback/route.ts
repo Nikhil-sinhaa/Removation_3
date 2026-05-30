@@ -69,8 +69,10 @@ export async function GET(req: Request) {
 
     // Check if user exists
     let user = await User.findOne({ email });
+    let isNewUser = false;
 
     if (!user) {
+      isNewUser = true;
       const signupCredits = await getFreeCreditsOnSignup().catch(err => {
         console.error('Error fetching dynamic free credits on Google signup:', err);
         return 10;
@@ -115,6 +117,13 @@ export async function GET(req: Request) {
       if (needsSave) {
         await user.save();
       }
+    }
+
+    // New Google OAuth users go to onboarding
+    if (isNewUser) {
+      const response = NextResponse.redirect(`${APP_URL}/onboarding`);
+      issueJwt(response, user);
+      return response;
     }
 
     // Determine where to redirect after login.
