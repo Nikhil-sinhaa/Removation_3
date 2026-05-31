@@ -203,7 +203,7 @@ export async function POST(request) {
 
     // ── Persist to MongoDB ────────────────────────────────────────────────────
     const authUser = await getCurrentUser();
-    const finalUserId = authUser?.id || '000000000000000000000000';
+    const finalUserId = authUser?.id || null;
 
     const project = await Project.create({
       name:           'Furniture Placement',

@@ -168,7 +168,7 @@ export async function POST(request) {
 
     // Create project record
     const authUser = await getCurrentUser();
-    const finalUserId = authUser?.id || '000000000000000000000000';
+    const finalUserId = authUser?.id || null;
 
     const project = await Project.create({
       name:           `Ultra-Pro ${roomType}`,

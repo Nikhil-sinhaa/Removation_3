@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
   try {
     const authUser = await getCurrentUser();
-    const finalUserId = authUser?.id || '000000000000000000000000';
+    const finalUserId = authUser?.id || null;
 
     const formData = await safeParseFormData(request);
     const imageFile = formData.get('image');

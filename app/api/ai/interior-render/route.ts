@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   await connectDB();
   try {
     const authUser = await getCurrentUser();
-    const finalUserId = authUser?.id || '000000000000000000000000';
+    const finalUserId = authUser?.id || null;
 
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;
