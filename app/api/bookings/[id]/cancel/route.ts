@@ -36,7 +36,7 @@ import { sendSystemMessage } from '@/lib/messages/system';
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // ── Auth ────────────────────────────────────────────────────────────────
@@ -45,7 +45,7 @@ export async function POST(
         const { user } = authResult;
 
         // ── Validate booking ID ─────────────────────────────────────────────────
-        const { id } = params;
+        const { id } = await params;
         if (!id || !Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: 'Invalid booking ID' }, { status: 400 });
         }

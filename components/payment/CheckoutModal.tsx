@@ -164,32 +164,40 @@ export function CheckoutModal({
       if (paymentMethod === 'stripe' && data.url) {
         // Redirect to Stripe Checkout
         window.location.href = data.url;
-      } else if (paymentMethod === 'razorpay' && data.orderId) {
+      } else if (paymentMethod === 'razorpay' && (data.orderId || data.subscriptionId)) {
         // Initialize Razorpay
-        const options = {
-          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        const options: any = {
+          key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || data.keyId,
           amount: data.amount,
           currency: 'INR',
           name: 'Removation.ai',
           description: `${plan.name} - ${isYearly ? 'Yearly' : 'Monthly'} Plan`,
-          order_id: data.orderId,
           handler: async function (response: any) {
-            // Verify payment
-            const verifyResponse = await fetch('/api/payment/verify', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-              }),
-            });
+            try {
+              // Verify payment
+              const verifyResponse = await fetch('/api/payment/verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  paymentMethod: 'razorpay',
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id || data.orderId,
+                  razorpay_subscription_id: response.razorpay_subscription_id || data.subscriptionId,
+                  razorpay_signature: response.razorpay_signature,
+                }),
+              });
 
-            if (verifyResponse.ok) {
-              setStep('success');
-              onSuccess?.(response.razorpay_payment_id);
-            } else {
-              throw new Error('Payment verification failed');
+              if (verifyResponse.ok) {
+                setStep('success');
+                onSuccess?.(response.razorpay_payment_id || data.subscriptionId || data.orderId);
+              } else {
+                const verifyData = await verifyResponse.json();
+                setError(verifyData.error || 'Payment verification failed');
+                setStep('error');
+              }
+            } catch (err: any) {
+              setError(err.message || 'Payment verification failed');
+              setStep('error');
             }
           },
           prefill: {
@@ -200,6 +208,12 @@ export function CheckoutModal({
             color: '#7c3aed',
           },
         };
+
+        if (data.subscriptionId) {
+          options.subscription_id = data.subscriptionId;
+        } else if (data.orderId) {
+          options.order_id = data.orderId;
+        }
 
         const rzp = new (window as any).Razorpay(options);
         rzp.on('payment.failed', function (response: any) {

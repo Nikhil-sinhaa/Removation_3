@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { Outfit, DM_Sans } from 'next/font/google'
+import { Outfit, DM_Sans, Inter } from 'next/font/google'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/Providers'
@@ -18,6 +18,13 @@ const dmSans = DM_Sans({
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-dm-sans',
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+  weight: ['300', '400', '500', '600', '700', '800'],
 })
 // Complete SEO metadata
 export const metadata: Metadata = {
@@ -252,7 +259,7 @@ export default function RootLayout({
       <html
         lang="en"
         suppressHydrationWarning
-        className={`${outfit.variable} ${dmSans.variable}`}
+        className={`dark ${outfit.variable} ${dmSans.variable} ${inter.variable}`}
       >
         <head>
           {/* Preconnect to external domains for performance */}
@@ -292,11 +299,12 @@ export default function RootLayout({
         <body
           className={`
             font-sans antialiased
-            bg-white dark:bg-gray-950
-            text-gray-900 dark:text-gray-100
+            bg-[#0a0a0a]
+            text-white
             min-h-screen
-            selection:bg-violet-500/20 selection:text-violet-900 dark:selection:text-violet-100
+            selection:bg-violet-500/30 selection:text-violet-100
           `}
+          style={{ fontFamily: "var(--font-inter, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif)" }}
           suppressHydrationWarning
         >
           <Providers>

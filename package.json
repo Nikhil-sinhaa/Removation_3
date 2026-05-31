@@ -5,13 +5,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbo",
-    "next-dev": "next dev --turbo",
-    "build": "next build",
-    "start": "next start",
+    "predev": "node scripts/predev.cjs",
+    "dev": "NODE_OPTIONS='--max-old-space-size=3072 --expose-gc' next dev --turbo",
+    "next-dev": "NODE_OPTIONS='--max-old-space-size=3072 --expose-gc' next dev --turbo",
+    "build": "NODE_OPTIONS='--max-old-space-size=6144' next build",
+    "start": "NODE_OPTIONS='--max-old-space-size=3072 --expose-gc' next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
-    "type-check": "NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit",
+    "type-check": "NODE_OPTIONS='--max-old-space-size=3072' tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -19,6 +20,7 @@
     "test:auth": "playwright test tests/e2e/auth.setup.ts --headed",
     "test:stage1": "node scripts/test-stable-stage1.js"
   },
+
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@fal-ai/client": "^1.9.4",

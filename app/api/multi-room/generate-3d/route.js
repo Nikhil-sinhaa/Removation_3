@@ -44,9 +44,18 @@ export async function POST(request) {
     }
 
     if (!process.env.MARBLE_API_KEY) {
+      await MultiRoomProject.findByIdAndUpdate(projectId, {
+        marbleStatus: 'error',
+        errorMessage:
+          'MARBLE_API_KEY is not configured. Add it to .env.local and restart the server. ' +
+          'Get your key from platform.worldlabs.ai/api-keys',
+      });
       return NextResponse.json(
-        { error: 'Marble API key is not configured on this server' },
-        { status: 500 }
+        {
+          error: 'Marble API key is not configured on this server',
+          fix: 'Add MARBLE_API_KEY to .env.local and restart the dev server',
+        },
+        { status: 503 }
       );
     }
 

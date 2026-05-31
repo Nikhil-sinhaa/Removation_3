@@ -20,7 +20,7 @@ import { Designer } from '@/lib/db/models/Designer';
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         // ── Auth Check ──────────────────────────────────────────────────────────
@@ -29,7 +29,7 @@ export async function POST(
         const { user } = authResult;
 
         // ── Validate review ID ──────────────────────────────────────────────────
-        const { id } = params;
+        const { id } = await params;
         if (!id || !Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: 'Invalid review ID' }, { status: 400 });
         }
@@ -56,7 +56,7 @@ export async function POST(
             if (!designer) {
                 return NextResponse.json({ message: 'Designer profile not found' }, { status: 404 });
             }
-            if (review.designerId.toString() !== designer._id.toString()) {
+            if (!review.designerId || review.designerId.toString() !== designer._id.toString()) {
                 return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
             }
         }

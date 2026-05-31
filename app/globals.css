@@ -1,6 +1,430 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ============================================
+   REMOVATION AI — SPACELY DARK MODE TOKENS
+   Extracted via Google Stitch MCP
+   Ultra-Minimalist Dark Mode Design System
+   ============================================ */
+
+:root {
+  /* ── Core Surfaces (Tonal Layering) ── */
+  --rm-bg: #0a0a0a;
+  --rm-bg-secondary: #111111;
+  --rm-bg-card: #161616;
+  --rm-bg-hover: #1c1c1c;
+  --rm-bg-popover: #222222;
+
+  /* ── Borders ── */
+  --rm-border: rgba(255, 255, 255, 0.08);
+  --rm-border-hover: rgba(255, 255, 255, 0.16);
+  --rm-border-focus: #7c3aed;
+
+  /* ── Accent — Electric Violet ── */
+  --rm-accent: #7c3aed;
+  --rm-accent-hover: #6d28d9;
+  --rm-accent-muted: rgba(124, 58, 237, 0.15);
+  --rm-accent-glow: rgba(124, 58, 237, 0.25);
+
+  /* ── Typography ── */
+  --rm-text: #ffffff;
+  --rm-text-secondary: #e8dfee;
+  --rm-text-muted: #a1a1aa;
+  --rm-text-subtle: rgba(255, 255, 255, 0.3);
+
+  /* ── Radius ── */
+  --rm-radius-sm: 4px;
+  --rm-radius-md: 8px;
+  --rm-radius-lg: 12px;
+  --rm-radius-xl: 16px;
+  --rm-radius-full: 9999px;
+
+  /* ── Status Colors ── */
+  --rm-status-pending: #f59e0b;
+  --rm-status-confirmed: #10b981;
+  --rm-status-completed: #3b82f6;
+
+  /* ── Font ── */
+  --rm-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* App Shell Dark Override */
+.app-shell {
+  background: var(--rm-bg);
+  color: var(--rm-text);
+  font-family: var(--rm-font);
+  min-height: 100vh;
+}
+
+/* ── Sidebar Dark ── */
+.rm-sidebar {
+  background: var(--rm-bg-card);
+  border-right: 1px solid var(--rm-border);
+}
+
+/* ── Nav Item States ── */
+.rm-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--rm-radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rm-text-muted);
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  text-decoration: none;
+}
+
+.rm-nav-item:hover {
+  background: var(--rm-bg-hover);
+  color: var(--rm-text-secondary);
+}
+
+.rm-nav-item.active {
+  background: var(--rm-accent-muted);
+  color: var(--rm-text);
+  border-left: 2px solid var(--rm-accent);
+  padding-left: 10px;
+}
+
+.rm-nav-item.active svg {
+  color: var(--rm-accent);
+}
+
+/* ── Dark Cards ── */
+.rm-card {
+  background: var(--rm-bg-card);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  transition: border-color 200ms ease, transform 200ms ease;
+}
+
+.rm-card:hover {
+  border-color: var(--rm-border-hover);
+}
+
+.rm-card-interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--rm-accent-muted);
+}
+
+/* ── Primary Button (solid accent) ── */
+.rm-btn-primary {
+  background: var(--rm-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--rm-radius-md);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--rm-font);
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rm-btn-primary:hover {
+  background: var(--rm-accent-hover);
+  transform: translateY(-1px);
+}
+
+/* ── Ghost Button ── */
+.rm-btn-ghost {
+  background: transparent;
+  color: var(--rm-text-muted);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--rm-font);
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rm-btn-ghost:hover {
+  background: var(--rm-bg-hover);
+  color: var(--rm-text);
+  border-color: var(--rm-border-hover);
+}
+
+/* ── Credits Badge ── */
+.rm-credits-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border: 1px solid var(--rm-accent);
+  border-radius: var(--rm-radius-full);
+  background: var(--rm-accent-muted);
+  color: var(--rm-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ── Top Bar Dark ── */
+.rm-topbar {
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--rm-border);
+}
+
+/* ── Status Chips ── */
+.rm-status-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 2px 10px;
+  border-radius: var(--rm-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rm-status-confirmed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 10px;
+  border-radius: var(--rm-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rm-status-completed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  padding: 2px 10px;
+  border-radius: var(--rm-radius-full);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── Upload Zone ── */
+.rm-upload-zone {
+  border: 1.5px dashed var(--rm-border-hover);
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-bg-card);
+  transition: border-color 200ms ease, background 200ms ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.rm-upload-zone:hover,
+.rm-upload-zone.dragging {
+  border-color: var(--rm-accent);
+  background: var(--rm-accent-muted);
+}
+
+/* ── Stat Card ── */
+.rm-stat-card {
+  background: var(--rm-bg-card);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  padding: 20px 24px;
+  transition: transform 200ms ease, border-color 200ms ease;
+}
+
+.rm-stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--rm-border-hover);
+}
+
+/* ── Section Heading ── */
+.rm-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rm-text-muted);
+  padding: 0 12px;
+  margin-bottom: 4px;
+}
+
+/* ── Dark Scrollbar ── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Input Dark ── */
+.rm-input {
+  background: var(--rm-bg);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-md);
+  color: var(--rm-text);
+  font-size: 14px;
+  font-family: var(--rm-font);
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 150ms ease;
+  width: 100%;
+}
+
+.rm-input:focus {
+  border-color: var(--rm-border-focus);
+  box-shadow: 0 0 0 3px var(--rm-accent-muted);
+}
+
+.rm-input::placeholder {
+  color: var(--rm-text-subtle);
+}
+
+/* ── Hero Card with image background ── */
+.rm-hero-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--rm-radius-lg);
+  background: var(--rm-bg-card);
+  border: 1px solid var(--rm-border);
+  min-height: 220px;
+}
+
+.rm-hero-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 10, 10, 0.7) 0%,
+    rgba(124, 58, 237, 0.3) 100%
+  );
+  pointer-events: none;
+}
+
+/* ── Designer Card ── */
+.rm-designer-card {
+  background: var(--rm-bg-card);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  overflow: hidden;
+  transition: transform 250ms ease, border-color 250ms ease, box-shadow 250ms ease;
+  cursor: pointer;
+}
+
+.rm-designer-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--rm-accent);
+  box-shadow: 0 0 0 1px var(--rm-accent), 0 12px 40px rgba(0,0,0,0.5);
+}
+
+/* ── Style Card (Onboarding) ── */
+.rm-style-card {
+  position: relative;
+  border-radius: var(--rm-radius-lg);
+  overflow: hidden;
+  border: 2px solid transparent;
+  cursor: pointer;
+  aspect-ratio: 4/3;
+  transition: transform 200ms ease, border-color 200ms ease;
+}
+
+.rm-style-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.rm-style-card:hover {
+  transform: scale(1.02);
+}
+
+.rm-style-card.selected {
+  border-color: var(--rm-accent);
+  box-shadow: 0 0 0 1px var(--rm-accent), 0 0 20px var(--rm-accent-glow);
+}
+
+/* ── Progress Dot ── */
+.rm-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--rm-border-hover);
+  transition: background 200ms ease, transform 200ms ease;
+}
+
+.rm-progress-dot.active {
+  background: var(--rm-accent);
+  transform: scale(1.3);
+}
+
+/* ── Before/After Slider ── */
+.rm-before-after-slider {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: var(--rm-radius-lg);
+}
+
+.rm-slider-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: white;
+  cursor: ew-resize;
+  z-index: 10;
+}
+
+.rm-slider-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ── Booking Card ── */
+.rm-booking-card {
+  background: var(--rm-bg-card);
+  border: 1px solid var(--rm-border);
+  border-radius: var(--rm-radius-lg);
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: border-color 200ms ease;
+}
+
+.rm-booking-card:hover {
+  border-color: var(--rm-border-hover);
+}
+
 
 /* ============================================
    REMOVATION.AI - PREMIUM GLOBAL STYLES
@@ -255,6 +679,136 @@
     }
   }
 }
+
+/* ============================================
+   DARK MODE OVERRIDES — Global Spacely AI Reskin
+   These target existing light-mode Tailwind classes to 
+   re-skin them without touching component files.
+   ============================================ */
+
+/* ── Card surfaces ── */
+.dark .bg-white,
+.bg-white {
+  background-color: #161616 !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1c1c1c !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: #222222 !important;
+}
+
+/* ── Text colors ── */
+.dark .text-gray-900,
+.text-gray-900 {
+  color: #ffffff !important;
+}
+
+.dark .text-gray-700,
+.text-gray-700 {
+  color: #e8dfee !important;
+}
+
+.dark .text-gray-600,
+.text-gray-600 {
+  color: #a1a1aa !important;
+}
+
+.dark .text-gray-500,
+.text-gray-500 {
+  color: #a1a1aa !important;
+}
+
+.dark .text-gray-400,
+.text-gray-400 {
+  color: rgba(255,255,255,0.35) !important;
+}
+
+/* ── Borders ── */
+.dark .border-gray-100,
+.border-gray-100 {
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+.dark .border-gray-200,
+.border-gray-200 {
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+/* ── Heading text ── */
+h1, h2, h3, h4, h5, h6 {
+  color: #ffffff;
+}
+
+/* ── Section headings specifically ── */
+.dark h2.text-xl {
+  color: #ffffff !important;
+}
+
+/* ── Hover states on dark bg ── */
+.dark .hover\:bg-gray-50:hover,
+.hover\:bg-gray-50:hover {
+  background-color: #1c1c1c !important;
+}
+
+.dark .hover\:bg-gray-100:hover,
+.hover\:bg-gray-100:hover {
+  background-color: #222222 !important;
+}
+
+/* ── Quick Action cards — dark base ── */
+.dark .rounded-2xl,
+.rounded-2xl {
+  border-color: rgba(255,255,255,0.06);
+}
+
+
+/* ── Skeleton shimmer ── */
+.dark .bg-gray-200 {
+  background-color: #2a2a2a !important;
+}
+
+/* ── Progress bar track ── */
+[role="progressbar"] > div {
+  background: #7c3aed !important;
+}
+
+/* ── Input fields ── */
+input, textarea, select {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(255,255,255,0.3) !important;
+}
+
+/* ── Shadcn Card component dark ── */
+.dark [data-slot="card"],
+[data-slot="card"] {
+  background-color: #161616 !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+
+/* ── Shadcn Card title dark ── */
+.dark [data-slot="card-title"],
+[data-slot="card-title"] {
+  color: #ffffff !important;
+}
+
+/* ── Gradient section backgrounds — deep dark purple ── */
+.dark .from-blue-50,
+.dark .from-violet-50 {
+  --tw-gradient-from: #12101a !important;
+}
+.dark .to-purple-50,
+.dark .to-pink-50 {
+  --tw-gradient-to: #100f18 !important;
+}
+
 
 /* ============================================
    SECTION 3: GRADIENT SYSTEMS
@@ -3779,3 +4333,65 @@
 .driver-overlay {
   background: rgba(0, 0, 0, 0.75) !important;
 }
+
+/* ============================================
+   MARQUEE KEYFRAMES & UTILITIES
+   ============================================ */
+@keyframes marquee-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-right {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-marquee-left {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 30s linear infinite;
+}
+
+.animate-marquee-right {
+  display: flex;
+  width: max-content;
+  animation: marquee-right 30s linear infinite;
+}
+
+.marquee-container {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  display: flex;
+}
+
+.marquee-container::before,
+.marquee-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 150px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.marquee-container::before {
+  left: 0;
+  background: linear-gradient(to right, #000000 0%, transparent 100%);
+}
+
+.marquee-container::after {
+  right: 0;
+  background: linear-gradient(to left, #000000 0%, transparent 100%);
+}
+

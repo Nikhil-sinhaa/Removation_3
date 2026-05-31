@@ -159,6 +159,10 @@ export async function POST(req: NextRequest) {
 
         const provider = designer || contractor;
 
+        if (!provider) {
+            return NextResponse.json({ message: 'Provider not found' }, { status: 404 });
+        }
+
         // ── Pricing check ─────────────────────────────────────────────────────
         const feeAmount = type === 'consultation'
             ? provider.consultationFee?.amount ?? 0
@@ -209,8 +213,8 @@ export async function POST(req: NextRequest) {
                     type: 'booking',
                     bookingType: type,
                     customerId: user._id.toString(),
-                    designerId: designer ? designer._id.toString() : undefined,
-                    contractorId: contractor ? contractor._id.toString() : undefined,
+                    designerId: designer ? designer._id.toString() : null,
+                    contractorId: contractor ? contractor._id.toString() : null,
                 },
             });
             if (!order || !order.id) {

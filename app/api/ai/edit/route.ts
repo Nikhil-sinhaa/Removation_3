@@ -15,6 +15,8 @@ import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 
+import { getCurrentUser } from '@/lib/auth/jwt';
+
 export const runtime = 'nodejs';
 
 async function safeParseFormData(request: Request) {
@@ -55,6 +57,9 @@ export async function POST(request: Request) {
   await connectDB();
 
   try {
+    const authUser = await getCurrentUser();
+    const finalUserId = authUser?.id || '000000000000000000000000';
+
     const formData = await safeParseFormData(request);
     const imageFile = formData.get('image');
     const maskFile = formData.get('mask');
@@ -103,7 +108,7 @@ export async function POST(request: Request) {
 
     const project = await Project.create({
       name: `Edit — ${roomType}`,
-      userId: '000000000000000000000000',
+      userId: finalUserId,
       originalImage: `/uploads/${imgFilename}`,
       status: 'queued',
       processingType: 'tab-edit',

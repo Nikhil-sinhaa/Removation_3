@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     // Create session
     const response = NextResponse.json({ message: 'Login successful', user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, imageUrl: user.imageUrl } }, { status: 200 });
-    issueJwt(response, user);
+    issueJwt(response, { _id: String(user._id), email: user.email });
 
     return response;
     

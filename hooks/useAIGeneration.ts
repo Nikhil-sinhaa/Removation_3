@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth } from "@/hooks/useAuth";
 
 interface GenerateParams {
     imageUrl: string;
@@ -30,7 +30,9 @@ interface RenderResult {
 export function useAIGeneration() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [currentRenderIds, setCurrentRenderIds] = useState<string[]>([]);
-    const { userId, isLoaded } = useAuth();
+    const { user, isLoading } = useAuth();
+    const userId = user?.id || user?._id || user?.clerkId || "";
+    const isLoaded = !isLoading;
 
     const generateDesign = useCallback(async (params: GenerateParams) => {
         if (!isLoaded || !userId) {

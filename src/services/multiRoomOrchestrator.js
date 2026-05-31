@@ -170,15 +170,27 @@ export async function generateMarbleView(projectId) {
 
   for (const photo of toUpload) {
     try {
+      const paintedUrl = photo.paintedUrl;
+
+      // Reject absolute URLs — Marble upload reads from local disk, not from URLs
+      if (/^https?:\/\//i.test(paintedUrl)) {
+        console.error(
+          `[multiRoom] paintedUrl is an absolute URL, cannot read from disk: ${paintedUrl}`
+        );
+        continue;
+      }
+
       // Build absolute file path from the public URL
       // e.g. /renders/abc.png → public/renders/abc.png
-      const relPath = photo.paintedUrl.replace(/^\//, '');
+      const relPath = paintedUrl.replace(/^\//, '');
       const filePath = path.join(process.cwd(), 'public', relPath);
 
       console.log(`[multiRoom] Reading painted photo: ${filePath}`);
 
       if (!fs.existsSync(filePath)) {
-        console.error(`[multiRoom] File not found: ${filePath}`);
+        console.error(
+          `[multiRoom] File not found on disk: ${filePath} (paintedUrl: ${paintedUrl})`
+        );
         continue;
       }
 
@@ -223,6 +235,7 @@ export async function generateMarbleView(projectId) {
   try {
     operationId = await generateMarbleWorld(assetIds, displayName);
   } catch (err) {
+    console.error(`[multiRoom] generateMarbleWorld failed:`, err.message);
     await MultiRoomProject.findByIdAndUpdate(projectId, {
       marbleStatus: 'error',
       errorMessage: err.message,

@@ -10,7 +10,6 @@ import { CreditSuccessHandler } from '@/components/payment/CreditSuccessHandler'
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-// Icons
 import {
   Home,
   FolderOpen,
@@ -30,8 +29,6 @@ import {
   HelpCircle,
   Zap,
   IndianRupee,
-  Compass,
-  Palette,
   Eraser,
   Paintbrush,
   Layers,
@@ -43,6 +40,7 @@ import {
   LayoutDashboard,
   LucideIcon,
   Store,
+  Palette,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -72,20 +70,23 @@ const sidebarNavigation: NavSection[] = [
       { name: 'Browse Designers', href: '/designers', icon: Users, tourId: 'sidebar-browse-designers' },
       { name: 'Browse Contractors', href: '/marketplace?tab=contractors', icon: Users },
       { name: 'Browse Vendors', href: '/marketplace?tab=vendors', icon: Store },
+    ],
+  },
+  {
+    title: 'AI Tools',
+    items: [
       { name: 'AI Design Studio', href: '/ai-design', icon: Wand2, tourId: 'sidebar-ai-studio' },
-      { name: 'Master Design Studio', href: '/master-design', icon: Settings },
-      { name: 'Professional Design Studio', href: '/professional-design', icon: Shield },
-      { name: 'Editor', href: '/editor', icon: Palette },
-      { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
-      { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
+      { name: 'Room Changer', href: '/room-changer', icon: Paintbrush },
+      { name: 'Ceiling Changer', href: '/ceiling-changer', icon: Layers },
       { name: 'Object Removal', href: '/remove-object', icon: Eraser },
       { name: 'Furniture Remover', href: '/furniture-remover', icon: Eraser },
-      { name: 'Room Changer', href: '/room-changer', icon: Paintbrush },
-      { name: 'Style Transfer', href: '/style-transfer', icon: Palette },
-      { name: 'Ceiling Changer', href: '/ceiling-changer', icon: Layers },
+      { name: 'Furniture Placement', href: '/furniture-placement', icon: Sofa },
       { name: 'AI Lighting Studio', href: '/lighting', icon: Lightbulb },
       { name: '3D Room View', href: '/room-3d', icon: Box },
-      { name: 'Furniture Placement', href: '/furniture-placement', icon: Sofa },
+      { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
+      { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
+      { name: 'Master Design Studio', href: '/master-design', icon: Settings },
+      { name: 'Pro Design Studio', href: '/professional-design', icon: Shield },
     ],
   },
   {
@@ -132,92 +133,79 @@ const sidebarNavigation: NavSection[] = [
   },
 ];
 
-const quickActions = [
-  { name: 'Dream Room', icon: Sparkles, color: 'violet', href: '/dream-room' },
-  { name: 'Visualize Color', icon: Palette, color: 'green', href: '/color-visualizer' },
-  { name: 'Object Removal', icon: Eraser, color: 'orange', href: '/remove-object' },
-];
-
 export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading: isLoaded } = useAuth();
   const plan = user?.plan || user?.subscription?.plan || 'free';
   const MAX_CREDITS = plan === 'pro' ? 500 : plan === 'team' ? 1000 : 50;
-  const usedPercent = Math.min(
-    100,
-    Math.round(((MAX_CREDITS - (user?.credits ?? 0)) / MAX_CREDITS) * 100)
-  );
   const remainingPercent = Math.min(
     100,
     Math.max(0, Math.round(((user?.credits ?? 0) / MAX_CREDITS) * 100))
   );
 
-  const isSignedIn = !!user;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
 
-  // Redirect incomplete onboarding users to the wizard
+  // Redirect incomplete onboarding
   useEffect(() => {
-    if (isLoaded) return; // still loading
+    if (isLoaded) return;
     if (user && user.onboardingCompleted === false && !pathname.startsWith('/onboarding')) {
       router.push('/onboarding');
     }
   }, [user, isLoaded, pathname, router]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey || e.ctrlKey) {
-        if (e.key === 'b') {
-          e.preventDefault();
-          setSidebarOpen((prev) => !prev);
-        }
-        if (e.key === 'k') {
-          e.preventDefault();
-          // Open command palette
-        }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setSidebarOpen((prev) => !prev);
       }
     };
-
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard';
-    return pathname.startsWith(href);
+    return pathname.startsWith(href.split('?')[0]);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Desktop Sidebar */}
+    <div className="app-shell flex" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      {/* ── Desktop Sidebar ── */}
       <motion.aside
         initial={false}
-        animate={{ width: sidebarOpen ? 280 : 80 }}
+        animate={{ width: sidebarOpen ? 260 : 68 }}
         transition={{ duration: 0.2, ease: 'easeInOut' }}
-        className="fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-40 hidden lg:flex flex-col"
+        className="rm-sidebar fixed left-0 top-0 h-screen z-40 hidden lg:flex flex-col overflow-hidden flex-shrink-0"
+        style={{ background: '#161616', borderRight: '1px solid rgba(255,255,255,0.08)' }}
       >
         {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-600/25">
-              <Sparkles className="w-5 h-5 text-white" />
+        <div
+          className="h-16 flex items-center justify-between px-4 flex-shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <Link href="/dashboard" className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: '#7c3aed', boxShadow: '0 0 16px rgba(124,58,237,0.4)' }}
+            >
+              <Sparkles className="w-4 h-4 text-white" />
             </div>
             <AnimatePresence>
               {sidebarOpen && (
                 <motion.span
-                  key="sidebar-logo-text"
-                  initial={{ opacity: 0, x: -10 }}
+                  key="logo-text"
+                  initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent"
+                  exit={{ opacity: 0, x: -8 }}
+                  transition={{ duration: 0.15 }}
+                  className="font-bold text-base text-white tracking-tight truncate"
                 >
                   Removation
                 </motion.span>
@@ -226,185 +214,215 @@ export default function AppLayout({ children }: AppLayoutProps) {
           </Link>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-md transition-colors"
+            style={{ color: '#a1a1aa' }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = '#1c1c1c'; e.currentTarget.style.color = '#fff'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#a1a1aa'; }}
           >
-            {sidebarOpen ? (
-              <ChevronLeft className="w-5 h-5 text-gray-500" />
-            ) : (
-              <ChevronRight className="w-5 h-5 text-gray-500" />
-            )}
+            {sidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
           </button>
         </div>
 
-        {/* Quick Actions */}
-        <AnimatePresence>
-          {sidebarOpen && (
-            <motion.div
-              key="sidebar-quick-actions"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="p-4 border-b border-gray-100"
-            >
-              <div className="grid grid-cols-3 gap-2">
-                {quickActions.map((action) => (
-                  <button
-                    key={action.name}
-                    onClick={() => router.push(action.href)}
-                    className={cn(
-                      'flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200',
-                      action.color === 'violet' && 'bg-violet-50 hover:bg-violet-100 text-violet-600',
-                      action.color === 'orange' && 'bg-orange-50 hover:bg-orange-100 text-orange-600',
-                      action.color === 'green' && 'bg-green-50 hover:bg-green-100 text-green-600'
-                    )}
-                  >
-                    <action.icon className="w-5 h-5" />
-                    <span className="text-xs font-medium truncate w-full text-center">
-                      {action.name}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3">
+        <nav className="flex-1 overflow-y-auto py-3 px-2" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.1) transparent' }}>
           {sidebarNavigation
             .filter((section) => !section.role || section.role === user?.role)
             .map((section) => (
-              <div key={section.title} className="mb-6">
-              <AnimatePresence>
-                {sidebarOpen && (
-                  <motion.h3
-                    key={`section-title-${section.title}`}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider"
-                  >
-                    {section.title}
-                  </motion.h3>
-                )}
-              </AnimatePresence>
-              <div className="space-y-1">
-                {section.items
-                  .filter((item) => !item.role || item.role === user?.role)
-                  .map((item) => {
-                    const active = isActive(item.href);
-                    return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        {...(item.tourId ? { 'data-tour': item.tourId } : {})}
-                        className={cn(
-                          'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative',
-                          active
-                            ? 'bg-violet-50 text-violet-700'
-                            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                        )}
-                      >
-                      <item.icon
-                        className={cn(
-                          'w-5 h-5 flex-shrink-0 transition-colors',
-                          active ? 'text-violet-600' : 'text-gray-400 group-hover:text-gray-600'
-                        )}
-                      />
-                      <AnimatePresence>
-                        {sidebarOpen && (
-                          <motion.span
-                            key={`nav-item-${item.name}`}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -10 }}
-                            className="font-medium"
-                          >
-                            {item.name}
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                      {active && (
-                        <motion.div
-                          layoutId="activeIndicator"
-                          className="absolute left-0 w-1 h-6 bg-violet-600 rounded-r-full"
-                          transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
-                        />
-                      )}
-                    </Link>
-                  );
-                })}
+              <div key={section.title} className="mb-5">
+                <AnimatePresence>
+                  {sidebarOpen && (
+                    <motion.p
+                      key={`label-${section.title}`}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="rm-section-label mb-2"
+                    >
+                      {section.title}
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+                <div className="space-y-0.5">
+                  {section.items
+                    .filter((item) => !item.role || item.role === user?.role)
+                    .map((item) => {
+                      const active = isActive(item.href);
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          {...(item.tourId ? { 'data-tour': item.tourId } : {})}
+                          title={!sidebarOpen ? item.name : undefined}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: sidebarOpen ? '8px 12px' : '8px',
+                            borderRadius: '8px',
+                            fontSize: '13.5px',
+                            fontWeight: active ? '500' : '400',
+                            color: active ? '#ffffff' : '#a1a1aa',
+                            background: active ? 'rgba(124,58,237,0.15)' : 'transparent',
+                            borderLeft: active ? '2px solid #7c3aed' : '2px solid transparent',
+                            paddingLeft: active ? '10px' : sidebarOpen ? '12px' : '8px',
+                            textDecoration: 'none',
+                            transition: 'all 150ms ease',
+                            justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!active) {
+                              e.currentTarget.style.background = '#1c1c1c';
+                              e.currentTarget.style.color = '#e8dfee';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!active) {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = '#a1a1aa';
+                            }
+                          }}
+                        >
+                          <item.icon
+                            className="flex-shrink-0"
+                            style={{
+                              width: '16px',
+                              height: '16px',
+                              color: active ? '#7c3aed' : 'inherit',
+                            }}
+                          />
+                          <AnimatePresence>
+                            {sidebarOpen && (
+                              <motion.span
+                                key={`nav-${item.name}`}
+                                initial={{ opacity: 0, x: -6 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -6 }}
+                                transition={{ duration: 0.12 }}
+                                className="truncate"
+                              >
+                                {item.name}
+                              </motion.span>
+                            )}
+                          </AnimatePresence>
+                        </Link>
+                      );
+                    })}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </nav>
 
         {/* Credits & Upgrade */}
-        <div className="p-4 border-t border-gray-100" data-tour="dashboard-credits">
-          <AnimatePresence>
+        <div
+          className="p-3 flex-shrink-0"
+          style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
+          data-tour="dashboard-credits"
+        >
+          <AnimatePresence mode="wait">
             {sidebarOpen ? (
               <motion.div
-                key="sidebar-upgrade-expanded"
+                key="credits-expanded"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="p-4 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl text-white"
+                style={{
+                  background: 'rgba(124,58,237,0.12)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  borderRadius: '10px',
+                  padding: '14px',
+                }}
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-medium text-white/80">Credits Left</span>
-                  <span className="text-lg font-bold">{user?.credits !== undefined ? user.credits : 0} credits left</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span style={{ fontSize: '12px', color: '#a1a1aa', fontWeight: '500' }}>Credits left</span>
+                  <span style={{ fontSize: '13px', color: '#ffffff', fontWeight: '700' }}>
+                    {user?.credits !== undefined ? user.credits : 0}
+                  </span>
                 </div>
-                <div className="w-full bg-white/20 rounded-full h-2 mb-3">
-                  <div 
-                    className="bg-white rounded-full h-2 transition-all duration-500" 
-                    style={{ width: `${remainingPercent}%` }} 
+                {/* Progress bar */}
+                <div
+                  className="w-full h-1.5 rounded-full mb-3"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
+                >
+                  <div
+                    className="h-1.5 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${remainingPercent}%`,
+                      background: '#7c3aed',
+                    }}
                   />
                 </div>
                 {user?.subscription?.plan !== 'pro' ? (
                   <Link
                     href="/billing"
-                    className="block w-full py-2 px-4 bg-white text-violet-600 rounded-lg font-semibold text-sm text-center hover:bg-white/90 transition-colors"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: '#7c3aed',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      transition: 'background 150ms ease',
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#6d28d9'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#7c3aed'; }}
                   >
-                    <Zap className="w-4 h-4 inline mr-2 animate-pulse" />
+                    <Zap className="w-3.5 h-3.5" />
                     Upgrade to Pro
                   </Link>
                 ) : (
-                  <div className="text-xs text-center text-white/80 font-medium py-1">
-                    ✨ Active Pro Subscription
+                  <div style={{ fontSize: '11px', color: '#a1a1aa', textAlign: 'center' }}>
+                    ✨ Pro Plan Active
                   </div>
                 )}
               </motion.div>
             ) : (
               <motion.button
-                key="sidebar-upgrade-collapsed"
+                key="credits-collapsed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => router.push('/billing')}
-                className="w-full p-3 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center hover:shadow-md transition-shadow"
-                title={`${user?.credits !== undefined ? user.credits : 0} Credits Left`}
+                title={`${user?.credits ?? 0} Credits`}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: 'rgba(124,58,237,0.15)',
+                  border: '1px solid rgba(124,58,237,0.3)',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
               >
-                <Zap className="w-5 h-5 text-white" />
+                <Zap className="w-4 h-4" style={{ color: '#7c3aed' }} />
               </motion.button>
             )}
           </AnimatePresence>
         </div>
       </motion.aside>
 
-      {/* Mobile Menu Overlay */}
+      {/* ── Mobile Menu Overlay ── */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+            className="fixed inset-0 z-50 lg:hidden"
+            style={{ background: 'rgba(0,0,0,0.7)' }}
             onClick={() => setMobileMenuOpen(false)}
           />
         )}
       </AnimatePresence>
 
-      {/* Mobile Sidebar */}
+      {/* ── Mobile Sidebar ── */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.aside
@@ -412,65 +430,64 @@ export default function AppLayout({ children }: AppLayoutProps) {
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
-            className="fixed left-0 top-0 h-screen w-80 bg-white z-50 lg:hidden flex flex-col"
+            className="fixed left-0 top-0 h-screen w-72 z-50 lg:hidden flex flex-col"
+            style={{ background: '#161616', borderRight: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {/* Mobile Header */}
-            <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
-              <Link href="/dashboard" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-white" />
+            <div className="h-16 flex items-center justify-between px-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <Link href="/dashboard" className="flex items-center gap-3" onClick={() => setMobileMenuOpen(false)}>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: '#7c3aed' }}>
+                  <Sparkles className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-                  Removation
-                </span>
+                <span className="font-bold text-base text-white">Removation</span>
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ color: '#a1a1aa', background: '#1c1c1c' }}
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Mobile Navigation */}
-            <nav className="flex-1 overflow-y-auto py-4 px-3">
+            <nav className="flex-1 overflow-y-auto py-3 px-2">
               {sidebarNavigation
                 .filter((section) => !section.role || section.role === user?.role)
                 .map((section) => (
-                  <div key={section.title} className="mb-6">
-                  <h3 className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    {section.title}
-                  </h3>
-                  <div className="space-y-1">
-                    {section.items
-                      .filter((item) => !item.role || item.role === user?.role)
-                      .map((item) => {
-                        const active = isActive(item.href);
-                      return (
-                        <Link
-                          key={item.name}
-                          href={item.href}
-                          {...(item.tourId ? { 'data-tour': item.tourId } : {})}
-                          className={cn(
-                            'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200',
-                            active
-                              ? 'bg-violet-50 text-violet-700'
-                              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                          )}
-                        >
-                          <item.icon
-                            className={cn(
-                              'w-5 h-5 flex-shrink-0',
-                              active ? 'text-violet-600' : 'text-gray-400'
-                            )}
-                          />
-                          <span className="font-medium">{item.name}</span>
-                        </Link>
-                      );
-                    })}
+                  <div key={section.title} className="mb-5">
+                    <p className="rm-section-label mb-2">{section.title}</p>
+                    <div className="space-y-0.5">
+                      {section.items
+                        .filter((item) => !item.role || item.role === user?.role)
+                        .map((item) => {
+                          const active = isActive(item.href);
+                          return (
+                            <Link
+                              key={item.name}
+                              href={item.href}
+                              {...(item.tourId ? { 'data-tour': item.tourId } : {})}
+                              onClick={() => setMobileMenuOpen(false)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                fontSize: '13.5px',
+                                fontWeight: active ? '500' : '400',
+                                color: active ? '#ffffff' : '#a1a1aa',
+                                background: active ? 'rgba(124,58,237,0.15)' : 'transparent',
+                                borderLeft: active ? '2px solid #7c3aed' : '2px solid transparent',
+                                paddingLeft: active ? '10px' : '12px',
+                                textDecoration: 'none',
+                              }}
+                            >
+                              <item.icon style={{ width: '16px', height: '16px', color: active ? '#7c3aed' : 'inherit', flexShrink: 0 }} />
+                              <span>{item.name}</span>
+                            </Link>
+                          );
+                        })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
             </nav>
           </motion.aside>
         )}
@@ -478,85 +495,105 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       <CreditSuccessHandler />
 
-      {/* Main Content */}
+      {/* ── Main Content ── */}
       <div
-        className={cn(
-          'transition-all duration-200',
-          sidebarOpen ? 'lg:ml-[280px]' : 'lg:ml-20'
-        )}
+        className={cn('flex-1 flex flex-col min-w-0 transition-all duration-200')}
+        style={{ marginLeft: sidebarOpen ? '260px' : '68px' }}
       >
-        {/* Top Bar */}
-        <header className="sticky top-0 z-30 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200">
-          <div className="h-full px-4 lg:px-6 flex items-center justify-between">
-            {/* Left Side */}
-            <div className="flex items-center gap-4">
+        {/* ── Top Bar ── */}
+        <header
+          className="sticky top-0 z-30 h-14 flex items-center px-4 lg:px-6"
+          style={{
+            background: 'rgba(10,10,10,0.85)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            borderBottom: '1px solid rgba(255,255,255,0.07)',
+          }}
+        >
+          <div className="flex items-center justify-between w-full">
+            {/* Left: mobile menu + search */}
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+                className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ color: '#a1a1aa', background: '#1c1c1c' }}
               >
-                <Menu className="w-5 h-5 text-gray-600" />
+                <Menu className="w-4 h-4" />
               </button>
 
               {/* Search */}
-              <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl w-64 lg:w-80">
-                <Search className="w-4 h-4 text-gray-400" />
+              <div
+                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg w-56 lg:w-72"
+                style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.08)' }}
+              >
+                <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a1a1aa' }} />
                 <input
                   type="text"
                   placeholder="Search projects..."
-                  className="flex-1 bg-transparent text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+                  className="flex-1 bg-transparent outline-none text-sm"
+                  style={{ color: '#ffffff', fontSize: '13px' }}
                 />
-                <kbd className="hidden lg:block px-2 py-0.5 text-xs text-gray-400 bg-white rounded border border-gray-200">
+                <kbd
+                  className="hidden lg:block px-1.5 py-0.5 text-xs rounded"
+                  style={{
+                    background: '#0a0a0a',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    color: '#a1a1aa',
+                    fontSize: '11px',
+                  }}
+                >
                   ⌘K
                 </kbd>
               </div>
             </div>
 
-            {/* Right Side */}
+            {/* Right */}
             <div className="flex items-center gap-2">
-              {/* Help */}
-              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <HelpCircle className="w-5 h-5 text-gray-500" />
+              <button
+                className="w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ color: '#a1a1aa' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#161616'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <Bell className="w-4 h-4" />
               </button>
 
-              {/* Notifications */}
-              <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                <Bell className="w-5 h-5 text-gray-500" />
-                {notifications > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {notifications}
-                  </span>
-                )}
+              <button
+                className="w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ color: '#a1a1aa' }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = '#161616'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <HelpCircle className="w-4 h-4" />
               </button>
 
-              {/* Divider */}
-              <div className="w-px h-6 bg-gray-200 mx-2" />
+              <div
+                className="w-px h-5 mx-1 flex-shrink-0"
+                style={{ background: 'rgba(255,255,255,0.1)' }}
+              />
 
-              {/* User Menu */}
-              <div className="flex items-center gap-3">
-                {isLoaded && user && (
-                  <>
-                    <div className="hidden sm:block text-right">
-                      <p className="text-sm font-medium text-gray-900">
-                        {user.firstName || 'User'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        <span>
-                          {plan === 'pro' ? 'Pro Plan' :
-                           plan === 'team' ? 'Team Plan' :
-                           'Free Plan'}
-                        </span>
-                      </p>
-                    </div>
-                    <UserMenu />
-                  </>
-                )}
-              </div>
+              {/* User info + menu */}
+              {!isLoaded && user && (
+                <div className="flex items-center gap-2.5">
+                  <div className="hidden sm:block text-right">
+                    <p className="text-sm font-medium" style={{ color: '#ffffff', fontSize: '13px' }}>
+                      {user.firstName || 'User'}
+                    </p>
+                    <p style={{ fontSize: '11px', color: '#a1a1aa' }}>
+                      {plan === 'pro' ? 'Pro Plan' : plan === 'team' ? 'Team Plan' : 'Free Plan'}
+                    </p>
+                  </div>
+                  <UserMenu />
+                </div>
+              )}
             </div>
           </div>
         </header>
 
-        {/* Page Content */}
-        <main className="p-4 lg:p-6">{children}</main>
+        {/* ── Page Content ── */}
+        <main className="flex-1 p-4 lg:p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

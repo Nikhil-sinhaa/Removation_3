@@ -158,7 +158,7 @@ export class PipelineOrchestrator {
             request.imageBase64,
             request.roomType,
           );
-          const stage1History = await this.submitAndWait(workflow);
+          const stage1History = await this.submitAndWait({ prompt: workflow });
           stage1Result = parseStableSceneOutputs(stage1History);
         }
 

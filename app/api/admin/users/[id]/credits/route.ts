@@ -7,9 +7,9 @@ import mongoose from 'mongoose';
 export const dynamic = 'force-dynamic';
 
 interface RouteContext {
-    params: {
+    params: Promise<{
         id: string;
-    };
+    }>;
 }
 
 export async function POST(
@@ -23,7 +23,7 @@ export async function POST(
             return authResult;
         }
 
-        const { id: userId } = params;
+        const { id: userId } = await params;
         if (!userId) {
             return NextResponse.json({ message: 'User ID is required' }, { status: 400 });
         }

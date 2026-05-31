@@ -122,7 +122,7 @@ export async function GET(req: Request) {
     // New Google OAuth users go to onboarding
     if (isNewUser) {
       const response = NextResponse.redirect(`${APP_URL}/onboarding`);
-      issueJwt(response, user);
+      issueJwt(response, { _id: String(user._id), email: user.email });
       return response;
     }
 
@@ -149,7 +149,7 @@ export async function GET(req: Request) {
     }
 
     const response = NextResponse.redirect(`${APP_URL}${postLoginRedirect}`);
-    issueJwt(response, user);
+    issueJwt(response, { _id: String(user._id), email: user.email });
 
     return response;
   } catch (error) {

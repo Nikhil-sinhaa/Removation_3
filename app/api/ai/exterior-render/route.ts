@@ -8,11 +8,15 @@ import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getCurrentUser } from '@/lib/auth/jwt';
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    const finalUserId = authUser?.id || '000000000000000000000000';
+
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;
     const data = JSON.parse((formData.get('data') as string) || '{}');
@@ -27,7 +31,7 @@ export async function POST(request: Request) {
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
-    const project = await Project.create({ name: `Exterior Render — ${buildingType}`, userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-exterior-render', aiConfig: { buildingType, style, prompt, timeOfDay, strength } });
+    const project = await Project.create({ name: `Exterior Render — ${buildingType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-exterior-render', aiConfig: { buildingType, style, prompt, timeOfDay, strength } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'exterior-render', { imageFilename: fn, buildingType, style, prompt, timeOfDay, strength }).catch((e: any) => console.error('❌ Exterior render error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'exterior-render', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Exterior render failed', message: error.message }, { status: 500 }); }

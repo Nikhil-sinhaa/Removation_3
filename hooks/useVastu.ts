@@ -421,7 +421,7 @@ import { analyzeVastu, type VastuAnalysisResult } from '@/lib/vastu-engine';
 
 export function useVastu(initialParams?: any) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<VastuAnalysisResult | null>(null);
+  const [analysis, setAnalysis] = useState<VastuAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const analyze = useCallback((params?: any) => {
@@ -431,7 +431,80 @@ export function useVastu(initialParams?: any) {
       // Simulate delay
       setTimeout(() => {
         const result = analyzeVastu(params || initialParams);
-        setAnalysis(result);
+        const mappedResult: VastuAnalysis = {
+          id: `vastu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          renderId: `render-${Date.now()}`,
+          projectId: params?.projectId || initialParams?.projectId,
+          overallScore: {
+            value: result.overallScore.value,
+            grade: result.overallScore.grade === 'fair' ? 'average' : result.overallScore.grade as any,
+            label: result.overallScore.label,
+            labelHi: result.overallScore.labelHi,
+            color: result.overallScore.value >= 80 ? 'text-green-500' : result.overallScore.value >= 60 ? 'text-yellow-500' : result.overallScore.value >= 40 ? 'text-orange-500' : 'text-red-500',
+            description: result.overallScore.description,
+            descriptionHi: result.overallScore.descriptionHi
+          },
+          categories: (result.categories || []).map((cat: any) => ({
+            category: cat.category || 'general',
+            score: cat.score || 100,
+            maxScore: cat.maxScore || 100,
+            percentage: cat.percentage || 100,
+            status: cat.status || 'compliant',
+            findings: cat.findings || [],
+            findingsHi: cat.findingsHi || []
+          })),
+          ruleEvaluations: (result.ruleEvaluations || []).map((rule: any) => ({
+            ruleId: rule.ruleId,
+            ruleCode: rule.ruleCode || rule.ruleId,
+            ruleTitle: rule.ruleTitle || rule.title || '',
+            ruleTitleHi: rule.ruleTitleHi || rule.titleHi || '',
+            status: rule.status || (rule.passed ? 'passed' : 'failed'),
+            score: rule.score || (rule.passed ? rule.points : 0),
+            maxScore: rule.maxScore || rule.points || 100,
+            details: rule.details || rule.reason || '',
+            detailsHi: rule.detailsHi || '',
+            affectedElements: rule.affectedElements || [],
+            suggestedRemedyIds: rule.suggestedRemedyIds || [],
+            confidence: rule.confidence || 1.0
+          })),
+          detectedElements: (result.detectedElements || []).map((elem: any, idx: number) => ({
+            id: elem.id || `elem-${idx}`,
+            type: elem.type || 'other',
+            name: elem.name || elem.toString(),
+            nameHi: elem.nameHi || elem.toString(),
+            boundingBox: elem.boundingBox || { x: 0, y: 0, width: 0, height: 0 },
+            position: elem.position || 'center',
+            vastuCompliance: elem.vastuCompliance || 'compliant',
+            issues: elem.issues || [],
+            issuesHi: elem.issuesHi || [],
+            confidence: elem.confidence || 1.0
+          })),
+          suggestions: (result.suggestions || []).map((sug: any) => ({
+            id: sug.id,
+            type: sug.type,
+            priority: sug.priority === 'high' ? 'high' : sug.priority === 'medium' ? 'medium' : 'low',
+            title: sug.title,
+            titleHi: sug.titleHi || sug.title,
+            description: sug.description,
+            descriptionHi: sug.descriptionHi || sug.description,
+            currentState: sug.currentState,
+            suggestedState: sug.suggestedState,
+            scoreImpact: sug.scoreImpact,
+            difficulty: sug.difficulty,
+            canAutoFix: sug.canAutoFix,
+            relatedRuleIds: sug.relatedRuleIds || []
+          })),
+          autoFixAvailable: result.autoFixAvailable,
+          positiveAspects: result.positiveAspects,
+          compass: result.compass,
+          roomDirection: (params?.direction || initialParams?.direction || null) as any,
+          roomType: params?.roomType || initialParams?.roomType || 'general',
+          analysisVersion: '2.0',
+          confidence: result.confidence,
+          processingTime: result.processingTime,
+          createdAt: new Date()
+        };
+        setAnalysis(mappedResult);
         setIsAnalyzing(false);
       }, 500);
     } catch (err: any) {

@@ -150,20 +150,24 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
     );
 
     // Create subscription record
-    await Subscription.create({
-        clerkId,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        plan,
-        status: 'active',
-        priceId,
-        amount: subscription.items.data[0]?.price.unit_amount || 0,
-        currency: subscription.currency,
-        interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        createdAt: new Date(),
-    });
+    await Subscription.findOneAndUpdate(
+        { clerkId },
+        {
+            clerkId,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: subscriptionId,
+            plan,
+            status: 'active',
+            priceId,
+            amount: subscription.items.data[0]?.price.unit_amount || 0,
+            currency: subscription.currency,
+            interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            updatedAt: new Date(),
+        },
+        { upsert: true, new: true }
+    );
 
     console.log(`Subscription created for user: ${clerkId}, plan: ${plan}`);
 }

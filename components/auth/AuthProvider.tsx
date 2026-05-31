@@ -19,8 +19,7 @@ export interface User {
   subscription?: any;
   preferences?: any;
   onboardingCompleted?: boolean;
-  tourCompleted?: boolean;
-  tourCompletedAt?: string | Date;
+  completedTours?: string[];
 }
 
 interface AuthContextType {
@@ -91,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Only use mock bypass if explicitly enabled
-      if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true') {
+      if (process.env.NEXT_PUBLIC_SKIP_AUTH === 'true' && process.env.NODE_ENV !== 'production') {
         console.warn('[Auth] Using mock bypass — NEXT_PUBLIC_SKIP_AUTH=true');
         const mockUser = {
           _id: 'test-user-123',

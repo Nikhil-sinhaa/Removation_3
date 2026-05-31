@@ -192,7 +192,7 @@ export async function POST(
     }
 
     // Return the message with sender info populated
-    const populatedMessage = message.toObject();
+    const populatedMessage = message.toObject() as any;
     populatedMessage.senderId = {
       _id: user._id.toString(),
       firstName: sender?.firstName || '',

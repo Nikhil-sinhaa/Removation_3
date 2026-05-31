@@ -31,6 +31,7 @@ import Project         from '@/src/models/Project.js';
 import FurniturePlacementRun from '@/src/models/FurniturePlacementRun.js';
 import comfyBridge     from '@/src/services/comfyBridge';
 import { guiToApiGraph } from '@/src/lib/comfyWorkflowConverter.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
 
@@ -201,9 +202,12 @@ export async function POST(request) {
     const resultUrl = `/renders/${destFilename}`;
 
     // ── Persist to MongoDB ────────────────────────────────────────────────────
+    const authUser = await getCurrentUser();
+    const finalUserId = authUser?.id || '000000000000000000000000';
+
     const project = await Project.create({
       name:           'Furniture Placement',
-      userId:         '000000000000000000000000',
+      userId:         finalUserId,
       originalImage:  roomImageUrl || '',
       resultImage:    resultUrl,
       status:         'completed',
@@ -211,7 +215,7 @@ export async function POST(request) {
     });
 
     await FurniturePlacementRun.create({
-      userId:            '000000000000000000000000',
+      userId:            finalUserId,
       projectId:         project._id,
       roomImageUrl:      roomImageUrl || '',
       furnitureImageUrl: furnitureComfyFilename,

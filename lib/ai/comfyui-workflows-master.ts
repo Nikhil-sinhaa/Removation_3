@@ -1,4 +1,6 @@
 // lib/ai/comfyui-workflows-master.ts
+import fs from 'fs';
+import path from 'path';
 import { GenerationRequest } from "./comfyui-bridge";
 
 // Re-export pure data constants from the client-safe module.

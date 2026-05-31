@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { DesignerMatchCard, MatchedDesigner } from '@/components/ai/DesignerMatchCard';
 import { BookingModal } from '@/components/booking/BookingModal';
 import { useLanguage } from '@/hooks/useLanguage';
+import Link from 'next/link';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -290,9 +291,9 @@ export function MakeItReal({ roomType = 'living-room', style, afterImage }: Make
                                 {!isFetching && cityResolved && designers.length === 0 && !fetchError && (
                                     <p className="text-sm text-zinc-500 text-center py-3">
                                         {t('mir_no_verified', { city })}{' '}
-                                        <a href="/designers" className="text-violet-500 hover:underline">
+                                        <Link href="/designers" className="text-violet-500 hover:underline">
                                             {t('mir_browse_all')}
-                                        </a>
+                                        </Link>
                                     </p>
                                 )}
                             </div>

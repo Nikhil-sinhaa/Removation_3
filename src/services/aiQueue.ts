@@ -94,6 +94,44 @@ class AIQueueService extends EventEmitter {
     this.processing.clear();
     this.emit('queue:cleared');
   }
+
+  getStatus() {
+    return {
+      isProcessing: this.isProcessing,
+      gpuStatus: {
+        vram_used: 0,
+        temperature: 0
+      },
+      comfyUIStatus: 'online'
+    };
+  }
+
+  async enqueue(jobData: {
+    type: string;
+    imageUrl: string;
+    point?: any;
+    mask?: any;
+    projectId?: string;
+  }): Promise<{ id: string; status: string; queuePosition: number }> {
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const job: QueuedJob = {
+      id: jobId,
+      type: jobData.type as any,
+      projectId: jobData.projectId || '',
+      status: 'queued',
+      createdAt: new Date()
+    };
+
+    this.queue.push(job);
+    this.emit('job:queued', job);
+    this.processQueue();
+
+    return {
+      id: jobId,
+      status: 'queued',
+      queuePosition: this.queue.length
+    };
+  }
 }
 
 const aiQueueService = new AIQueueService();

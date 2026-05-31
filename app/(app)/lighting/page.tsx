@@ -46,7 +46,7 @@ interface SingleResultState {
   results: ResultImage[];
 }
 
-export const LIGHTING_PRESETS: Record<string, {
+const LIGHTING_PRESETS: Record<string, {
   label: string;
   icon: string;
   description: string;

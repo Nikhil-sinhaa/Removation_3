@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       } 
     }, { status: 200 });
 
-    issueJwt(response, user);
+    issueJwt(response, { _id: String(user._id), email: user.email });
     
     return response;
     

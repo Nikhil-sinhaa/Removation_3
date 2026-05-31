@@ -1,7 +1,7 @@
 // app/(app)/studio/page.tsx
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -65,6 +65,22 @@ export default function StudioPage() {
   const [showSidePanels, setShowSidePanels] = useState({ vastu: false, cost: false });
   const [generationHistory, setGenerationHistory] = useState<{ tab: string; url: string; timestamp: Date }[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup store on unmount
+  useEffect(() => {
+    return () => {
+      useEditorStore.getState().dispose();
+    };
+  }, []);
+
+  // Revoke object URL on change / unmount
+  useEffect(() => {
+    return () => {
+      if (uploadedImage) {
+        URL.revokeObjectURL(uploadedImage);
+      }
+    };
+  }, [uploadedImage]);
 
   // Handle image upload
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

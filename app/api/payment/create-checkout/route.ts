@@ -112,15 +112,39 @@ export async function POST(req: NextRequest) {
             plan,
             paymentMethod = 'stripe',
             successUrl,
-            cancelUrl
+            cancelUrl,
+            planId,
+            billingCycle,
+            isYearly,
+            currency,
         } = body as {
-            plan: PlanType;
-            paymentMethod: 'stripe' | 'razorpay';
+            plan?: PlanType;
+            paymentMethod?: 'stripe' | 'razorpay';
             successUrl?: string;
             cancelUrl?: string;
+            planId?: string;
+            billingCycle?: 'monthly' | 'yearly';
+            isYearly?: boolean;
+            currency?: string;
         };
 
-        if (!plan) {
+        let finalPlan = plan;
+        let finalPaymentMethod = paymentMethod;
+
+        if (!finalPlan && planId) {
+            const isYearlyBilling = isYearly || billingCycle === 'yearly';
+            if (planId === 'pro' || planId === 'team') {
+                finalPlan = `${planId}_${isYearlyBilling ? 'yearly' : 'monthly'}` as PlanType;
+            } else {
+                finalPlan = planId as PlanType;
+            }
+        }
+
+        if (currency === 'INR') {
+            finalPaymentMethod = 'razorpay';
+        }
+
+        if (!finalPlan) {
             return NextResponse.json(
                 { error: 'Plan is required' },
                 { status: 400 }
@@ -145,10 +169,10 @@ export async function POST(req: NextRequest) {
         const finalSuccessUrl = successUrl || `${baseUrl}/dashboard?payment=success`;
         const finalCancelUrl = cancelUrl || `${baseUrl}/pricing?payment=canceled`;
 
-        if (paymentMethod === 'stripe') {
-            return handleStripeCheckout(user, plan, userId, finalSuccessUrl, finalCancelUrl);
-        } else if (paymentMethod === 'razorpay') {
-            return handleRazorpayCheckout(user, plan, userId);
+        if (finalPaymentMethod === 'stripe') {
+            return handleStripeCheckout(user, finalPlan, userId, finalSuccessUrl, finalCancelUrl);
+        } else if (finalPaymentMethod === 'razorpay') {
+            return handleRazorpayCheckout(user, finalPlan, userId);
         } else {
             return NextResponse.json(
                 { error: 'Invalid payment method' },

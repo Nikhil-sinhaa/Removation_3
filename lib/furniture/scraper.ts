@@ -105,7 +105,7 @@ async function scrapeAmazon(url: string): Promise<Partial<FurnitureItem>> {
 
   // Dimensions (from product info table)
   let dimensions: FurnitureItem['dimensions'] | undefined;
-  $('table.prodDetTable tr, #productDetails_techSpec_section_1 tr').each((_: number, row: cheerio.Element) => {
+  $('table.prodDetTable tr, #productDetails_techSpec_section_1 tr').each((_: number, row) => {
     const label = $(row).find('th, td:first-child').text().toLowerCase();
     const value = $(row).find('td:last-child, td:nth-child(2)').text().trim();
     if (label.includes('dimension') || label.includes('size')) {
@@ -178,7 +178,7 @@ async function scrapeFlipkart(url: string): Promise<Partial<FurnitureItem>> {
 
   // Dimensions from specs table
   let dimensions: FurnitureItem['dimensions'] | undefined;
-  $('table._14cfVK tr, div._3k_Q8S tr').each((_: number, row: cheerio.Element) => {
+  $('table._14cfVK tr, div._3k_Q8S tr').each((_: number, row) => {
     const label = $(row).find('td:first-child').text().toLowerCase();
     const value = $(row).find('td:last-child').text().trim();
     if (label.includes('dimension') || label.includes('size')) {

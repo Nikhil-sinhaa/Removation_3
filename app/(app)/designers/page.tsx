@@ -22,6 +22,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { paiseToRupees } from '@/lib/booking/money';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useLanguage } from '@/hooks/useLanguage';
+import { useAuth } from '@/hooks/useAuth';
+import { usePageTour } from '@/hooks/usePageTour';
 
 // ── Specialty configs ────────────────────────────────────────────────────────
 
@@ -128,6 +130,7 @@ function GridSkeleton() {
 // ── Inner component ───────────────────────────
 
 function DesignersListingContent() {
+    const { user } = useAuth();
     const { t } = useLanguage();
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -240,6 +243,40 @@ function DesignersListingContent() {
         return () => { active = false; };
     }, [urlTab, urlSearch, urlCity, urlSpecialty, urlPage]);
 
+    usePageTour({
+        tourKey: 'designers_tour',
+        completed: !user || user.onboardingCompleted === false || (user.completedTours?.includes('designers_tour') ?? false),
+        steps: [
+            {
+                element: '[data-tour="designers-tabs"]',
+                popover: {
+                    title: '👩‍🎨 Find the Right Professional',
+                    description: 'Switch between interior designers, service contractors, and material vendors to find the right partner for your project.',
+                    side: 'bottom',
+                    align: 'start'
+                }
+            },
+            {
+                element: '[data-tour="designers-filters"]',
+                popover: {
+                    title: '🔍 Filter and Search',
+                    description: 'Search by name, filter by city, or select a specialty like modular kitchen or budget designs to narrow down your options.',
+                    side: 'bottom',
+                    align: 'center'
+                }
+            },
+            {
+                element: '[data-tour="designers-grid"]',
+                popover: {
+                    title: '📋 Verified Portfolios',
+                    description: 'Browse verified professionals, check their reviews, experience, and consultation fees, and click "View Profile" to book a slot.',
+                    side: 'top',
+                    align: 'center'
+                }
+            }
+        ]
+    });
+
     const handleTabChange = (tabId: string) => {
         setActiveTab(tabId);
         setSpecialtyVal(''); // Reset specialty since options change
@@ -321,7 +358,7 @@ function DesignersListingContent() {
             </div>
 
             {/* Role Tab Group */}
-            <div className="flex border-b border-zinc-100 mb-6 gap-6">
+            <div className="flex border-b border-zinc-100 mb-6 gap-6" data-tour="designers-tabs">
                 {(['designers', 'contractors', 'vendors'] as const).map((tabId) => {
                     const isActive = activeTab === tabId;
                     if (tabId === 'contractors' || tabId === 'vendors') {
@@ -356,7 +393,7 @@ function DesignersListingContent() {
             </div>
 
             {/* Filter bar */}
-            <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-5 mb-8">
+            <div className="bg-white rounded-2xl border border-zinc-100 shadow-sm p-5 mb-8" data-tour="designers-filters">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="relative">
                         <Search className="absolute left-3.5 top-3 w-4 h-4 text-zinc-400" />
@@ -427,7 +464,7 @@ function DesignersListingContent() {
                 </motion.div>
             ) : (
                 <div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6" data-tour="designers-grid">
                         {providers.map((provider) => {
                             const firstImage          = provider.portfolioImages?.[0] ?? '';
                             const specialtiesToShow   = provider.specialties.slice(0, 2);

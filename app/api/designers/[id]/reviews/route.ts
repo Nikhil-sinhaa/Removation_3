@@ -20,10 +20,10 @@ import '@/lib/db/models/User'; // Ensure User model is loaded for populate
 
 export async function GET(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const { id } = params;
+        const { id } = await params;
         if (!id || !Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: 'Invalid designer ID' }, { status: 400 });
         }

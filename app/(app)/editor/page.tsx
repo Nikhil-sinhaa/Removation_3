@@ -8,6 +8,7 @@ import { ObjectRemovalSidebar } from '@/components/ai/ObjectRemovalSidebar';
 import { LiveFeedbackSidebar } from '@/components/ai/LiveFeedbackSidebar';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { usePageTour } from '@/hooks/usePageTour';
 // TODO: Remnant Clerk imports: useUser
 import Image from 'next/image';
 import {
@@ -221,6 +222,50 @@ export default function EditorPage() {
   const isSignedIn = !!user;
   const { toast } = useToast();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Initialize Product Tour
+  usePageTour({
+    tourKey: 'editor_tour',
+    completed: user?.completedTours?.includes('editor_tour') ?? false,
+    steps: [
+      {
+        element: '[data-tour="editor-upload-zone"]',
+        popover: {
+          title: '📸 Upload Room Photo',
+          description: 'Start by uploading a high-quality photo of your room or area that you want to transform.',
+          side: 'bottom',
+          align: 'start',
+        },
+      },
+      {
+        element: '[data-tour="editor-tabs"]',
+        popover: {
+          title: '🎛️ Design Options',
+          description: 'Use the tabs to switch between choosing a transformation mode, selecting an interior style, or tweaking advanced model parameters.',
+          side: 'right',
+          align: 'start',
+        },
+      },
+      {
+        element: '[data-tour="editor-transformation-mode"]',
+        popover: {
+          title: '🔄 Transformation Mode',
+          description: 'Choose your workflow: Redesign a room entirely, Furnish an empty space, Enhance resolution, paint specific areas, or remove objects.',
+          side: 'right',
+          align: 'start',
+        },
+      },
+      {
+        element: '[data-tour="editor-generate-btn"]',
+        popover: {
+          title: '✨ Generate Design',
+          description: 'Once you are satisfied with your options, click here to run the AI engine and generate gorgeous concepts!',
+          side: 'top',
+          align: 'center',
+        },
+      },
+    ],
+  });
 
   // State Management
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -569,7 +614,7 @@ export default function EditorPage() {
 
           <ScrollArea className="flex-1 p-4">
             <Tabs defaultValue="transform" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsList className="grid w-full grid-cols-3 mb-4" data-tour="editor-tabs">
                 <TabsTrigger value="transform" className="text-xs">
                   Transform
                 </TabsTrigger>
@@ -584,7 +629,7 @@ export default function EditorPage() {
               {/* Transform Tab */}
               <TabsContent value="transform" className="space-y-4">
                 {/* Transformation Mode */}
-                <div className="space-y-2">
+                <div className="space-y-2" data-tour="editor-transformation-mode">
                   <Label className="text-sm font-medium">Transformation Mode</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -885,6 +930,7 @@ export default function EditorPage() {
           {/* Generate Button */}
           <div className="p-4 border-t bg-card">
             <Button
+              data-tour="editor-generate-btn"
               onClick={handleGenerate}
               disabled={!originalImage || isGenerating}
               className="w-full h-12 text-base font-semibold gap-2"
@@ -1068,7 +1114,7 @@ export default function EditorPage() {
           </div>
 
           {/* Canvas Area */}
-          <div className="flex-1 relative overflow-hidden bg-muted/30">
+          <div className="flex-1 relative overflow-hidden bg-muted/30" data-tour="editor-canvas-container">
             {!originalImage ? (
               /* Upload Zone — uses the shared ImageUploader component */
               <motion.div
@@ -1076,7 +1122,7 @@ export default function EditorPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute inset-8 flex items-center justify-center"
               >
-                <div className="w-full max-w-2xl">
+                <div className="w-full max-w-2xl" data-tour="editor-upload-zone">
                   <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold mb-2">Upload your room photo</h2>
                     <p className="text-muted-foreground text-sm">

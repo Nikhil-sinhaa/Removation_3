@@ -30,7 +30,6 @@ class ComfyUIBridge {
   private uploadDir: string;
   private outputDir: string;
   private publicDir: string;
-  private baseUrl: string;
   private comfyInputDir: string;
 
   constructor() {

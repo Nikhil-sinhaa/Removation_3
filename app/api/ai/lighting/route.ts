@@ -104,7 +104,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No input image provided' }, { status: 400 });
     }
 
-    if (preset && !LIGHTING_PRESETS[preset]) {
+    const presets = LIGHTING_PRESETS as Record<string, any>;
+    if (preset && !presets[preset]) {
       return NextResponse.json({ error: `Invalid preset selected: ${preset}` }, { status: 400 });
     }
 
@@ -143,7 +144,7 @@ export async function POST(request: Request) {
     }
 
     // ── Create Project document ──────────────────────────────────────────────
-    const label = preset ? (LIGHTING_PRESETS[preset]?.label || preset) : 'Custom Studio';
+    const label = preset ? (presets[preset]?.label || preset) : 'Custom Studio';
     const project = await Project.create({
       name: `Lighting — ${label}`,
       userId,
@@ -199,7 +200,8 @@ export async function POST(request: Request) {
       projectId: projId,
       userId,
       clerkId,
-      inputImageUrl
+      inputImageUrl,
+      emitProgress: () => {}
     }).catch(err => {
       console.error('❌ runLightingWorkflow background execution error:', err.message);
     });

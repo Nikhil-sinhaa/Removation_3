@@ -38,6 +38,10 @@ async function getGPURouter() {
   return _gpuRouter;
 }
 
+// Detect if we are running in a Next.js compilation or dev worker phase
+const isNextJS = typeof process !== 'undefined' && (process.env.NEXT_PHASE !== undefined || process.env.NEXT_RUNTIME !== undefined);
+const isCompilation = isNextJS && (process.env.NEXT_RUNTIME !== 'nodejs' || process.env.NEXT_PRIVATE_WORKER === 'true' || process.env.PHASE === 'phase-production-build');
+
 // ── Startup: apply persisted settings from MongoDB to runtime ─────────────────
 // Runs once on first load so the in-process router reflects the DB state.
 async function _syncSettingsFromDB() {
@@ -56,7 +60,12 @@ async function _syncSettingsFromDB() {
     console.warn('[GPU] Could not sync settings from DB (non-fatal):', e.message);
   }
 }
-_syncSettingsFromDB();
+
+if (!isCompilation) {
+  _syncSettingsFromDB();
+} else {
+  console.log('ℹ️ Next.js compilation context detected: skipping database settings sync');
+}
 
 class ComfyBridgeService {
   constructor() {
@@ -75,7 +84,11 @@ class ComfyBridgeService {
     // reading these fields directly — they may change when mode is toggled.
     this.backendPort = process.env.BACKEND_WS_PORT || 3001;
 
-    this.init();
+    if (!isCompilation) {
+      this.init();
+    } else {
+      console.log('ℹ️ Next.js compilation context detected: skipping automatic ComfyBridge initialization');
+    }
   }
 
   /**
@@ -136,6 +149,18 @@ class ComfyBridgeService {
    */
   async connectToComfyUI() {
     try {
+      // Prevent multiple parallel connection attempts or listener leaks
+      if (this.comfyUIWebSocket) {
+        console.log('🧹 Cleaning up previous ComfyUI WebSocket instance and listeners...');
+        try {
+          this.comfyUIWebSocket.removeAllListeners();
+          this.comfyUIWebSocket.close();
+        } catch (e) {
+          console.warn('⚠️ WebSocket cleanup warning:', e.message);
+        }
+        this.comfyUIWebSocket = null;
+      }
+
       const wsUrl = await this.getComfyWsUrl();
       const cloud = await this._isCloud();
       console.log(`🔗 Connecting to ComfyUI [${cloud ? 'CLOUD ☁️' : 'LOCAL 🖥️'}]: ${wsUrl}`);

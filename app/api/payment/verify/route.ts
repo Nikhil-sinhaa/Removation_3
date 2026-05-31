@@ -26,40 +26,76 @@ const PLAN_CREDITS: Record<string, number> = {
 };
 
 export async function POST(req: NextRequest) {
+    let isRedirect = req.nextUrl.searchParams.get('redirect') === 'true';
     try {
-        const authUser = await getCurrentUser();
-  const userId = authUser?.id;
-
-        if (!userId) {
-            return NextResponse.json(
-                { error: 'Unauthorized' },
-                { status: 401 }
-            );
+        let body: any = {};
+        const contentType = req.headers.get('content-type') || '';
+        
+        if (contentType.includes('application/x-www-form-urlencoded')) {
+            const formData = await req.formData();
+            formData.forEach((value, key) => {
+                body[key] = value;
+            });
+        } else {
+            try {
+                body = await req.json();
+            } catch (err) {
+                body = {};
+            }
         }
 
-        const body = await req.json();
         const {
-            paymentMethod,
+            paymentMethod: reqPaymentMethod,
             sessionId,
-            razorpayPaymentId,
-            razorpayOrderId,
-            razorpaySubscriptionId,
-            razorpaySignature,
+            razorpayPaymentId: camelPaymentId,
+            razorpayOrderId: camelOrderId,
+            razorpaySubscriptionId: camelSubscriptionId,
+            razorpaySignature: camelSignature,
+            razorpay_payment_id: snakePaymentId,
+            razorpay_order_id: snakeOrderId,
+            razorpay_subscription_id: snakeSubscriptionId,
+            razorpay_signature: snakeSignature,
         } = body;
+
+        const paymentMethod = reqPaymentMethod || req.nextUrl.searchParams.get('paymentMethod') || 'stripe';
+        if (req.nextUrl.searchParams.get('redirect') === 'true') {
+            isRedirect = true;
+        }
+
+        const finalPaymentId = camelPaymentId || snakePaymentId;
+        const finalOrderId = camelOrderId || snakeOrderId;
+        const finalSubscriptionId = camelSubscriptionId || snakeSubscriptionId;
+        const finalSignature = camelSignature || snakeSignature;
 
         await connectToDatabase();
 
         if (paymentMethod === 'stripe') {
+            const authUser = await getCurrentUser();
+            const userId = authUser?.id;
+
+            if (!userId) {
+                return NextResponse.json(
+                    { error: 'Unauthorized' },
+                    { status: 401 }
+                );
+            }
             return verifyStripePayment(userId, sessionId);
         } else if (paymentMethod === 'razorpay') {
+            const authUser = await getCurrentUser();
+            const userId = authUser?.id;
+
             return verifyRazorpayPayment(
-                userId,
-                razorpayPaymentId,
-                razorpayOrderId,
-                razorpaySubscriptionId,
-                razorpaySignature
+                userId || null,
+                finalPaymentId,
+                finalOrderId,
+                finalSubscriptionId,
+                finalSignature,
+                isRedirect
             );
         } else {
+            if (isRedirect) {
+                return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=invalid_method`);
+            }
             return NextResponse.json(
                 { error: 'Invalid payment method' },
                 { status: 400 }
@@ -67,6 +103,9 @@ export async function POST(req: NextRequest) {
         }
     } catch (error) {
         console.error('Error verifying payment:', error);
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed`);
+        }
         return NextResponse.json(
             { error: 'Failed to verify payment' },
             { status: 500 }
@@ -182,15 +221,29 @@ async function verifyStripePayment(userId: string, sessionId: string) {
 }
 
 async function verifyRazorpayPayment(
-    userId: string,
+    userId: string | null,
     paymentId: string,
     orderId?: string,
     subscriptionId?: string,
-    signature?: string
+    signature?: string,
+    isRedirect?: boolean
 ) {
     if (!paymentId) {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=missing_payment_id`);
+        }
         return NextResponse.json(
             { error: 'Payment ID is required' },
+            { status: 400 }
+        );
+    }
+
+    if (!signature) {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=missing_signature`);
+        }
+        return NextResponse.json(
+            { error: 'Signature is required' },
             { status: 400 }
         );
     }
@@ -211,13 +264,23 @@ async function verifyRazorpayPayment(
             .update(`${orderId}|${paymentId}`)
             .digest('hex');
     } else {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=missing_ids`);
+        }
         return NextResponse.json(
             { error: 'Order ID or Subscription ID is required' },
             { status: 400 }
         );
     }
 
-    if (signature !== expectedSignature) {
+    const sigBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    const isSignatureValid = sigBuffer.length === expectedBuffer.length && crypto.timingSafeEqual(sigBuffer, expectedBuffer);
+
+    if (!isSignatureValid) {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=invalid_signature`);
+        }
         return NextResponse.json(
             { error: 'Invalid signature' },
             { status: 400 }
@@ -228,25 +291,51 @@ async function verifyRazorpayPayment(
     const payment = await razorpay.payments.fetch(paymentId);
 
     if (payment.status !== 'captured') {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=not_captured`);
+        }
         return NextResponse.json(
             { error: 'Payment not captured', status: payment.status },
             { status: 400 }
         );
     }
 
-    // Verify payment belongs to user
-    if ((payment.notes as any)?.clerkId !== userId) {
+    // Verify payment belongs to user (find clerkId from metadata)
+    let metadataUserId = (payment.notes as any)?.clerkId;
+    if (subscriptionId && !metadataUserId) {
+        const subscription = await razorpay.subscriptions.fetch(subscriptionId);
+        metadataUserId = (subscription.notes as any)?.clerkId;
+    }
+
+    const finalUserId = userId || metadataUserId;
+    if (!finalUserId) {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=user_not_identified`);
+        }
         return NextResponse.json(
-            { error: 'Payment does not belong to user' },
+            { error: 'User could not be identified' },
+            { status: 400 }
+        );
+    }
+
+    if (userId && metadataUserId && userId !== metadataUserId) {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=user_mismatch`);
+        }
+        return NextResponse.json(
+            { error: 'User mismatch' },
             { status: 403 }
         );
     }
 
     // Note: clerkId field holds MongoDB _id value via pre-save hook.
     // userId here is the JWT payload id (= MongoDB _id string).
-    const user = await User.findOne({ clerkId: userId });
+    const user = await User.findOne({ clerkId: finalUserId });
 
     if (!user) {
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/billing?payment=failed&error=user_not_found`);
+        }
         return NextResponse.json(
             { error: 'User not found' },
             { status: 404 }
@@ -258,18 +347,20 @@ async function verifyRazorpayPayment(
         const subscription = await razorpay.subscriptions.fetch(subscriptionId);
         const plan = (subscription.notes as any)?.plan || 'pro_monthly';
         const credits = PLAN_CREDITS[plan] || 100;
+        const currentPeriodStart = (subscription as any).current_start ? new Date((subscription as any).current_start * 1000) : new Date();
+        const currentPeriodEnd = (subscription as any).current_end ? new Date((subscription as any).current_end * 1000) : new Date(Date.now() + 30 * 86400000);
 
         await User.findOneAndUpdate(
-            { clerkId: userId },
+            { clerkId: finalUserId },
             {
-                razorpayCustomerId: (payment as any).customer_id,
+                razorpayCustomerId: (payment as any).customer_id || (subscription as any).customer_id,
                 razorpaySubscriptionId: subscriptionId,
                 'subscription.plan': plan.includes('team') ? 'team' : 'pro',
                 'subscription.status': 'active',
                 'subscription.credits': credits,
                 'subscription.creditsUsed': 0,
-                'subscription.currentPeriodStart': new Date((subscription as any).current_start * 1000),
-                'subscription.currentPeriodEnd': new Date((subscription as any).current_end * 1000),
+                'subscription.currentPeriodStart': currentPeriodStart,
+                'subscription.currentPeriodEnd': currentPeriodEnd,
                 'subscription.paymentMethod': 'razorpay',
                 credits: credits, // Sync legacy root field
                 updatedAt: new Date(),
@@ -278,34 +369,38 @@ async function verifyRazorpayPayment(
 
         // Create subscription record
         await Subscription.findOneAndUpdate(
-            { razorpaySubscriptionId: subscriptionId },
+            { clerkId: finalUserId },
             {
-                clerkId: userId,
+                clerkId: finalUserId,
+                razorpayCustomerId: (payment as any).customer_id || (subscription as any).customer_id,
                 razorpaySubscriptionId: subscriptionId,
                 plan: plan.includes('team') ? 'team' : 'pro',
                 status: 'active',
                 paymentMethod: 'razorpay',
-                currentPeriodStart: new Date((subscription as any).current_start * 1000),
-                currentPeriodEnd: new Date((subscription as any).current_end * 1000),
-                createdAt: new Date(),
+                currentPeriodStart,
+                currentPeriodEnd,
                 updatedAt: new Date(),
             },
-            { upsert: true }
+            { upsert: true, new: true }
         );
+
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard?upgrade=success`);
+        }
 
         return NextResponse.json({
             success: true,
             type: 'subscription',
             plan: plan.includes('team') ? 'team' : 'pro',
             credits,
-            currentPeriodEnd: new Date((subscription as any).current_end * 1000),
+            currentPeriodEnd,
         });
     } else {
         // One-time payment for credits
         const credits = parseInt((payment.notes as any)?.credits || '0');
 
         await User.findOneAndUpdate(
-            { clerkId: userId },
+            { clerkId: finalUserId },
             {
                 $inc: { 
                     'subscription.credits': credits,
@@ -329,7 +424,11 @@ async function verifyRazorpayPayment(
 
         // Note: clerkId field holds MongoDB _id value via pre-save hook.
         // userId here is the JWT payload id (= MongoDB _id string).
-        const updatedUser = await User.findOne({ clerkId: userId });
+        const updatedUser = await User.findOne({ clerkId: finalUserId });
+
+        if (isRedirect) {
+            return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard?upgrade=success`);
+        }
 
         return NextResponse.json({
             success: true,
