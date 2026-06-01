@@ -32,6 +32,8 @@ export function issueJwt(res: NextResponse, user: { _id: string; email: string }
 
   const isProduction = process.env.NODE_ENV === 'production';
 
+  console.log('[Auth] Setting cookie:', COOKIE_NAME, '| secure:', isProduction, '| sameSite:', isProduction ? 'strict' : 'lax');
+
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: isProduction,

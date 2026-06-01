@@ -127,8 +127,10 @@ export async function GET(req: Request) {
     }
 
     // Determine where to redirect after login.
-    // Default to '/' — the original hardcoded behavior.
-    let postLoginRedirect = '/';
+    // Default to '/dashboard' so the auth guard runs and the UI shows the logged-in state.
+    // (The marketing homepage '/' has no auth check, so the cookie would be set but
+    // the sidebar would still show a logged-out state until the next navigation.)
+    let postLoginRedirect = '/dashboard';
 
     // Read and verify the OAuth state JWT (CSRF + redirect).
     // On any failure: still log the user in, just send them to '/'.
@@ -142,9 +144,9 @@ export async function GET(req: Request) {
           postLoginRedirect = payload.redirect;
         }
       } catch (err) {
-        // Verification failed (bad signature, expired, malformed) — fall back to '/'.
+        // Verification failed (bad signature, expired, malformed) — fall back to '/dashboard'.
         // This is expected for tampered or timed-out state params.
-        console.warn('OAuth state verification failed, redirecting to /:', (err as Error).message);
+        console.warn('OAuth state verification failed, redirecting to /dashboard:', (err as Error).message);
       }
     }
 
