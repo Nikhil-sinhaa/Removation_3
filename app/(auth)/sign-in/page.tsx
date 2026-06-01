@@ -1,25 +1,37 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
+import { useAuth } from '@/hooks/useAuth';
 
 function SignInForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+  const { user, isLoading: authLoading } = useAuth();
+
+  // If already logged in (e.g. landed here after Google OAuth set the cookie), go to dashboard
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/dashboard');
+    }
+  }, [user, authLoading, router]);
+
   // Read and validate the redirect_url on the client side (defense in depth)
   const rawRedirect = searchParams?.get('redirect_url');
   const redirectUrl = isSafeRedirectPath(rawRedirect) ? rawRedirect : '/';
+
+  // Show errors passed back from the Google OAuth callback (e.g. invalid credentials, redirect URI mismatch)
+  const urlError = searchParams?.get('error') ?? '';
+  const [error, setError] = useState(urlError ? decodeURIComponent(urlError) : '');
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();

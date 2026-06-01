@@ -1,20 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-export default function SignUpPage() {
+function SignUpForm() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Show errors passed back from the Google OAuth callback
+  const urlError = searchParams?.get('error') ?? '';
+  const [error, setError] = useState(urlError ? decodeURIComponent(urlError) : '');
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,6 +154,14 @@ export default function SignUpPage() {
         </Link>
       </p>
     </>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
+      <SignUpForm />
+    </Suspense>
   );
 }
 
