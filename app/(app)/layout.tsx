@@ -85,6 +85,7 @@ const sidebarNavigation: NavSection[] = [
       { name: '3D Room View', href: '/room-3d', icon: Box },
       { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
       { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
+      { name: 'Style Transfer', href: '/style-transfer', icon: Palette },
       { name: 'Master Design Studio', href: '/master-design', icon: Settings },
       { name: 'Pro Design Studio', href: '/professional-design', icon: Shield },
     ],

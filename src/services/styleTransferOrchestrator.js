@@ -37,6 +37,8 @@ const PUBLIC_RENDERS = path.join(process.cwd(), 'public', 'renders');
  * @param {string}   opts.stylePresetId - ID of the selected style preset
  * @param {string}   opts.projectId - MongoDB Project _id
  * @param {string}   [opts.userId] - MongoDB User _id
+ * @param {string}   [opts.positivePrompt] - Pre-resolved positive prompt (overrides preset default)
+ * @param {string}   [opts.negativePrompt] - Pre-resolved negative prompt (overrides preset default)
  * @param {function} [opts.onProgress] - Callback function for custom progress updates
  */
 export async function runStyleTransfer({
@@ -47,6 +49,10 @@ export async function runStyleTransfer({
   stylePresetId,
   projectId,
   userId,
+  // Optional: pre-resolved prompts from reference config. If not provided,
+  // falls back to preset's default prompt from transferPresetsData.
+  positivePrompt: positivePromptOverride,
+  negativePrompt: negativePromptOverride,
   onProgress = () => {},
 }) {
   // 1. Mutex acquisition (exclusive lock for ComfyUI generation queue)
@@ -68,8 +74,9 @@ export async function runStyleTransfer({
   try {
     // 2. Fetch/Prepare preset config
     const preset = TRANSFER_PRESETS.find(p => p.id === stylePresetId) || TRANSFER_PRESETS[0];
-    const positivePrompt = preset.prompt;
-    const negativePrompt = preset.negativePrompt || DEFAULT_NEGATIVE_PROMPT;
+    // Use override prompts (from reference-specific config) if provided, else fallback to preset
+    const positivePrompt = positivePromptOverride || preset.prompt;
+    const negativePrompt = negativePromptOverride || preset.negativePrompt || DEFAULT_NEGATIVE_PROMPT;
     const seed = Math.floor(Math.random() * 2 ** 32);
 
     // Create the StyleTransferRun log entry in DB

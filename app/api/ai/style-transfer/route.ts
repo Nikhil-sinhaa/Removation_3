@@ -1,8 +1,13 @@
 /**
  * Style Transfer API Route
  *
- * Handles client style transfer requests by saving the room & style images,
- * registering the Project model, and executing the ComfyUI generation pipeline.
+ * Handles client style transfer requests. Accepts a room image + a style reference,
+ * which can come from three sources (priority order):
+ *   1. referenceImageFile — custom uploaded file from the user
+ *   2. referenceImageUrl  — URL of a preset gallery image (downloaded server-side)
+ *   3. fallback           — text-prompt only (no image reference)
+ *
+ * The reference image is saved to ComfyUI/input/ and injected as the IP-Adapter input.
  */
 
 import { writeFile, mkdir } from 'fs/promises';
@@ -15,6 +20,7 @@ import sharp from 'sharp';
 import { checkIPAdapterModels, IPADAPTER_MISSING_ERROR } from '@/lib/ai/preflight';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getPresetById, getReferenceById } from '@/config/style-presets';
 
 export const runtime = 'nodejs';
 
@@ -38,82 +44,129 @@ export async function POST(request: Request) {
     }
 
     const formData = await request.formData();
-    
-    // Support both roomImage/styleImage and image/referenceImage for full backward compatibility
-    const roomImageFile = (formData.get('roomImage') || formData.get('image')) as File;
-    const styleImageFile = (formData.get('styleImage') || formData.get('referenceImage')) as File;
-    const stylePreset = (formData.get('stylePreset') || 'japandi') as string;
 
-    if (!roomImageFile || !styleImageFile) {
-      return NextResponse.json(
-        { error: 'Both room image and style reference image are required.' },
-        { status: 400 }
-      );
+    // ── Room image (required) ────────────────────────────────────────────────
+    const roomImageFile = (formData.get('roomImage') || formData.get('image')) as File | null;
+    if (!roomImageFile) {
+      return NextResponse.json({ error: 'Room image is required.' }, { status: 400 });
     }
 
-    // IPAdapter pre-flight check
+    // ── Preset & reference metadata ─────────────────────────────────────────
+    const presetId    = (formData.get('presetId')     || formData.get('stylePreset') || 'japandi') as string;
+    const referenceId = (formData.get('referenceId')  || '') as string;
+    const promptOverride     = (formData.get('prompt')         || '') as string;
+    const negativeOverride   = (formData.get('negativePrompt') || '') as string;
+
+    // ── Style reference resolution (priority: custom file > preset URL > fallback) ──
+    // 1. Custom file upload
+    const referenceImageFile = formData.get('referenceImageFile') as File | null;
+    // 2. Preset gallery URL
+    const referenceImageUrl  = (formData.get('referenceImageUrl') || '') as string;
+
+    // Resolve prompt from preset config
+    const preset = getPresetById(presetId);
+    const referenceConfig = referenceId ? getReferenceById(presetId, referenceId) : null;
+
+    const positivePrompt = promptOverride
+      || referenceConfig?.prompt
+      || preset?.defaultPrompt
+      || 'interior design, high quality, photorealistic, (professional architectural photography:1.3)';
+
+    const negativePrompt = negativeOverride
+      || referenceConfig?.negativePrompt
+      || preset?.defaultNegativePrompt
+      || 'low quality, blurry, distorted, unrealistic, cartoon, watermark';
+
+    // ── IP-Adapter pre-flight ────────────────────────────────────────────────
     const ipOk = await checkIPAdapterModels();
     if (!ipOk) {
       return NextResponse.json(IPADAPTER_MISSING_ERROR, { status: 422 });
     }
 
     const comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    
+    const uploadsDir    = path.join(process.cwd(), 'public', 'uploads');
+
     await mkdir(comfyInputDir, { recursive: true });
-    await mkdir(uploadsDir, { recursive: true });
+    await mkdir(uploadsDir,    { recursive: true });
 
     const timestamp = Date.now();
-    const roomFn = `style_room_${timestamp}.png`;
-    const styleFn = `style_ref_${timestamp}.png`;
+    const roomFn    = `style_room_${timestamp}.png`;
+    let   styleFn   = '';
 
+    // ── Process room image ───────────────────────────────────────────────────
     const roomBuffer = Buffer.from(await roomImageFile.arrayBuffer());
-    const styleBuffer = Buffer.from(await styleImageFile.arrayBuffer());
-
-    // 1. Process and save room image (using sharp for optimization & standardization to PNG)
-    const roomPathComfy = path.join(comfyInputDir, roomFn);
-    const roomPathUploads = path.join(uploadsDir, roomFn);
-    
     const processedRoom = await sharp(roomBuffer)
       .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
       .png()
       .toBuffer();
 
-    await writeFile(roomPathComfy, processedRoom);
-    await writeFile(roomPathUploads, processedRoom);
+    await writeFile(path.join(comfyInputDir, roomFn), processedRoom);
+    await writeFile(path.join(uploadsDir,    roomFn), processedRoom);
 
-    // 2. Process and save style reference image
-    const stylePathComfy = path.join(comfyInputDir, styleFn);
-    const stylePathUploads = path.join(uploadsDir, styleFn);
-    
-    const processedStyle = await sharp(styleBuffer)
-      .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
-      .png()
-      .toBuffer();
+    // ── Process style reference image ────────────────────────────────────────
+    let styleBuffer: Buffer | null = null;
 
-    await writeFile(stylePathComfy, processedStyle);
-    await writeFile(stylePathUploads, processedStyle);
+    if (referenceImageFile) {
+      // Custom uploaded file takes highest priority
+      styleBuffer = Buffer.from(await referenceImageFile.arrayBuffer());
+      styleFn     = `style_ref_custom_${timestamp}.png`;
+    } else if (referenceImageUrl) {
+      // Preset gallery image — the URL is a local public path or absolute URL
+      try {
+        let rawBuf: Buffer;
+        if (referenceImageUrl.startsWith('/')) {
+          // Local public asset
+          const localPath = path.join(process.cwd(), 'public', referenceImageUrl);
+          rawBuf = await import('fs/promises').then(fs => fs.readFile(localPath));
+        } else {
+          // External URL (shouldn't happen in normal flow, but handle gracefully)
+          const res = await fetch(referenceImageUrl);
+          if (!res.ok) throw new Error(`Failed to fetch reference image: ${res.status}`);
+          rawBuf = Buffer.from(await res.arrayBuffer());
+        }
+        styleBuffer = rawBuf;
+        styleFn     = `style_ref_preset_${timestamp}.png`;
+      } catch (err: any) {
+        console.error('[StyleTransferRoute] Failed to load reference image:', err.message);
+        // Fallback: proceed without image reference (text-prompt only)
+        styleFn = '';
+      }
+    }
 
-    // 3. Create Project record in MongoDB
+    if (styleBuffer && styleFn) {
+      const processedStyle = await sharp(styleBuffer)
+        .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+        .png()
+        .toBuffer();
+      await writeFile(path.join(comfyInputDir, styleFn), processedStyle);
+      await writeFile(path.join(uploadsDir,    styleFn), processedStyle);
+    }
+
+    // ── Create Project record ────────────────────────────────────────────────
     const project = await Project.create({
-      name: `Style Transfer (${stylePreset})`,
+      name: `Style Transfer (${preset?.label || presetId})`,
       userId: finalUserId,
       originalImage: `/uploads/${roomFn}`,
       status: 'queued',
       processingType: 'tool-style-transfer',
       aiConfig: {
-        stylePreset,
-        styleImage: `/uploads/${styleFn}`,
+        presetId,
+        referenceId: referenceId || null,
+        styleImage: styleFn ? `/uploads/${styleFn}` : null,
+        prompt: positivePrompt,
+        negativePrompt,
       },
     });
 
-    // 4. Run Style Transfer Orchestrator in background
+    // ── Fire and forget orchestrator ─────────────────────────────────────────
     runStyleTransfer({
       roomImageFilename: roomFn,
-      styleImageFilename: styleFn,
+      styleImageFilename: styleFn || roomFn, // fallback to room if no reference
       inputImageUrl: `/uploads/${roomFn}`,
-      styleImageUrl: `/uploads/${styleFn}`,
-      stylePresetId: stylePreset,
+      styleImageUrl: styleFn ? `/uploads/${styleFn}` : `/uploads/${roomFn}`,
+      stylePresetId: presetId,
+      positivePrompt,
+      negativePrompt,
       projectId: project._id.toString(),
       userId: finalUserId,
     }).catch((err) => {
