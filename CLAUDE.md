@@ -702,3 +702,223 @@ scripts/composite_furniture.py           ← Python: paste furniture + generate 
 Trust the code over this file. This file may lag behind recent changes.
 If you notice a discrepancy, tell the user — don't silently follow
 whichever version seems right.
+
+---
+
+## Project Status (Updated: June 2026)
+
+### Tech Stack
+- **Frontend:** Next.js 14 App Router, TypeScript, Tailwind CSS, shadcn/ui, Framer Motion
+- **Backend:** Next.js API routes, MongoDB/Mongoose, JWT auth, Google OAuth
+- **AI:** ComfyUI (local RTX 4060 8GB), RealESRGAN upscaling, SAM2 segmentation
+- **Payments:** Razorpay (primary, INR), Stripe (USD)
+- **Real-time:** Pusher Channels (chat), Socket.io (AI progress)
+- **Storage:** UploadThing (images), local public/renders (AI outputs)
+- **Cache/Queue:** Redis (ioredis), Redlock distributed locking
+- **i18n:** Hindi + English (hooks/useLanguage.ts + hooks/i18n/)
+
+---
+
+## Architecture Overview
+
+### Authentication
+- Custom JWT auth (not Clerk) — `lib/auth/jwt.ts`
+- Google OAuth with state JWT + CSRF protection — `app/api/auth/google/`
+- Role-based access: `customer | designer | contractor | vendor | admin`
+- `requireRole(req, ['role'])` pattern for all protected API routes
+- `SKIP_AUTH=false` must be set in all environments
+
+### Database Models (lib/db/models/)
+- `User` — credits, subscription, onboardingCompleted, tourCompleted, completedTours
+- `Designer` — portfolio, specialties, pricing, averageRating, isVerified
+- `Contractor` — serviceCategories, serviceRadius, pricing, isVerified
+- `Vendor` — businessType, address, inquiries
+- `Booking` — 7-state machine, Razorpay payment, refunds
+- `Review` — rating, designerReply, isVisible
+- `Message` — bookingId, Pusher real-time
+- `Project` + `Render` — userId required (never null)
+- `Subscription` — plan, status, currentPeriodEnd, razorpaySubscriptionId
+- `AdminConfig` — key-value store for app settings (app_mode, credit_costs)
+- `VendorInquiry`, `ChatMessage`
+
+### Critical Rules
+
+**userId is NEVER null or ghost ID:**
+Every AI route must call `getCurrentUser()` and use `authUser?.id`.
+The ghost ID `000000000000000000000000` must never appear in production code.
+```js
+const authUser = await getCurrentUser();
+const finalUserId = authUser?.id || null;
+```
+
+**Credit system:**
+- Dev mode: no credits deducted (check AdminConfig `app_mode`)
+- Production mode: `checkAndDeductCredits(userId, toolName)` before every AI render
+- Returns 402 with `{ error: 'insufficient_credits' }` if balance insufficient
+- Uses `subscription.creditsUsed` increment pattern (not root `credits` field)
+
+**Booking state machine:**
+`pending_payment → pending_designer → confirmed → completed`
+Also: `rejected`, `cancelled`, `expired`
+Refunds are automatic via Razorpay on rejection/cancellation.
+
+**Redis patterns:**
+- Always use `getRedisClient()` singleton — never `new Redis()` directly
+- Use `withLock()` for critical sections
+- Use `acquireRenderLock(userId, toolName)` before AI renders
+- Cache keys: `cache:*`, lock keys: `lock:*`, queue keys: `queue:*`, rate limit: `ratelimit:*`
+
+**Razorpay:**
+- Subscriptions use `subscription_id` not `order_id` in frontend
+- Signature: `payment_id|subscription_id` for subscriptions, `order_id|payment_id` for one-time
+- Webhook URL: `/api/webhook/razorpay` (singular, not webhooks)
+- Plan IDs from env: `RAZORPAY_PLAN_PRO_MONTHLY`, `RAZORPAY_PLAN_TEAM_MONTHLY`
+- Razorpay SDK loaded via `<Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="beforeInteractive" />` in root layout
+
+**Stripe:**
+- Use `getStripe()` lazy initializer — never top-level `new Stripe()`
+- Returns null if `STRIPE_SECRET_KEY` is missing — fail gracefully
+
+---
+
+## File Structure (Key Files)
+
+### Auth
+- `lib/auth/jwt.ts` — `getCurrentUser()`, `issueJwt()`
+- `lib/auth/requireRole.ts` — role guard for API routes
+- `lib/auth/safeRedirect.ts` — OAuth redirect protection
+
+### AI Infrastructure
+- `lib/ai/comfyui-bridge.ts` — ComfyUI job submission
+- `lib/ai/comfyui.ts` — ComfyUI client
+- `lib/ai/appMode.ts` — dev/prod mode with Redis cache
+- `lib/ai/deductCredits.ts` — atomic credit deduction
+- `src/services/roomChangerOrchestrator.js` — reference pattern for all AI orchestrators
+
+### Redis
+- `lib/redis/client.ts` — singleton ioredis client
+- `lib/redis/lock.ts` — Redlock distributed locking
+- `lib/redis/cache.ts` — cache helpers
+- `lib/redis/rateLimit.ts` — sliding window rate limiting
+- `lib/redis/aiQueue.ts` — AI job queue
+
+### Payments
+- `app/api/payment/create-checkout/route.ts` — create Razorpay order or Stripe session
+- `app/api/payment/verify/route.ts` — verify payment signatures
+- `app/api/payment/credits/route.ts` — credit package purchases
+- `app/api/webhook/razorpay/route.ts` — Razorpay webhook handler
+- `app/api/webhook/stripe/route.ts` — Stripe webhook handler
+
+### i18n
+- `hooks/useLanguage.ts` — main hook, imports from hooks/i18n/
+- `hooks/i18n/index.ts` — merges all translation categories
+- `hooks/i18n/dashboard.ts`, `booking.ts`, `ai.ts`, `common.ts`, `nav.ts`, etc.
+
+### Memory Management
+- `lib/server/memoryWatchdog.ts` — kills server at 90% RAM
+- `instrumentation.ts` — starts watchdog on server boot
+- `scripts/predev.cjs` — pre-flight checks before npm run dev
+- `start.sh` — recommended entry point for dev
+
+---
+
+## Environment Variables Required
+
+```bash
+# MongoDB
+MONGODB_URI=mongodb://127.0.0.1:27017/removation_ai
+
+# Auth
+JWT_SECRET=<strong-hex-secret>
+NEXTAUTH_SECRET=<secret>
+SKIP_AUTH=false
+
+# Google OAuth
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# Razorpay (required)
+RAZORPAY_KEY_ID=rzp_test_...
+RAZORPAY_KEY_SECRET=
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_...
+RAZORPAY_WEBHOOK_SECRET=
+RAZORPAY_PLAN_PRO_MONTHLY=plan_...
+RAZORPAY_PLAN_PRO_YEARLY=plan_...
+RAZORPAY_PLAN_TEAM_MONTHLY=plan_...
+RAZORPAY_PLAN_TEAM_YEARLY=plan_...
+
+# Stripe (optional — for USD payments)
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PRICE_PRO_MONTHLY=price_...
+STRIPE_WEBHOOK_SECRET=
+
+# Redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_TLS=false
+
+# Pusher (real-time chat)
+PUSHER_APP_ID=
+PUSHER_KEY=
+PUSHER_SECRET=
+PUSHER_CLUSTER=ap2
+NEXT_PUBLIC_PUSHER_KEY=
+NEXT_PUBLIC_PUSHER_CLUSTER=ap2
+
+# UploadThing
+UPLOADTHING_TOKEN=
+
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NODE_ENV=development
+```
+
+---
+
+## Known Issues (KNOWN_ISSUES.md)
+
+See `KNOWN_ISSUES.md` for the full list. Key items:
+- Pusher keys not configured — chat works but no real-time
+- Stripe keys not configured — USD payments disabled
+- Razorpay Plan IDs need to be created in Razorpay Dashboard
+- 21 AI routes have userId fixed to null (not real user ID yet)
+- Admin sub-route pages redirect to parent without tab context
+- User.role is single-valued — admin cannot also be designer
+
+---
+
+## Development Commands
+
+```bash
+./start.sh              # recommended — pre-flight checks + dev server
+npm run dev             # direct dev server (runs predev.cjs first)
+npm run build           # production build (8GB heap)
+npm run type-check      # tsc without building
+
+# Redis
+redis-cli ping          # check Redis running
+./scripts/setup-redis.sh  # configure Redis for dev
+
+# ComfyUI (start separately)
+cd ~/ComfyUI && python main.py --listen 0.0.0.0 --port 8188 --lowvram --fp8_e4m3fn-unet
+
+# Memory check
+curl http://localhost:3000/api/system/memory
+curl http://localhost:3000/api/system/redis
+```
+
+---
+
+## Deployment Checklist
+
+Before deploying to production:
+- [ ] `SKIP_AUTH=false` in all env files
+- [ ] Real Razorpay plan IDs set in env
+- [ ] Pusher keys configured
+- [ ] Redis URL set (Upstash recommended for serverless)
+- [ ] `NEXT_PUBLIC_APP_URL` set to production domain
+- [ ] Run DB migration: mark existing users as onboarded
+- [ ] Switch `app_mode` to `production` in AdminConfig
+- [ ] Verify webhook URL in Razorpay Dashboard: `https://yourdomain.com/api/webhook/razorpay`
+- [ ] Verify Razorpay SDK loads: check Network tab for checkout.razorpay.com
