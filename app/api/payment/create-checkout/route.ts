@@ -6,9 +6,14 @@ import Razorpay from 'razorpay';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-06-20',
-});
+// Lazy Stripe initialization — safe when STRIPE_SECRET_KEY is not configured (INR users)
+function getStripe() {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || key.startsWith('sk_test_your') || key.length < 20) {
+        return null;
+    }
+    return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -131,12 +136,15 @@ export async function POST(req: NextRequest) {
         let finalPlan = plan;
         let finalPaymentMethod = paymentMethod;
 
-        if (!finalPlan && planId) {
+        // Normalize 'teams' → 'team' for backward compatibility
+        const normalizedPlanId = planId === 'teams' ? 'team' : planId;
+
+        if (!finalPlan && normalizedPlanId) {
             const isYearlyBilling = isYearly || billingCycle === 'yearly';
-            if (planId === 'pro' || planId === 'team') {
-                finalPlan = `${planId}_${isYearlyBilling ? 'yearly' : 'monthly'}` as PlanType;
+            if (normalizedPlanId === 'pro' || normalizedPlanId === 'team') {
+                finalPlan = `${normalizedPlanId}_${isYearlyBilling ? 'yearly' : 'monthly'}` as PlanType;
             } else {
-                finalPlan = planId as PlanType;
+                finalPlan = normalizedPlanId as PlanType;
             }
         }
 
@@ -195,6 +203,14 @@ async function handleStripeCheckout(
     successUrl: string,
     cancelUrl: string
 ) {
+    const stripe = getStripe();
+    if (!stripe) {
+        return NextResponse.json(
+            { error: 'Stripe is not configured on this server. Use INR/Razorpay payments.' },
+            { status: 503 }
+        );
+    }
+
     const pricing = PRICING.stripe[plan];
 
     if (!pricing) {

@@ -215,6 +215,11 @@ export function CheckoutModal({
           options.order_id = data.orderId;
         }
 
+        if (typeof window === 'undefined' || typeof (window as any).Razorpay === 'undefined') {
+          setError('Razorpay payment SDK failed to load. Please refresh the page and try again.');
+          setStep('error');
+          return;
+        }
         const rzp = new (window as any).Razorpay(options);
         rzp.on('payment.failed', function (response: any) {
           setError(response.error.description);

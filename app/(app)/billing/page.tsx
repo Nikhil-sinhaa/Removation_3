@@ -190,7 +190,7 @@ const PRICING_PLANS: PricingPlan[] = [
     ctaVariant: 'default',
   },
   {
-    id: 'teams',
+    id: 'team',
     name: 'Teams',
     description: 'For design studios and agencies',
     icon: <Users className="h-6 w-6" />,
@@ -481,6 +481,15 @@ export default function PricingPage() {
 
       const data = await response.json();
 
+      if (!response.ok) {
+        toast({
+          title: 'Payment Error',
+          description: data.error || data.message || 'Failed to create checkout. Please try again.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       if (data.url) {
         window.location.href = data.url;
       } else if (data.orderId || data.subscriptionId || data.razorpayOrderId) {
@@ -538,8 +547,16 @@ export default function PricingPage() {
         } else if (data.orderId || data.razorpayOrderId) {
           options.order_id = data.orderId || data.razorpayOrderId;
         }
-        // @ts-ignore
-        const razorpay = new window.Razorpay(options);
+
+        if (typeof window === 'undefined' || typeof (window as any).Razorpay === 'undefined') {
+          toast({
+            title: 'Payment Error',
+            description: 'Razorpay payment SDK failed to load. Please refresh the page and try again.',
+            variant: 'destructive',
+          });
+          return;
+        }
+        const razorpay = new (window as any).Razorpay(options);
         razorpay.open();
       }
     } catch (error) {

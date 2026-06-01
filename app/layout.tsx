@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Outfit, DM_Sans, Inter } from 'next/font/google'
+import Script from 'next/script'
 import { AuthProvider } from '@/components/auth/AuthProvider'
 import { Toaster } from '@/components/ui/toaster'
 import { Providers } from '@/components/Providers'
@@ -333,6 +334,12 @@ export default function RootLayout({
           >
             Skip to main content
           </a>
+
+          {/* Razorpay checkout SDK — loaded before interactive so window.Razorpay is available */}
+          <Script
+            src="https://checkout.razorpay.com/v1/checkout.js"
+            strategy="beforeInteractive"
+          />
         </body>
       </html>
     </AuthProvider>

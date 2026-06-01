@@ -8,9 +8,14 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 import { Subscription } from '@/lib/db/models/Subscription';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-06-20',
-});
+// Lazy Stripe initialization — safe when STRIPE_SECRET_KEY is not configured (INR users)
+function getStripe() {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || key.startsWith('sk_test_your') || key.length < 20) {
+        return null;
+    }
+    return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -114,6 +119,14 @@ export async function POST(req: NextRequest) {
 }
 
 async function verifyStripePayment(userId: string, sessionId: string) {
+    const stripe = getStripe();
+    if (!stripe) {
+        return NextResponse.json(
+            { error: 'Stripe is not configured on this server. Use INR/Razorpay payments.' },
+            { status: 503 }
+        );
+    }
+
     if (!sessionId) {
         return NextResponse.json(
             { error: 'Session ID is required' },
@@ -459,6 +472,14 @@ export async function GET(req: NextRequest) {
             return NextResponse.json(
                 { error: 'Session ID is required' },
                 { status: 400 }
+            );
+        }
+
+        const stripe = getStripe();
+        if (!stripe) {
+            return NextResponse.json(
+                { error: 'Stripe is not configured on this server. Use INR/Razorpay payments.' },
+                { status: 503 }
             );
         }
 

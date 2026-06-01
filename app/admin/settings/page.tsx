@@ -91,8 +91,8 @@ const API_KEYS = [
 ];
 
 const WEBHOOKS = [
-  { name: "Razorpay Payments",   url: "/api/webhooks/razorpay",  events: ["payment.captured", "subscription.activated", "subscription.cancelled"],  status: "active" },
-  { name: "Stripe Payments",     url: "/api/webhooks/stripe",    events: ["payment_intent.succeeded", "customer.subscription.updated"],              status: "active" },
+  { name: "Razorpay Payments",   url: "/api/webhook/razorpay",   events: ["payment.captured", "subscription.activated", "subscription.cancelled"],  status: "active" },
+  { name: "Stripe Payments",     url: "/api/webhook/stripe",     events: ["payment_intent.succeeded", "customer.subscription.updated"],              status: "active" },
   { name: "UploadThing Events",  url: "/api/uploadthing",        events: ["file.uploaded"],                                                          status: "active" },
 ];
 

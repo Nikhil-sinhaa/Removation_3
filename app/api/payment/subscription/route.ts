@@ -8,9 +8,14 @@ import Razorpay from 'razorpay';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-06-20', // Use a more recent stable API version
-});
+// Lazy Stripe initialization — safe when STRIPE_SECRET_KEY is not configured (INR users)
+function getStripe() {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || key.startsWith('sk_test_your') || key.length < 20) {
+        return null;
+    }
+    return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -32,7 +37,10 @@ async function getCurrentSubscription(userId: string) {
 
     if (user.stripeSubscriptionId) {
         try {
-            stripeSub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+            const stripe = getStripe();
+            if (stripe) {
+                stripeSub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+            }
         } catch (err) {
             console.error('Stripe fetch error:', err);
         }
@@ -143,6 +151,14 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
         }
 
+        const stripe = getStripe();
+        if (!stripe) {
+            return NextResponse.json(
+                { error: 'Stripe is not configured on this server. Use INR/Razorpay payments.' },
+                { status: 503 }
+            );
+        }
+
         const updatedSub = await stripe.subscriptions.update(user.stripeSubscriptionId, {
             cancel_at_period_end: false,
             proration_behavior: 'create_prorations',
@@ -196,12 +212,15 @@ export async function DELETE(req: NextRequest) {
 
         // Handle Stripe
         if (user.stripeSubscriptionId && stripeSub) {
-            if (immediately) {
-                await stripe.subscriptions.cancel(user.stripeSubscriptionId);
-            } else {
-                await stripe.subscriptions.update(user.stripeSubscriptionId, {
-                    cancel_at_period_end: true,
-                });
+            const stripe = getStripe();
+            if (stripe) {
+                if (immediately) {
+                    await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+                } else {
+                    await stripe.subscriptions.update(user.stripeSubscriptionId, {
+                        cancel_at_period_end: true,
+                    });
+                }
             }
 
             await User.updateOne(
