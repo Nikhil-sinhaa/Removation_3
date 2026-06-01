@@ -43,6 +43,12 @@ export async function POST(request) {
   await connectDB();
 
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
     const body = await request.json();
     const {
       roomComfyFilename,
@@ -202,9 +208,6 @@ export async function POST(request) {
     const resultUrl = `/renders/${destFilename}`;
 
     // ── Persist to MongoDB ────────────────────────────────────────────────────
-    const authUser = await getCurrentUser();
-    const finalUserId = authUser?.id || null;
-
     const project = await Project.create({
       name:           'Furniture Placement',
       userId:         finalUserId,

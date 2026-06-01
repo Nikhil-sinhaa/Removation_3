@@ -24,8 +24,11 @@ const publicPaths = [
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Only bypass if explicitly set — not just because we're in dev
-  if (process.env.SKIP_AUTH === 'true' && process.env.NODE_ENV !== 'production') {
+  // Only allow SKIP_AUTH bypass in non-production
+  const skipAuth = process.env.SKIP_AUTH === 'true' 
+    && process.env.NODE_ENV !== 'production';
+
+  if (skipAuth) {
     return NextResponse.next();
   }
 

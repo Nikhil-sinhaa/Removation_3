@@ -4,9 +4,22 @@ import { User } from '@/lib/db/models/User';
 import { issueJwt } from '@/lib/auth/jwt';
 import bcrypt from 'bcryptjs';
 import { getFreeCreditsOnSignup } from '@/lib/ai/appMode';
+import { rateLimiters } from '@/lib/redis/rateLimit';
 
 export async function POST(req: Request) {
   try {
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      'unknown';
+    const rateLimit = await rateLimiters.auth(ip);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { message: 'Too many signup attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const { email, password, firstName, lastName } = await req.json();
 
     if (!email || !password) {

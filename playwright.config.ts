@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const testPort = process.env.TEST_PORT || '3001';
+
 export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: false, // AI tests should run sequentially
@@ -10,9 +12,10 @@ export default defineConfig({
         ['html', { open: 'never' }],
         ['list'],
     ],
+    globalSetup: './tests/e2e/setup/auth.ts',
 
     use: {
-        baseURL: 'http://localhost:3000',
+        baseURL: `http://localhost:${testPort}`,
         headless: false, // Set true in CI
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
@@ -21,9 +24,9 @@ export default defineConfig({
 
     // Start dev server automatically
     webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:3000',
-        reuseExistingServer: true,
+        command: `SKIP_AUTH=true PORT=${testPort} npm run dev`,
+        port: parseInt(testPort),
+        reuseExistingServer: false, // always start fresh test server
         timeout: 120_000,
     },
 

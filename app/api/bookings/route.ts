@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
             const slot = new Date(consultationSlot as string);
             const conflictQuery: Record<string, unknown> = {
                 consultationSlot: slot,
-                status: { $in: ['pending_designer', 'confirmed'] },
+                status: { $in: ['pending_payment', 'pending_designer', 'confirmed'] },
             };
             if (designer) {
                 conflictQuery.designerId = designer._id;

@@ -15,7 +15,21 @@ export async function POST(request: Request) {
   await connectDB();
   try {
     const authUser = await getCurrentUser();
-    const finalUserId = authUser?.id || null;
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const { checkAndDeductCredits } = await import('@/lib/ai/deductCredits');
+    const deductResult = await checkAndDeductCredits(authUser.id, 'interior-render');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/billing'
+      }, { status: 402 });
+    }
 
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;
