@@ -18,7 +18,11 @@ const publicPaths = [
   '/terms',
   '/api/webhook',
   '/api/uploadthing',
-  '/api/auth'
+  '/api/auth',
+  '/api/stats/public',
+  '/api/designers',
+  '/api/contractors',
+  '/api/vendors'
 ];
 
 export function middleware(req: NextRequest) {

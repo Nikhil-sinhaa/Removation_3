@@ -3,6 +3,9 @@ import { writeFile, mkdir, readFile } from "fs/promises";
 import path from "path";
 import axios from "axios";
 import fs from "fs";
+import { connectDB } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 // ComfyUI base URL
 const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
@@ -55,7 +58,24 @@ function createObjectRemovalWorkflow(
 }
 
 export async function POST(req: NextRequest) {
+  await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'remove-object');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const { imageBase64, maskBase64 } = await req.json();
 
     if (!imageBase64 || !maskBase64) {

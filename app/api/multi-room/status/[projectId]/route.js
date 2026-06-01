@@ -8,11 +8,17 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db/mongodb';
 import MultiRoomProject from '../../../../../src/models/MultiRoomProject.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(_request, { params }) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   await connectDB();
 
   const { projectId } = await params;
@@ -23,7 +29,7 @@ export async function GET(_request, { params }) {
 
   try {
     const mp = await MultiRoomProject.findById(projectId).lean();
-    if (!mp) {
+    if (!mp || mp.userId !== authUser.id) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 

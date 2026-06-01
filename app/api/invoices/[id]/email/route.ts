@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
+import { getCurrentUser } from "@/lib/auth/jwt";
 
 /**
  * POST /api/invoices/:id/email
@@ -16,11 +17,11 @@ export async function POST(
         const resolvedParams = await params;
         const invoiceId = resolvedParams.id;
         
-        // TESTING: Bypass auth for development
-        const userId = "test-user-123";
-        if (!userId) {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const userId = authUser.id;
 
         if (!invoiceId.startsWith("in_")) {
             // Razorpay invoices — no server-side email trigger available

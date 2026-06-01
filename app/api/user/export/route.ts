@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 import Render from "@/lib/db/models/Render";
 import Project from "@/lib/db/models/Project";
+import { getCurrentUser } from "@/lib/auth/jwt";
 
 /**
  * POST /api/user/export
@@ -12,18 +13,11 @@ import Project from "@/lib/db/models/Project";
  */
 export async function POST() {
     try {
-        // TESTING: Bypass auth for development
-        const userId = "test-user-123";
-        const clerkUser = { 
-            firstName: "Test", 
-            lastName: "User", 
-            emailAddresses: [{ emailAddress: "test@example.com" }],
-            createdAt: new Date()
-        };
-
-        if (!userId || !clerkUser) {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
+        const userId = authUser.id;
 
         await connectToDatabase();
 
@@ -33,14 +27,18 @@ export async function POST() {
             Render.find({ userId }).lean(),
         ]);
 
+        if (!dbUser) {
+            return new NextResponse("User not found", { status: 404 });
+        }
+
         const exportData = {
             exportedAt: new Date().toISOString(),
             profile: {
                 id: userId,
-                email: clerkUser.emailAddresses[0]?.emailAddress,
-                firstName: clerkUser.firstName,
-                lastName: clerkUser.lastName,
-                createdAt: clerkUser.createdAt,
+                email: (dbUser as any).email,
+                firstName: (dbUser as any).firstName,
+                lastName: (dbUser as any).lastName,
+                createdAt: (dbUser as any).createdAt,
             },
             subscription: (dbUser as any)?.subscription ?? null,
             credits: (dbUser as any)?.credits ?? 0,

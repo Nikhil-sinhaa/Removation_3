@@ -46,32 +46,6 @@ export default function MasterDesignPage() {
   const [logs, setLogs] = useState<string[]>([]);
   const [masterSelector, setMasterSelector] = useState<any>(null);
   const [masterToggles, setMasterToggles] = useState<any>(null);
-  const [isEnhancing, setIsEnhancing] = useState(false);
-  const [enhancedUrl, setEnhancedUrl] = useState<string | null>(null);
-
-  const handleEnhance = async () => {
-    const imageUrl = result?.generatedImage;
-    if (!imageUrl) return;
-    setIsEnhancing(true);
-    try {
-      const res = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
-      });
-      const data = await res.json();
-      if (data.outputImage) {
-        setEnhancedUrl(data.outputImage);
-        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
-      } else {
-        throw new Error(data.error || 'Enhancement failed');
-      }
-    } catch {
-      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
   const fileInputRef = useRef<HTMLInputElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
@@ -88,7 +62,6 @@ export default function MasterDesignPage() {
       setPreviewUrl(URL.createObjectURL(file));
       setResult(null);
       setError(null);
-      setEnhancedUrl(null);
       addLog(`Selected file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
     }
   };
@@ -365,42 +338,15 @@ export default function MasterDesignPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                <Card className="border-green-200">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2 text-green-700">
-                        <CheckCircle className="w-5 h-5" />
-                        Design Generated!
-                      </CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setResult(null); setLogs([]); }}
-                      >
-                        <Palette className="w-4 h-4 mr-1" />
-                        Redesign
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <AIResultPanel
-                      originalImageUrl={result.originalPreview || "/images/hero-before.jpg"}
-                      resultImageUrl={result.generatedImage}
-                      enhancedImageUrl={enhancedUrl}
-                      isEnhancing={isEnhancing}
-                      onEnhance={handleEnhance}
-                      onSave={() => toast({ title: 'Saved to project', description: 'Design saved.' })}
-                      toolName="Master Design"
-                      beforeLabel="Original Room"
-                      afterLabel="AI Redesigned"
-                    />
-                  </CardContent>
-                </Card>
-
-                {/* Make It Real — connect render to a real designer */}
-                <MakeItReal
+                <AIResultPanel
+                  originalImageUrl={result.originalPreview || "/images/hero-before.jpg"}
+                  resultImageUrl={result.generatedImage}
+                  projectId={result.projectId}
+                  onSaveToProject={() => toast({ title: 'Saved to project', description: 'Design saved.' })}
+                  onTryAgain={() => { setResult(null); setLogs([]); }}
+                  toolName="Master Design"
+                  showMakeItReal={true}
                   roomType={roomType}
-                  afterImage={result.generatedImage}
                 />
               </motion.div>
             ) : (

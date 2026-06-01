@@ -13,13 +13,14 @@ import {
   CheckCircle, 
   AlertCircle, 
   Loader2, 
-  Image, 
+  Image as ImageIcon, 
   Zap,
   Wand2,
   Scan
 } from "lucide-react";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUserStore } from '@/stores/user-store';
+import { AIResultPanel } from "@/components/ai/AIResultPanel";
 
 export default function RemoveObjectPage() {
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
@@ -249,7 +250,7 @@ export default function RemoveObjectPage() {
                 className="w-full"
                 disabled={isGenerating}
               >
-                <Image className="w-4 h-4 mr-2" />
+                <ImageIcon className="w-4 h-4 mr-2" />
                 {selectedFile ? `📸 ${selectedFile.name}` : t("ro_choose_image")}
               </Button>
               {selectedFile && (
@@ -393,67 +394,19 @@ export default function RemoveObjectPage() {
             exit={{ opacity: 0, y: -20 }}
             className="mt-8"
           >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  {t("ro_done_title")}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>Status:</strong> {result.status}
-                    </div>
-                    <div>
-                      <strong>Processing Time:</strong> {result.processingTime}ms
-                    </div>
-                    <div>
-                      <strong>Method:</strong> {methodInfo.name}
-                    </div>
-                    <div>
-                      <strong>Auto-Detect:</strong> {removalMethod === 'sam2' ? 'Enabled' : 'Manual'}
-                    </div>
-                  </div>
-                  
-                  <BeforeAfterSlider
-                    beforeImage={selectedFile ? URL.createObjectURL(selectedFile) : "/images/hero-before.jpg"}
-                    afterImage={result.generatedImage}
-                    beforeLabel={t("ro_original")}
-                    afterLabel={t("ro_removed")}
-                  />
-                  
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                      <Trash2 className="w-5 h-5" />
-                      {t("ro_success_title")}
-                    </h3>
-                    <p className="text-sm text-green-700 mb-2">
-                      Object has been removed using {methodInfo.name} with seamless background reconstruction.
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                      <div className="flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        <span>8GB Optimized</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        <span>Seamless Fill</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Scan className="w-3 h-3" />
-                        <span>Smart Detection</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Wand2 className="w-3 h-3" />
-                        <span>Professional</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AIResultPanel
+              originalImageUrl={selectedFile ? URL.createObjectURL(selectedFile) : null}
+              resultImageUrl={result.generatedImage}
+              onSaveToProject={() => {
+                addLog("💾 Result saved to project");
+              }}
+              onTryAgain={() => {
+                setResult(null);
+                setLogs([]);
+              }}
+              toolName="Object Removal"
+              showMakeItReal={false}
+            />
           </motion.div>
         )}
       </AnimatePresence>

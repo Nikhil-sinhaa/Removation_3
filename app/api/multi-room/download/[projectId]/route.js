@@ -4,11 +4,17 @@ import path from 'path';
 import fs from 'fs';
 import MultiRoomProject from '@/src/models/MultiRoomProject';
 import { connectDB } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req, { params }) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   await connectDB();
 
   const { projectId } = await params;
@@ -35,7 +41,7 @@ export async function GET(req, { params }) {
     } catch (e) {}
   }
 
-  if (!project) {
+  if (!project || project.userId !== authUser.id) {
     return NextResponse.json(
       { error: 'Project not found' },
       { status: 404 }

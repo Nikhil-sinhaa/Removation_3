@@ -123,6 +123,12 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
+    const stripe = getStripe();
+    if (!stripe) {
+        console.error('[Stripe webhook] Stripe not configured');
+        return;
+    }
+
     const clerkId = session.metadata?.clerkId;
     const customerId = session.customer as string;
     const subscriptionId = session.subscription as string;
@@ -292,6 +298,12 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+    const stripe = getStripe();
+    if (!stripe) {
+        console.error('[Stripe webhook] Stripe not configured');
+        return;
+    }
+
     const customerId = invoice.customer as string;
     const subscriptionId = invoice.subscription as string;
 

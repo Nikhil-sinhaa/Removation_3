@@ -1,12 +1,16 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getAllSettings, setSetting } from '@/src/lib/appSettings';
 import { setGPUModeRuntime, resetGPUMode } from '@/lib/ai/gpu-mode-router';
+import { requireRole } from '@/lib/auth/requireRole';
 
 export const runtime = 'nodejs';
 
 // GET — return current GPU settings
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const authResult = await requireRole(req, ['admin']);
+    if (authResult instanceof NextResponse) return authResult;
+
     const settings = await getAllSettings();
     return NextResponse.json({
       mode:     settings.COMFYUI_MODE,
@@ -18,8 +22,11 @@ export async function GET() {
 }
 
 // POST — update GPU settings and apply at runtime
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    const authResult = await requireRole(req, ['admin']);
+    if (authResult instanceof NextResponse) return authResult;
+
     const { mode, cloudUrl } = await req.json();
 
     const validModes = ['local', 'auto', 'cloud'];

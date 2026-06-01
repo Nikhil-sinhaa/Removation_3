@@ -130,31 +130,6 @@ export default function FurnitureRemoverPage() {
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
-  const [isEnhancing, setIsEnhancing]   = useState(false);
-  const [enhancedUrl, setEnhancedUrl]   = useState<string | null>(null);
-
-  const handleEnhance = async () => {
-    if (!result?.afterUrl) return;
-    setIsEnhancing(true);
-    try {
-      const res = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: result.afterUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
-      });
-      const data = await res.json();
-      if (data.outputImage) {
-        setEnhancedUrl(data.outputImage);
-        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
-      } else {
-        throw new Error(data.error || 'Enhancement failed');
-      }
-    } catch {
-      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
 
   // ── Auto Mode Parameters ───────────────────────────────────────────────────
   const [selectedCategories, setSelectedCategories] = useState<string[]>(["sofa", "chair", "table", "bed", "cabinet", "lamp"]);
@@ -502,7 +477,6 @@ export default function FurnitureRemoverPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
-    setEnhancedUrl(null);
     setFeedback({ rating: null, text: "", submitted: false, submitting: false });
     setCanvasHistory([]);
   };
@@ -931,88 +905,13 @@ export default function FurnitureRemoverPage() {
                     <AIResultPanel
                       originalImageUrl={result.beforeUrl}
                       resultImageUrl={result.afterUrl}
-                      enhancedImageUrl={enhancedUrl}
-                      isEnhancing={isEnhancing}
-                      onEnhance={handleEnhance}
-                      onDownload={() => {
-                        const a = document.createElement("a");
-                        a.href = enhancedUrl || result.afterUrl;
-                        a.download = `furniture-remover-${activeTab}-${Date.now()}.png`;
-                        a.click();
-                      }}
-                      onSave={() => toast({ title: "Saved successfully", description: "Generation saved to your user history dashboard." })}
+                      projectId={projectId || undefined}
+                      onSaveToProject={() => toast({ title: "Saved to project", description: "Furniture removal result saved successfully." })}
+                      onTryAgain={handleTryAnother}
                       toolName="Furniture Remover"
-                      beforeLabel="Original Room"
-                      afterLabel="Furniture Erased"
-                    >
-                      <Button size="sm" variant="outline" onClick={handleTryAnother} className="w-full border-gray-200">
-                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another
-                      </Button>
-                    </AIResultPanel>
-
-                    {/* Feedback Rating Module */}
-                    <div className="pt-4 border-t border-gray-100">
-                      {feedback.submitted ? (
-                        <p className="text-center text-xs font-semibold text-green-600">👍 Feedback saved. Thanks for helping us improve!</p>
-                      ) : (
-                        <div className="space-y-3">
-                          <p className="text-xs font-bold uppercase tracking-wider text-gray-400 text-center">Are you happy with the removal boundaries?</p>
-                          <div className="flex gap-3 justify-center">
-                            <button
-                              onClick={() => handleFeedbackRating('up')}
-                              disabled={feedback.rating !== null}
-                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-all ${
-                                feedback.rating === 'up'
-                                  ? 'border-green-500 bg-green-50/50 scale-95'
-                                  : feedback.rating !== null
-                                  ? 'border-gray-100 opacity-30 cursor-not-allowed'
-                                  : 'border-gray-200 hover:border-green-400 hover:bg-green-50/20 cursor-pointer'
-                              }`}
-                            >
-                              👍
-                            </button>
-                            <button
-                              onClick={() => handleFeedbackRating('down')}
-                              disabled={feedback.rating !== null}
-                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-all ${
-                                feedback.rating === 'down'
-                                  ? 'border-red-400 bg-red-50/50 scale-95'
-                                  : feedback.rating !== null
-                                  ? 'border-gray-100 opacity-30 cursor-not-allowed'
-                                  : 'border-gray-200 hover:border-red-300 hover:bg-red-50/20 cursor-pointer'
-                              }`}
-                            >
-                              👎
-                            </button>
-                          </div>
-
-                          {feedback.rating && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="space-y-2"
-                            >
-                              <textarea
-                                value={feedback.text}
-                                onChange={e => setFeedback(prev => ({ ...prev, text: e.target.value }))}
-                                maxLength={1000}
-                                rows={2}
-                                placeholder={feedback.rating === 'up' ? "Awesome! Any details on the blending?" : "What went wrong with the mask or background blending?"}
-                                className="w-full text-xs border border-gray-200 rounded-lg p-2.5 resize-none focus:outline-none focus:ring-2 focus:ring-red-100"
-                              />
-                              <Button
-                                size="sm"
-                                onClick={handleFeedbackSubmit}
-                                disabled={feedback.submitting}
-                                className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold"
-                              >
-                                {feedback.submitting ? "Saving feedback…" : "Submit Review"}
-                              </Button>
-                            </motion.div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                      showMakeItReal={false}
+                      roomType="living-room"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>

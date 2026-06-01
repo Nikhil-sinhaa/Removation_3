@@ -4,9 +4,29 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import axios from "axios";
 import { createOptimizedObjectRemovalWorkflow, ObjectRemovalRequest } from "@/lib/ai/comfyui-workflows-object-removal";
+import { connectDB } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export async function POST(req: NextRequest) {
+  await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'remove-object');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     console.log("🗑️ Starting Object Removal generation...");
     
     // Parse form data
@@ -60,7 +80,7 @@ export async function POST(req: NextRequest) {
         num_inference_steps: 15,
         guidance_scale: 7.5,
       },
-      userId: "object_removal_user",
+      userId: finalUserId,
       removalMethod: data.removalMethod || 'lama',
       maskData: data.maskData || {
         coordinates: { x: 100, y: 100, width: 200, height: 150 },
@@ -78,7 +98,8 @@ export async function POST(req: NextRequest) {
 
     console.log("🚀 Submitting object removal workflow to ComfyUI...");
 
-    const response = await axios.post('http://127.0.0.1:8188/prompt', {
+    const comfyUrl = process.env.COMFYUI_URL || 'http://127.0.0.1:8188';
+    const response = await axios.post(`${comfyUrl}/prompt`, {
       prompt: workflow.prompt
     }, {
       timeout: 12000

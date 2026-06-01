@@ -6,10 +6,17 @@ import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import FloorPlanProject from '@/src/models/FloorPlanProject';
 import { connectDB } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 const execAsync = promisify(exec);
 
 export async function POST(req) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const userId = authUser.id;
+
   await connectDB();
   
   try {
@@ -57,6 +64,7 @@ export async function POST(req) {
     
     // Create MongoDB document
     const project = await FloorPlanProject.create({
+      userId,
       roomName,
       photos: savedPhotos,
       status: 'photos_uploaded',

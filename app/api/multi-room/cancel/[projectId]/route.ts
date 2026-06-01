@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import MultiRoomProject from '@/src/models/MultiRoomProject';
 import { connectDB } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,11 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ projectId: string }> }
 ) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   await connectDB();
 
   const resolvedParams = await params;
@@ -20,7 +26,7 @@ export async function POST(
 
   const project = await MultiRoomProject.findById(projectId);
 
-  if (!project) {
+  if (!project || project.userId !== authUser.id) {
     return NextResponse.json(
       { error: 'Project not found' },
       { status: 404 }

@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireRole } from '@/lib/auth/requireRole';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req) {
+  const authResult = await requireRole(req, ['admin']);
+  if (authResult instanceof NextResponse) return authResult;
+
   const apiKey = process.env.MARBLE_API_KEY;
 
   if (!apiKey || apiKey === 'your_worldlabs_api_key_here') {

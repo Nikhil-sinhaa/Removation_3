@@ -56,31 +56,6 @@ export default function CeilingChangerPage() {
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
-  const [isEnhancing, setIsEnhancing]   = useState(false);
-  const [enhancedUrl, setEnhancedUrl]   = useState<string | null>(null);
-
-  const handleEnhance = async () => {
-    if (!result?.afterUrl) return;
-    setIsEnhancing(true);
-    try {
-      const res = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: result.afterUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
-      });
-      const data = await res.json();
-      if (data.outputImage) {
-        setEnhancedUrl(data.outputImage);
-        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
-      } else {
-        throw new Error(data.error || 'Enhancement failed');
-      }
-    } catch {
-      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
 
   const isGeneratingRef = useRef(isGenerating);
   useEffect(() => {
@@ -254,7 +229,6 @@ export default function CeilingChangerPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
-    setEnhancedUrl(null);
     setFeedback({ rating: null, text: "", submitted: false, submitting: false });
   };
 
@@ -486,92 +460,13 @@ export default function CeilingChangerPage() {
                     <AIResultPanel
                       originalImageUrl={result.beforeUrl}
                       resultImageUrl={result.afterUrl}
-                      enhancedImageUrl={enhancedUrl}
-                      isEnhancing={isEnhancing}
-                      onEnhance={handleEnhance}
-                      onDownload={() => {
-                        const a = document.createElement("a");
-                        a.href = enhancedUrl || result.afterUrl;
-                        a.download = `ceiling-changer-${color.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}.png`;
-                        a.click();
-                      }}
-                      onSave={() => toast({ title: "Saved to project", description: `${color.name} ceiling recolor saved successfully.` })}
+                      projectId={projectId || undefined}
+                      onSaveToProject={() => toast({ title: "Saved to project", description: `${color.name} ceiling recolor saved successfully.` })}
+                      onTryAgain={handleTryAnother}
                       toolName="Ceiling Changer"
-                      beforeLabel="Original"
-                      afterLabel={color.name || "Recolored"}
-                    >
-                      <Button size="sm" variant="outline" onClick={handleTryAnother} className="w-full">
-                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another Color
-                      </Button>
-                    </AIResultPanel>
-
-                    {/* Feedback */}
-                    <div className="pt-3 border-t border-gray-100">
-                      {feedback.submitted ? (
-                        <p className="text-center text-sm text-green-600 font-medium">Thanks for your feedback</p>
-                      ) : (
-                        <div className="space-y-3">
-                          <p className="text-sm font-medium text-gray-700 text-center">Happy with this result?</p>
-                          <div className="flex gap-3 justify-center">
-                            <button
-                              onClick={() => handleFeedbackRating('up')}
-                              disabled={feedback.rating !== null}
-                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-colors ${
-                                feedback.rating === 'up'
-                                  ? 'border-green-500 bg-green-50'
-                                  : feedback.rating !== null
-                                  ? 'border-gray-200 opacity-40 cursor-not-allowed'
-                                  : 'border-gray-200 hover:border-green-400 hover:bg-green-50 cursor-pointer'
-                              }`}
-                              aria-label="Thumbs up"
-                            >
-                              👍
-                            </button>
-                            <button
-                              onClick={() => handleFeedbackRating('down')}
-                              disabled={feedback.rating !== null}
-                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-colors ${
-                                feedback.rating === 'down'
-                                  ? 'border-red-400 bg-red-50'
-                                  : feedback.rating !== null
-                                  ? 'border-gray-200 opacity-40 cursor-not-allowed'
-                                  : 'border-gray-200 hover:border-red-300 hover:bg-red-50 cursor-pointer'
-                              }`}
-                              aria-label="Thumbs down"
-                            >
-                              👎
-                            </button>
-                          </div>
-                          {feedback.rating && (
-                            <motion.div
-                              initial={{ opacity: 0, y: -4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              className="space-y-2"
-                            >
-                              <p className="text-xs text-gray-500 text-center">
-                                {feedback.rating === 'up' ? 'Glad you liked it!' : 'Sorry — help us improve'}
-                              </p>
-                              <textarea
-                                value={feedback.text}
-                                onChange={e => setFeedback(prev => ({ ...prev, text: e.target.value }))}
-                                maxLength={1000}
-                                rows={2}
-                                placeholder={feedback.rating === 'up' ? 'Tell us what worked (optional)' : 'What went wrong? (optional)'}
-                                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 placeholder:text-gray-400"
-                              />
-                              <Button
-                                size="sm"
-                                onClick={handleFeedbackSubmit}
-                                disabled={feedback.submitting}
-                                className="w-full bg-violet-600 hover:bg-violet-700 text-white"
-                              >
-                                {feedback.submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />Submitting…</> : 'Submit'}
-                              </Button>
-                            </motion.div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                      showMakeItReal={true}
+                      roomType="living-room"
+                    />
                   </motion.div>
                 )}
               </AnimatePresence>

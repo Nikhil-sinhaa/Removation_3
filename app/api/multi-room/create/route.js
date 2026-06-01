@@ -14,6 +14,7 @@ import { connectDB } from '../../../../lib/db/mongodb';
 import MultiRoomProject from '../../../../src/models/MultiRoomProject.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { paintAllPhotos } from '../../../../src/services/multiRoomOrchestrator.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +57,12 @@ async function safeParseFormData(request) {
 }
 
 export async function POST(request) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const userId = authUser.id;
+
   await connectDB();
 
   try {
@@ -120,6 +127,7 @@ export async function POST(request) {
 
     // ── Create MultiRoomProject ──────────────────────────────────────────────
     const mp = await MultiRoomProject.create({
+      userId,
       roomName,
       colorName,
       colorHex,

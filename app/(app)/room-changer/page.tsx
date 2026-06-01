@@ -108,8 +108,6 @@ export default function RoomChangerPage() {
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
-  const [isEnhancing, setIsEnhancing]   = useState(false);
-  const [enhancedUrl, setEnhancedUrl]   = useState<string | null>(null);
 
   // ── Paint Selection mode (mask editor) ────────────────────────────────────
   const [paintMode, setPaintMode]       = useState<'whole' | 'selection'>('whole');
@@ -117,30 +115,6 @@ export default function RoomChangerPage() {
   const [maskResult, setMaskResult]     = useState<string | null>(null);
   const [brushSize, setBrushSize]       = useState(30);
   const maskCanvasRef = useRef<ReactSketchCanvasRef>(null);
-
-  const handleEnhance = async () => {
-    const imageUrl = result?.afterUrl;
-    if (!imageUrl) return;
-    setIsEnhancing(true);
-    try {
-      const res = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
-      });
-      const data = await res.json();
-      if (data.outputImage) {
-        setEnhancedUrl(data.outputImage);
-        toast({ title: t("rc_enhance_done") || '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
-      } else {
-        throw new Error(data.error || 'Enhancement failed');
-      }
-    } catch {
-      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
 
   const handleMaskRepaint = async () => {
     if (!maskCanvasRef.current || !previewUrl) return;
@@ -383,7 +357,6 @@ export default function RoomChangerPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
-    setEnhancedUrl(null);
     setPaintMode('whole');
     setMaskResult(null);
     setFeedback({ rating: null, text: "", submitted: false, submitting: false });
@@ -706,26 +679,13 @@ export default function RoomChangerPage() {
                     <AIResultPanel
                       originalImageUrl={result.beforeUrl}
                       resultImageUrl={result.afterUrl}
-                      enhancedImageUrl={enhancedUrl}
-                      isEnhancing={isEnhancing}
-                      onEnhance={handleEnhance}
-                      onDownload={() => {
-                        const a = document.createElement("a");
-                        a.href = enhancedUrl || result.afterUrl;
-                        a.download = `room-changer-${color.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}.png`;
-                        a.click();
-                      }}
-                      onSave={() => toast({ title: t("rc_repaint_saved_title"), description: t("rc_repaint_saved_desc", { color: color.name }) })}
+                      projectId={projectId || undefined}
+                      onSaveToProject={() => toast({ title: t("rc_repaint_saved_title"), description: t("rc_repaint_saved_desc", { color: color.name }) })}
+                      onTryAgain={handleTryAnother}
                       toolName="Room Changer"
-                      beforeLabel={t("rc_repaint_original")}
-                      afterLabel={color.name || t("rc_repaint_recolored")}
-                    >
-                      <Button size="sm" variant="outline" onClick={handleTryAnother} className="w-full">
-                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_try_another")}
-                      </Button>
-                      {/* Make It Real — connect render to a real designer */}
-                      <MakeItReal roomType="living-room" afterImage={enhancedUrl || result.afterUrl} />
-                    </AIResultPanel>
+                      showMakeItReal={true}
+                      roomType="living-room"
+                    />
 
                     {/* Feedback */}
                     <div className="pt-3 border-t border-gray-100">

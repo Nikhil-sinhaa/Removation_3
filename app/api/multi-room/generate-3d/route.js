@@ -15,10 +15,16 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../lib/db/mongodb';
 import MultiRoomProject from '../../../../src/models/MultiRoomProject.js';
 import { generateMarbleView } from '../../../../src/services/multiRoomOrchestrator.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
 
 export async function POST(request) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   await connectDB();
 
   try {
@@ -30,7 +36,7 @@ export async function POST(request) {
     }
 
     const mp = await MultiRoomProject.findById(projectId);
-    if (!mp) {
+    if (!mp || mp.userId !== authUser.id) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 

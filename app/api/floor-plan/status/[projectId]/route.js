@@ -1,14 +1,20 @@
 import { NextResponse } from 'next/server';
 import FloorPlanProject from '@/src/models/FloorPlanProject';
 import { connectDB } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function GET(req, { params }) {
+  const authUser = await getCurrentUser();
+  if (!authUser) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   await connectDB();
   
   const { projectId } = params;
   const project = await FloorPlanProject.findById(projectId);
   
-  if (!project) {
+  if (!project || project.userId !== authUser.id) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
   }
   

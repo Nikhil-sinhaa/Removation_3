@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 import { randomBytes, createHash } from "crypto";
+import { getCurrentUser } from "@/lib/auth/jwt";
 
 /**
  * POST /api/user/api-key
@@ -11,12 +12,11 @@ import { randomBytes, createHash } from "crypto";
  */
 export async function POST() {
     try {
-        // TESTING: Bypass auth for development
-        const userId = "test-user-123";
-
-        if (!userId) {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
+        const userId = authUser.id;
 
         // Generate a cryptographically random key
         const rawKey = `rmvt_sk_live_${randomBytes(24).toString("hex")}`;

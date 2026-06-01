@@ -84,31 +84,6 @@ export default function FurniturePlacementPage() {
   // Flow
   const [isGenerating, setIsGenerating] = useState(false);
   const [resultUrl,    setResultUrl]    = useState('');
-  const [isEnhancing,  setIsEnhancing]  = useState(false);
-  const [enhancedUrl,  setEnhancedUrl]  = useState<string | null>(null);
-
-  const handleEnhance = async () => {
-    if (!resultUrl) return;
-    setIsEnhancing(true);
-    try {
-      const res = await fetch('/api/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageUrl: resultUrl, enhanceType: 'upscale', settings: { scale: '2x' } }),
-      });
-      const data = await res.json();
-      if (data.outputImage) {
-        setEnhancedUrl(data.outputImage);
-        toast({ title: '✨ HD Enhancement complete!', description: 'Image upscaled 2x' });
-      } else {
-        throw new Error(data.error || 'Enhancement failed');
-      }
-    } catch {
-      toast({ title: 'Enhancement failed', description: 'Try again', variant: 'destructive' });
-    } finally {
-      setIsEnhancing(false);
-    }
-  };
 
   const fileRoomRef      = useRef<HTMLInputElement>(null);
   const fileFurnitureRef = useRef<HTMLInputElement>(null);
@@ -235,7 +210,7 @@ export default function FurniturePlacementPage() {
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────────
-  const handleTryAnother = () => { setResultUrl(''); setEnhancedUrl(null); setStage('place'); };
+  const handleTryAnother = () => { setResultUrl(''); setStage('place'); };
 
   const handleStartOver = () => {
     setStage('upload');
@@ -247,7 +222,6 @@ export default function FurniturePlacementPage() {
     setFurNatW(0);             setFurNatH(0);
     setBgState('idle');
     setIsGenerating(false);    setResultUrl('');
-    setEnhancedUrl(null);
     setPosX(50); setPosY(60); setScalePct(30); setRotation(0);
   };
 
@@ -562,32 +536,15 @@ export default function FurniturePlacementPage() {
             <AIResultPanel
               originalImageUrl={roomPreviewUrl || roomPreview}
               resultImageUrl={resultUrl}
-              enhancedImageUrl={enhancedUrl}
-              isEnhancing={isEnhancing}
-              onEnhance={handleEnhance}
-              onDownload={() => {
-                const a = document.createElement('a');
-                a.href = enhancedUrl || resultUrl;
-                a.download = 'furnished-room.png';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-              }}
-              onSave={() => toast({ title: 'Saved to project', description: 'Furniture placement saved.' })}
+              onSaveToProject={() => toast({ title: 'Saved to project', description: 'Furniture placement saved.' })}
+              onTryAgain={handleTryAnother}
               toolName="Furniture Placement"
-              beforeLabel="Original"
-              afterLabel="Furnished"
+              showMakeItReal={false}
             >
               <div className="flex flex-wrap gap-3">
                 <button
-                  onClick={handleTryAnother}
-                  className="flex items-center gap-2 border border-violet-200 text-violet-700 hover:bg-violet-50 font-semibold px-5 py-3 rounded-xl transition-colors"
-                >
-                  <Wand2 className="w-4 h-4" /> Try Different Position
-                </button>
-                <button
                   onClick={handleStartOver}
-                  className="flex items-center gap-2 bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800 text-white font-semibold px-5 py-3 rounded-xl shadow-md shadow-violet-600/20 transition-all"
+                  className="flex items-center gap-2 border border-violet-200 text-violet-700 hover:bg-violet-50 font-semibold px-5 py-3 rounded-xl transition-colors"
                 >
                   <RotateCcw className="w-4 h-4" /> Start Over
                 </button>
