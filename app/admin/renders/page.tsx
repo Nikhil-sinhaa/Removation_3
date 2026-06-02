@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
@@ -851,14 +852,22 @@ const RenderDetailsModal = ({
 
 // Main Component
 export default function AdminRendersPage() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const viewParam = searchParams.get('view');
+
   const [isLoading, setIsLoading] = useState(true);
   const [renders, setRenders] = useState<Render[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    tabParam === 'flagged' || tabParam === 'processing' ? tabParam : 'all'
+  );
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [selectedRenders, setSelectedRenders] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">(
+    viewParam === 'gallery' ? 'grid' : 'grid'
+  );
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);

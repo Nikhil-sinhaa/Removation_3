@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllSettings, setSetting } from '@/src/lib/appSettings';
+import { getAllSettings, setSetting } from '@/src/lib/appSettings.ts';
 import { setGPUModeRuntime, resetGPUMode } from '@/lib/ai/gpu-mode-router';
 import { requireRole } from '@/lib/auth/requireRole';
 

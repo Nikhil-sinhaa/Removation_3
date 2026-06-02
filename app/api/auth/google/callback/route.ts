@@ -150,6 +150,12 @@ export async function GET(req: Request) {
       }
     }
 
+    // Safety net: never redirect to bare '/' — the marketing homepage doesn't show
+    // auth state, so the user would appear logged out even though the cookie is set.
+    if (!postLoginRedirect || postLoginRedirect === '/') {
+      postLoginRedirect = '/dashboard';
+    }
+
     const response = NextResponse.redirect(`${APP_URL}${postLoginRedirect}`);
     issueJwt(response, { _id: String(user._id), email: user.email });
 

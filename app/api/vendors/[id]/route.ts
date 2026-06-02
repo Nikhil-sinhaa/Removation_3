@@ -22,19 +22,25 @@ export async function GET(
         const authUser   = await getCurrentUser();
         const isLoggedIn = !!authUser;
 
-        const publicSelect = 'displayName bio city storeAddress specialties portfolioImages isVerified createdAt';
+        const publicSelect = 'displayName bio city storeAddress specialties portfolioImages isVerified createdAt userId';
         const authedSelect = publicSelect + ' phone';
         const selectFields = isLoggedIn ? authedSelect : publicSelect;
 
-        const vendor = await Vendor.findOne({
-            _id:        id,
-            isVerified: true,
-            isActive:   true,
-        })
+        const vendor = await Vendor.findOne({ _id: id })
             .select(selectFields)
             .populate('userId', 'firstName lastName imageUrl');
 
         if (!vendor) {
+            return NextResponse.json({ message: 'Vendor not found' }, { status: 404 });
+        }
+
+        const isOwner = authUser && vendor.userId && (
+            (vendor.userId as any)._id 
+                ? (vendor.userId as any)._id.toString() === authUser._id.toString() 
+                : vendor.userId.toString() === authUser._id.toString()
+        );
+
+        if (!isOwner && (!vendor.isVerified || !vendor.isActive)) {
             return NextResponse.json({ message: 'Vendor not found' }, { status: 404 });
         }
 

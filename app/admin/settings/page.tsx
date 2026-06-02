@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import { motion } from "framer-motion";
 import {
   Settings,
@@ -98,6 +99,13 @@ const WEBHOOKS = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SettingsAdminPage() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const VALID_TABS = ['tuning', 'general', 'api-keys', 'webhooks', 'security'];
+  const [activeSettingsTab, setActiveSettingsTab] = useState(
+    tabParam && VALID_TABS.includes(tabParam) ? tabParam : 'tuning'
+  );
+
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
   
   // Dynamic config states
@@ -185,7 +193,7 @@ export default function SettingsAdminPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="tuning">
+      <Tabs value={activeSettingsTab} onValueChange={setActiveSettingsTab}>
         <TabsList className="bg-neutral-900 border border-neutral-800">
           <TabsTrigger value="tuning" className="data-[state=active]:bg-neutral-800 data-[state=active]:text-white text-neutral-400">
             <Sliders className="w-4 h-4 mr-2" />

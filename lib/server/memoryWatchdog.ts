@@ -57,6 +57,10 @@ function getMemStats(): MemStats {
 }
 
 export function startMemoryWatchdog() {
+  if (process.env.DISABLE_WATCHDOG === 'true') {
+    console.log('🛡️  REMOVATION MEMORY WATCHDOG IS DISABLED (via DISABLE_WATCHDOG=true)');
+    return;
+  }
   // Thresholds tuned for 16GB RAM system
   const WARN_PERCENT = 75;       // log warning
   const CRITICAL_PERCENT = 85;   // force GC + log critical

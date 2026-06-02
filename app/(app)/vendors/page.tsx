@@ -1,11 +1,7 @@
-'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
+// /vendors is surfaced as a tab inside the unified marketplace page.
+// This server-side redirect is instant (no client-side flash).
 export default function VendorsPage() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace('/marketplace?tab=vendors');
-  }, [router]);
-  return null;
+  redirect('/marketplace?tab=vendors');
 }

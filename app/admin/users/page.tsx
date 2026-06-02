@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
@@ -134,6 +135,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 // Types
 interface User {
@@ -1159,11 +1161,18 @@ const UserDetailsSheet = ({
 
 // Main Component
 export default function AdminUsersPage() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
   const [isLoading, setIsLoading] = useState(true);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [planFilter, setPlanFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    tabParam === 'active' || tabParam === 'banned' || tabParam === 'suspended' ? tabParam : 'all'
+  );
+  const [planFilter, setPlanFilter] = useState<string>(
+    tabParam === 'subscribed' ? 'pro' : 'all'
+  );
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
@@ -1177,6 +1186,8 @@ export default function AdminUsersPage() {
   const [actionType, setActionType] = useState<string>("");
   const [actionUserId, setActionUserId] = useState<string>("");
   const [stats, setStats] = useState<UserStats>(defaultStats);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const { toast } = useToast();
   const itemsPerPage = viewMode === "grid" ? 12 : 15;
 
   useEffect(() => {
@@ -1333,46 +1344,80 @@ export default function AdminUsersPage() {
     }
   };
 
-  const executeAction = (action: string, userId: string) => {
-    switch (action) {
-      case "ban":
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, status: "banned" as const } : u
-        ));
-        break;
-      case "unban":
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, status: "active" as const } : u
-        ));
-        break;
-      case "suspend":
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, status: "suspended" as const } : u
-        ));
-        break;
-      case "unsuspend":
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, status: "active" as const } : u
-        ));
-        break;
-      case "delete":
-        setUsers(prev => prev.filter(u => u.id !== userId));
-        setSelectedUsers(prev => prev.filter(id => id !== userId));
-        break;
-      case "plan-free":
-      case "plan-pro":
-      case "plan-teams":
-      case "plan-enterprise":
+  const executeAction = async (action: string, userId: string) => {
+    setIsActionLoading(true);
+    try {
+      let res: Response | null = null;
+
+      if (action === "ban" || action === "unban" || action === "suspend" || action === "unsuspend") {
+        const newStatus = (action === "ban") ? "banned"
+          : (action === "suspend") ? "suspended"
+          : "active";
+        res = await fetch(`/api/admin/users/${userId}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus }),
+        });
+        if (res.ok) {
+          setUsers(prev => prev.map(u =>
+            u.id === userId ? { ...u, status: newStatus as User["status"] } : u
+          ));
+          toast({ title: "Done", description: `User ${action}ned successfully.` });
+        }
+      } else if (action === "delete") {
+        res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
+        if (res.ok) {
+          setUsers(prev => prev.filter(u => u.id !== userId));
+          setSelectedUsers(prev => prev.filter(id => id !== userId));
+          toast({ title: "Deleted", description: "User permanently deleted." });
+        }
+      } else if (action.startsWith("plan-")) {
         const plan = action.replace("plan-", "") as User["plan"];
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, plan } : u
-        ));
-        break;
-      default:
-        console.log(`Action: ${action} for user: ${userId}`);
+        res = await fetch(`/api/admin/users/${userId}/role`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan }),
+        });
+        if (res.ok) {
+          setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan } : u));
+          toast({ title: "Plan updated", description: `Plan changed to ${plan}.` });
+        }
+      } else if (action === "makeAdmin" || action === "removeAdmin") {
+        const role = action === "makeAdmin" ? "admin" : "customer";
+        res = await fetch(`/api/admin/users/${userId}/role`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role }),
+        });
+        if (res.ok) {
+          setUsers(prev => prev.map(u =>
+            u.id === userId ? { ...u, role: (role === "admin" ? "admin" : "user") as User["role"] } : u
+          ));
+          toast({ title: "Role updated", description: `Role changed to ${role}.` });
+        }
+      } else {
+        console.log(`Unhandled action: ${action} for user: ${userId}`);
+      }
+
+      if (res && !res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast({
+          title: "Error",
+          description: (err as { message?: string }).message ?? "Action failed",
+          variant: "destructive",
+        });
+      }
+    } catch (err) {
+      toast({
+        title: "Network error",
+        description: String(err),
+        variant: "destructive",
+      });
+    } finally {
+      setIsActionLoading(false);
+      setIsActionDialogOpen(false);
+      setIsDetailsOpen(false);
     }
-    setIsActionDialogOpen(false);
-    setIsDetailsOpen(false);
   };
 
   const handleBulkAction = (action: string) => {

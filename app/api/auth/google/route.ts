@@ -10,8 +10,9 @@ export async function GET(req: Request) {
   const rawRedirect = searchParams.get('redirect_url');
 
   // Validate the redirect_url before encoding into state.
-  // If missing or invalid, fall back to '/' — the flow still continues cleanly.
-  const safeRedirect = isSafeRedirectPath(rawRedirect) ? rawRedirect : '/';
+  // If missing or invalid (or just '/'), fall back to '/dashboard' so users land in
+  // the authenticated area, not the marketing homepage where auth state is invisible.
+  const safeRedirect = (isSafeRedirectPath(rawRedirect) && rawRedirect !== '/') ? rawRedirect : '/dashboard';
 
   // Build state JWT: CSRF token + safe redirect path, signed, 5-minute expiry.
   // This is passed to Google and verified in the callback to prevent CSRF

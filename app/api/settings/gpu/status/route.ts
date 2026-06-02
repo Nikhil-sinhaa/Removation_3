@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSetting } from '@/src/lib/appSettings';
+import { getSetting } from '@/src/lib/appSettings.ts';
 import { checkComfyHealth } from '@/lib/ai/gpu-mode-router';
 
 export const runtime = 'nodejs';

@@ -13,6 +13,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
     AlertCircle,
+    ArrowLeft,
     CheckCircle2,
     Clock,
     IndianRupee,
@@ -281,13 +283,20 @@ export default function ContractorPricingPage() {
                 animate={{ opacity: 1, y: 0 }}
             >
                 {/* Header */}
-                <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-zinc-900">Pricing & Availability</h1>
-                    <p className="text-sm text-zinc-500 mt-1">
-                        Set your fees and toggle which booking types you accept. Changes take effect
-                        immediately for new bookings — existing bookings use the fee snapshotted at
-                        booking time.
-                    </p>
+                <div className="mb-6 space-y-4">
+                    <Link
+                        href="/contractor/dashboard"
+                        className="inline-flex items-center text-sm text-zinc-500 hover:text-zinc-800 transition-colors gap-1.5"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Dashboard
+                    </Link>
+                    <div>
+                        <h1 className="text-2xl font-bold text-zinc-900">Pricing & Availability</h1>
+                        <p className="text-sm text-zinc-500 mt-1">
+                            Set your fees and toggle which booking types you accept. Setting valid fees enables customer bookings on your public profile.
+                        </p>
+                    </div>
                 </div>
 
                 {fetchError && (

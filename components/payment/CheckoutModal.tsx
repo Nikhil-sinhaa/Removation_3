@@ -76,6 +76,7 @@ export function CheckoutModal({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRazorpayOpen, setIsRazorpayOpen] = useState(false);
   const [billingDetails, setBillingDetails] = useState<BillingDetails>({
     name: '',
     email: '',
@@ -173,6 +174,7 @@ export function CheckoutModal({
           name: 'Removation.ai',
           description: `${plan.name} - ${isYearly ? 'Yearly' : 'Monthly'} Plan`,
           handler: async function (response: any) {
+            setIsRazorpayOpen(false);
             try {
               // Verify payment
               const verifyResponse = await fetch('/api/payment/verify', {
@@ -222,9 +224,11 @@ export function CheckoutModal({
         }
         const rzp = new (window as any).Razorpay(options);
         rzp.on('payment.failed', function (response: any) {
+          setIsRazorpayOpen(false);
           setError(response.error.description);
           setStep('error');
         });
+        setIsRazorpayOpen(true);
         rzp.open();
       }
     } catch (err: any) {
@@ -566,7 +570,7 @@ export function CheckoutModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onClose} modal={!isRazorpayOpen}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">

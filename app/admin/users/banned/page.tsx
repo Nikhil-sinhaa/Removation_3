@@ -1,9 +1,2 @@
-// app/admin/users/banned/page.tsx – redirects to parent
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-export default function Page() {
-  const router = useRouter();
-  useEffect(() => { router.replace("/admin/users"); }, [router]);
-  return null;
-}
+import { redirect } from 'next/navigation';
+export default function Page() { redirect('/admin/users?tab=banned'); }

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CreditCard,
@@ -209,6 +210,13 @@ const TxStatusBadge = ({ status }: { status: string }) => {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function SubscriptionsPage() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  // 'plans' sub-page redirects here; closest tab is 'subscribers'
+  const [activeSubTab, setActiveSubTab] = useState(
+    tabParam === 'transactions' ? 'transactions' : 'subscribers'
+  );
+
   const [data, setData]       = useState<ApiData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
@@ -395,7 +403,7 @@ export default function SubscriptionsPage() {
       )}
 
       {/* ── Tabs: Subscribers / Transactions ── */}
-      <Tabs defaultValue="subscribers">
+      <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
         <TabsList className="bg-neutral-900 border border-neutral-800">
           <TabsTrigger value="subscribers" className="data-[state=active]:bg-neutral-800 data-[state=active]:text-white text-neutral-400">
             <Users className="w-4 h-4 mr-2" />

@@ -85,6 +85,8 @@ export default function VendorRegisterPage() {
     yearsOfExperience: '',
   });
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [existingPortfolioImages, setExistingPortfolioImages] = useState<string[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -106,12 +108,6 @@ export default function VendorRegisterPage() {
         const res = await fetch('/api/vendor/me');
         if (res.ok) {
           const data = await res.json();
-          // Already registered — if rejected, let them edit. Otherwise redirect.
-          if (!data.vendor.rejectionReason) {
-            router.replace('/designers?tab=vendors');
-            return;
-          }
-          // Pre-fill form for resubmission
           const v = data.vendor;
           setForm({
             displayName: v.displayName || '',
@@ -123,6 +119,8 @@ export default function VendorRegisterPage() {
             yearsOfExperience: v.yearsOfExperience !== undefined ? String(v.yearsOfExperience) : '',
           });
           setSelectedSpecialties(v.specialties || []);
+          setExistingPortfolioImages(v.portfolioImages || []);
+          setIsEditing(true);
         }
       } catch {
         // 404 = no profile
@@ -130,7 +128,7 @@ export default function VendorRegisterPage() {
         setCheckingProfile(false);
       }
     })();
-  }, [user, isLoading, router]);
+  }, [user, isLoading]);
 
   // ── Validation ───────────────────────────────────────────────────────────────
   function validate() {
@@ -149,7 +147,7 @@ export default function VendorRegisterPage() {
         e.yearsOfExperience = 'Enter an integer between 0 and 100';
       }
     }
-    if (portfolioUpload.uploadedFiles.length === 0)
+    if (existingPortfolioImages.length + portfolioUpload.uploadedFiles.length === 0)
       e.portfolioImages = 'Upload at least one store photo';
     return e;
   }
@@ -184,7 +182,10 @@ export default function VendorRegisterPage() {
           website:         form.website.trim() || undefined,
           yearsOfExperience: form.yearsOfExperience.trim() ? Number(form.yearsOfExperience) : undefined,
           specialties:     selectedSpecialties,
-          portfolioImages: portfolioUpload.uploadedFiles.map(f => f.url),
+          portfolioImages: [
+            ...existingPortfolioImages,
+            ...portfolioUpload.uploadedFiles.map(f => f.url)
+          ],
         }),
       });
 
@@ -195,8 +196,13 @@ export default function VendorRegisterPage() {
         return;
       }
 
-      toast({ title: 'Application submitted!', description: "We'll review your profile shortly." });
-      router.push('/designers?tab=vendors');
+      if (isEditing) {
+        toast({ title: 'Profile updated!', description: 'Your changes have been saved successfully.' });
+        router.push('/vendor/dashboard');
+      } else {
+        toast({ title: 'Application submitted!', description: "We'll review your profile shortly." });
+        router.push('/designers?tab=vendors');
+      }
     } catch {
       toast({ title: 'Network error', description: 'Please try again.', variant: 'destructive' });
     } finally {
@@ -227,14 +233,20 @@ export default function VendorRegisterPage() {
             <Store className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Register as a Vendor</h1>
-            <p className="text-sm text-gray-500">List your store in the marketplace to receive quote requests</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditing ? 'Edit Store Profile' : 'Register as a Vendor'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {isEditing ? 'Update your store listings and details' : 'List your store in the marketplace to receive quote requests'}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
           <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <p className="text-sm text-emerald-700">
-            Your store profile will be reviewed by our team before going live. This usually takes 24–48 hours.
+            {isEditing 
+              ? 'Keep your details up-to-date to build trust and receive accurate quote requests from customers.' 
+              : 'Your store profile will be reviewed by our team before going live. This usually takes 24–48 hours.'}
           </p>
         </div>
       </motion.div>
@@ -399,11 +411,34 @@ export default function VendorRegisterPage() {
               Store / Product Gallery
             </h2>
             <span className="text-xs text-gray-400">
-              {portfolioUpload.uploadedFiles.length} of 10 images
+              {existingPortfolioImages.length + portfolioUpload.uploadedFiles.length} of 10 images
             </span>
           </div>
 
-          {/* Uploaded images list */}
+          {/* Existing store photos (when editing) */}
+          {existingPortfolioImages.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-400 mb-2">Current store photos (click × to remove)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {existingPortfolioImages.map((url, idx) => (
+                  <div key={url} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                    <img src={url} alt={`Store photo ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      id={`existing-portfolio-remove-${idx}`}
+                      onClick={() => setExistingPortfolioImages(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      aria-label={`Remove image ${idx + 1}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Newly uploaded images list */}
           {portfolioUpload.uploadedFiles.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
               {portfolioUpload.uploadedFiles.map((file, idx) => (
@@ -428,7 +463,7 @@ export default function VendorRegisterPage() {
           )}
 
           {/* Drop zone / add button — hidden once at 10 */}
-          {portfolioUpload.uploadedFiles.length < 10 && (
+          {(existingPortfolioImages.length + portfolioUpload.uploadedFiles.length) < 10 && (
             <div
               id="portfolio-dropzone"
               onDragEnter={portfolioUpload.handleDragEnter}
@@ -497,17 +532,17 @@ export default function VendorRegisterPage() {
           <Button
             id="vendor-register-submit"
             type="submit"
-            disabled={isSubmitting || portfolioUpload.isUploading || portfolioUpload.uploadedFiles.length === 0}
+            disabled={isSubmitting || portfolioUpload.isUploading || (existingPortfolioImages.length === 0 && portfolioUpload.uploadedFiles.length === 0)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 gap-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Submitting...
+                {isEditing ? 'Saving...' : 'Submitting...'}
               </>
             ) : (
               <>
-                Submit for Review
+                {isEditing ? 'Save Changes' : 'Submit for Review'}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}

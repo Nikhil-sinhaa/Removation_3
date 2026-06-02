@@ -1,0 +1,338 @@
+[
+  {
+    "id": "japandi",
+    "folder": "japandi",
+    "references": [
+      {
+        "id": "warm-wood",
+        "label": "Warm wood tones",
+        "imageUrl": "/style-references/japandi/warm-wood.jpg",
+        "exists": true
+      },
+      {
+        "id": "dark-zen",
+        "label": "Dark zen palette",
+        "imageUrl": "/style-references/japandi/dark-zen.jpg",
+        "exists": true
+      },
+      {
+        "id": "natural-light",
+        "label": "Natural light",
+        "imageUrl": "/style-references/japandi/natural-light.jpg",
+        "exists": true
+      },
+      {
+        "id": "wabi-sabi",
+        "label": "Wabi-sabi textures",
+        "imageUrl": "/style-references/japandi/wabi-sabi.jpg",
+        "exists": false
+      },
+      {
+        "id": "earthy-minimal",
+        "label": "Earthy minimal",
+        "imageUrl": "/style-references/japandi/earthy-minimal.jpg",
+        "exists": false
+      },
+      {
+        "id": "nordic-japanese",
+        "label": "Nordic-Japanese fusion",
+        "imageUrl": "/style-references/japandi/nordic-japanese.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "traditional-indian",
+    "folder": "traditional-indian",
+    "references": [
+      {
+        "id": "rajasthani",
+        "label": "Rajasthani royal",
+        "imageUrl": "/style-references/traditional-indian/rajasthani.jpg",
+        "exists": true
+      },
+      {
+        "id": "kerala",
+        "label": "Kerala teak",
+        "imageUrl": "/style-references/traditional-indian/kerala.jpg",
+        "exists": true
+      },
+      {
+        "id": "mughal",
+        "label": "Mughal inspired",
+        "imageUrl": "/style-references/traditional-indian/mughal.jpg",
+        "exists": true
+      },
+      {
+        "id": "haveli",
+        "label": "Haveli style",
+        "imageUrl": "/style-references/traditional-indian/haveli.jpg",
+        "exists": true
+      },
+      {
+        "id": "brass-accents",
+        "label": "Brass accents",
+        "imageUrl": "/style-references/traditional-indian/brass-accents.jpg",
+        "exists": false
+      },
+      {
+        "id": "block-print",
+        "label": "Block print",
+        "imageUrl": "/style-references/traditional-indian/block-print.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "scandinavian",
+    "folder": "scandinavian",
+    "references": [
+      {
+        "id": "white-cozy",
+        "label": "White and cozy",
+        "imageUrl": "/style-references/scandinavian/white-cozy.jpg",
+        "exists": true
+      },
+      {
+        "id": "pine-wood",
+        "label": "Pine wood",
+        "imageUrl": "/style-references/scandinavian/pine-wood.jpg",
+        "exists": false
+      },
+      {
+        "id": "dark-hygge",
+        "label": "Dark hygge",
+        "imageUrl": "/style-references/scandinavian/dark-hygge.jpg",
+        "exists": false
+      },
+      {
+        "id": "grey-calm",
+        "label": "Grey calm",
+        "imageUrl": "/style-references/scandinavian/grey-calm.jpg",
+        "exists": false
+      },
+      {
+        "id": "natural-linen",
+        "label": "Natural linen",
+        "imageUrl": "/style-references/scandinavian/natural-linen.jpg",
+        "exists": false
+      },
+      {
+        "id": "open-plan",
+        "label": "Open plan",
+        "imageUrl": "/style-references/scandinavian/open-plan.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "industrial",
+    "folder": "industrial",
+    "references": [
+      {
+        "id": "raw-brick",
+        "label": "Raw exposed brick",
+        "imageUrl": "/style-references/industrial/raw-brick.jpg",
+        "exists": true
+      },
+      {
+        "id": "concrete",
+        "label": "Concrete and metal",
+        "imageUrl": "/style-references/industrial/concrete.jpg",
+        "exists": false
+      },
+      {
+        "id": "warehouse",
+        "label": "Warehouse conversion",
+        "imageUrl": "/style-references/industrial/warehouse.jpg",
+        "exists": true
+      },
+      {
+        "id": "dark-iron",
+        "label": "Dark iron",
+        "imageUrl": "/style-references/industrial/dark-iron.jpg",
+        "exists": false
+      },
+      {
+        "id": "rustic-wood",
+        "label": "Rustic reclaimed",
+        "imageUrl": "/style-references/industrial/rustic-wood.jpg",
+        "exists": false
+      },
+      {
+        "id": "minimal-raw",
+        "label": "Minimal raw",
+        "imageUrl": "/style-references/industrial/minimal-raw.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "luxury",
+    "folder": "luxury",
+    "references": [
+      {
+        "id": "marble-gold",
+        "label": "Marble and gold",
+        "imageUrl": "/style-references/luxury/marble-gold.jpg",
+        "exists": true
+      },
+      {
+        "id": "velvet-dark",
+        "label": "Dark velvet",
+        "imageUrl": "/style-references/luxury/velvet-dark.jpg",
+        "exists": false
+      },
+      {
+        "id": "white-luxury",
+        "label": "White luxury",
+        "imageUrl": "/style-references/luxury/white-luxury.jpg",
+        "exists": false
+      },
+      {
+        "id": "art-deco",
+        "label": "Art deco",
+        "imageUrl": "/style-references/luxury/art-deco.jpg",
+        "exists": true
+      },
+      {
+        "id": "modern-luxury",
+        "label": "Modern luxury",
+        "imageUrl": "/style-references/luxury/modern-luxury.jpg",
+        "exists": false
+      },
+      {
+        "id": "classic-grand",
+        "label": "Classic grand",
+        "imageUrl": "/style-references/luxury/classic-grand.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "bohemian",
+    "folder": "bohemian",
+    "references": [
+      {
+        "id": "colorful",
+        "label": "Colorful boho",
+        "imageUrl": "/style-references/bohemian/colorful.jpg",
+        "exists": false
+      },
+      {
+        "id": "earthy-boho",
+        "label": "Earthy boho",
+        "imageUrl": "/style-references/bohemian/earthy-boho.jpg",
+        "exists": true
+      },
+      {
+        "id": "dark-boho",
+        "label": "Dark moody boho",
+        "imageUrl": "/style-references/bohemian/dark-boho.jpg",
+        "exists": false
+      },
+      {
+        "id": "desert-boho",
+        "label": "Desert boho",
+        "imageUrl": "/style-references/bohemian/desert-boho.jpg",
+        "exists": false
+      },
+      {
+        "id": "global-boho",
+        "label": "Global nomad",
+        "imageUrl": "/style-references/bohemian/global-boho.jpg",
+        "exists": false
+      },
+      {
+        "id": "minimal-boho",
+        "label": "Minimal boho",
+        "imageUrl": "/style-references/bohemian/minimal-boho.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "modern-minimalist",
+    "folder": "modern-minimalist",
+    "references": [
+      {
+        "id": "all-white",
+        "label": "All white clean",
+        "imageUrl": "/style-references/modern-minimalist/all-white.jpg",
+        "exists": false
+      },
+      {
+        "id": "warm-neutral",
+        "label": "Warm neutral",
+        "imageUrl": "/style-references/modern-minimalist/warm-neutral.jpg",
+        "exists": true
+      },
+      {
+        "id": "dark-minimal",
+        "label": "Dark minimal",
+        "imageUrl": "/style-references/modern-minimalist/dark-minimal.jpg",
+        "exists": false
+      },
+      {
+        "id": "wood-white",
+        "label": "Wood and white",
+        "imageUrl": "/style-references/modern-minimalist/wood-white.jpg",
+        "exists": false
+      },
+      {
+        "id": "concrete-min",
+        "label": "Concrete minimal",
+        "imageUrl": "/style-references/modern-minimalist/concrete-min.jpg",
+        "exists": false
+      },
+      {
+        "id": "zen-modern",
+        "label": "Zen modern",
+        "imageUrl": "/style-references/modern-minimalist/zen-modern.jpg",
+        "exists": false
+      }
+    ]
+  },
+  {
+    "id": "vastu-traditional",
+    "folder": "vastu-traditional",
+    "references": [
+      {
+        "id": "warm-earth",
+        "label": "Warm earth",
+        "imageUrl": "/style-references/vastu-traditional/warm-earth.jpg",
+        "exists": true
+      },
+      {
+        "id": "natural-wood",
+        "label": "Natural wood",
+        "imageUrl": "/style-references/vastu-traditional/natural-wood.jpg",
+        "exists": false
+      },
+      {
+        "id": "peaceful-home",
+        "label": "Peaceful home",
+        "imageUrl": "/style-references/vastu-traditional/peaceful-home.jpg",
+        "exists": false
+      },
+      {
+        "id": "brass-lamp",
+        "label": "Brass lamp corner",
+        "imageUrl": "/style-references/vastu-traditional/brass-lamp.jpg",
+        "exists": false
+      },
+      {
+        "id": "courtyard",
+        "label": "Courtyard light",
+        "imageUrl": "/style-references/vastu-traditional/courtyard.jpg",
+        "exists": false
+      },
+      {
+        "id": "south-indian",
+        "label": "South Indian",
+        "imageUrl": "/style-references/vastu-traditional/south-indian.jpg",
+        "exists": false
+      }
+    ]
+  }
+]

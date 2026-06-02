@@ -79,6 +79,9 @@ export interface IUser {
     // Tour
     completedTours?: string[];
 
+    // Admin-managed account status (separate from subscription.status)
+    accountStatus?: 'active' | 'banned' | 'suspended';
+
     // Metadata
     lastRenderAt?: Date;
     createdAt: Date;
@@ -154,6 +157,8 @@ const UserSchema = new Schema<IUser>({
     onboardingCompletedAt: Date,
 
     completedTours: { type: [String], default: [] },
+
+    accountStatus: { type: String, enum: ['active', 'banned', 'suspended'], default: 'active' },
 
     lastRenderAt: Date,
     createdAt: { type: Date, default: Date.now },

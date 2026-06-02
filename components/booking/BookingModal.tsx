@@ -151,6 +151,7 @@ export function BookingModal({
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successBookingId, setSuccessBookingId] = useState<string | null>(null);
+    const [isRazorpayOpen, setIsRazorpayOpen] = useState(false);
 
     const slots = generateSlots(14);
 
@@ -250,6 +251,7 @@ export function BookingModal({
                     razorpay_order_id: string;
                     razorpay_signature: string;
                 }) {
+                    setIsRazorpayOpen(false);
                     // 3. Verify payment
                     const verifyRes = await fetch(`/api/bookings/${bookingId}/payment-verify`, {
                         method: 'POST',
@@ -276,7 +278,7 @@ export function BookingModal({
                 },
                 modal: {
                     ondismiss: () => {
-                        // User closed Razorpay without paying — go back to details
+                        setIsRazorpayOpen(false);
                         setStep('details');
                         setIsLoading(false);
                     },
@@ -285,10 +287,12 @@ export function BookingModal({
 
             const rzp = new (window as any).Razorpay(options);
             rzp.on('payment.failed', function (response: any) {
+                setIsRazorpayOpen(false);
                 setError(response.error?.description || t('bk_err_payment_failed'));
                 setStep('error');
                 setIsLoading(false);
             });
+            setIsRazorpayOpen(true);
             rzp.open();
 
         } catch (err: any) {
@@ -575,7 +579,7 @@ export function BookingModal({
     }
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={onClose} modal={!isRazorpayOpen}>
             <DialogContent className="sm:max-w-[480px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-3">

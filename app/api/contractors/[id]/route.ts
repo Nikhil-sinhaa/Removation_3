@@ -26,15 +26,21 @@ export async function GET(
         const authedSelect = publicSelect + ' phone';
         const selectFields = isLoggedIn ? authedSelect : publicSelect;
 
-        const contractor = await Contractor.findOne({
-            _id:        id,
-            isVerified: true,
-            isActive:   true,
-        })
+        const contractor = await Contractor.findOne({ _id: id })
             .select(selectFields)
             .populate('userId', 'firstName lastName imageUrl');
 
         if (!contractor) {
+            return NextResponse.json({ message: 'Contractor not found' }, { status: 404 });
+        }
+
+        const isOwner = authUser && contractor.userId && (
+            (contractor.userId as any)._id 
+                ? (contractor.userId as any)._id.toString() === authUser._id.toString() 
+                : contractor.userId.toString() === authUser._id.toString()
+        );
+
+        if (!isOwner && (!contractor.isVerified || !contractor.isActive)) {
             return NextResponse.json({ message: 'Contractor not found' }, { status: 404 });
         }
 

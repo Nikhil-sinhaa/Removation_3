@@ -10,22 +10,37 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { paiseToRupees } from '@/lib/booking/money';
 import {
   AlertCircle,
+  AlertTriangle,
+  BookOpen,
   Briefcase,
+  Calendar,
   CheckCircle2,
   Clock,
   Edit3,
+  FileText,
   Globe,
+  IndianRupee,
   MapPin,
   Phone,
+  Settings,
   Sparkles,
   Star,
+  ToggleLeft,
+  ToggleRight,
+  TrendingUp,
   X,
   Maximize2,
 } from 'lucide-react';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+interface MoneyAmount {
+  amount: number;
+  currency: string;
+}
+
 interface ContractorProfile {
   _id: string;
   displayName: string;
@@ -40,6 +55,11 @@ interface ContractorProfile {
   rejectionReason?: string | null;
   isActive: boolean;
   createdAt: string;
+  consultationFee?: MoneyAmount;
+  projectMinFee?: MoneyAmount;
+  acceptsConsultations?: boolean;
+  acceptsProjects?: boolean;
+  consultationDurationMinutes?: number;
 }
 
 // ── Status Banner ──────────────────────────────────────────────────────────────
@@ -122,6 +142,132 @@ function StatusBanner({ contractor }: { contractor: ContractorProfile }) {
   );
 }
 
+// ── Pricing Warning Banner ─────────────────────────────────────────────────────
+function PricingWarningBanner({ contractor }: { contractor: ContractorProfile }) {
+  const noPricingSet =
+    (!contractor.acceptsConsultations && !contractor.acceptsProjects) ||
+    ((!contractor.consultationFee?.amount || contractor.consultationFee.amount === 0) &&
+      (!contractor.projectMinFee?.amount || contractor.projectMinFee.amount === 0));
+
+  if (!noPricingSet || !contractor.isVerified) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex items-start gap-4 p-4 bg-amber-50 border border-amber-300 rounded-2xl"
+    >
+      <div className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center flex-shrink-0">
+        <AlertTriangle className="w-5 h-5 text-amber-600" />
+      </div>
+      <div className="flex-1">
+        <p className="font-semibold text-amber-800">Customers can't book you yet!</p>
+        <p className="text-sm text-amber-700 mt-0.5">
+          Your profile is live, but you haven't set your pricing. Customers visiting your profile see "not accepting bookings". Set your fees to start receiving bookings.
+        </p>
+        <Button asChild size="sm" className="mt-3 bg-amber-600 hover:bg-amber-700 text-white gap-1.5">
+          <Link href="/contractor/pricing">
+            <IndianRupee className="w-3.5 h-3.5" />
+            Set Pricing Now
+          </Link>
+        </Button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ── Pricing Summary Card ───────────────────────────────────────────────────────
+function PricingCard({ contractor }: { contractor: ContractorProfile }) {
+  const hasConsultationFee = contractor.acceptsConsultations && (contractor.consultationFee?.amount ?? 0) > 0;
+  const hasProjectFee = contractor.acceptsProjects && (contractor.projectMinFee?.amount ?? 0) > 0;
+
+  if (!hasConsultationFee && !hasProjectFee) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.15 }}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
+    >
+      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <IndianRupee className="w-4 h-4 text-violet-600" />
+          <h2 className="text-sm font-semibold text-gray-700">Your Pricing</h2>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="text-xs text-violet-600 hover:text-violet-700 h-7 px-2">
+          <Link href="/contractor/pricing">
+            <Settings className="w-3 h-3 mr-1" />
+            Edit
+          </Link>
+        </Button>
+      </div>
+
+      <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Consultation */}
+        <div className={cn(
+          'rounded-xl p-4 border',
+          hasConsultationFee
+            ? 'bg-violet-50 border-violet-100'
+            : 'bg-gray-50 border-gray-100 opacity-60'
+        )}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-violet-600" />
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Consultation</span>
+            </div>
+            {contractor.acceptsConsultations
+              ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Open</span>
+              : <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">Closed</span>
+            }
+          </div>
+          {hasConsultationFee ? (
+            <>
+              <p className="text-2xl font-extrabold text-violet-900">
+                {paiseToRupees(contractor.consultationFee!.amount)}
+              </p>
+              {contractor.consultationDurationMinutes && (
+                <p className="text-xs text-violet-500 mt-0.5">{contractor.consultationDurationMinutes} min session</p>
+              )}
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 italic mt-1">Not configured</p>
+          )}
+        </div>
+
+        {/* Project */}
+        <div className={cn(
+          'rounded-xl p-4 border',
+          hasProjectFee
+            ? 'bg-emerald-50 border-emerald-100'
+            : 'bg-gray-50 border-gray-100 opacity-60'
+        )}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Project</span>
+            </div>
+            {contractor.acceptsProjects
+              ? <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Open</span>
+              : <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">Closed</span>
+            }
+          </div>
+          {hasProjectFee ? (
+            <>
+              <p className="text-2xl font-extrabold text-emerald-900">
+                {paiseToRupees(contractor.projectMinFee!.amount)}
+              </p>
+              <p className="text-xs text-emerald-600 mt-0.5">Starting from</p>
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 italic mt-1">Not configured</p>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Portfolio grid with lightbox ───────────────────────────────────────────────
 function PortfolioGrid({ images }: { images: string[] }) {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -190,6 +336,61 @@ const SPECIALTY_LABELS: Record<string, string> = {
   'modular-kitchen-installer': 'Modular Kitchen Installer',
 };
 
+// ── Quick action card ──────────────────────────────────────────────────────────
+function QuickActions({ profile }: { profile: ContractorProfile }) {
+  const actions = [
+    {
+      href: '/contractor/register',
+      icon: Edit3,
+      label: 'Edit Profile',
+      desc: 'Update your info & portfolio',
+      color: 'text-violet-600',
+      bg: 'bg-violet-50',
+    },
+    {
+      href: '/contractor/pricing',
+      icon: IndianRupee,
+      label: 'Pricing',
+      desc: 'Set fees & availability',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
+    },
+    {
+      href: '/contractor/bookings',
+      icon: BookOpen,
+      label: 'My Bookings',
+      desc: 'View customer requests',
+      color: 'text-sky-600',
+      bg: 'bg-sky-50',
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
+      className="grid grid-cols-3 gap-3"
+    >
+      {actions.map(a => (
+        <Link
+          key={a.href}
+          href={a.href}
+          className="group bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-col items-center text-center gap-2 hover:border-violet-200 hover:shadow-md transition-all duration-200"
+        >
+          <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', a.bg)}>
+            <a.icon className={cn('w-5 h-5', a.color)} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800 group-hover:text-violet-700 transition-colors">{a.label}</p>
+            <p className="text-xs text-gray-400 leading-snug mt-0.5">{a.desc}</p>
+          </div>
+        </Link>
+      ))}
+    </motion.div>
+  );
+}
+
 // ── Main ───────────────────────────────────────────────────────────────────────
 export default function ContractorDashboardPage() {
   const router = useRouter();
@@ -221,8 +422,14 @@ export default function ContractorDashboardPage() {
 
   if (isLoading || fetching) {
     return (
-      <div className="max-w-2xl mx-auto py-8 px-4 space-y-6">
+      <div className="max-w-2xl mx-auto py-8 px-4 space-y-4">
+        <Skeleton className="h-14 w-full rounded-2xl" />
         <Skeleton className="h-24 w-full rounded-2xl" />
+        <div className="grid grid-cols-3 gap-3">
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+          <Skeleton className="h-24 rounded-2xl" />
+        </div>
         <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
     );
@@ -231,12 +438,12 @@ export default function ContractorDashboardPage() {
   if (!profile) return null;
 
   return (
-    <div className="max-w-2xl mx-auto py-8 px-4">
+    <div className="max-w-2xl mx-auto py-8 px-4 space-y-5">
       {/* Page header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-6 flex items-center justify-between"
+        className="flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-600/25">
@@ -247,24 +454,25 @@ export default function ContractorDashboardPage() {
             <p className="text-sm text-gray-500">Your marketplace profile</p>
           </div>
         </div>
-        <Button asChild variant="outline" size="sm" className="border-gray-200">
-          <Link href="/contractor/register">
-            <Edit3 className="w-4 h-4 mr-1.5" />
-            Edit Profile
-          </Link>
-        </Button>
       </motion.div>
 
       {/* Status banner */}
-      <div className="mb-6">
-        <StatusBanner contractor={profile} />
-      </div>
+      <StatusBanner contractor={profile} />
+
+      {/* Pricing warning (only shown to verified contractors with no pricing) */}
+      <PricingWarningBanner contractor={profile} />
+
+      {/* Quick actions */}
+      <QuickActions profile={profile} />
+
+      {/* Pricing summary card (only shown if pricing configured) */}
+      <PricingCard contractor={profile} />
 
       {/* Profile card */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
+        transition={{ delay: 0.25 }}
         className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
       >
         {/* Profile header */}
@@ -351,6 +559,25 @@ export default function ContractorDashboardPage() {
         {/* Portfolio */}
         {profile.portfolioImages.length > 0 && (
           <PortfolioGrid images={profile.portfolioImages} />
+        )}
+
+        {/* Empty portfolio prompt */}
+        {profile.portfolioImages.length === 0 && (
+          <div className="px-6 pb-6 border-t border-gray-100 pt-6">
+            <div className="flex flex-col items-center justify-center py-6 rounded-xl border-2 border-dashed border-gray-200 text-center gap-2">
+              <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-gray-300" />
+              </div>
+              <p className="text-sm text-gray-500 font-medium">No portfolio images yet</p>
+              <p className="text-xs text-gray-400">Add images to showcase your work and attract more customers</p>
+              <Button asChild size="sm" variant="outline" className="mt-1 text-violet-600 border-violet-200 hover:bg-violet-50">
+                <Link href="/contractor/register">
+                  <Edit3 className="w-3.5 h-3.5 mr-1.5" />
+                  Add Portfolio Images
+                </Link>
+              </Button>
+            </div>
+          </div>
         )}
       </motion.div>
     </div>

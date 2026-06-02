@@ -46,7 +46,7 @@ const isCompilation = isNextJS && (process.env.NEXT_RUNTIME !== 'nodejs' || proc
 // Runs once on first load so the in-process router reflects the DB state.
 async function _syncSettingsFromDB() {
   try {
-    const { getSetting } = await import('../lib/appSettings.js');
+    const { getSetting } = await import('../lib/appSettings.ts');
     const [mode, cloudUrl] = await Promise.all([
       getSetting('COMFYUI_MODE'),
       getSetting('COMFYUI_CLOUD_URL'),

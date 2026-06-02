@@ -86,6 +86,8 @@ export default function ContractorRegisterPage() {
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [existingPortfolioImages, setExistingPortfolioImages] = useState<string[]>([]);
 
   // Portfolio upload — pointed at the auth-gated contractorPortfolio UploadThing route
   const portfolioUpload = useUpload({
@@ -96,7 +98,7 @@ export default function ContractorRegisterPage() {
   });
   const [checkingProfile, setCheckingProfile] = useState(true);
 
-  // Check if user already has a profile
+  // Check if user already has a profile → pre-fill for editing
   useEffect(() => {
     if (!user || isLoading) return;
 
@@ -105,13 +107,10 @@ export default function ContractorRegisterPage() {
         const res = await fetch('/api/contractor/me');
         if (res.ok) {
           const data = await res.json();
-          // Already registered — if rejected, let them edit. Otherwise redirect.
-          if (!data.contractor.rejectionReason) {
-            router.replace('/contractor/dashboard');
-            return;
-          }
-          // Pre-fill form for resubmission
+          // Pre-fill form with existing data so contractor can edit
           const c = data.contractor;
+          setIsEditing(true);
+          setExistingPortfolioImages(c.portfolioImages || []);
           setForm({
             displayName:      c.displayName || '',
             bio:              c.bio || '',
@@ -121,8 +120,9 @@ export default function ContractorRegisterPage() {
           });
           setSelectedSpecialties(c.specialties || []);
         }
+        // 404 = no profile yet, form stays blank
       } catch {
-        // 404 = no profile, that's fine
+        // network error, form stays blank
       } finally {
         setCheckingProfile(false);
       }
@@ -140,7 +140,9 @@ export default function ContractorRegisterPage() {
       e.city = 'Enter your city';
     if (form.yearsOfExperience && (isNaN(Number(form.yearsOfExperience)) || Number(form.yearsOfExperience) < 0 || Number(form.yearsOfExperience) > 60))
       e.yearsOfExperience = 'Enter a number between 0 and 60';
-    if (portfolioUpload.uploadedFiles.length === 0)
+    // When editing, skip portfolio check if existing images are present
+    const totalImages = existingPortfolioImages.length + portfolioUpload.uploadedFiles.length;
+    if (totalImages === 0)
       e.portfolioImages = 'Upload at least one portfolio image';
     return e;
   }
@@ -172,7 +174,11 @@ export default function ContractorRegisterPage() {
           phone:              form.phone.trim(),
           city:               form.city.trim(),
           specialties:        selectedSpecialties,
-          portfolioImages:    portfolioUpload.uploadedFiles.map(f => f.url),
+          // Merge existing images with newly uploaded ones (dedup)
+          portfolioImages:    [
+            ...existingPortfolioImages,
+            ...portfolioUpload.uploadedFiles.map(f => f.url),
+          ].filter((url, idx, arr) => arr.indexOf(url) === idx).slice(0, 10),
           yearsOfExperience:  form.yearsOfExperience ? Number(form.yearsOfExperience) : undefined,
         }),
       });
@@ -184,7 +190,10 @@ export default function ContractorRegisterPage() {
         return;
       }
 
-      toast({ title: 'Application submitted!', description: "We'll review your profile shortly." });
+      toast({
+        title: isEditing ? 'Profile updated!' : 'Application submitted!',
+        description: isEditing ? 'Your profile has been updated.' : "We'll review your profile shortly.",
+      });
       router.push('/contractor/dashboard');
     } catch {
       toast({ title: 'Network error', description: 'Please try again.', variant: 'destructive' });
@@ -216,16 +225,24 @@ export default function ContractorRegisterPage() {
             <Briefcase className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Join as a Contractor</h1>
-            <p className="text-sm text-gray-500">Create your professional profile to be listed publicly</p>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEditing ? 'Edit Your Profile' : 'Join as a Contractor'}
+            </h1>
+            <p className="text-sm text-gray-500">
+              {isEditing
+                ? 'Update your professional profile details'
+                : 'Create your professional profile to be listed publicly'}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 p-3 bg-violet-50 border border-violet-100 rounded-xl">
-          <Sparkles className="w-4 h-4 text-violet-600 flex-shrink-0" />
-          <p className="text-sm text-violet-700">
-            Your profile will be reviewed by our team before going live. This usually takes 24–48 hours.
-          </p>
-        </div>
+        {!isEditing && (
+          <div className="flex items-center gap-2 p-3 bg-violet-50 border border-violet-100 rounded-xl">
+            <Sparkles className="w-4 h-4 text-violet-600 flex-shrink-0" />
+            <p className="text-sm text-violet-700">
+              Your profile will be reviewed by our team before going live. This usually takes 24–48 hours.
+            </p>
+          </div>
+        )}
       </motion.div>
 
       {/* Form */}
@@ -365,11 +382,34 @@ export default function ContractorRegisterPage() {
               Portfolio Gallery
             </h2>
             <span className="text-xs text-gray-400">
-              {portfolioUpload.uploadedFiles.length} of 10 images
+              {existingPortfolioImages.length + portfolioUpload.uploadedFiles.length} of 10 images
             </span>
           </div>
 
-          {/* Uploaded images list */}
+          {/* Existing portfolio images (when editing) */}
+          {existingPortfolioImages.length > 0 && (
+            <div className="mb-3">
+              <p className="text-xs text-gray-400 mb-2">Current portfolio images (click × to remove)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                {existingPortfolioImages.map((url, idx) => (
+                  <div key={url} className="group relative aspect-square rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                    <img src={url} alt={`Portfolio ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      id={`existing-portfolio-remove-${idx}`}
+                      onClick={() => setExistingPortfolioImages(prev => prev.filter((_, i) => i !== idx))}
+                      className="absolute top-1 right-1 p-1 bg-black/50 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
+                      aria-label={`Remove image ${idx + 1}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Newly uploaded images list */}
           {portfolioUpload.uploadedFiles.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-4">
               {portfolioUpload.uploadedFiles.map((file, idx) => (
@@ -393,8 +433,8 @@ export default function ContractorRegisterPage() {
             </div>
           )}
 
-          {/* Drop zone / add button — hidden once at 10 */}
-          {portfolioUpload.uploadedFiles.length < 10 && (
+          {/* Drop zone / add button — hidden once at 10 total */}
+          {(existingPortfolioImages.length + portfolioUpload.uploadedFiles.length) < 10 && (
             <div
               id="portfolio-dropzone"
               onDragEnter={portfolioUpload.handleDragEnter}
@@ -463,17 +503,17 @@ export default function ContractorRegisterPage() {
           <Button
             id="contractor-register-submit"
             type="submit"
-            disabled={isSubmitting || portfolioUpload.isUploading || portfolioUpload.uploadedFiles.length === 0}
+            disabled={isSubmitting || portfolioUpload.isUploading || (existingPortfolioImages.length === 0 && portfolioUpload.uploadedFiles.length === 0)}
             className="bg-violet-600 hover:bg-violet-700 text-white px-6 gap-2 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSubmitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Submitting...
+                {isEditing ? 'Saving...' : 'Submitting...'}
               </>
             ) : (
               <>
-                Submit for Review
+                {isEditing ? 'Save Changes' : 'Submit for Review'}
                 <ChevronRight className="w-4 h-4" />
               </>
             )}

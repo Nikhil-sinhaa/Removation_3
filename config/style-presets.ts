@@ -1,3 +1,5 @@
+import manifest from '../public/style-references/manifest.json';
+
 /**
  * Style Preset Configuration
  *
@@ -425,4 +427,23 @@ export function getPresetsByCategory(category: StylePreset['category']): StylePr
 export function getReferenceById(presetId: string, referenceId: string): StyleReference | undefined {
   const preset = getPresetById(presetId);
   return preset?.references.find(r => r.id === referenceId);
+}
+
+// Merge manifest URLs into preset definitions
+export function getPresetsWithImages(): StylePreset[] {
+  return STYLE_PRESETS.map(preset => {
+    const manifestEntry = manifest.find(m => m.id === preset.id);
+    if (!manifestEntry) return preset;
+    
+    return {
+      ...preset,
+      references: preset.references.map(ref => {
+        const manifestRef = manifestEntry.references.find(r => r.id === ref.id);
+        return {
+          ...ref,
+          imageUrl: manifestRef?.exists ? manifestRef.imageUrl : '/style-references/placeholder.jpg'
+        };
+      })
+    };
+  });
 }

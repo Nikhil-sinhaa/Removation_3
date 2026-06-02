@@ -30,14 +30,15 @@ export function issueJwt(res: NextResponse, user: { _id: string; email: string }
     { expiresIn: JWT_EXPIRES_IN as any }
   );
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  const secure = process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') || false;
+  const sameSite = 'lax';
 
-  console.log('[Auth] Setting cookie:', COOKIE_NAME, '| secure:', isProduction, '| sameSite:', isProduction ? 'strict' : 'lax');
+  console.log('[Auth] Setting cookie:', COOKIE_NAME, '| secure:', secure, '| sameSite:', sameSite);
 
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    secure,
+    sameSite,
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     path: '/',
   });

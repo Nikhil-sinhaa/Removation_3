@@ -86,25 +86,27 @@ export async function POST(req: NextRequest) {
 
         let contractor;
         if (existingContractor) {
-            // Rejection flow: if there is a rejection reason, allow resubmission (updating existing profile)
-            if (existingContractor.rejectionReason !== null) {
-                existingContractor.displayName = displayName.trim();
-                existingContractor.bio = bio ? bio.trim() : undefined;
-                existingContractor.phone = phone.trim();
-                existingContractor.city = city.trim();
-                existingContractor.specialties = specialties || [];
-                existingContractor.portfolioImages = portfolioImages || [];
-                existingContractor.yearsOfExperience = yearsOfExperience !== undefined ? Number(yearsOfExperience) : undefined;
+            // Allow all contractors to update their profile info at any time.
+            // If they had a rejection, clear it so it goes back for review.
+            // Verified / pending profiles keep their verification status.
+            existingContractor.displayName = displayName.trim();
+            existingContractor.bio = bio ? bio.trim() : undefined;
+            existingContractor.phone = phone.trim();
+            existingContractor.city = city.trim();
+            existingContractor.specialties = specialties || [];
+            existingContractor.portfolioImages = portfolioImages || [];
+            existingContractor.yearsOfExperience = yearsOfExperience !== undefined ? Number(yearsOfExperience) : undefined;
+            existingContractor.isActive = true;
+
+            // If previously rejected, reset verification state for re-review
+            if (existingContractor.rejectionReason) {
                 existingContractor.isVerified = false;
                 existingContractor.verifiedAt = null;
                 existingContractor.verifiedBy = null;
-                existingContractor.rejectionReason = null; // Clear rejection
-                existingContractor.isActive = true;
-
-                contractor = await existingContractor.save();
-            } else {
-                return NextResponse.json({ message: 'Already registered as a contractor' }, { status: 400 });
+                existingContractor.rejectionReason = null;
             }
+
+            contractor = await existingContractor.save();
         } else {
             // Create brand new contractor
             contractor = await Contractor.create({

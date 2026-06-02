@@ -89,27 +89,29 @@ export async function POST(req: NextRequest) {
 
         let vendor;
         if (existingVendor) {
-            // Rejection flow: if there is a rejection reason, allow resubmission (updating existing profile)
-            if (existingVendor.rejectionReason !== null) {
-                existingVendor.displayName = displayName.trim();
-                existingVendor.bio = bio ? bio.trim() : undefined;
-                existingVendor.phone = phone.trim();
-                existingVendor.city = city.trim();
-                existingVendor.storeAddress = storeAddress.trim();
-                existingVendor.website = website ? website.trim() : undefined;
-                existingVendor.yearsOfExperience = yearsOfExperience !== undefined ? Number(yearsOfExperience) : undefined;
-                existingVendor.specialties = specialties || [];
-                existingVendor.portfolioImages = portfolioImages || [];
+            // Allow all vendors to update their profile info at any time.
+            // If they had a rejection, clear it so it goes back for review.
+            // Verified / pending profiles keep their verification status.
+            existingVendor.displayName = displayName.trim();
+            existingVendor.bio = bio ? bio.trim() : undefined;
+            existingVendor.phone = phone.trim();
+            existingVendor.city = city.trim();
+            existingVendor.storeAddress = storeAddress.trim();
+            existingVendor.website = website ? website.trim() : undefined;
+            existingVendor.yearsOfExperience = yearsOfExperience !== undefined ? Number(yearsOfExperience) : undefined;
+            existingVendor.specialties = specialties || [];
+            existingVendor.portfolioImages = portfolioImages || [];
+            existingVendor.isActive = true;
+
+            // If previously rejected, reset verification state for re-review
+            if (existingVendor.rejectionReason) {
                 existingVendor.isVerified = false;
                 existingVendor.verifiedAt = null;
                 existingVendor.verifiedBy = null;
-                existingVendor.rejectionReason = null; // Clear rejection
-                existingVendor.isActive = true;
-
-                vendor = await existingVendor.save();
-            } else {
-                return NextResponse.json({ message: 'Already registered as a vendor' }, { status: 400 });
+                existingVendor.rejectionReason = null;
             }
+
+            vendor = await existingVendor.save();
         } else {
             // Create brand new vendor
             vendor = await Vendor.create({
