@@ -100,7 +100,8 @@ test.describe('Feature 9: Schema.org SEO', () => {
     const res = await request.get(`${BASE_URL}/robots.txt`);
     expect(res.status()).toBe(200);
     const body = await res.text();
-    expect(body).toContain('User-agent: *');
+    // Next.js renders User-Agent (capital A) — test case-insensitively
+    expect(body.toLowerCase()).toContain('user-agent: *');
     expect(body).toContain('Disallow: /admin');
     expect(body).toContain('Disallow: /dashboard');
     expect(body).toContain('Sitemap:');
