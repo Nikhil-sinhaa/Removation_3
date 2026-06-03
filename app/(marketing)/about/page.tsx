@@ -4,6 +4,8 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import JsonLd from "@/components/seo/JsonLd";
+import { buildOrganizationSchema, buildBreadcrumbSchema } from "@/lib/seo/schema";
 import {
   Sparkles,
   Target,
@@ -971,6 +973,14 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </section>
+
+      <JsonLd schemas={[
+        buildOrganizationSchema(),
+        buildBreadcrumbSchema([
+          { name: 'Home',  item: '/' },
+          { name: 'About', item: '/about' },
+        ]),
+      ]} />
     </div>
   );
 }

@@ -11,15 +11,29 @@ export const dynamic = 'force-dynamic';
  * Called by Vercel Cron (or external scheduler) every minute.
  * Checks which tasks are due according to their cron expression and runs them.
  *
- * Secured by CRON_SECRET header or query param.
+ * Accepts authentication via:
+ *   1. x-cron-secret header
+ *   2. ?secret= query param
+ *   3. Authorization: Bearer <CRON_SECRET> header (standard Vercel cron auth)
  */
 export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  const bearerSecret = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
   const secret =
     req.headers.get('x-cron-secret') ||
-    req.nextUrl.searchParams.get('secret');
+    req.nextUrl.searchParams.get('secret') ||
+    bearerSecret;
 
-  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const cronSecret = process.env.CRON_SECRET;
+
+  // If CRON_SECRET is configured, validate. If not set, only allow in non-production.
+  if (cronSecret) {
+    if (secret !== cronSecret) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  } else if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'CRON_SECRET not configured' }, { status: 401 });
   }
 
   await initializeScheduler();

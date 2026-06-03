@@ -18,9 +18,12 @@ export function useDashboardTour(shouldShow: boolean) {
       stageRadius: 8,
       popoverClass: 'removation-tour-popover',
       onDestroyed: async () => {
-        // Mark tour complete when user finishes or closes
         try {
-          await fetch('/api/user/complete-tour', { method: 'POST' });
+          await fetch('/api/user/complete-tour', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tourKey: 'dashboard_tour' }),
+          });
         } catch (error) {
           console.error('Failed to mark tour as complete', error);
         }

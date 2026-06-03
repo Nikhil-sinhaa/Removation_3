@@ -526,8 +526,16 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <Menu className="w-4 h-4" />
               </button>
 
-              {/* Search */}
+              {/* Search — full bar on sm+, icon link on mobile */}
               <SearchBar className="hidden sm:block w-56 lg:w-72" />
+              <Link
+                href="/search"
+                className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg"
+                style={{ color: '#a1a1aa', background: '#1c1c1c' }}
+                aria-label="Search"
+              >
+                <Search className="w-4 h-4" />
+              </Link>
             </div>
 
             {/* Right */}
