@@ -12,4 +12,15 @@ export { VendorInquiry, type IVendorInquiry, type InquiryStatus } from './Vendor
 export { ChatMessage, type IChatMessage } from './ChatMessage';
 export { Message, type IMessage } from './Message';
 export { AdminConfig, type IAdminConfig } from './AdminConfig';
-
+export { default as AuditLog, type IAuditLog, type AuditAction, type AuditCategory } from './AuditLog';
+export { default as PrivacyRequest, type IPrivacyRequest, type PrivacyRequestType, type PrivacyRequestStatus } from './PrivacyRequest';
+export { default as ScheduledTask, type IScheduledTask, type TaskStatus, type TaskId } from './ScheduledTask';
+export { Tour, type ITour, type ITourStep } from './Tour';
+export { TourProgress, type ITourProgress } from './TourProgress';
+export { default as Tag, type ITag, type TagCategory } from './Tag';
+export { default as Tagging, type ITagging, type TaggableType } from './Tagging';
+export { default as Redirect, type IRedirect, type RedirectType, type RedirectStatus } from './Redirect';
+export { default as NotFoundLog, type INotFoundLog } from './NotFoundLog';
+export { default as WorkflowState, type IWorkflowState, type BookingStateId } from './WorkflowState';
+export { default as WorkflowTransition, type IWorkflowTransition } from './WorkflowTransition';
+export { default as WorkflowEvent, type IWorkflowEvent } from './WorkflowEvent';

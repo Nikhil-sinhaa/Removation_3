@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAllSettings, setSetting } from '@/src/lib/appSettings.ts';
+import { getAllSettings, setSetting } from '@/src/lib/appSettings';
 import { setGPUModeRuntime, resetGPUMode } from '@/lib/ai/gpu-mode-router';
 import { requireRole } from '@/lib/auth/requireRole';
+import { writeAuditLog, auditDescription } from '@/lib/audit/logger';
 
 export const runtime = 'nodejs';
 
@@ -37,6 +38,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const previousSettings = await getAllSettings();
+
     if (mode) {
       await setSetting('COMFYUI_MODE', mode);
       // Apply at runtime immediately (no server restart needed)
@@ -59,8 +62,26 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Log audit trail
+    const extraInfo = `mode=${mode || previousSettings.COMFYUI_MODE}${cloudUrl !== undefined ? `, cloudUrl=${cloudUrl}` : ''}`;
+    await writeAuditLog(req, authResult.user, {
+      action: 'system.gpu.mode.change',
+      category: 'system',
+      targetType: 'system',
+      targetId: 'gpu_mode',
+      targetName: 'GPU Mode Config',
+      description: auditDescription('system.gpu.mode.change', 'GPU Mode Config', extraInfo),
+      metadata: {
+        previousMode: previousSettings.COMFYUI_MODE,
+        previousCloudUrl: previousSettings.COMFYUI_CLOUD_URL,
+        newMode: mode,
+        newCloudUrl: cloudUrl
+      }
+    });
+
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

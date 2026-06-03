@@ -7,6 +7,9 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { CreditSuccessHandler } from '@/components/payment/CreditSuccessHandler';
+import { TourProvider } from '@/components/tours/TourProvider';
+import { TourHelpMenu } from '@/components/tours/TourHelpMenu';
+import { SearchBar } from '@/components/search/SearchBar';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -177,6 +180,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
+    <TourProvider>
     <div className="app-shell flex" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* ── Desktop Sidebar ── */}
       <motion.aside
@@ -523,29 +527,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </button>
 
               {/* Search */}
-              <div
-                className="hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg w-56 lg:w-72"
-                style={{ background: '#161616', border: '1px solid rgba(255,255,255,0.08)' }}
-              >
-                <Search className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#a1a1aa' }} />
-                <input
-                  type="text"
-                  placeholder="Search projects..."
-                  className="flex-1 bg-transparent outline-none text-sm"
-                  style={{ color: '#ffffff', fontSize: '13px' }}
-                />
-                <kbd
-                  className="hidden lg:block px-1.5 py-0.5 text-xs rounded"
-                  style={{
-                    background: '#0a0a0a',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#a1a1aa',
-                    fontSize: '11px',
-                  }}
-                >
-                  ⌘K
-                </kbd>
-              </div>
+              <SearchBar className="hidden sm:block w-56 lg:w-72" />
             </div>
 
             {/* Right */}
@@ -559,14 +541,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 <Bell className="w-4 h-4" />
               </button>
 
-              <button
-                className="w-8 h-8 flex items-center justify-center rounded-lg"
-                style={{ color: '#a1a1aa' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#161616'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <HelpCircle className="w-4 h-4" />
-              </button>
+              <TourHelpMenu />
 
               <div
                 className="w-px h-5 mx-1 flex-shrink-0"
@@ -597,5 +572,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </main>
       </div>
     </div>
+    </TourProvider>
   );
 }

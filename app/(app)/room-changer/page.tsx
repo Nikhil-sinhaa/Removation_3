@@ -30,7 +30,6 @@ import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { useUserStore } from '@/stores/user-store';
 import { useAuth } from '@/hooks/useAuth';
-import { usePageTour } from '@/hooks/usePageTour';
 
 interface ProgressState {
   stage: number; // 1 = scene analysis, 2 = repainting
@@ -58,46 +57,7 @@ export default function RoomChangerPage() {
   const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
 
-  usePageTour({
-    tourKey: 'room_changer_tour',
-    completed: !user || user.onboardingCompleted === false || (user.completedTours?.includes('room_changer_tour') ?? false),
-    steps: [
-      {
-        element: '[data-tour="rc-uploader"]',
-        popover: {
-          title: '📸 Upload Photo',
-          description: 'Upload a clear photo of the room you want to repaint. For best results, ensure the walls are well-lit.',
-          side: 'bottom',
-          align: 'center'
-        }
-      },
-      {
-        element: '[data-tour="rc-color-picker"]',
-        popover: {
-          title: '🎨 Choose Color',
-          description: 'Select your preferred paint color from our curated presets, or use the custom color picker.',
-          side: 'top',
-          align: 'center'
-        }
-      },
-      {
-        element: '[data-tour="rc-generate-btn"]',
-        popover: {
-          title: '⚡ Repaint Wall',
-          description: 'Click this button to start the AI repaint. The AI will analyze the walls and apply the new color seamlessly.',
-          side: 'top',
-          align: 'center'
-        }
-      },
-      {
-        popover: {
-          title: '✨ Ready to design?',
-          description: 'Select a color, upload a photo, and watch the AI repaint the walls. Your first render is on us!',
-          align: 'center'
-        }
-      }
-    ]
-  });
+
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl]     = useState<string | null>(null);

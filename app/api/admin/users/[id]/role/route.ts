@@ -1,8 +1,6 @@
 /**
  * PATCH /api/admin/users/[id]/role
- *
  * Body: { role?: string, plan?: string }
- * Updates the user's role and/or subscription plan.
  * Admin only.
  */
 
@@ -10,13 +8,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
+import { writeAuditLog, auditDescription } from '@/lib/audit/logger';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
 
-const VALID_ROLES  = ['customer', 'designer', 'contractor', 'vendor', 'admin'] as const;
-const VALID_PLANS  = ['free', 'pro', 'team'] as const;
+const VALID_ROLES = ['customer', 'designer', 'contractor', 'vendor', 'admin'] as const;
+const VALID_PLANS = ['free', 'pro', 'team'] as const;
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
   const auth = await requireRole(req, ['admin']);
@@ -33,16 +32,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   const { role, plan } = body;
 
   if (role && !VALID_ROLES.includes(role as typeof VALID_ROLES[number])) {
-    return NextResponse.json(
-      { message: `role must be one of: ${VALID_ROLES.join(', ')}` },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: `role must be one of: ${VALID_ROLES.join(', ')}` }, { status: 400 });
   }
   if (plan && !VALID_PLANS.includes(plan as typeof VALID_PLANS[number])) {
-    return NextResponse.json(
-      { message: `plan must be one of: ${VALID_PLANS.join(', ')}` },
-      { status: 400 },
-    );
+    return NextResponse.json({ message: `plan must be one of: ${VALID_PLANS.join(', ')}` }, { status: 400 });
   }
   if (!role && !plan) {
     return NextResponse.json({ message: 'Provide at least one of role or plan' }, { status: 400 });
@@ -58,6 +51,30 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
     .select('role subscription.plan email firstName lastName');
 
   if (!user) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+
+  const targetName = user.email;
+  if (role) {
+    await writeAuditLog(req, auth.user, {
+      action: 'user.role.change',
+      category: 'users',
+      targetType: 'user',
+      targetId: id,
+      targetName,
+      description: auditDescription('user.role.change', targetName, role),
+      metadata: { newRole: role },
+    });
+  }
+  if (plan) {
+    await writeAuditLog(req, auth.user, {
+      action: 'user.plan.change',
+      category: 'users',
+      targetType: 'user',
+      targetId: id,
+      targetName,
+      description: auditDescription('user.plan.change', targetName, plan),
+      metadata: { newPlan: plan },
+    });
+  }
 
   return NextResponse.json({ success: true, role: user.role, plan: user.subscription.plan });
 }

@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Contractor } from '@/lib/db/models/Contractor';
 import { Types } from 'mongoose';
+import { writeAuditLog, auditDescription } from '@/lib/audit/logger';
 
 export async function PATCH(
     req: NextRequest,
@@ -11,9 +12,7 @@ export async function PATCH(
 ) {
     try {
         const authResult = await requireRole(req, ['admin']);
-        if (authResult instanceof NextResponse) {
-            return authResult;
-        }
+        if (authResult instanceof NextResponse) return authResult;
 
         const { id } = await params;
 
@@ -22,18 +21,13 @@ export async function PATCH(
         }
 
         let body;
-        try {
-            body = await req.json();
-        } catch {
+        try { body = await req.json(); } catch {
             return NextResponse.json({ message: 'Invalid JSON body' }, { status: 400 });
         }
 
         const { reason } = body;
         if (!reason || typeof reason !== 'string' || reason.trim().length < 5) {
-            return NextResponse.json(
-                { message: 'Rejection reason is required (min 5 characters)' },
-                { status: 400 }
-            );
+            return NextResponse.json({ message: 'Rejection reason is required (min 5 characters)' }, { status: 400 });
         }
 
         await connectToDatabase();
@@ -47,13 +41,20 @@ export async function PATCH(
         contractor.rejectionReason = reason.trim();
         contractor.verifiedAt = null;
         contractor.verifiedBy = null;
-
         await contractor.save();
 
-        return NextResponse.json(
-            { message: 'Contractor application rejected', contractor },
-            { status: 200 }
-        );
+        const targetName = (contractor as any).displayName || id;
+        await writeAuditLog(req, authResult.user, {
+            action: 'contractor.reject',
+            category: 'contractors',
+            targetType: 'contractor',
+            targetId: id,
+            targetName,
+            description: auditDescription('contractor.reject', targetName),
+            metadata: { reason: reason.trim() },
+        });
+
+        return NextResponse.json({ message: 'Contractor application rejected', contractor }, { status: 200 });
     } catch (error) {
         console.error('Reject contractor error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });

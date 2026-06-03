@@ -3,6 +3,8 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { AdminConfig } from '@/lib/db/models/AdminConfig';
 import { invalidateAppModeCache } from '@/lib/ai/appMode';
+import { writeAuditLog, auditDescription } from '@/lib/audit/logger';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -143,6 +145,23 @@ export async function PATCH(req: NextRequest) {
             ? Number(updatedMap.get('free_credits_on_signup'))
             : 10;
 
+        // Log the change
+        const changes: string[] = [];
+        if (appMode !== undefined) changes.push(`app_mode=${appMode}`);
+        if (creditCosts !== undefined) changes.push(`credit_costs=${JSON.stringify(creditCosts)}`);
+        if (freeCreditsOnSignup !== undefined) changes.push(`free_credits_on_signup=${freeCreditsOnSignup}`);
+
+        const changeStr = changes.join(', ');
+        await writeAuditLog(req, authResult.user, {
+            action: 'system.app.mode.change',
+            category: 'system',
+            targetType: 'system',
+            targetId: 'app_mode',
+            targetName: 'App Configurations',
+            description: auditDescription('system.app.mode.change', 'App Configurations', changeStr),
+            metadata: { appMode, creditCosts, freeCreditsOnSignup }
+        });
+
         return NextResponse.json({
             success: true,
             message: 'App configurations updated successfully',
@@ -160,3 +179,4 @@ export async function PATCH(req: NextRequest) {
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
 }
+

@@ -1,8 +1,6 @@
 /**
  * PATCH /api/admin/users/[id]/status
- *
  * Body: { status: 'active' | 'banned' | 'suspended' }
- * Sets the user's accountStatus field.
  * Admin only.
  */
 
@@ -10,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
+import { writeAuditLog, auditDescription } from '@/lib/audit/logger';
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -47,6 +46,23 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   ).select('-password -otp -otpExpiry');
 
   if (!user) return NextResponse.json({ message: 'User not found' }, { status: 404 });
+
+  const actionMap: Record<AccountStatus, 'user.ban' | 'user.unban' | 'user.suspend'> = {
+    banned:    'user.ban',
+    active:    'user.unban',
+    suspended: 'user.suspend',
+  };
+  const action = actionMap[status as AccountStatus];
+  const targetName = user.email;
+  await writeAuditLog(req, auth.user, {
+    action,
+    category: 'users',
+    targetType: 'user',
+    targetId: id,
+    targetName,
+    description: auditDescription(action, targetName),
+    metadata: { newStatus: status },
+  });
 
   return NextResponse.json({ success: true, accountStatus: user.accountStatus });
 }

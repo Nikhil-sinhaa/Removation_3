@@ -18,6 +18,9 @@
     "test:e2e:headed": "playwright test --headed",
     "test:health": "playwright test tests/e2e/health.spec.ts",
     "test:auth": "playwright test tests/e2e/auth.setup.ts --headed",
+    "test:features": "playwright test --config=playwright.features.config.ts",
+    "test:features:watch": "playwright test --config=playwright.features.config.ts --reporter=list",
+    "test:all": "bash tests/run-all.sh",
     "test:stage1": "node scripts/test-stable-stage1.js"
   },
   "dependencies": {

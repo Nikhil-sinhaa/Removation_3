@@ -22,6 +22,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import JsonLd from "@/components/seo/JsonLd";
+import { buildBreadcrumbSchema, buildFAQSchema, buildSoftwareApplicationSchema } from "@/lib/seo/schema";
 
 // ─── Animation ──────────────────────────────────────────────────────────────
 const fadeInUp = {
@@ -565,6 +567,14 @@ export default function PricingPage() {
           </div>
         </div>
       </section>
+      <JsonLd schemas={[
+        buildBreadcrumbSchema([
+          { name: "Home", item: "/" },
+          { name: "Pricing", item: "/pricing" }
+        ]),
+        buildSoftwareApplicationSchema(),
+        buildFAQSchema(faqs.map(({ q, a }) => ({ question: q, answer: a }))),
+      ]} />
     </main>
   );
 }

@@ -125,7 +125,7 @@ export default function DreamRoomPage() {
 
             <div className="flex-1 space-y-12 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                 {/* Step 1 */}
-                <div className="flex flex-col gap-6 items-center">
+                <div className="flex flex-col gap-6 items-center" data-tour="dream-room-theme">
                     <StepIcon step={1} title={t("dr_step1")} />
                     <Select
                         value={theme}
@@ -143,7 +143,7 @@ export default function DreamRoomPage() {
                 </div>
 
                 {/* Step 2 */}
-                <div className="flex flex-col gap-6 items-center">
+                <div className="flex flex-col gap-6 items-center" data-tour="dream-room-room">
                     <StepIcon step={2} title={t("dr_step2")} />
                     <Select
                         value={room}
@@ -161,7 +161,7 @@ export default function DreamRoomPage() {
                 </div>
 
                 {/* Step 3 */}
-                <div className="flex flex-col gap-6 items-center">
+                <div className="flex flex-col gap-6 items-center" data-tour="dream-room-upload">
                     <StepIcon step={3} title={t("dr_step3")} />
                     <div className="w-full max-w-[600px]">
                         <ImageUploader
@@ -173,9 +173,9 @@ export default function DreamRoomPage() {
                     </div>
                 </div>
 
-                {/* Generate Button */}
                 <div className="flex justify-center mt-12 pt-8 border-t border-gray-100">
                     <Button
+                        data-tour="dream-room-generate"
                         disabled={!imageUrl || !theme || !room || isLoading}
                         className="w-full max-w-[400px] h-14 text-lg bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-md shadow-violet-200"
                         onClick={handleGenerate}

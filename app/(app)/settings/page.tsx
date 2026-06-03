@@ -44,6 +44,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -555,28 +556,44 @@ export default function SettingsPage() {
     });
   };
 
-  // Export data — triggers a real JSON download
+  // Export data — downloads JSON + HTML report
   const handleExportData = async () => {
     setIsSaving(true);
     try {
       const response = await fetch("/api/user/export", { method: "POST" });
       if (!response.ok) throw new Error("Export failed");
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `removation-export-${Date.now()}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      const result = await response.json();
+      const dateStr = new Date().toISOString().split("T")[0];
 
+      // Download JSON
+      const jsonBlob = new Blob([JSON.stringify(result.data, null, 2)], { type: "application/json" });
+      const jsonUrl  = URL.createObjectURL(jsonBlob);
+      const jsonLink = document.createElement("a");
+      jsonLink.href = jsonUrl;
+      jsonLink.download = `removation-export-${dateStr}.json`;
+      document.body.appendChild(jsonLink);
+      jsonLink.click();
+      document.body.removeChild(jsonLink);
+      URL.revokeObjectURL(jsonUrl);
+
+      // Download HTML report
+      const htmlBlob = new Blob([result.htmlReport], { type: "text/html" });
+      const htmlUrl  = URL.createObjectURL(htmlBlob);
+      const htmlLink = document.createElement("a");
+      htmlLink.href = htmlUrl;
+      htmlLink.download = `removation-report-${dateStr}.html`;
+      document.body.appendChild(htmlLink);
+      htmlLink.click();
+      document.body.removeChild(htmlLink);
+      URL.revokeObjectURL(htmlUrl);
+
+      setExportStatus({ completedAt: new Date().toISOString() });
       toast({
         title: language === "hi" ? "डेटा निर्यात" : "Data Exported",
         description: language === "hi"
-          ? "आपका डेटा डाउनलोड हो रहा है।"
-          : "Your data download has started.",
+          ? "JSON और HTML रिपोर्ट डाउनलोड हो रहे हैं।"
+          : "JSON and HTML report downloads have started.",
       });
     } catch {
       toast({
@@ -589,16 +606,66 @@ export default function SettingsPage() {
     }
   };
 
-  // Handle delete account
+  // Deletion request state
+  const [deletionReason, setDeletionReason]       = useState("");
+  const [deletionDialogOpen, setDeletionDialogOpen] = useState(false);
+  const [pendingDeletion, setPendingDeletion]       = useState<{ _id: string; createdAt: string } | null>(null);
+  const [deletionLoading, setDeletionLoading]       = useState(false);
+  const [exportStatus, setExportStatus]             = useState<{ completedAt?: string } | null>(null);
+
+  // Load pending deletion request + last export on mount
+  useEffect(() => {
+    fetch('/api/user/delete-request')
+      .then(r => r.json())
+      .then(d => { if (d.request) setPendingDeletion(d.request); })
+      .catch(() => {});
+    fetch('/api/user/export')
+      .then(r => r.json())
+      .then(d => { if (d.request?.processedAt) setExportStatus({ completedAt: d.request.processedAt }); })
+      .catch(() => {});
+  }, []);
+
   const handleDeleteAccount = async () => {
-    // This would trigger account deletion
-    toast({
-      title: language === "hi" ? "खाता हटाने का अनुरोध" : "Account Deletion Request",
-      description: language === "hi"
-        ? "आपका अनुरोध प्राप्त हुआ। 24 घंटे में प्रक्रिया पूरी होगी।"
-        : "Your request has been received. It will be processed within 24 hours.",
-      variant: "destructive",
-    });
+    setDeletionLoading(true);
+    try {
+      const res = await fetch('/api/user/delete-request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: deletionReason }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed');
+      setPendingDeletion({ _id: data.requestId, createdAt: new Date().toISOString() });
+      setDeletionDialogOpen(false);
+      setDeletionReason("");
+      toast({
+        title: language === "hi" ? "अनुरोध सबमिट किया गया" : "Deletion Request Submitted",
+        description: language === "hi"
+          ? "आपका अनुरोध 30 दिनों के भीतर समीक्षा किया जाएगा।"
+          : "Your request will be reviewed within 30 days.",
+      });
+    } catch (err: unknown) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to submit request.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletionLoading(false);
+    }
+  };
+
+  const handleCancelDeletion = async () => {
+    try {
+      await fetch('/api/user/delete-request', { method: 'DELETE' });
+      setPendingDeletion(null);
+      toast({
+        title: language === "hi" ? "अनुरोध रद्द किया गया" : "Request Cancelled",
+        description: language === "hi" ? "आपका खाता हटाने का अनुरोध रद्द हो गया।" : "Your account deletion request has been cancelled.",
+      });
+    } catch {
+      toast({ title: "Error", description: "Failed to cancel request.", variant: "destructive" });
+    }
   };
 
   if (isLoading) {
@@ -1574,6 +1641,7 @@ export default function SettingsPage() {
                 {/* Data & Privacy Section */}
                 {activeSection === "data" && (
                   <div className="space-y-6">
+                    {/* Data Export */}
                     <Card>
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
@@ -1582,81 +1650,118 @@ export default function SettingsPage() {
                         </CardTitle>
                         <CardDescription>
                           {language === "hi"
-                            ? "अपने सभी डेटा की कॉपी डाउनलोड करें"
-                            : "Download a copy of all your data"}
+                            ? "अपने सभी डेटा की कॉपी डाउनलोड करें — प्रोजेक्ट्स, रेंडर्स, बुकिंग्स और अकाउंट जानकारी।"
+                            : "Download a copy of all your data — projects, renders, bookings, reviews, and account information."}
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          {language === "hi"
-                            ? "आपके सभी प्रोजेक्ट्स, रेंडर्स और सेटिंग्स शामिल होंगी।"
-                            : "This includes all your projects, renders, and settings."}
-                        </p>
+                      <CardContent className="space-y-4">
+                        {exportStatus?.completedAt && (
+                          <p className="text-sm text-muted-foreground">
+                            {language === "hi" ? "अंतिम निर्यात:" : "Last exported:"}{" "}
+                            {new Date(exportStatus.completedAt).toLocaleDateString()}
+                          </p>
+                        )}
                         <Button onClick={handleExportData} disabled={isSaving}>
                           {isSaving ? (
                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                           ) : (
                             <Download className="h-4 w-4 mr-2" />
                           )}
-                          {language === "hi" ? "डेटा निर्यात करें" : "Export Data"}
+                          {language === "hi" ? "डेटा निर्यात करें" : "Export My Data"}
                         </Button>
+                        <p className="text-xs text-muted-foreground">
+                          {language === "hi"
+                            ? "JSON डेटा फ़ाइल और readable HTML रिपोर्ट दोनों डाउनलोड होंगे।"
+                            : "Downloads both a JSON data file and a readable HTML report."}
+                        </p>
                       </CardContent>
                     </Card>
 
-                    {/* Danger Zone */}
+                    {/* Account Deletion */}
                     <Card className="border-red-200 dark:border-red-900">
                       <CardHeader>
                         <CardTitle className="text-red-500 flex items-center gap-2">
                           <AlertTriangle className="h-5 w-5" />
-                          {language === "hi" ? "खतरा क्षेत्र" : "Danger Zone"}
+                          {language === "hi" ? "खाता हटाना" : "Account Deletion"}
                         </CardTitle>
+                        <CardDescription>
+                          {language === "hi"
+                            ? "खाता हटाने का अनुरोध करें। हमारी टीम 30 दिनों के भीतर समीक्षा करेगी।"
+                            : "Request permanent deletion of your account and all associated data. This cannot be undone."}
+                        </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between p-4 border border-red-200 dark:border-red-900 rounded-lg">
-                          <div>
-                            <p className="font-medium">
-                              {language === "hi" ? "खाता हटाएं" : "Delete Account"}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {language === "hi"
-                                ? "आपका सारा डेटा स्थायी रूप से हटा दिया जाएगा।"
-                                : "All your data will be permanently deleted."}
-                            </p>
+                      <CardContent>
+                        {pendingDeletion ? (
+                          <div className="flex items-center justify-between p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <Loader2 className="h-5 w-5 text-yellow-600 animate-spin" />
+                              <div>
+                                <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                                  {language === "hi" ? "हटाने का अनुरोध लंबित है" : "Deletion request pending"}
+                                </p>
+                                <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                                  {language === "hi" ? "सबमिट किया गया:" : "Submitted:"}{" "}
+                                  {new Date(pendingDeletion.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelDeletion}
+                              className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:text-yellow-300 dark:hover:bg-yellow-950"
+                            >
+                              {language === "hi" ? "अनुरोध रद्द करें" : "Cancel Request"}
+                            </Button>
                           </div>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="destructive">
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                {language === "hi" ? "हटाएं" : "Delete"}
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
+                        ) : (
+                          <Dialog open={deletionDialogOpen} onOpenChange={setDeletionDialogOpen}>
+                            <Button
+                              variant="destructive"
+                              onClick={() => setDeletionDialogOpen(true)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              {language === "hi" ? "खाता हटाने का अनुरोध करें" : "Request Account Deletion"}
+                            </Button>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>
+                                  {language === "hi" ? "खाता हटाने का अनुरोध" : "Request Account Deletion"}
+                                </DialogTitle>
+                                <DialogDescription>
                                   {language === "hi"
-                                    ? "क्या आप वाकई खाता हटाना चाहते हैं?"
-                                    : "Are you sure you want to delete your account?"}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {language === "hi"
-                                    ? "यह कार्रवाई पूर्ववत नहीं की जा सकती। आपके सभी प्रोजेक्ट्स और डेटा स्थायी रूप से हटा दिए जाएंगे।"
-                                    : "This action cannot be undone. All your projects and data will be permanently deleted."}
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>
+                                    ? "आपका अनुरोध हमारी टीम 30 दिनों के भीतर समीक्षा करेगी। आप इस अनुरोध को प्रोसेस होने से पहले रद्द कर सकते हैं।"
+                                    : "Your request will be reviewed by our team within 30 days. You can cancel this request before it is processed."}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-3 py-2">
+                                <Label htmlFor="deletion-reason">
+                                  {language === "hi" ? "आप क्यों जा रहे हैं? (वैकल्पिक)" : "Why are you leaving? (optional)"}
+                                </Label>
+                                <Textarea
+                                  id="deletion-reason"
+                                  value={deletionReason}
+                                  onChange={e => setDeletionReason(e.target.value)}
+                                  placeholder={language === "hi" ? "कारण बताएं..." : "Tell us why..."}
+                                  rows={3}
+                                />
+                              </div>
+                              <DialogFooter>
+                                <Button variant="outline" onClick={() => setDeletionDialogOpen(false)}>
                                   {language === "hi" ? "रद्द करें" : "Cancel"}
-                                </AlertDialogCancel>
-                                <AlertDialogAction
+                                </Button>
+                                <Button
+                                  variant="destructive"
                                   onClick={handleDeleteAccount}
-                                  className="bg-red-500 hover:bg-red-600"
+                                  disabled={deletionLoading}
                                 >
-                                  {language === "hi" ? "हां, हटाएं" : "Yes, Delete"}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
+                                  {deletionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                                  {language === "hi" ? "अनुरोध सबमिट करें" : "Submit Deletion Request"}
+                                </Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </CardContent>
                     </Card>
                   </div>

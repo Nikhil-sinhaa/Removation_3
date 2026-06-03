@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const testPort = process.env.TEST_PORT || '3001';
+const featureBaseUrl = process.env.TEST_BASE_URL || 'http://localhost:3000';
 
 export default defineConfig({
     testDir: './tests/e2e',
@@ -34,6 +35,18 @@ export default defineConfig({
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
+        },
+        {
+            name: 'feature-tests',
+            testDir: './tests/features',
+            use: {
+                ...devices['Desktop Chrome'],
+                baseURL: featureBaseUrl,
+                headless: true,
+                extraHTTPHeaders: {
+                    'x-test-secret': process.env.TEST_SECRET || 'test_secret_local',
+                },
+            },
         },
     ],
 });

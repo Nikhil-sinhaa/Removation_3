@@ -60,6 +60,9 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TagInput } from '@/components/tags/TagInput';
+import { TagCloud } from '@/components/tags/TagCloud';
+import type { ITag } from '@/lib/db/models/Tag';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -747,18 +750,9 @@ function ProjectCard({
           </span>
 
           {/* Tags */}
-          {project.tags.length > 0 && (
-            <div className="flex items-center gap-1">
-              {project.tags.slice(0, 2).map((tag) => (
-                <span
-                  key={tag}
-                  className="px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
+          <div className="mt-1" onClick={e => e.stopPropagation()}>
+            <TagInput itemId={project.id} itemType="project" compact />
+          </div>
         </div>
       </div>
     </motion.div>
@@ -1006,6 +1000,18 @@ export default function ProjectsPage() {
   // Compare modal
   const [compareProject, setCompareProject] = useState<Project | null>(null);
 
+  // Tag filter
+  const [selectedTagId, setSelectedTagId] = useState<string | null>(null);
+  const [tagFilteredIds, setTagFilteredIds] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!selectedTagId) { setTagFilteredIds(null); return; }
+    fetch(`/api/tags/${selectedTagId}/items?type=project`)
+      .then(r => r.json())
+      .then(d => setTagFilteredIds(new Set((d.itemIds || []) as string[])))
+      .catch(() => setTagFilteredIds(null));
+  }, [selectedTagId]);
+
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
 
@@ -1089,7 +1095,8 @@ export default function ProjectsPage() {
         if (tabFilter === 'archived') matchesTab = project.isArchived;
         if (tabFilter === 'all') matchesTab = !project.isArchived;
 
-        return matchesSearch && matchesRoomType && matchesTab;
+        const matchesTag = !tagFilteredIds || tagFilteredIds.has(project.id);
+        return matchesSearch && matchesRoomType && matchesTab && matchesTag;
       })
       .sort((a, b) => {
         let comparison = 0;
@@ -1113,7 +1120,7 @@ export default function ProjectsPage() {
 
         return sortOrder === 'desc' ? -comparison : comparison;
       });
-  }, [projects, debouncedSearch, selectedRoomType, tabFilter, sortBy, sortOrder]);
+  }, [projects, debouncedSearch, selectedRoomType, tabFilter, sortBy, sortOrder, tagFilteredIds]);
 
   // Toggle selection
   const toggleSelection = useCallback((id: string) => {
@@ -1302,6 +1309,36 @@ export default function ProjectsPage() {
               </TabsTrigger>
             </TabsList>
           </Tabs>
+        </motion.div>
+
+        {/* Tag Cloud Filter */}
+        {selectedTagId && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mb-4 flex items-center gap-2 flex-wrap"
+          >
+            <span className="text-sm text-gray-500">Filtered by tag:</span>
+            <button
+              onClick={() => setSelectedTagId(null)}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700 border border-violet-200 hover:bg-violet-200 transition-colors"
+            >
+              <X className="w-3 h-3" />
+              Clear filter
+            </button>
+          </motion.div>
+        )}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12 }}
+          className="mb-4"
+        >
+          <TagCloud
+            onSelect={(tag: ITag) => setSelectedTagId(prev => prev === String(tag._id) ? null : String(tag._id))}
+            selectedTagId={selectedTagId || undefined}
+            showCount
+          />
         </motion.div>
 
         {/* Filters Bar */}

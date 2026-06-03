@@ -18,10 +18,13 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     AlertCircle,
+    ArrowRight,
     Calendar,
     CheckCircle2,
+    ChevronDown,
     Clock,
     FileText,
+    History,
     IndianRupee,
     Loader2,
     MapPin,
@@ -55,6 +58,8 @@ import { paiseToRupees } from '@/lib/booking/money';
 import { cn } from '@/lib/utils';
 import type { BookingStatus } from '@/lib/db/models/Booking';
 import { BookingChat } from '@/components/booking/BookingChat';
+import { TransitionButtons } from '@/components/booking/TransitionButton';
+import { WorkflowTimeline } from '@/components/booking/WorkflowTimeline';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -144,14 +149,17 @@ function BookingCard({
     onCancel,
     onReview,
     onChat,
+    onRefresh,
     unreadCount = 0,
 }: {
     booking: Booking;
     onCancel: (id: string) => void;
     onReview: (booking: Booking) => void;
     onChat: (id: string, providerName: string) => void;
+    onRefresh: () => void;
     unreadCount?: number;
 }) {
+    const [showHistory, setShowHistory] = useState(false);
     const { t } = useLanguage();
 
     // Resolve provider — whichever of the two is populated
@@ -323,24 +331,14 @@ function BookingCard({
                 )}
             </div>
 
-            {/* Actions */}
-            {canCancel && (
-                <div className="px-5 pb-5">
-                    <Button
-                        id={`cancel-booking-${booking._id}`}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() => onCancel(booking._id)}
-                    >
-                        <X className="w-3.5 h-3.5 mr-1.5" />
-                        {t('myb_cancel_booking')}
-                    </Button>
-                </div>
-            )}
+            {/* Workflow transition actions */}
+            <div className="px-5 pb-2">
+                <TransitionButtons bookingId={booking._id} onSuccess={onRefresh} />
+            </div>
 
+            {/* Review button — separate from workflow (creates a Review record) */}
             {booking.status === 'completed' && !booking.reviewId && (
-                <div className="px-5 pb-5">
+                <div className="px-5 pb-2">
                     <Button
                         id={`review-booking-${booking._id}`}
                         variant="outline"
@@ -355,14 +353,14 @@ function BookingCard({
             )}
 
             {booking.status === 'completed' && booking.reviewId && (
-                <div className="px-5 pb-5 text-xs text-green-600 flex items-center gap-1 font-medium">
+                <div className="px-5 pb-2 text-xs text-green-600 flex items-center gap-1 font-medium">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     {t('myb_review_submitted')}
                 </div>
             )}
 
             {canChat && (
-                <div className="px-5 pb-5">
+                <div className="px-5 pb-4">
                     <Button
                         id={`chat-booking-${booking._id}`}
                         variant="outline"
@@ -380,6 +378,23 @@ function BookingCard({
                     </Button>
                 </div>
             )}
+
+            {/* Workflow history toggle */}
+            <div className="px-5 pb-5 border-t border-zinc-50 pt-3">
+                <button
+                    className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
+                    onClick={() => setShowHistory(v => !v)}
+                >
+                    <History className="w-3.5 h-3.5" />
+                    <span>History</span>
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', showHistory && 'rotate-180')} />
+                </button>
+                {showHistory && (
+                    <div className="mt-3">
+                        <WorkflowTimeline bookingId={booking._id} />
+                    </div>
+                )}
+            </div>
         </motion.div>
     );
 }
@@ -637,6 +652,7 @@ export default function MyBookingsPage() {
                                     setChatProviderName(name);
                                     setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
                                 }}
+                                onRefresh={() => fetchBookings(page)}
                                 unreadCount={unreadCounts[b._id] || 0}
                             />
                         ))}

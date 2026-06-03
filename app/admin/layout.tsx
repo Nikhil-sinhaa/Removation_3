@@ -123,6 +123,8 @@ import {
   RotateCcw,
   RotateCw,
   Loader2,
+  ArrowRightLeft,
+  GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -338,6 +340,26 @@ const systemNavItems: (NavItem | SimpleNavItem)[] = [
     badge: '72%',
     badgeColor: 'bg-yellow-100 text-yellow-700',
   },
+  {
+    title: 'Guided Tours',
+    href: '/admin/tours',
+    icon: HelpCircle,
+  },
+  {
+    title: 'Tags',
+    href: '/admin/tags',
+    icon: Tag,
+  },
+  {
+    title: 'Redirects',
+    href: '/admin/redirects',
+    icon: ArrowRightLeft,
+  },
+  {
+    title: 'Workflow',
+    href: '/admin/workflow',
+    icon: GitBranch,
+  },
 ];
 
 const settingsNavItems: SimpleNavItem[] = [
@@ -350,6 +372,11 @@ const settingsNavItems: SimpleNavItem[] = [
     title: 'Security',
     href: '/admin/settings/security',
     icon: Shield,
+  },
+  {
+    title: 'Scheduler',
+    href: '/admin/scheduler',
+    icon: Calendar,
   },
   {
     title: 'API Keys',

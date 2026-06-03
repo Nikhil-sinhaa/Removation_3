@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/auth/requireRole';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Contractor } from '@/lib/db/models/Contractor';
 import { Types } from 'mongoose';
+import { writeAuditLog, auditDescription } from '@/lib/audit/logger';
 
 export async function PATCH(
     req: NextRequest,
@@ -11,11 +12,8 @@ export async function PATCH(
 ) {
     try {
         const authResult = await requireRole(req, ['admin']);
-        if (authResult instanceof NextResponse) {
-            return authResult;
-        }
+        if (authResult instanceof NextResponse) return authResult;
 
-        const { user: adminUser } = authResult;
         const { id } = await params;
 
         if (!Types.ObjectId.isValid(id)) {
@@ -28,22 +26,27 @@ export async function PATCH(
         if (!contractor) {
             return NextResponse.json({ message: 'Contractor not found' }, { status: 404 });
         }
-
         if (contractor.isVerified) {
             return NextResponse.json({ message: 'Contractor is already verified' }, { status: 400 });
         }
 
         contractor.isVerified = true;
         contractor.verifiedAt = new Date();
-        contractor.verifiedBy = adminUser._id;
+        contractor.verifiedBy = authResult.user._id;
         contractor.rejectionReason = null;
-
         await contractor.save();
 
-        return NextResponse.json(
-            { message: 'Contractor verified successfully', contractor },
-            { status: 200 }
-        );
+        const targetName = (contractor as any).displayName || id;
+        await writeAuditLog(req, authResult.user, {
+            action: 'contractor.approve',
+            category: 'contractors',
+            targetType: 'contractor',
+            targetId: id,
+            targetName,
+            description: auditDescription('contractor.approve', targetName),
+        });
+
+        return NextResponse.json({ message: 'Contractor verified successfully', contractor }, { status: 200 });
     } catch (error) {
         console.error('Verify contractor error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });

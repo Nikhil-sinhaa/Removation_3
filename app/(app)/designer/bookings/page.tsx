@@ -22,8 +22,10 @@ import {
     AlertCircle,
     Calendar,
     CheckCircle2,
+    ChevronDown,
     Clock,
     FileText,
+    History,
     IndianRupee,
     Loader2,
     Mail,
@@ -44,6 +46,8 @@ import {
 import { paiseToRupees } from '@/lib/booking/money';
 import { cn } from '@/lib/utils';
 import type { BookingStatus } from '@/lib/db/models/Booking';
+import { TransitionButtons } from '@/components/booking/TransitionButton';
+import { WorkflowTimeline } from '@/components/booking/WorkflowTimeline';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -172,6 +176,7 @@ function DesignerBookingCard({
     onComplete,
     actionLoading,
     onChat,
+    onRefresh,
     unreadCount = 0,
 }: {
     booking: DesignerBooking;
@@ -180,8 +185,10 @@ function DesignerBookingCard({
     onComplete: (id: string) => void;
     actionLoading: string | null;
     onChat: (id: string, customerName: string) => void;
+    onRefresh: () => void;
     unreadCount?: number;
 }) {
+    const [showHistory, setShowHistory] = useState(false);
     const { t, language } = useLanguage();
     const customer = typeof booking.customerId === 'object' ? booking.customerId : null;
     const status = STATUS_CONFIG[booking.status];
@@ -327,55 +334,13 @@ function DesignerBookingCard({
                 )}
             </div>
 
-            {/* Actions */}
-            {isPending && (
-                <div className="px-5 pb-5 flex gap-3">
-                    <Button
-                        id={`accept-booking-${booking._id}`}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => onAccept(booking._id)}
-                        disabled={!!actionLoading}
-                    >
-                        {isThisLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        ) : (
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                        )}
-                        {t('accept')}
-                    </Button>
-                    <Button
-                        id={`reject-booking-${booking._id}`}
-                        variant="outline"
-                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() => onReject(booking._id)}
-                        disabled={!!actionLoading}
-                    >
-                        <X className="w-4 h-4 mr-2" />
-                        {t('reject')}
-                    </Button>
-                </div>
-            )}
-
-            {booking.status === 'confirmed' && (
-                <div className="px-5 pb-5 flex gap-3">
-                    <Button
-                        id={`complete-booking-${booking._id}`}
-                        className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
-                        onClick={() => onComplete(booking._id)}
-                        disabled={!!actionLoading}
-                    >
-                        {isThisLoading ? (
-                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        ) : (
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                        )}
-                        {t('desb_mark_complete')}
-                    </Button>
-                </div>
-            )}
+            {/* Workflow transition actions */}
+            <div className="px-5 pb-2">
+                <TransitionButtons bookingId={booking._id} onSuccess={onRefresh} />
+            </div>
 
             {['pending_designer', 'confirmed', 'completed'].includes(booking.status) && (
-                <div className="px-5 pb-5">
+                <div className="px-5 pb-4">
                     <Button
                         id={`chat-booking-${booking._id}`}
                         variant="outline"
@@ -393,6 +358,23 @@ function DesignerBookingCard({
                     </Button>
                 </div>
             )}
+
+            {/* Workflow history toggle */}
+            <div className="px-5 pb-5 border-t border-zinc-50 pt-3">
+                <button
+                    className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-zinc-600 transition-colors"
+                    onClick={() => setShowHistory(v => !v)}
+                >
+                    <History className="w-3.5 h-3.5" />
+                    <span>History</span>
+                    <ChevronDown className={cn('w-3 h-3 transition-transform', showHistory && 'rotate-180')} />
+                </button>
+                {showHistory && (
+                    <div className="mt-3">
+                        <WorkflowTimeline bookingId={booking._id} />
+                    </div>
+                )}
+            </div>
         </motion.div>
     );
 }
@@ -613,8 +595,8 @@ export default function DesignerBookingsPage() {
                         {t('myb_total_count', { count: String(total) })}
                         {pendingCount > 0 && (
                             <span className="ml-2 text-amber-600 font-medium">
-                                {pendingCount === 1 
-                                    ? t('desb_need_action') 
+                                {pendingCount === 1
+                                    ? t('desb_need_action')
                                     : t('desb_needs_action', { count: String(pendingCount) })}
                             </span>
                         )}
@@ -699,6 +681,7 @@ export default function DesignerBookingsPage() {
                                     setChatCustomerName(name);
                                     setUnreadCounts(prev => ({ ...prev, [id]: 0 }));
                                 }}
+                                onRefresh={() => fetchBookings(page)}
                                 unreadCount={unreadCounts[b._id] || 0}
                             />
                         ))}

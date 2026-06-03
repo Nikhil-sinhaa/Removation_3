@@ -1,18 +1,11 @@
 /**
  * POST /api/bookings/[id]/accept
  *
- * Designer accepts a booking, transitioning it from
- * `pending_designer` → `confirmed`.
+ * Designer accepts a booking.
+ * Delegates state transition to the workflow engine (transitionId: 'accept').
+ * Ownership check is enforced here before delegating.
  *
- * Auth: designer role; must own the designer profile that received the booking.
- * Guards:
- *   - 404 if booking not found
- *   - 403 if caller is not the receiving designer
- *   - 409 if booking is not in `pending_designer` state (already actioned)
- *
- * Manual test:
- *   curl -X POST http://localhost:3000/api/bookings/BOOKING_ID/accept \
- *     -H "Cookie: auth_token=YOUR_DESIGNER_JWT"
+ * Auth: designer | contractor | admin
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -22,20 +15,18 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { Booking } from '@/lib/db/models/Booking';
 import { Designer } from '@/lib/db/models/Designer';
 import { Contractor } from '@/lib/db/models/Contractor';
-
 import { sendSystemMessage } from '@/lib/messages/system';
+import { executeTransition } from '@/lib/workflow/engine';
 
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        // ── Auth ────────────────────────────────────────────────────────────────
         const authResult = await requireRole(req, ['designer', 'contractor', 'admin']);
         if (authResult instanceof NextResponse) return authResult;
         const { user } = authResult;
 
-        // ── Validate booking ID ─────────────────────────────────────────────────
         const { id } = await params;
         if (!id || !Types.ObjectId.isValid(id)) {
             return NextResponse.json({ message: 'Invalid booking ID' }, { status: 400 });
@@ -43,14 +34,12 @@ export async function POST(
 
         await connectToDatabase();
 
-        // ── Fetch booking ───────────────────────────────────────────────────────
         const booking = await Booking.findById(id);
         if (!booking) {
             return NextResponse.json({ message: 'Booking not found' }, { status: 404 });
         }
 
-        // ── Provider ownership ─────────────────────────────────────────────────
-        // Admins bypass this check.
+        // Ownership check — admins bypass
         if (user.role !== 'admin') {
             if (booking.designerId) {
                 const designer = await Designer.findOne({ userId: user._id });
@@ -67,24 +56,18 @@ export async function POST(
             }
         }
 
-        // ── State guard: must be pending_designer ───────────────────────────────
-        if (booking.status !== 'pending_designer') {
-            return NextResponse.json(
-                {
-                    message: `Booking cannot be accepted in status "${booking.status}"`,
-                    status: booking.status,
-                },
-                { status: 409 }
-            );
+        const result = await executeTransition({
+            bookingId:       id,
+            transitionId:    'accept',
+            triggeredById:   user._id.toString(),
+            triggeredByRole: user.role,
+            req,
+        });
+
+        if (!result.success) {
+            return NextResponse.json({ message: result.error }, { status: 409 });
         }
 
-        // ── Transition: pending_designer → confirmed ────────────────────────────
-        booking.status = 'confirmed';
-        booking.designerAcceptedAt = new Date();
-
-        await booking.save();
-
-        // Send system message
         try {
             await sendSystemMessage(booking._id, "Booking accepted. Let's start discussing your requirements!");
         } catch (msgErr) {
@@ -92,10 +75,10 @@ export async function POST(
         }
 
         return NextResponse.json({
-            success: true,
-            status: booking.status,
-            bookingId: booking._id.toString(),
-            designerAcceptedAt: booking.designerAcceptedAt,
+            success:  true,
+            status:   result.newState,
+            bookingId: id,
+            designerAcceptedAt: (result.booking as { designerAcceptedAt?: Date })?.designerAcceptedAt ?? new Date(),
         });
 
     } catch (error) {
