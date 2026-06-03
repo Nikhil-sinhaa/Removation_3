@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -213,28 +214,40 @@ export default function FurnitureRemoverPage() {
     return () => { socket.disconnect(); stopPolling(); };
   }, [stopPolling]);
 
+  // ── Crop modal state ───────────────────────────────────────────────────────
+  const [cropOpen,    setCropOpen]    = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl,  setPendingUrl]  = useState("");
+
+  const applyFileSelection = useCallback((file: File, url: string) => {
+    setSelectedFile(file);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(url);
+    setResult(null);
+    setError(null);
+    setCanvasHistory([]);
+  }, [previewUrl]);
+
+  const openCrop = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    setPendingFile(file);
+    setPendingUrl(url);
+    setCropOpen(true);
+  }, []);
+
   // ── File Selection ─────────────────────────────────────────────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSelectedFile(file);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(URL.createObjectURL(file));
-    setResult(null);
-    setError(null);
-    setCanvasHistory([]);
+    e.currentTarget.value = "";
+    openCrop(file);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
-    setSelectedFile(file);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(URL.createObjectURL(file));
-    setResult(null);
-    setError(null);
-    setCanvasHistory([]);
+    openCrop(file);
   };
 
   // ── Auto Mode category selection toggles ──────────────────────────────────
@@ -920,6 +933,25 @@ export default function FurnitureRemoverPage() {
           </Card>
         </div>
       </div>
+
+      <ImageCropModal
+        isOpen={cropOpen}
+        imageFile={pendingFile}
+        imageUrl={pendingUrl}
+        title="Crop before removing furniture"
+        onConfirm={(croppedFile, croppedUrl) => {
+          setCropOpen(false);
+          if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+          setPendingFile(null); setPendingUrl("");
+          applyFileSelection(croppedFile, croppedUrl);
+        }}
+        onCancel={() => {
+          setCropOpen(false);
+          const f = pendingFile; const u = pendingUrl;
+          setPendingFile(null); setPendingUrl("");
+          if (f) applyFileSelection(f, u);
+        }}
+      />
     </div>
   );
 }

@@ -1136,6 +1136,8 @@ export default function EditorPage() {
                     aspectRatio="video"
                     showUrlInput
                     showCameraButton
+                    enableCrop
+                    cropTitle="Crop your room photo"
                   />
                 </div>
               </motion.div>

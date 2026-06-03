@@ -109,6 +109,8 @@ export default function ColorVisualizerPage() {
                             onRemove={() => setImageUrl("")}
                             currentImage={imageUrl}
                             aspectRatio="video"
+                            enableCrop
+                            cropTitle="Crop your room photo"
                         />
                     </div>
                 </div>

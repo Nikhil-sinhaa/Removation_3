@@ -169,6 +169,8 @@ export default function DreamRoomPage() {
                             onRemove={() => setImageUrl("")}
                             currentImage={imageUrl}
                             aspectRatio="video"
+                            enableCrop
+                            cropTitle="Crop your room photo"
                         />
                     </div>
                 </div>

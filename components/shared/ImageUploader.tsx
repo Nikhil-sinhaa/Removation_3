@@ -28,6 +28,7 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { useUploadThing } from "@/lib/uploadthing";
 import { useLanguage } from "@/hooks/useLanguage";
+import { ImageCropModal } from "@/components/shared/ImageCropModal";
 
 interface ImageUploaderProps {
   onUpload: (url: string) => void;
@@ -39,6 +40,12 @@ interface ImageUploaderProps {
   showUrlInput?: boolean;
   showCameraButton?: boolean;
   className?: string;
+  /** When true, shows the crop/rotate modal before uploading */
+  enableCrop?: boolean;
+  /** Aspect ratio constraint for the crop modal (null = free crop) */
+  cropAspectRatio?: number | null;
+  /** Title shown in the crop modal header */
+  cropTitle?: string;
 }
 
 export function ImageUploader({
@@ -51,6 +58,9 @@ export function ImageUploader({
   showUrlInput = true,
   showCameraButton = true,
   className,
+  enableCrop = false,
+  cropAspectRatio = null,
+  cropTitle = "Crop & Adjust Image",
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -61,6 +71,11 @@ export function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const { language } = useLanguage();
+
+  // Crop modal state
+  const [cropOpen,    setCropOpen]    = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl,  setPendingUrl]  = useState("");
 
   const { startUpload } = useUploadThing("imageUploader", {
     onClientUploadComplete: (res) => {
@@ -89,12 +104,31 @@ export function ImageUploader({
     },
   });
 
+  // Core upload logic — called after optional crop step
+  const doUpload = useCallback(
+    async (file: File, localPreviewUrl?: string) => {
+      setError(null);
+      setIsUploading(true);
+      setUploadProgress(0);
+
+      if (localPreviewUrl) {
+        setPreviewUrl(localPreviewUrl);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => setPreviewUrl(e.target?.result as string);
+        reader.readAsDataURL(file);
+      }
+
+      await startUpload([file]);
+    },
+    [startUpload]
+  );
+
   const onDrop = useCallback(
-    async (acceptedFiles: File[]) => {
+    (acceptedFiles: File[]) => {
       const file = acceptedFiles[0];
       if (!file) return;
 
-      // Validate file size
       if (file.size > maxSize * 1024 * 1024) {
         setError(
           language === "hi"
@@ -104,7 +138,6 @@ export function ImageUploader({
         return;
       }
 
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         setError(
           language === "hi"
@@ -114,21 +147,18 @@ export function ImageUploader({
         return;
       }
 
-      setError(null);
-      setIsUploading(true);
-      setUploadProgress(0);
+      if (enableCrop) {
+        // Show crop modal first — upload happens after confirmation
+        const url = URL.createObjectURL(file);
+        setPendingFile(file);
+        setPendingUrl(url);
+        setCropOpen(true);
+        return;
+      }
 
-      // Create preview
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreviewUrl(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-
-      // Upload to server
-      await startUpload([file]);
+      doUpload(file);
     },
-    [maxSize, language, startUpload]
+    [maxSize, language, enableCrop, doUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive, isDragReject } =
@@ -185,10 +215,10 @@ export function ImageUploader({
     cameraInputRef.current?.click();
   };
 
-  const handleCameraChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCameraChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      await onDrop([file]);
+      onDrop([file]);
     }
   };
 
@@ -407,6 +437,33 @@ export function ImageUploader({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Crop modal — only mounted when enableCrop=true */}
+      {enableCrop && (
+        <ImageCropModal
+          isOpen={cropOpen}
+          imageFile={pendingFile}
+          imageUrl={pendingUrl}
+          aspectRatio={cropAspectRatio}
+          title={cropTitle}
+          onConfirm={(croppedFile, croppedUrl) => {
+            setCropOpen(false);
+            if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+            setPendingFile(null);
+            setPendingUrl("");
+            doUpload(croppedFile, croppedUrl);
+          }}
+          onCancel={() => {
+            // Skip crop — upload original file as-is
+            setCropOpen(false);
+            const original = pendingFile;
+            const originalUrl = pendingUrl;
+            setPendingFile(null);
+            setPendingUrl("");
+            if (original) doUpload(original, originalUrl);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { io, Socket } from "socket.io-client";
 import { useToast } from "@/components/ui/use-toast";
@@ -116,20 +117,33 @@ export default function StyleTransferPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── File handlers ───────────────────────────────────────────────────────────
-  const handleRoomFile = (file: File) => {
-    if (!file.type.startsWith("image/")) return;
+  // ── Crop modal state ───────────────────────────────────────────────────────
+  const [cropOpen,    setCropOpen]    = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl,  setPendingUrl]  = useState("");
+
+  const applyRoomFile = useCallback((file: File, url: string) => {
     setRoomFile(file);
-    const url = URL.createObjectURL(file);
     setRoomPreview(url);
     setResult(null);
     setError(null);
-  };
+  }, []);
+
+  const openCrop = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) return;
+    const url = URL.createObjectURL(file);
+    setPendingFile(file);
+    setPendingUrl(url);
+    setCropOpen(true);
+  }, []);
+
+  // ── File handlers ───────────────────────────────────────────────────────────
+  const handleRoomFile = (file: File) => openCrop(file);
 
   const handleRoomDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
-    if (file) handleRoomFile(file);
+    if (file) openCrop(file);
   };
 
   const handlePresetSelect = (preset: StylePreset) => {
@@ -369,7 +383,7 @@ export default function StyleTransferPage() {
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) handleRoomFile(f); }}
+                    onChange={e => { const f = e.target.files?.[0]; e.currentTarget.value = ""; if (f) handleRoomFile(f); }}
                   />
                 </div>
               </div>
@@ -547,6 +561,25 @@ export default function StyleTransferPage() {
           </div>
         )}
       </div>
+
+      <ImageCropModal
+        isOpen={cropOpen}
+        imageFile={pendingFile}
+        imageUrl={pendingUrl}
+        title="Crop your room photo"
+        onConfirm={(croppedFile, croppedUrl) => {
+          setCropOpen(false);
+          if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+          setPendingFile(null); setPendingUrl("");
+          applyRoomFile(croppedFile, croppedUrl);
+        }}
+        onCancel={() => {
+          setCropOpen(false);
+          const f = pendingFile; const u = pendingUrl;
+          setPendingFile(null); setPendingUrl("");
+          if (f) applyRoomFile(f, u);
+        }}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { ImageCropModal } from '@/components/shared/ImageCropModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload, Wand2, Download, RotateCcw, Loader2,
@@ -96,15 +97,17 @@ export default function FurniturePlacementPage() {
     img.src = furnitureNoBgUrl;
   }, [furnitureNoBgUrl]);
 
-  // ── Room upload ───────────────────────────────────────────────────────────────
-  const handleRoomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // ── Crop modal state ──────────────────────────────────────────────────────────
+  const [cropOpen,    setCropOpen]    = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl,  setPendingUrl]  = useState('');
+
+  const doRoomUpload = useCallback(async (file: File, previewBlobUrl: string) => {
     if (file.size > 10 * 1024 * 1024) {
       toast({ title: 'File too large', description: 'Room photo must be under 10 MB.', variant: 'destructive' });
       return;
     }
-    setRoomPreview(URL.createObjectURL(file));
+    setRoomPreview(previewBlobUrl);
     setRoomPreviewUrl('');
     setRoomUpload('loading');
     setRoomComfyFilename('');
@@ -123,6 +126,23 @@ export default function FurniturePlacementPage() {
       setRoomUpload('error');
       toast({ title: 'Room upload failed', description: err.message, variant: 'destructive' });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toast]);
+
+  // ── Room upload ───────────────────────────────────────────────────────────────
+  const handleRoomUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.currentTarget.value = '';
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: 'File too large', description: 'Room photo must be under 10 MB.', variant: 'destructive' });
+      return;
+    }
+    // Show crop modal — server upload happens after crop confirmation
+    const url = URL.createObjectURL(file);
+    setPendingFile(file);
+    setPendingUrl(url);
+    setCropOpen(true);
   };
 
   // ── Furniture upload + bg removal ─────────────────────────────────────────────
@@ -554,6 +574,25 @@ export default function FurniturePlacementPage() {
         )}
 
       </AnimatePresence>
+
+      <ImageCropModal
+        isOpen={cropOpen}
+        imageFile={pendingFile}
+        imageUrl={pendingUrl}
+        title="Crop your room photo"
+        onConfirm={(croppedFile, croppedUrl) => {
+          setCropOpen(false);
+          if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+          setPendingFile(null); setPendingUrl('');
+          doRoomUpload(croppedFile, croppedUrl);
+        }}
+        onCancel={() => {
+          setCropOpen(false);
+          const f = pendingFile; const u = pendingUrl;
+          setPendingFile(null); setPendingUrl('');
+          if (f) doRoomUpload(f, u);
+        }}
+      />
     </div>
   );
 }
