@@ -12,7 +12,8 @@ export type TaskId =
   | 'redis.cache.flush'
   | 'render.stuck.cleanup'
   | 'db.stats.snapshot'
-  | 'purge.404.logs';
+  | 'purge.404.logs'
+  | 'purge.old.snapshots';
 
 export interface IScheduledTask extends Document {
   taskId:           TaskId;

@@ -24,3 +24,4 @@ export { default as NotFoundLog, type INotFoundLog } from './NotFoundLog';
 export { default as WorkflowState, type IWorkflowState, type BookingStateId } from './WorkflowState';
 export { default as WorkflowTransition, type IWorkflowTransition } from './WorkflowTransition';
 export { default as WorkflowEvent, type IWorkflowEvent } from './WorkflowEvent';
+export { default as Snapshot, type ISnapshot, type SnapshotTrigger } from './Snapshot';

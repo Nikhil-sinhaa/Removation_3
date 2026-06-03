@@ -184,6 +184,16 @@ export async function seedDefaultTasks() {
       runCount:       0,
       failCount:      0,
     },
+    {
+      taskId:         'purge.old.snapshots',
+      name:           'Purge Old Project Snapshots',
+      description:    'Delete non-pinned project snapshots older than 90 days and enforce 50-snapshot limit per project',
+      cronExpression: '0 4 * * 0',
+      enabled:        true,
+      status:         'idle',
+      runCount:       0,
+      failCount:      0,
+    },
   ];
 
   for (const task of defaults) {

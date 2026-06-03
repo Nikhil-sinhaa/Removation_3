@@ -4,6 +4,7 @@ import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/lib/db/models/User";
 import Project from "@/lib/db/models/Project";
 import Render from "@/lib/db/models/Render";
+import { createSnapshot, extractProjectData } from "@/lib/versioning/snapshots";
 
 export async function GET(
     request: NextRequest,
@@ -77,6 +78,17 @@ export async function PATCH(
             { ...body, updatedAt: new Date() },
             { new: true }
         );
+
+        // Non-blocking snapshot — never delays the save response
+        if (project) {
+            createSnapshot({
+                projectId:    id,
+                userId:       authUser.id,
+                trigger:      'manual_save',
+                data:         extractProjectData(project.toObject() as unknown as Record<string, unknown>),
+                thumbnailUrl: body.thumbnailUrl,
+            }).catch(err => console.error('[Snapshot] Auto-snapshot on save failed:', err));
+        }
 
         return NextResponse.json(project);
     } catch (error) {

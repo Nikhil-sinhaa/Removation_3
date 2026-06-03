@@ -8,6 +8,7 @@ import { renderStuckCleanupTask }           from './tasks/renderStuckCleanup';
 import { redisCacheFlushTask }              from './tasks/redisCacheFlush';
 import { dbStatsSnapshotTask }              from './tasks/dbStatsSnapshot';
 import { purge404LogsTask }                 from './tasks/purge404Logs';
+import { purgeOldSnapshotsTask }            from './tasks/purgeOldSnapshots';
 
 let initialized = false;
 
@@ -29,8 +30,9 @@ export async function initializeScheduler() {
   registerTask('redis.cache.flush',              redisCacheFlushTask);
   registerTask('db.stats.snapshot',              dbStatsSnapshotTask);
   registerTask('purge.404.logs',                 purge404LogsTask);
+  registerTask('purge.old.snapshots',            purgeOldSnapshotsTask);
 
   await seedDefaultTasks();
 
-  console.log('[Scheduler] Initialized with 9 registered task handlers');
+  console.log('[Scheduler] Initialized with 10 registered task handlers');
 }
