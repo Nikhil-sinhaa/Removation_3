@@ -8,7 +8,7 @@ import { defaultTours } from '@/lib/tours/defaultTours';
 export async function GET(req: NextRequest) {
   try {
     const authError = await requireRole(req, ['admin']);
-    if (authError) return authError;
+    if (authError instanceof NextResponse) return authError;
 
     await connectToDatabase();
 
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const authError = await requireRole(req, ['admin']);
-    if (authError) return authError;
+    if (authError instanceof NextResponse) return authError;
 
     const body = await req.json();
     await connectToDatabase();

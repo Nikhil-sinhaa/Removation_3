@@ -9,7 +9,7 @@ export async function PATCH(
 ) {
   try {
     const authError = await requireRole(req, ['admin']);
-    if (authError) return authError;
+    if (authError instanceof NextResponse) return authError;
 
     const { tourId } = params;
     const body = await req.json();
@@ -39,7 +39,7 @@ export async function DELETE(
 ) {
   try {
     const authError = await requireRole(req, ['admin']);
-    if (authError) return authError;
+    if (authError instanceof NextResponse) return authError;
 
     const { tourId } = params;
 
