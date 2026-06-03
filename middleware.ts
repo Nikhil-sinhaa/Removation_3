@@ -27,6 +27,7 @@ const PUBLIC_PREFIXES = [
   '/api/contractors',
   '/api/vendors',
   '/api/test',
+  '/api/internal',
 ];
 
 function isPublicPath(pathname: string): boolean {
