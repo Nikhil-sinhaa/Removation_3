@@ -1,6 +1,11 @@
 public/renders
 node_modules
+.next
+tmp
+.venv-graphify
+.venv
+venv
+scripts/rclone
 .env*.local
-src/workflows
-scripts
 *.ipynb
+src/workflows
