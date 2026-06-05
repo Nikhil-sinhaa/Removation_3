@@ -26,13 +26,14 @@ check_port() {
 wait_for_service() {
     local port=$1
     local name=$2
-    local max_attempts=30
+    local path=$3
+    local max_attempts=90
     local attempt=1
     
     echo -e "${BLUE}Waiting for $name to be ready...${NC}"
     
     while [ $attempt -le $max_attempts ]; do
-        if curl -s http://localhost:$port >/dev/null 2>&1; then
+        if curl -s http://localhost:$port$path >/dev/null 2>&1; then
             echo -e "${GREEN}✅ $name is ready on port $port${NC}"
             return 0
         fi
@@ -47,7 +48,7 @@ wait_for_service() {
 
 # Kill existing processes
 echo -e "${BLUE}🧹 Cleaning up existing processes...${NC}"
-pkill -f "python3.*main.py" 2>/dev/null || true
+pkill -f "python.*main.py" 2>/dev/null || true
 pkill -f "next.*dev" 2>/dev/null || true
 pkill -f "node.*3000" 2>/dev/null || true
 sleep 2
@@ -73,23 +74,45 @@ echo -e "${BLUE}🤖 Starting ComfyUI...${NC}"
 cd /home/nikhil/Documents/Remo2/ComfyUI
 source venv/bin/activate
 
-# ComfyUI optimized for RTX 4060 8GB
+# Detect if NVIDIA driver is loaded and working
+USE_CPU=""
+if ! nvidia-smi >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  NVIDIA driver is not responding or not loaded.${NC}"
+    echo -e "${YELLOW}   Current kernel ($(uname -r)) is missing NVIDIA modules, which are installed on 6.17.0-22-generic.${NC}"
+    echo -e "${YELLOW}   Falling back to CPU mode (--cpu) so the server can start. Note: Image generation will be slow.${NC}"
+    echo -e "${YELLOW}   👉 Tip: Reboot and select kernel '6.17.0-22-generic' from the GRUB advanced boot options to restore full GPU acceleration.${NC}"
+    USE_CPU="--cpu"
+fi
+
+# ComfyUI optimized for RTX 4060 8GB (or fallback to CPU)
 export XFORMERS_FORCE_DISABLE_TRITON=1
 export TORCH_CUDNN_V8_API_ENABLED=1
-python3 main.py \
-    --listen 0.0.0.0 \
-    --port 8188 \
-    --lowvram \
-    --preview-method auto \
-    --disable-metadata \
-    --disable-xformers \
-    > /tmp/logs/comfyui.log 2>&1 &
+
+if [ -n "$USE_CPU" ]; then
+    python3 main.py \
+        --listen 0.0.0.0 \
+        --port 8188 \
+        --cpu \
+        --disable-metadata \
+        --enable-manager \
+        > /tmp/logs/comfyui.log 2>&1 &
+else
+    python3 main.py \
+        --listen 0.0.0.0 \
+        --port 8188 \
+        --lowvram \
+        --preview-method auto \
+        --disable-metadata \
+        --disable-xformers \
+        --enable-manager \
+        > /tmp/logs/comfyui.log 2>&1 &
+fi
 
 COMFYUI_PID=$!
 echo "ComfyUI PID: $COMFYUI_PID"
 
 # Wait for ComfyUI to be ready
-if ! wait_for_service 8188 "ComfyUI"; then
+if ! wait_for_service 8188 "ComfyUI" "/system_stats"; then
     echo -e "${RED}❌ ComfyUI failed to start. Check logs: /tmp/logs/comfyui.log${NC}"
     kill $COMFYUI_PID 2>/dev/null
     exit 1
@@ -105,13 +128,13 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Start Next.js in background
-npm run dev > /tmp/logs/nextjs.log 2>&1 &
+# Start Next.js in background with increased Node heap memory limit
+NODE_OPTIONS="--max-old-space-size=4096" npm run dev > /tmp/logs/nextjs.log 2>&1 &
 NEXTJS_PID=$!
 echo "Next.js PID: $NEXTJS_PID"
 
 # Wait for Next.js to be ready
-if ! wait_for_service 3000 "Next.js"; then
+if ! wait_for_service 3000 "Next.js" ""; then
     echo -e "${RED}❌ Next.js failed to start. Check logs: /tmp/logs/nextjs.log${NC}"
     kill $COMFYUI_PID 2>/dev/null
     kill $NEXTJS_PID 2>/dev/null
@@ -138,7 +161,55 @@ echo -e "${BLUE}│${NC}  ${GREEN}Logs:${NC}           /tmp/logs/${NC}          
 echo -e "${BLUE}└─────────────────────────────────────────────────────────┘${NC}"
 echo -e "${YELLOW}Press Ctrl+C to stop all services${NC}"
 
-# Monitor services
+# Helper function to get process tree RSS in Megabytes
+get_process_tree_rss() {
+    local parent_pid=$1
+    if [ -z "$parent_pid" ]; then
+        echo 0
+        return
+    fi
+    # Start with the parent pid itself
+    local pids="$parent_pid"
+    
+    # Get direct child processes of the parent pid
+    local children=$(pgrep -P $parent_pid 2>/dev/null)
+    for child in $children; do
+        pids="$pids $child"
+        local grandchildren=$(pgrep -P $child 2>/dev/null)
+        if [ -n "$grandchildren" ]; then
+            pids="$pids $grandchildren"
+        fi
+    done
+    
+    # Remove duplicates
+    pids=$(echo $pids | tr ' ' '\n' | sort -u | tr '\n' ' ')
+    
+    local total_rss=0
+    for pid in $pids; do
+        if [ -d "/proc/$pid" ]; then
+            local rss=$(ps -o rss= -p $pid 2>/dev/null | tr -d '[:space:]')
+            if [[ "$rss" =~ ^[0-9]+$ ]]; then
+                total_rss=$((total_rss + rss))
+            fi
+        fi
+    done
+    
+    echo $((total_rss / 1024))
+}
+
+# Helper function to check available system memory in Megabytes
+get_available_system_memory() {
+    local available_kb=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+    if [ -n "$available_kb" ]; then
+        echo $((available_kb / 1024))
+    else
+        echo -1
+    fi
+}
+
+# Monitor services with automatic OOM watchdog prevention
+echo -e "${BLUE}🛡️ Memory Watchdog Active (Next.js threshold: 3800MB, System low-mem threshold: 500MB)${NC}"
+
 while true; do
     # Check if ComfyUI is responding
     if ! curl -s http://localhost:8188/system_stats >/dev/null 2>&1; then
@@ -151,9 +222,25 @@ while true; do
         echo -e "${RED}❌ Next.js not responding${NC}"
         break
     fi
+
+    # Monitor Next.js memory usage
+    NEXT_MEM=$(get_process_tree_rss $NEXTJS_PID)
+    if [ "$NEXT_MEM" -gt 3800 ]; then
+        echo -e "${RED}🚨 WARNING: Next.js process tree memory (${NEXT_MEM}MB) has exceeded safe limits (heap max: 4096MB).${NC}"
+        echo -e "${RED}🚨 Automatically terminating server to prevent an Out-Of-Memory system crash/freeze!${NC}"
+        break
+    fi
+
+    # Monitor overall system available memory
+    SYS_AVAIL=$(get_available_system_memory)
+    if [ "$SYS_AVAIL" -ne -1 ] && [ "$SYS_AVAIL" -lt 500 ]; then
+        echo -e "${RED}🚨 CRITICAL: Available system memory is extremely low (${SYS_AVAIL}MB).${NC}"
+        echo -e "${RED}🚨 Shutting down services immediately to prevent system lockup/freeze!${NC}"
+        break
+    fi
     
     sleep 10
 done
 
-# If we reach here, something went wrong
+# If we reach here, something went wrong or OOM limit was hit
 cleanup

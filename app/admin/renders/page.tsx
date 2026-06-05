@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import {
@@ -851,14 +852,22 @@ const RenderDetailsModal = ({
 
 // Main Component
 export default function AdminRendersPage() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const viewParam = searchParams.get('view');
+
   const [isLoading, setIsLoading] = useState(true);
   const [renders, setRenders] = useState<Render[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(
+    tabParam === 'flagged' || tabParam === 'processing' ? tabParam : 'all'
+  );
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [selectedRenders, setSelectedRenders] = useState<string[]>([]);
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "table">(
+    viewParam === 'gallery' ? 'grid' : 'grid'
+  );
   const [sortBy, setSortBy] = useState<string>("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -868,12 +877,56 @@ export default function AdminRendersPage() {
   const [renderToDelete, setRenderToDelete] = useState<string | null>(null);
   const itemsPerPage = 12;
 
+  const [stats, setStats] = useState<RenderStats>(mockStats);
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setRenders(mockRenders);
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    async function fetchRenders() {
+      try {
+        setIsLoading(true);
+        const res = await fetch('/api/admin/renders?limit=500');
+        if (res.ok) {
+          const data = await res.json();
+          const mapped: Render[] = (data.renders ?? []).map((r: any) => ({
+            id: r._id,
+            userId: r.userId?._id ?? r.userId ?? 'unknown',
+            userName: r.userId ? [(r.userId.firstName ?? ''), (r.userId.lastName ?? '')].filter(Boolean).join(' ') || r.userId.email || 'Unknown User' : 'Unknown User',
+            userEmail: r.userId?.email ?? 'unknown@email.com',
+            userAvatar: r.userId?.imageUrl,
+            userPlan: (r.userId?.subscription?.plan ?? 'free') as 'free' | 'pro' | 'teams',
+            type: r.mode ? r.mode.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : 'Unknown',
+            style: r.style ?? '',
+            roomType: r.roomType ?? '',
+            status: (r.status === 'starting' ? 'queued' : (r.status === 'canceled' ? 'failed' : r.status)) as Render['status'],
+            originalImage: r.inputImage,
+            generatedImage: r.outputImage || (r.outputUrls && r.outputUrls[0]) || r.resultUrl,
+            vastuScore: r.vastuScore,
+            costEstimate: r.costEstimate,
+            processingTime: r.processingTime,
+            createdAt: r.createdAt,
+            completedAt: r.completedAt,
+            errorMessage: r.error,
+            isFlagged: false,
+            isDeleted: false,
+            metadata: {
+              width: r.settings?.width ?? 1024,
+              height: r.settings?.height ?? 768,
+              model: r.predictionId ? 'Replicate' : 'ComfyUI',
+              prompt: r.prompt,
+            },
+          }));
+          setRenders(mapped);
+          if (data.stats) {
+            setStats(data.stats);
+          }
+        }
+      } catch (e) {
+        // Fallback to mock renders on error
+        setRenders(mockRenders);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchRenders();
   }, []);
 
   // Filter and sort renders
@@ -1044,50 +1097,50 @@ export default function AdminRendersPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           <StatCard
             title="Total"
-            value={mockStats.total}
+            value={stats.total}
             icon={<Layers className="w-5 h-5 text-violet-500" />}
             color="bg-violet-500"
             subValue="All time"
           />
           <StatCard
             title="Completed"
-            value={mockStats.completed}
+            value={stats.completed}
             icon={<CheckCircle2 className="w-5 h-5 text-green-500" />}
             color="bg-green-500"
           />
           <StatCard
             title="Processing"
-            value={mockStats.processing}
+            value={stats.processing}
             icon={<RefreshCw className="w-5 h-5 text-amber-500" />}
             color="bg-amber-500"
           />
           <StatCard
             title="Failed"
-            value={mockStats.failed}
+            value={stats.failed}
             icon={<XCircle className="w-5 h-5 text-red-500" />}
             color="bg-red-500"
           />
           <StatCard
             title="Queued"
-            value={mockStats.queued}
+            value={stats.queued}
             icon={<Clock className="w-5 h-5 text-blue-500" />}
             color="bg-blue-500"
           />
           <StatCard
             title="Today"
-            value={mockStats.todayCount}
+            value={stats.todayCount}
             icon={<Activity className="w-5 h-5 text-cyan-500" />}
             color="bg-cyan-500"
           />
           <StatCard
             title="Avg Time"
-            value={mockStats.avgProcessingTime}
+            value={stats.avgProcessingTime}
             icon={<Zap className="w-5 h-5 text-yellow-500" />}
             color="bg-yellow-500"
           />
           <StatCard
             title="Success Rate"
-            value={mockStats.successRate}
+            value={stats.successRate}
             icon={<TrendingUp className="w-5 h-5 text-emerald-500" />}
             color="bg-emerald-500"
           />

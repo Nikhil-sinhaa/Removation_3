@@ -3,8 +3,8 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
-// Optional: import Clerk auth later when you need protected uploads
-// import { getCurrentUser } from '@/lib/auth/jwt';
+import { verifyJwt } from '@/lib/auth/jwt';
+
 
 const f = createUploadthing();
 
@@ -18,20 +18,16 @@ export const ourFileRouter = {
       contentDisposition: "inline",
     },
   })
-    .middleware(async ({ req, files, input }) => {
-      // Note: no 'res' here — that's why TS complained
-      // You can use 'req' for headers/cookies if needed
-
-      // Optional: Clerk auth integration (uncomment when ready)
-      // const authUser = await getCurrentUser();
-  const userId = authUser?.id;
-      // if (!userId) throw new UploadThingError("Unauthorized");
-
-      // Metadata that will be available in onUploadComplete
-      return {
-        userId: "anonymous",        // replace with real userId later
-        // Example: projectId: input?.projectId, etc.
-      };
+    .middleware(async ({ req }) => {
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
       // Runs on server after successful upload
@@ -52,8 +48,16 @@ export const ourFileRouter = {
   // Endpoint for project cover images
   projectImage: f({
     image: { maxFileSize: "4MB", maxFileCount: 1 }
-  }).middleware(async () => {
-    return { userId: "user" };
+  }).middleware(async ({ req }) => {
+    const cookieName = process.env.COOKIE_NAME || 'auth_token';
+    const rawCookie = req.headers.get('cookie') ?? '';
+    const match = rawCookie.match(
+      new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+    );
+    const token = match?.[1] ?? null;
+    const user = token ? verifyJwt(token) : null;
+    if (!user) throw new UploadThingError('Unauthorized');
+    return { userId: user.id };
   }).onUploadComplete(async ({ file }) => {
     return { url: file.url, key: file.key };
   }),
@@ -61,13 +65,125 @@ export const ourFileRouter = {
   // Endpoint for user avatars
   avatar: f({
     image: { maxFileSize: "2MB", maxFileCount: 1 }
-  }).middleware(async () => {
-    return { userId: "user" };
+  }).middleware(async ({ req }) => {
+    const cookieName = process.env.COOKIE_NAME || 'auth_token';
+    const rawCookie = req.headers.get('cookie') ?? '';
+    const match = rawCookie.match(
+      new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+    );
+    const token = match?.[1] ?? null;
+    const user = token ? verifyJwt(token) : null;
+    if (!user) throw new UploadThingError('Unauthorized');
+    return { userId: user.id };
   }).onUploadComplete(async ({ file }) => {
     return { url: file.url, key: file.key };
   }),
 
+
+  // ─── Designer Portfolio Upload ─────────────────────────────────────────────
+  // Auth-gated from day one. Reads the same auth_token cookie the rest of the
+  // app uses (lib/auth/jwt.ts). Max 10 images, 4MB each, no SVG/HEIC/GIF/PDF.
+  designerPortfolio: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 10,
+      contentDisposition: "inline",
+    },
+  })
+    .middleware(async ({ req }) => {
+      // Read auth_token from the Cookie header — UploadThing middleware runs
+      // outside the standard Next.js response cycle so we parse raw headers.
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      // Simple cookie parser: find `auth_token=<value>` bounded by ; or end
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Designer portfolio upload complete:');
+      console.log('  • URL:', file.url);
+      console.log('  • Key:', file.key);
+      console.log('  • User:', metadata.userId);
+
+      return {
+        url: file.url,
+        key: file.key,
+        name: file.name ?? 'unnamed',
+        size: file.size,
+      };
+    }),
+
+  // ─── Contractor Portfolio Upload ───────────────────────────────────────────
+  contractorPortfolio: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 10,
+      contentDisposition: "inline",
+    },
+  })
+    .middleware(async ({ req }) => {
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Contractor portfolio upload complete:');
+      return {
+        url: file.url,
+        key: file.key,
+        name: file.name ?? 'unnamed',
+        size: file.size,
+      };
+    }),
+
+  // ─── Vendor Portfolio Upload ───────────────────────────────────────────────
+  vendorPortfolio: f({
+    image: {
+      maxFileSize: "4MB",
+      maxFileCount: 10,
+      contentDisposition: "inline",
+    },
+  })
+    .middleware(async ({ req }) => {
+      const cookieName = process.env.COOKIE_NAME || 'auth_token';
+      const rawCookie = req.headers.get('cookie') ?? '';
+      const match = rawCookie.match(
+        new RegExp(`(?:^|;\\s*)${cookieName}=([^;]+)`)
+      );
+      const token = match?.[1] ?? null;
+
+      const user = token ? verifyJwt(token) : null;
+      if (!user) throw new UploadThingError('Unauthorized');
+
+      return { userId: user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      console.log('Vendor portfolio upload complete:');
+      return {
+        url: file.url,
+        key: file.key,
+        name: file.name ?? 'unnamed',
+        size: file.size,
+      };
+    }),
+
 } satisfies FileRouter;
+
 
 // Critical export for type safety in other files (fixes import in lib/uploadthing.ts)
 export type OurFileRouter = typeof ourFileRouter;

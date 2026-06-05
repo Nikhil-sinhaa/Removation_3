@@ -1,69 +1,282 @@
-/**
- * API Route: Lighting Tab
- * POST /api/ai/lighting — Low-denoise relighting
- */
+import { Readable } from 'stream';
+import { NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { connectDB } from '@/src/lib/mongodb';
-import Project from '@/src/models/Project';
-import comfyBridge from '@/src/services/comfyBridge';
-import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { connectDB } from '@/lib/db/mongodb';
+import Project from '@/src/models/Project';
+import User from '@/lib/db/models/User';
+import LightingRun from '@/src/models/LightingRun';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
+import { runLightingWorkflow, LIGHTING_PRESETS } from '@/src/services/lightingOrchestrator';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { enqueueGeneration } from '@/lib/ai/queuedGeneration';
+import { ensureWorkerRunning } from '@/lib/ai/workerInit';
+
+import { getQueueDepth } from '@/lib/redis/aiQueue';
+
 export const runtime = 'nodejs';
+
+// Turbopack-safe multipart formData parser
+async function safeParseFormData(request: Request): Promise<any> {
+  try {
+    return await request.formData();
+  } catch (_) {
+    const Busboy = (await import('busboy')).default;
+    const contentType = request.headers.get('content-type') || '';
+    return new Promise(async (resolve, reject) => {
+      const fields = new Map();
+      const files = new Map();
+      const bb = Busboy({ headers: { 'content-type': contentType } });
+      bb.on('file', (fieldname, fileStream, info) => {
+        const { filename, mimeType } = info;
+        const chunks: any[] = [];
+        fileStream.on('data', c => chunks.push(c));
+        fileStream.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          const blob = new Blob([buffer], { type: mimeType }) as any;
+          blob.name = filename;
+          blob.arrayBuffer = async () =>
+            buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+          files.set(fieldname, blob);
+        });
+      });
+      bb.on('field', (fieldname, value) => fields.set(fieldname, value));
+      bb.on('close', () => resolve({ get: (k: string) => files.get(k) || fields.get(k) || null }));
+      bb.on('error', reject);
+      const ab = await request.arrayBuffer();
+      Readable.from(Buffer.from(ab)).pipe(bb);
+    });
+  }
+}
 
 export async function POST(request: Request) {
   await connectDB();
+  ensureWorkerRunning();
+
   try {
-    const formData = await request.formData();
-    const imageFile = formData.get('image') as File;
-    const rawData = formData.get('data') as string;
-    const data = rawData ? JSON.parse(rawData) : {};
-    if (!imageFile) return NextResponse.json({ error: 'No image' }, { status: 400 });
+    // ── Authentication ────────────────────────────────────────────────────────
+    const authUser = await getCurrentUser();
+    const clerkId = authUser?.id;
+    if (!clerkId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const user = await User.findOne({ clerkId });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+    const userId = String(user._id);
 
-    const { mood = 'warm', timeOfDay = 'day', intensity = 0.35, roomType = 'living room' } = data;
-    const comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
-    await mkdir(comfyInputDir, { recursive: true });
-
-    const bytes = await imageFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const comfyFilename = `lighting_${Date.now()}.png`;
-    await sharp(buffer).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, comfyFilename));
-
-    let referenceLight: string | null = null;
-    const refFile = formData.get('referenceLight') as File | null;
-    if (refFile) {
-      const refBuf = Buffer.from(await refFile.arrayBuffer());
-      const refFn = `lighting_ref_${Date.now()}.png`;
-      await sharp(refBuf).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, refFn));
-      referenceLight = refFn;
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Queue is full. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-    await writeFile(path.join(uploadsDir, comfyFilename), buffer);
+    // ── Parse Body ───────────────────────────────────────────────────────────
+    const formData = await safeParseFormData(request);
+    const imageFile = (formData.get('image') || formData.get('roomImage')) as File | null;
+    const rawData = formData.get('data') as string;
+    const data = rawData ? JSON.parse(rawData) : {};
 
+    const {
+      preset,
+      manualPrompt,
+      shape,
+      lightX,
+      lightY,
+      canvasWidth,
+      canvasHeight,
+      lightWidth,
+      lightHeight,
+      spread,
+      softness,
+      invertLight,
+      intensity,
+      icMultiplier,
+      denoise,
+      cfg,
+      frames
+    } = data;
+
+    // ── Validation ───────────────────────────────────────────────────────────
+    if (!imageFile) {
+      return NextResponse.json({ error: 'No input image provided' }, { status: 400 });
+    }
+
+    const presets = LIGHTING_PRESETS as Record<string, any>;
+    if (preset && !presets[preset]) {
+      return NextResponse.json({ error: `Invalid preset selected: ${preset}` }, { status: 400 });
+    }
+
+    // ── Save Uploaded Image ──────────────────────────────────────────────────
+    const bytes = await imageFile.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const uploadFilename = `lighting_${Date.now()}_${imageFile.name || 'room.png'}`;
+
+    // Read actual dimensions of uploaded image using sharp
+    let finalImageWidth = data.imageWidth;
+    let finalImageHeight = data.imageHeight;
+    try {
+      const metadata = await sharp(buffer).metadata();
+      if (metadata.width) finalImageWidth = metadata.width;
+      if (metadata.height) finalImageHeight = metadata.height;
+      console.log(`[Lighting API] Sharp parsed dimensions: ${finalImageWidth}x${finalImageHeight}`);
+    } catch (err: any) {
+      console.warn('[Lighting API] Sharp failed to read image dimensions:', err.message);
+    }
+
+    if (!finalImageWidth || !finalImageHeight) {
+      finalImageWidth = 512;
+      finalImageHeight = 512;
+    }
+
+    // 1. Save local preview image in /uploads/
+    const inputImageUrl = await saveUploadPreview(buffer, uploadFilename);
+
+    // 2. Save image to ComfyUI input folder
+    let comfyFilename = '';
+    const pngFilename = uploadFilename.replace(/\.[^.]+$/, '.png');
+    try {
+      comfyFilename = await saveImageForComfy(buffer, pngFilename);
+    } catch {
+      comfyFilename = await saveImageForComfy(buffer, uploadFilename);
+    }
+
+    // ── Create Project document ──────────────────────────────────────────────
+    const label = preset ? (presets[preset]?.label || preset) : 'Custom Studio';
     const project = await Project.create({
-      name: `Lighting — ${mood} ${timeOfDay}`, userId: '000000000000000000000000',
-      originalImage: `/uploads/${comfyFilename}`, status: 'queued', processingType: 'tab-lighting',
-      aiConfig: { mood, timeOfDay, intensity, roomType },
+      name: `Lighting — ${label}`,
+      userId,
+      originalImage: inputImageUrl || '',
+      status: 'queued',
+      processingType: 'lighting',
+      aiConfig: {
+        preset,
+        manualPrompt,
+        shape,
+        lightX,
+        lightY,
+        canvasWidth,
+        canvasHeight,
+        lightWidth,
+        lightHeight,
+        spread,
+        softness,
+        invertLight,
+        intensity,
+        icMultiplier,
+        denoise,
+        cfg,
+        frames
+      }
     });
 
-    comfyBridge.enqueueTabJob(project._id.toString(), 'lighting', {
-      imageFilename: comfyFilename, mood, timeOfDay, intensity, referenceLight,
-    }).catch((err: any) => console.error('❌ Lighting error:', err.message));
+    const projId = String(project._id);
 
-    return NextResponse.json({ success: true, projectId: project._id, tab: 'lighting', status: 'queued' });
+    // ── Enqueue ───────────────────────────────────────────────────────────────
+    const queueResult = await enqueueGeneration({
+      userId,
+      featureType: 'lighting',
+      generateFn: async () => {
+        const creditResult = await checkAndDeductCredits(clerkId, 'lighting');
+        if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
+        await runLightingWorkflow({
+          comfyFilename,
+          imageWidth: finalImageWidth,
+          imageHeight: finalImageHeight,
+          preset,
+          manualPrompt,
+          shape,
+          lightX,
+          lightY,
+          canvasWidth,
+          canvasHeight,
+          lightWidth,
+          lightHeight,
+          spread,
+          softness,
+          invertLight,
+          intensity,
+          icMultiplier,
+          denoise,
+          cfg,
+          frames,
+          saveFilename: `lighting_${projId}`,
+          projectId: projId,
+          userId,
+          clerkId,
+          inputImageUrl,
+          emitProgress: () => {},
+        });
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      projectId: projId,
+      renderId: queueResult.renderId,
+      jobId: queueResult.jobId,
+      queuePosition: queueResult.queuePosition,
+      estimatedWaitSeconds: queueResult.estimatedWaitSeconds,
+    }, { status: 202 });
+
   } catch (error: any) {
-    return NextResponse.json({ error: 'Lighting failed', message: error.message }, { status: 500 });
+    console.error('❌ /api/ai/lighting POST error:', error.message);
+    if (error?.code === 'insufficient_credits' || error?.message?.includes('insufficient_credits')) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: error.message,
+      }, { status: 402 });
+    }
+    if (error?.code === 'QUEUE_FULL') {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function GET(request: Request) {
   await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const user = await User.findOne({ clerkId: authUser.id });
+  if (!user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
-  if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findById(projectId);
-  if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  return NextResponse.json(project);
+
+  if (!projectId) {
+    return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
+  }
+
+  try {
+    const project = await Project.findOne({ _id: projectId, userId: user._id }).lean();
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Fetch the latest runs for this project
+    const run = await LightingRun.findOne({ projectId }).sort({ createdAt: -1 }).lean();
+
+    const results = run ? run.results : [];
+
+    return NextResponse.json({
+      status: project.status,
+      resultImage: project.resultImage,
+      errorMessage: project.errorMessage,
+      results,
+      runId: run ? String(run._id) : null,
+      isBatch: run ? run.isBatch : (project.aiConfig?.frames && project.aiConfig.frames > 1)
+    });
+  } catch (error: any) {
+    console.error('❌ /api/ai/lighting GET error:', error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 }

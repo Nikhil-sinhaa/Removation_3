@@ -662,20 +662,155 @@ const PendingItemRow = ({ item, index }: { item: PendingItem; index: number }) =
   );
 };
 
+// API response types
+interface StatsResponse {
+  users: {
+    total: number;
+    today: number;
+    thisMonth: number;
+    growth: number;
+    active: number;
+    pro: number;
+    byPlan: Record<string, number>;
+    byRole: Record<string, number>;
+    recent: Array<{
+      _id: string;
+      firstName?: string;
+      lastName?: string;
+      email: string;
+      imageUrl?: string;
+      'subscription.plan'?: string;
+      subscription?: { plan: string };
+      role: string;
+      createdAt: string;
+    }>;
+  };
+  renders: {
+    total: number;
+    today: number;
+    thisMonth: number;
+    growth: number;
+    byStatus: Record<string, number>;
+    byMode: Array<{ _id: string; count: number }>;
+    recent: Array<{
+      _id: string;
+      mode: string;
+      status: string;
+      createdAt: string;
+      userId?: { firstName?: string; lastName?: string; email?: string; imageUrl?: string };
+    }>;
+  };
+}
+
 // Main Component
 export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [stats, setStats] = useState<StatsResponse | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    async function fetchStats() {
+      try {
+        const res = await fetch('/api/admin/stats');
+        if (res.ok) {
+          const data = await res.json();
+          setStats(data);
+        }
+      } catch (e) {
+        // stats stays null — fallback to mock display
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchStats();
   }, []);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Build real stat cards from API data
+  const realStats: StatCard[] = stats ? [
+    {
+      title: 'Total Users',
+      value: stats.users.total.toLocaleString(),
+      change: stats.users.growth,
+      changeLabel: 'vs last month',
+      icon: <Users className="w-6 h-6" />,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10',
+      href: '/admin/users',
+    },
+    {
+      title: 'Total Renders',
+      value: stats.renders.total.toLocaleString(),
+      change: stats.renders.growth,
+      changeLabel: 'vs last month',
+      icon: <ImageIcon className="w-6 h-6" />,
+      color: 'text-violet-500',
+      bgColor: 'bg-violet-500/10',
+      href: '/admin/renders',
+    },
+    {
+      title: 'Pro / Team Users',
+      value: stats.users.pro.toLocaleString(),
+      change: 0,
+      changeLabel: 'paying subscribers',
+      icon: <CreditCard className="w-6 h-6" />,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10',
+      href: '/admin/analytics',
+    },
+    {
+      title: 'Active Subscriptions',
+      value: stats.users.active.toLocaleString(),
+      change: 0,
+      changeLabel: 'currently active',
+      icon: <TrendingUp className="w-6 h-6" />,
+      color: 'text-amber-500',
+      bgColor: 'bg-amber-500/10',
+      href: '/admin/analytics',
+    },
+  ] : mockStats;
+
+  const displayStats = realStats;
+
+  // Build quick stats from real data
+  const realQuickStats = stats ? [
+    { label: "New Users Today", value: stats.users.today.toLocaleString(), icon: <UserPlus className="w-4 h-4" />, trend: "+" + stats.users.today },
+    { label: "Renders Today", value: stats.renders.today.toLocaleString(), icon: <ImagePlus className="w-4 h-4" />, trend: "+" + stats.renders.today },
+    { label: "This Month Users", value: stats.users.thisMonth.toLocaleString(), icon: <Home className="w-4 h-4" />, trend: stats.users.growth + "%" },
+    { label: "Monthly Renders", value: stats.renders.thisMonth.toLocaleString(), icon: <IndianRupee className="w-4 h-4" />, trend: stats.renders.growth + "%" },
+    { label: "Active Subscriptions", value: stats.users.active.toLocaleString(), icon: <Activity className="w-4 h-4" />, trend: "live" },
+    { label: "Pro Users", value: stats.users.pro.toLocaleString(), icon: <Zap className="w-4 h-4" />, trend: "stable" },
+  ] : mockQuickStats;
+
+  // Map recent users from API
+  const recentUsersFromApi: RecentUser[] = stats?.users.recent.map(u => ({
+    id: u._id,
+    name: [(u.firstName ?? ''), (u.lastName ?? '')].filter(Boolean).join(' ') || u.email,
+    email: u.email,
+    avatar: u.imageUrl,
+    plan: ((u.subscription as any)?.plan ?? 'free') as 'free' | 'pro' | 'teams',
+    joinedAt: new Date(u.createdAt).toLocaleDateString(),
+    renders: 0,
+    status: 'active' as const,
+  })) ?? [];
+
+  const displayUsers = recentUsersFromApi.length > 0 ? recentUsersFromApi : mockRecentUsers;
+
+  // Map recent renders from API
+  const recentRendersFromApi: RecentRender[] = stats?.renders.recent.map(r => ({
+    id: r._id,
+    user: r.userId ? [(r.userId.firstName ?? ''), (r.userId.lastName ?? '')].filter(Boolean).join(' ') || (r.userId.email ?? 'Unknown') : 'Unknown',
+    type: r.mode.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+    style: '',
+    status: r.status as 'completed' | 'processing' | 'failed',
+    createdAt: new Date(r.createdAt).toLocaleString(),
+  })) ?? [];
+
+  const displayRenders = recentRendersFromApi.length > 0 ? recentRendersFromApi : mockRecentRenders;
 
   if (isLoading) {
     return (
@@ -757,7 +892,7 @@ export default function AdminDashboardPage() {
 
         {/* Main Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {mockStats.map((stat, index) => (
+          {displayStats.map((stat, index) => (
             <StatCardComponent key={stat.title} stat={stat} index={index} />
           ))}
         </div>
@@ -769,7 +904,7 @@ export default function AdminDashboardPage() {
           transition={{ delay: 0.4 }}
           className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"
         >
-          {mockQuickStats.map((stat, index) => (
+          {realQuickStats.map((stat, index) => (
             <QuickStatPill key={stat.label} stat={stat} index={index} />
           ))}
         </motion.div>
@@ -803,7 +938,7 @@ export default function AdminDashboardPage() {
                 <CardContent className="p-0">
                   <ScrollArea className="h-[280px]">
                     <div className="space-y-1 px-2">
-                      {mockRecentUsers.map((user, index) => (
+                      {displayUsers.map((user, index) => (
                         <UserRow key={user.id} user={user} index={index} />
                       ))}
                     </div>
@@ -837,7 +972,7 @@ export default function AdminDashboardPage() {
                 <CardContent className="p-0">
                   <ScrollArea className="h-[320px]">
                     <div className="space-y-1 px-2">
-                      {mockRecentRenders.map((render, index) => (
+                      {displayRenders.map((render, index) => (
                         <RenderRow key={render.id} render={render} index={index} />
                       ))}
                     </div>

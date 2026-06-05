@@ -76,7 +76,7 @@ export class ComfyUIErrorLogger {
   }
 
   logGPUError(message: string, details?: any): void {
-    log({
+    this.log({
       severity: 'error',
       component: 'gpu',
       message,

@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     "try",
-    "try3"
+    "try3",
+    "tomato-code"
   ]
 }

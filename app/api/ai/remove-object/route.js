@@ -5,11 +5,39 @@
 
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { connectDB } from '../../../../lib/db/mongodb';
 import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export async function POST(request) {
+  await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return Response.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
+
+    const deductResult = await checkAndDeductCredits(authUser.id, 'remove-object');
+    if (!deductResult.success) {
+      return Response.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     console.log('🗑️ Starting object removal...');
     
     // Parse form data
@@ -100,6 +128,7 @@ export async function POST(request) {
     // Create MongoDB Project
     const project = await Project.create({
       name: `Remove ${objectName}`,
+      userId: authUser.id,
       originalImage: `/uploads/${filename}`,
       status: 'queued',
       processingType: 'object_removal',
@@ -127,11 +156,16 @@ export async function POST(request) {
 }
 
 export async function GET(request) {
+  await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   
   if (projectId) {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ _id: projectId, userId: authUser.id });
     if (!project) {
       return Response.json({ error: 'Project not found' }, { status: 404 });
     }
@@ -142,6 +176,11 @@ export async function GET(request) {
 }
 
 export async function DELETE(request) {
+  await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   
@@ -149,7 +188,7 @@ export async function DELETE(request) {
     return Response.json({ error: 'Project ID required' }, { status: 400 });
   }
   
-  const project = await Project.findByIdAndDelete(projectId);
+  const project = await Project.findOneAndDelete({ _id: projectId, userId: authUser.id });
   if (!project) {
     return Response.json({ error: 'Project not found' }, { status: 404 });
   }

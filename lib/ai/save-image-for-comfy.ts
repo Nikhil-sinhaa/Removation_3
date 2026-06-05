@@ -16,19 +16,56 @@ import path from 'path';
 import { getGPUMode, getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 import { uploadImageToRemoteComfy } from '@/lib/ai/cloud-comfy-adapter';
 
+const TARGET_LONGEST = 1024;
+const MIN_LONGEST    = 768;  // images shorter than this on their longest side get upscaled
+
 export async function saveImageForComfy(
   buffer: Buffer,
   filename: string,
-  resizeOpts: { width?: number; height?: number } = { width: 1024, height: 1024 },
+  resizeOpts: { width?: number; height?: number } = { width: TARGET_LONGEST, height: TARGET_LONGEST },
 ): Promise<string> {
-  // Always resize + convert to PNG
-  const processed = await sharp(buffer)
-    .resize(resizeOpts.width, resizeOpts.height, {
+  // Resize to SDXL's operating range, then convert to PNG.
+  // Images smaller than MIN_LONGEST on their longest side are upscaled with
+  // Lanczos3 so SDXL doesn't run at thumbnail resolution (which causes
+  // oversaturation, warped geometry, and colour bleeding).
+  const meta = await sharp(buffer).metadata();
+  const origW = meta.width  ?? TARGET_LONGEST;
+  const origH = meta.height ?? TARGET_LONGEST;
+  const longestSide = Math.max(origW, origH);
+
+  type FitEnum = 'inside' | 'outside' | 'cover' | 'contain' | 'fill';
+  type KernelEnum = 'nearest' | 'cubic' | 'mitchell' | 'lanczos2' | 'lanczos3';
+
+  let resizeConfig: {
+    width?: number; height?: number;
+    fit: FitEnum; withoutEnlargement: boolean; kernel?: KernelEnum;
+  };
+
+  if (longestSide < MIN_LONGEST) {
+    // Upscale small thumbnails to TARGET_LONGEST on the long side
+    resizeConfig = {
+      width:  origW >= origH ? TARGET_LONGEST : undefined,
+      height: origH >  origW ? TARGET_LONGEST : undefined,
+      fit: 'inside',
+      withoutEnlargement: false,
+      kernel: 'lanczos3',
+    };
+  } else {
+    // Downscale oversized images or leave near-target images alone
+    resizeConfig = {
+      width:  resizeOpts.width,
+      height: resizeOpts.height,
       fit: 'inside',
       withoutEnlargement: true,
-    })
-    .png()
+    };
+  }
+
+  const processed = await sharp(buffer)
+    .resize(resizeConfig)
+    .png({ compressionLevel: 6 })
     .toBuffer();
+
+  console.log(`📐 saveImageForComfy: ${origW}×${origH} → ${longestSide < MIN_LONGEST ? 'upscaled' : longestSide > TARGET_LONGEST ? 'downscaled' : 'kept'} for SDXL`);
 
   const mode = getGPUMode();
 

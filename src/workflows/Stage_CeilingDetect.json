@@ -1,0 +1,409 @@
+{
+  "id": "stage1-ceiling-mask-only-sdxl-8gb",
+  "revision": 1,
+  "last_node_id": 7,
+  "last_link_id": 8,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        26,
+        260
+      ],
+      "size": [
+        315,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 1,
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "original_image.png"
+      ],
+      "title": "\ud83d\udcf7 Load Room Image"
+    },
+    {
+      "id": 2,
+      "type": "SAMLoader",
+      "pos": [
+        26,
+        100
+      ],
+      "size": [
+        315,
+        78
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SAM_MODEL",
+          "type": "SAM_MODEL",
+          "slot_index": 0,
+          "links": [
+            2
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SAMLoader"
+      },
+      "widgets_values": [
+        "sam2_hiera_small.pt",
+        "AUTO"
+      ],
+      "title": "\ud83c\udfaf SAMLoader \u2192 SAM2 (Hiera-Small, AUTO)"
+    },
+    {
+      "id": 3,
+      "type": "CLIPSegDetectorProvider",
+      "pos": [
+        420,
+        100
+      ],
+      "size": [
+        340,
+        130
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "BBOX_DETECTOR",
+          "type": "BBOX_DETECTOR",
+          "slot_index": 0,
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "CLIPSegDetectorProvider"
+      },
+      "widgets_values": [
+        "ceiling, white ceiling, overhead surface, top of room, upper wall, ceiling plane, interior ceiling, flat ceiling",
+        7.0,
+        0.25,
+        4
+      ],
+      "title": "\ud83d\udfeb CLIPSeg: CEILING Detector"
+    },
+    {
+      "id": 4,
+      "type": "ImpactSimpleDetectorSEGS",
+      "pos": [
+        840,
+        100
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "bbox_detector",
+          "type": "BBOX_DETECTOR",
+          "link": 3
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "name": "sam_model_opt",
+          "type": "SAM_MODEL",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SEGS",
+          "type": "SEGS",
+          "slot_index": 0,
+          "links": [
+            4
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImpactSimpleDetectorSEGS"
+      },
+      "widgets_values": [
+        0.35,
+        0,
+        3.0,
+        10,
+        0.5,
+        0,
+        0,
+        0.7,
+        0
+      ],
+      "title": "\ud83d\udd0d Detect + Refine: CEILING"
+    },
+    {
+      "id": 5,
+      "type": "SegsToCombinedMask",
+      "pos": [
+        1210,
+        100
+      ],
+      "size": [
+        220,
+        46
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "segs",
+          "type": "SEGS",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 0,
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SegsToCombinedMask"
+      },
+      "widgets_values": [],
+      "title": "SEGS \u2192 Ceiling Mask"
+    },
+    {
+      "id": 6,
+      "type": "MaskToImage",
+      "pos": [
+        1500,
+        100
+      ],
+      "size": [
+        220,
+        30
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            6
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      },
+      "widgets_values": [],
+      "title": "Ceiling Mask \u2192 Image"
+    },
+    {
+      "id": 7,
+      "type": "SaveImage",
+      "pos": [
+        1760,
+        100
+      ],
+      "size": [
+        300,
+        270
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 6
+        }
+      ],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "ceiling-detect/mask"
+      ],
+      "title": "\ud83d\udcbe Save: ceiling_mask.png"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      4,
+      1,
+      "IMAGE"
+    ],
+    [
+      2,
+      2,
+      0,
+      4,
+      2,
+      "SAM_MODEL"
+    ],
+    [
+      3,
+      3,
+      0,
+      4,
+      0,
+      "BBOX_DETECTOR"
+    ],
+    [
+      4,
+      4,
+      0,
+      5,
+      0,
+      "SEGS"
+    ],
+    [
+      5,
+      5,
+      0,
+      6,
+      0,
+      "MASK"
+    ],
+    [
+      6,
+      6,
+      0,
+      7,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "INPUT \u2014 Load Room Photo + SAM2 Model",
+      "bounding": [
+        10,
+        50,
+        350,
+        550
+      ],
+      "color": "#3f789e"
+    },
+    {
+      "title": "CLIPSeg DETECTOR \u2014 Ceiling Prompt",
+      "bounding": [
+        400,
+        50,
+        380,
+        200
+      ],
+      "color": "#8A2BE2"
+    },
+    {
+      "title": "DETECTION + SAM2 REFINEMENT",
+      "bounding": [
+        820,
+        50,
+        620,
+        380
+      ],
+      "color": "#e76f51"
+    },
+    {
+      "title": "OUTPUT \u2014 Save Ceiling Mask",
+      "bounding": [
+        1490,
+        50,
+        590,
+        380
+      ],
+      "color": "#264653"
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.55,
+      "offset": [
+        50,
+        30
+      ]
+    },
+    "info": {
+      "name": "Stage 1: Ceiling Mask Only (VRAM-Safe)",
+      "description": "Generates a single binary mask of the ceiling region using CLIPSeg + SAM2 refinement. Output feeds directly into the olive-ceiling inpainting workflow. No SDXL loaded \u2014 peak VRAM ~600MB.",
+      "author": "Removation Pipeline",
+      "version": "1.0",
+      "target_gpu": "RTX 4060 8GB (--lowvram)",
+      "required_custom_nodes": [
+        "ComfyUI-Impact-Pack (SAMLoader, CLIPSegDetectorProvider, ImpactSimpleDetectorSEGS, SegsToCombinedMask)",
+        "ComfyUI-CLIPSeg (biegert/ComfyUI-CLIPSeg \u2014 required by CLIPSegDetectorProvider)"
+      ],
+      "required_models": {
+        "sam2": "sam2_hiera_small.pt \u2192 ComfyUI/models/sams/",
+        "clipseg": "auto-downloaded by CLIPSeg node on first run"
+      },
+      "outputs": {
+        "stage1/ceiling_mask": "Binary mask of ceiling surface \u2014 white = ceiling, black = everything else"
+      },
+      "tuning_tips": {
+        "mask_misses_parts_of_ceiling": "Lower the threshold (4th widget on CLIPSegDetectorProvider) from 0.4 to 0.3 or 0.25",
+        "mask_bleeds_into_walls": "Raise threshold to 0.5; or raise the SAM detection_hint threshold (1st widget on SimpleDetectorSEGS) from 0.35 to 0.50",
+        "no_ceiling_detected_at_all": "Image may have an unusual ceiling \u2014 try replacing prompt with just 'ceiling' or add specific terms like 'wooden ceiling, beam ceiling, coffered ceiling'",
+        "mask_too_tight": "Add mask_dilation by raising widget 2 (currently 0) on ImpactSimpleDetectorSEGS to 5-10 pixels"
+      },
+      "vram_budget": {
+        "sam2_hiera_small": "~150MB",
+        "clipseg_model": "~150MB",
+        "peak_total": "~600MB",
+        "sdxl_loaded": false
+      }
+    }
+  },
+  "version": 0.4
+}

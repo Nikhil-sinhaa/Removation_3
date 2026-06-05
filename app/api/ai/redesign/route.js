@@ -9,11 +9,14 @@
 import { writeFile, mkdir, copyFile, unlink } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
-import { connectDB } from '../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../lib/db/mongodb';
 import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 // Force Node.js runtime (Turbopack edge runtime can't do formData)
 export const runtime = 'nodejs';
@@ -303,6 +306,31 @@ function buildRedesignWorkflow({
 export async function POST(request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return Response.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
+
+    const deductResult = await checkAndDeductCredits(authUser.id, 'redesign');
+    if (!deductResult.success) {
+      return Response.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
+    const finalUserId = authUser.id;
+
     console.log('🎨 Starting room redesign...');
 
     const formData = await safeParseFormData(request);
@@ -362,7 +390,7 @@ export async function POST(request) {
 
     const project = await Project.create({
       name:          projectName,
-      userId:        '000000000000000000000000',
+      userId:        finalUserId,
       originalImage: `/uploads/${uploadFilename}`,
       status:        'queued',
       processingType: 'redesign',

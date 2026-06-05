@@ -1,8 +1,52 @@
 #!/bin/bash
 # Start both ComfyUI and Next.js for Removation
+# Includes memory pre-flight checks to prevent OOM crashes.
 
-echo "🚀 Starting Removation Full Stack..."
+echo "======================================"
+echo "🏠 REMOVATION.AI — DEV STARTUP"
+echo "======================================"
 echo ""
+
+# ── Memory pre-flight ─────────────────────────────────────────────────────────
+FREE_MB=$(awk '/MemAvailable/ {printf "%d", $2/1024}' /proc/meminfo)
+TOTAL_MB=$(awk '/MemTotal/ {printf "%d", $2/1024}' /proc/meminfo)
+USED_PCT=$(( (TOTAL_MB - FREE_MB) * 100 / TOTAL_MB ))
+SWAP_TOTAL=$(awk '/SwapTotal/ {printf "%d", $2/1024}' /proc/meminfo)
+SWAP_FREE=$(awk '/SwapFree/ {printf "%d", $2/1024}' /proc/meminfo)
+SWAP_USED=$(( SWAP_TOTAL - SWAP_FREE ))
+
+echo "🧠 RAM:  ${FREE_MB}MB free / ${TOTAL_MB}MB total (${USED_PCT}% used)"
+echo "💾 Swap: ${SWAP_USED}MB used / ${SWAP_TOTAL}MB total"
+echo ""
+
+if [ "$FREE_MB" -lt 2000 ]; then
+  echo "❌ Less than 2GB free. Free up memory before starting."
+  echo "   • Close Chrome tabs"
+  echo "   • Restart ComfyUI: python main.py --lowvram --fp8_e4m3fn-unet"
+  echo "   • Kill unused processes: htop"
+  exit 1
+fi
+
+# Kill duplicate MCP servers before starting
+pkill -f mongodb-mcp-server 2>/dev/null && echo "✅ Killed duplicate MCP servers" || true
+
+# Warn if ComfyUI is using --highvram
+if ps aux 2>/dev/null | grep -q -- "--highvram" 2>/dev/null; then
+  echo "⚠️  WARNING: ComfyUI is running with --highvram. Restart with --lowvram to save RAM."
+fi
+
+# Clear bloated .next cache
+if [ -d "/home/nikhil/Documents/Remo2/Removation_3/.next" ]; then
+  NEXT_SIZE=$(du -sm /home/nikhil/Documents/Remo2/Removation_3/.next 2>/dev/null | cut -f1 || echo "0")
+  if [ "${NEXT_SIZE:-0}" -gt 3000 ]; then
+    echo "🗑️  Clearing .next cache (${NEXT_SIZE}MB)..."
+    rm -rf /home/nikhil/Documents/Remo2/Removation_3/.next
+  fi
+fi
+
+echo "🛡️  Memory watchdog will activate when Next.js starts (kills at 90% RAM)"
+echo ""
+
 
 # Colors
 GREEN='\033[0;32m'
@@ -28,7 +72,7 @@ else
     fi
     
     # Start ComfyUI in background
-    python main.py --listen 127.0.0.1 --port 8188 &
+    python main.py --listen 127.0.0.1 --port 8188 --enable-manager &
     COMFY_PID=$!
     
     # Wait for ComfyUI to start

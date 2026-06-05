@@ -57,10 +57,10 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div className="text-center p-8 bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-red-200">
+      <div className="text-center p-8 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm shadow-xl rounded-2xl border border-red-200 p-6">
         <h2 className="text-xl font-bold text-red-600 mb-2">Invalid Access</h2>
-        <p className="text-gray-600 mb-6">No reset token provided. Please request a new password reset link.</p>
-        <Button asChild>
+        <p className="text-gray-600 mb-6 font-medium">No reset token provided. Please request a new password reset link.</p>
+        <Button asChild className="bg-violet-600 hover:bg-violet-700 text-white">
           <Link href="/forgot-password">Request Reset Link</Link>
         </Button>
       </div>
@@ -68,10 +68,10 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-2xl border border-gray-100 dark:border-gray-700 p-8">
+    <>
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Set new password</h2>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Please enter your new password below.</p>
+        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Set new password</h2>
+        <p className="text-gray-600 dark:text-gray-400">Please enter your new password below.</p>
       </div>
 
       {success ? (
@@ -118,16 +118,14 @@ function ResetPasswordForm() {
           </Button>
         </form>
       )}
-    </div>
+    </>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-      <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
-        <ResetPasswordForm />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="text-gray-500">Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

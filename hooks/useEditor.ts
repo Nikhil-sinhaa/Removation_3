@@ -110,7 +110,7 @@ const DEFAULT_BRUSH_HARDNESS = 0.8;
 const DEFAULT_BRUSH_OPACITY = 1;
 const DEFAULT_BRUSH_FLOW = 1;
 const DEFAULT_BRUSH_COLOR = '#ffffff';
-const MAX_HISTORY_LENGTH = 50;
+const MAX_HISTORY_LENGTH = 15;
 
 export function useEditor(options: UseEditorOptions = {}): UseEditorReturn {
   const {

@@ -1,76 +1,59 @@
-// app/api/user/export/route.ts
-import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db/mongodb";
-import User from "@/lib/db/models/User";
-import Render from "@/lib/db/models/Render";
-import Project from "@/lib/db/models/Project";
+import { NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { collectUserData } from '@/lib/privacy/dataCollector';
+import { generateHtmlReport } from '@/lib/privacy/reportGenerator';
+import PrivacyRequest from '@/lib/db/models/PrivacyRequest';
+import mongoose from 'mongoose';
 
 /**
  * POST /api/user/export
- * Assembles the user's full account data (profile, projects, renders, credit history)
- * into a JSON response delivered as a downloadable file.
+ * Collects all user data, returns JSON + HTML report, records an audit entry.
  */
 export async function POST() {
-    try {
-        // TESTING: Bypass auth for development
-        const userId = "test-user-123";
-        const clerkUser = { 
-            firstName: "Test", 
-            lastName: "User", 
-            emailAddresses: [{ emailAddress: "test@example.com" }],
-            createdAt: new Date()
-        };
+  const authUser = await getCurrentUser();
+  if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-        if (!userId || !clerkUser) {
-            return new NextResponse("Unauthorized", { status: 401 });
-        }
+  await connectToDatabase();
 
-        await connectToDatabase();
+  const data = await collectUserData(authUser.id);
+  const html = generateHtmlReport(data);
 
-        const [dbUser, projects, renders] = await Promise.all([
-            User.findOne({ clerkId: userId }).lean(),
-            Project.find({ userId }).lean(),
-            Render.find({ userId }).lean(),
-        ]);
+  const profile = data.profile as Record<string, unknown> | null;
+  const userName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ').trim() || authUser.email;
 
-        const exportData = {
-            exportedAt: new Date().toISOString(),
-            profile: {
-                id: userId,
-                email: clerkUser.emailAddresses[0]?.emailAddress,
-                firstName: clerkUser.firstName,
-                lastName: clerkUser.lastName,
-                createdAt: clerkUser.createdAt,
-            },
-            subscription: (dbUser as any)?.subscription ?? null,
-            credits: (dbUser as any)?.credits ?? 0,
-            creditHistory: (dbUser as any)?.creditHistory ?? [],
-            projects: projects.map((p: any) => ({
-                id: p._id,
-                name: p.name,
-                roomType: p.roomType,
-                style: p.style,
-                createdAt: p.createdAt,
-                updatedAt: p.updatedAt,
-            })),
-            renders: renders.map((r: any) => ({
-                id: r._id,
-                projectId: r.projectId,
-                status: r.status,
-                outputImage: r.outputImage,
-                createdAt: r.createdAt,
-            })),
-        };
+  await PrivacyRequest.create({
+    userId:      new mongoose.Types.ObjectId(authUser.id),
+    userEmail:   authUser.email,
+    userName,
+    type:        'export',
+    status:      'completed',
+    processedAt: new Date(),
+  });
 
-        return new NextResponse(JSON.stringify(exportData, null, 2), {
-            status: 200,
-            headers: {
-                "Content-Type": "application/json",
-                "Content-Disposition": `attachment; filename="removation-export-${Date.now()}.json"`,
-            },
-        });
-    } catch (error) {
-        console.error("[USER_EXPORT_POST]", error);
-        return new NextResponse("Internal Error", { status: 500 });
-    }
+  return NextResponse.json({
+    success:     true,
+    data,
+    htmlReport:  html,
+    exportedAt:  data.exportedAt,
+    summary:     data._meta,
+  });
+}
+
+/**
+ * GET /api/user/export
+ * Returns the latest export request for the current user.
+ */
+export async function GET() {
+  const authUser = await getCurrentUser();
+  if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  await connectToDatabase();
+
+  const latest = await PrivacyRequest.findOne({
+    userId: new mongoose.Types.ObjectId(authUser.id),
+    type: 'export',
+  }).sort({ createdAt: -1 });
+
+  return NextResponse.json({ request: latest });
 }

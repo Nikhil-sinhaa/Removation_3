@@ -22,7 +22,14 @@ function verifyWebhookSignature(body: string, signature: string, secret: string)
     .update(body)
     .digest("hex");
 
-  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+  const expectedBuffer = Buffer.from(expected);
+  const signatureBuffer = Buffer.from(signature);
+
+  if (signatureBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(signatureBuffer, expectedBuffer);
 }
 
 export async function POST(req: NextRequest) {
@@ -123,6 +130,15 @@ async function handlePaymentCaptured(payment: any) {
         updatedAt: new Date(),
       }
     );
+
+    if (credits > 0) {
+      try {
+        const { notifyCreditsPurchased } = await import('@/lib/notifications/send');
+        await notifyCreditsPurchased(clerkId, credits);
+      } catch (notifErr) {
+        console.error('[razorpay webhook] Credit notification failed:', notifErr);
+      }
+    }
   }
 }
 
@@ -171,31 +187,65 @@ async function handleSubscriptionActivated(sub: any) {
     }
   );
 
-  await Subscription.create({
-    clerkId,
-    razorpayCustomerId: sub.customer_id,
-    razorpaySubscriptionId: sub.id,
-    plan,
-    status: "active",
-    planId,
-    createdAt: new Date(),
-  });
+  await Subscription.findOneAndUpdate(
+    { clerkId },
+    {
+      clerkId,
+      razorpayCustomerId: sub.customer_id,
+      razorpaySubscriptionId: sub.id,
+      plan,
+      status: "active",
+      planId,
+      currentPeriodStart: new Date(sub.current_start * 1000),
+      currentPeriodEnd: new Date(sub.current_end * 1000),
+      updatedAt: new Date(),
+    },
+    { upsert: true, new: true }
+  );
 }
 
 async function handleSubscriptionCharged(sub: any) {
   const clerkId = sub.notes?.clerkId;
   if (!clerkId) return;
 
-  const credits = PLAN_CREDITS[sub.plan_id] || 100;
+  const planId = sub.plan_id;
+  const plan = planId.includes("team") ? "team" : "pro";
+  const credits = PLAN_CREDITS[planId] || 100;
+  const currentPeriodStart = sub.current_start ? new Date(sub.current_start * 1000) : new Date();
+  const currentPeriodEnd = sub.current_end ? new Date(sub.current_end * 1000) : new Date(Date.now() + 30 * 86400000);
 
   await User.findOneAndUpdate(
     { clerkId },
     {
+      razorpayCustomerId: sub.customer_id,
+      razorpaySubscriptionId: sub.id,
+      "subscription.plan": plan,
+      "subscription.status": "active",
       "subscription.credits": credits,
       "subscription.creditsUsed": 0,
-      "subscription.status": "active",
+      "subscription.planId": planId,
+      "subscription.currentPeriodStart": currentPeriodStart,
+      "subscription.currentPeriodEnd": currentPeriodEnd,
+      "subscription.paymentMethod": "razorpay",
+      credits: credits, // Sync legacy root field
       updatedAt: new Date(),
     }
+  );
+
+  await Subscription.findOneAndUpdate(
+    { clerkId },
+    {
+      clerkId,
+      razorpayCustomerId: sub.customer_id,
+      razorpaySubscriptionId: sub.id,
+      plan,
+      status: "active",
+      planId,
+      currentPeriodStart,
+      currentPeriodEnd,
+      updatedAt: new Date(),
+    },
+    { upsert: true, new: true }
   );
 }
 
@@ -207,6 +257,11 @@ async function handleSubscriptionPending(sub: any) {
     { clerkId },
     { "subscription.status": "pending", updatedAt: new Date() }
   );
+
+  await Subscription.findOneAndUpdate(
+    { clerkId },
+    { status: "pending", updatedAt: new Date() }
+  );
 }
 
 async function handleSubscriptionHalted(sub: any) {
@@ -216,6 +271,11 @@ async function handleSubscriptionHalted(sub: any) {
   await User.findOneAndUpdate(
     { clerkId },
     { "subscription.status": "past_due", updatedAt: new Date() }
+  );
+
+  await Subscription.findOneAndUpdate(
+    { clerkId },
+    { status: "past_due", updatedAt: new Date() }
   );
 }
 
@@ -231,6 +291,11 @@ async function handleSubscriptionCancelled(sub: any) {
       updatedAt: new Date(),
     }
   );
+
+  await Subscription.findOneAndUpdate(
+    { clerkId },
+    { status: "canceled", canceledAt: new Date(), updatedAt: new Date() }
+  );
 }
 
 async function handleSubscriptionCompleted(sub: any) {
@@ -244,6 +309,11 @@ async function handleSubscriptionCompleted(sub: any) {
       "subscription.plan": "free",
       updatedAt: new Date(),
     }
+  );
+
+  await Subscription.findOneAndUpdate(
+    { clerkId },
+    { status: "completed", plan: "free", updatedAt: new Date() }
   );
 }
 

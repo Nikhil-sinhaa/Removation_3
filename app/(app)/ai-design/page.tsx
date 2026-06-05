@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { BeforeAfterSlider } from "@/components/ui/before-after-slider";
 import { StylePresets } from "@/components/ui/style-presets";
 import { useAuth } from '@/hooks/useAuth';
+import { usePageTour } from '@/hooks/usePageTour';
 import { 
   Upload, 
   Zap, 
@@ -36,6 +37,7 @@ import {
   Star,
   ArrowRight
 } from "lucide-react";
+import { useUserStore } from '@/stores/user-store';
 
 const roomTypes = [
   { id: "living_room", name: "Living Room", icon: <Sofa className="w-4 h-4" /> },
@@ -64,7 +66,70 @@ const defaultStylePresets = [
 ];
 
 export default function AIDesignPage() {
-  // const { user } = useAuth(); // Bypassed for testing
+  const { user } = useAuth();
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+
+  usePageTour({
+    tourKey: 'ai_design_tour',
+    completed: !user || user.onboardingCompleted === false || (user.completedTours?.includes('ai_design_tour') ?? false),
+    steps: [
+      {
+        element: '[data-tour="ad-uploader"]',
+        popover: {
+          title: 'Upload Room Photo',
+          description: 'Upload a clear, well-lit photo of the room you want to transform.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: '[data-tour="ad-room-type"]',
+        popover: {
+          title: 'Select Room Type',
+          description: 'Choose the room category so the AI generator understands what type of space it is redesigning.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: '[data-tour="ad-design-mode"]',
+        popover: {
+          title: 'Choose Design Mode',
+          description: 'Select your preferred transformation depth, from subtle decoration changes to a complete layout overhaul.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: '[data-tour="ad-style-presets"]',
+        popover: {
+          title: 'Pick a Design Style',
+          description: 'Choose from modern, luxury, traditional Indian, and many other curated design themes.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: '[data-tour="ad-advanced-settings"]',
+        popover: {
+          title: 'Advanced Settings',
+          description: 'Toggle Architectural Mode to keep structural elements intact, or manually adjust AI creativity levels.',
+          side: 'right',
+          align: 'start'
+        }
+      },
+      {
+        element: '[data-tour="ad-generate-btn"]',
+        popover: {
+          title: 'Generate Design',
+          description: 'Ready to see the magic? Click here to kick off the high-performance AI room redesign.',
+          side: 'top',
+          align: 'center'
+        }
+      }
+    ]
+  });
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedStyle, setSelectedStyle] = useState(defaultStylePresets[0]);
   const [mode, setMode] = useState("redesign");
@@ -136,6 +201,12 @@ export default function AIDesignPage() {
         method: 'POST',
         body: formData,
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 
@@ -234,6 +305,7 @@ export default function AIDesignPage() {
         <div className="lg:col-span-1 space-y-6">
           {/* Upload */}
           <motion.div
+            data-tour="ad-uploader"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
@@ -273,6 +345,7 @@ export default function AIDesignPage() {
 
           {/* Room Type */}
           <motion.div
+            data-tour="ad-room-type"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
@@ -302,6 +375,7 @@ export default function AIDesignPage() {
 
           {/* Design Mode */}
           <motion.div
+            data-tour="ad-design-mode"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
@@ -333,6 +407,7 @@ export default function AIDesignPage() {
 
           {/* Style Selection */}
           <motion.div
+            data-tour="ad-style-presets"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
@@ -347,6 +422,7 @@ export default function AIDesignPage() {
 
           {/* Settings */}
           <motion.div
+            data-tour="ad-advanced-settings"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.5 }}
@@ -417,6 +493,7 @@ export default function AIDesignPage() {
 
           {/* Generate Button */}
           <motion.div
+            data-tour="ad-generate-btn"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 }}

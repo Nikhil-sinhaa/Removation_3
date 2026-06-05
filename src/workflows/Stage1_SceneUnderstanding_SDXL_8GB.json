@@ -52,7 +52,7 @@
         {"name": "BBOX_DETECTOR", "type": "BBOX_DETECTOR", "slot_index": 0, "links": [7]}
       ],
       "properties": {"Node name for S&R": "CLIPSegDetectorProvider"},
-      "widgets_values": ["wall, painted wall, drywall, wallpaper", 7.0, 0.4, 4],
+      "widgets_values": ["wall, walls, back wall, side wall, accent wall, colored wall, painted wall, interior wall surface", 7.0, 0.35, 4],
       "title": "🧱 CLIPSeg: WALL Detector"
     },
 

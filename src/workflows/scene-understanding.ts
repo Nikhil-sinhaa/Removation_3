@@ -6,7 +6,7 @@
  * Outputs: wall_mask.png, floor_mask.png, ceiling_mask.png, object_mask.png, empty_space_mask.png, depth_map.png
  */
 
-import { ComfyUIWorkflow } from '../types/comfyui';
+import { ComfyUIWorkflow } from '@/lib/ai/comfyui-workflows';
 
 interface SceneUnderstandingConfig {
   imageBase64: string;
@@ -92,19 +92,22 @@ function getDetectionPrompts(roomType: string): {
       structural: basePrompts.structural + ', entertainment unit, TV cabinet',
       furniture: basePrompts.furniture + ', sofa set, recliner, armchair, center table, bookshelf, display cabinet',
       secondary: basePrompts.secondary + ', wall clock, speakers, air conditioner, decorative items',
-      clutter: basePrompts.clutter + ', remote controls, magazines, cushions, throws'
+      clutter: basePrompts.clutter + ', remote controls, magazines, cushions, throws',
+      negative: basePrompts.negative
     },
     bedroom: {
       structural: basePrompts.structural,
       furniture: basePrompts.furniture + ', bed frame, headboard, nightstand, bedside table, wardrobe, closet, dressing table, vanity mirror',
       secondary: basePrompts.secondary + ', study desk, wall decor, air conditioner',
-      clutter: basePrompts.clutter + ', clothes, books, personal items, jewelry box'
+      clutter: basePrompts.clutter + ', clothes, books, personal items, jewelry box',
+      negative: basePrompts.negative
     },
     kitchen: {
       structural: basePrompts.structural + ', backsplash, tiles, countertop',
       furniture: basePrompts.furniture + ', kitchen cabinets, storage racks, shelves',
       secondary: basePrompts.secondary + ', chimney, exhaust fan, lighting fixtures',
-      clutter: basePrompts.clutter + ', utensils, appliances, containers, food items, spice jars'
+      clutter: basePrompts.clutter + ', utensils, appliances, containers, food items, spice jars',
+      negative: basePrompts.negative
     },
     general: basePrompts
   };
@@ -675,7 +678,7 @@ function buildWorkflowNodes(
 /**
  * Build workflow links between nodes
  */
-function buildWorkflowLinks(): number[][] {
+function buildWorkflowLinks(): any[][] {
   const links = [
     // Input connections
     [1, 1, 0, 2, 0, "IMAGE"],           // LoadImage -> ImageScale

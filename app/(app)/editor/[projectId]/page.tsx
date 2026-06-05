@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { VersionHistoryPanel } from '@/components/editor/VersionHistoryPanel';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -195,6 +196,7 @@ import { useToast } from '@/components/ui/use-toast';
 
 import { useUploadThing } from '@/lib/uploadthing';
 import { cn } from '@/lib/utils';
+import { useUserStore } from '@/stores/user-store';
 import { DESIGN_STYLES } from '@/constants/styles-400';
 import { ROOM_TYPES } from '@/constants/room-types';
 
@@ -269,6 +271,7 @@ interface HistoryEntry {
 type ToolType = 'select' | 'pan' | 'brush' | 'eraser' | 'crop' | 'text' | 'shape' | 'eyedropper';
 
 export default function ProjectEditorPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const router = useRouter();
   const params = useParams();
   const projectId = params.projectId as string;
@@ -405,6 +408,39 @@ export default function ProjectEditorPage() {
       fetchProject();
     }
   }, [projectId, router, toast]);
+
+  // Listen for version restore events — reload project when snapshot is restored
+  useEffect(() => {
+    const onRestored = (e: CustomEvent) => {
+      if (e.detail?.projectId === projectId) {
+        // Re-fetch to pick up the restored state
+        fetch(`/api/projects/${projectId}`)
+          .then(r => r.json())
+          .then(data => {
+            if (!data.message) {
+              const renders       = data.renders || [];
+              const normalized    = {
+                ...data,
+                id:            data.id || data._id?.toString(),
+                renders,
+                collaborators: data.collaborators || [],
+                tags:          data.tags || [],
+                isStarred:     data.isStarred ?? false,
+                roomType:      data.roomType || 'Living Room',
+              };
+              setProject(normalized);
+              if (renders.length > 0) {
+                setOriginalImage(renders[0].originalImage);
+                setSelectedRender(renders[renders.length - 1]);
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    };
+    window.addEventListener('project-restored', onRestored as EventListener);
+    return () => window.removeEventListener('project-restored', onRestored as EventListener);
+  }, [projectId]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -571,6 +607,16 @@ export default function ProjectEditorPage() {
     setIsGenerating(true);
     setGenerationProgress(0);
 
+    // Snapshot before generation — silent, non-blocking
+    fetch(`/api/projects/${projectId}/snapshots`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        trigger: 'before_generate',
+        label:   `Before ${selectedMode} generation`,
+      }),
+    }).catch(() => {});
+
     const progressInterval = setInterval(() => {
       setGenerationProgress((prev) => Math.min(prev + Math.random() * 8, 85));
     }, 1000);
@@ -595,6 +641,12 @@ export default function ProjectEditorPage() {
           numberOfVariations,
         }),
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 
@@ -1403,41 +1455,9 @@ export default function ProjectEditorPage() {
                 </ScrollArea>
               </TabsContent>
 
-              {/* History Tab */}
-              <TabsContent value="history" className="space-y-4 mt-0">
-                <Label className="text-sm font-medium">Activity History</Label>
-                <ScrollArea className="h-[400px]">
-                  <div className="space-y-3">
-                    {historyStack.length === 0 ? (
-                      <div className="text-center py-8 text-muted-foreground">
-                        <History className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-sm">No activity yet</p>
-                      </div>
-                    ) : (
-                      historyStack.map((entry) => (
-                        <div
-                          key={entry.id}
-                          className="flex items-start gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                        >
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <GitBranch className="h-4 w-4 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium">{entry.action}</p>
-                            {entry.details && (
-                              <p className="text-xs text-muted-foreground truncate">
-                                {entry.details}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {entry.user} • {new Date(entry.timestamp).toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
+              {/* History Tab — Version snapshots with restore */}
+              <TabsContent value="history" className="mt-0 h-[440px] flex flex-col">
+                <VersionHistoryPanel projectId={projectId} />
               </TabsContent>
             </Tabs>
           </ScrollArea>

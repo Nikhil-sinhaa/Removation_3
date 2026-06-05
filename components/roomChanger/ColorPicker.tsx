@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ASIAN_PAINTS_COLORS from "@/src/config/asianPaintsPalette";
 
 export interface ColorValue {
   name: string;
@@ -39,6 +40,7 @@ function isLight(hex: string): boolean {
 }
 
 export function ColorPicker({ value, onChange, disabled = false }: ColorPickerProps) {
+  const [activeTab, setActiveTab]   = useState<'famous' | 'asian'>('famous');
   const [customOpen, setCustomOpen] = useState(false);
   const [customHex, setCustomHex]   = useState("#FF6B9D");
   const [customName, setCustomName] = useState("Custom Color");
@@ -72,9 +74,37 @@ export function ColorPicker({ value, onChange, disabled = false }: ColorPickerPr
 
   return (
     <div className={cn("space-y-3", disabled && "opacity-50 pointer-events-none")}>
-      {/* Famous-colors grid: 4 columns × 3 rows */}
+      {/* Tabs */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
+        <button
+          type="button"
+          onClick={() => setActiveTab('famous')}
+          className={cn(
+            "flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-colors",
+            activeTab === 'famous'
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          )}
+        >
+          Famous Colors
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('asian')}
+          className={cn(
+            "flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-colors",
+            activeTab === 'asian'
+              ? "bg-white text-gray-900 shadow-sm"
+              : "text-gray-500 hover:text-gray-700"
+          )}
+        >
+          Asian Paints
+        </button>
+      </div>
+
+      {/* Color swatch grid */}
       <div className="grid grid-cols-4 gap-2">
-        {FAMOUS_COLORS.map((color) => {
+        {(activeTab === 'famous' ? FAMOUS_COLORS : ASIAN_PAINTS_COLORS).map((color) => {
           const selected = value.hex === color.hex;
           return (
             <button
@@ -113,6 +143,13 @@ export function ColorPicker({ value, onChange, disabled = false }: ColorPickerPr
           );
         })}
       </div>
+
+      {/* Asian Paints footnote */}
+      {activeTab === 'asian' && (
+        <p className="text-xs text-gray-400">
+          Color shades are approximations for preview. Actual paint may vary.
+        </p>
+      )}
 
       {/* Selected color preview */}
       {value.hex && (

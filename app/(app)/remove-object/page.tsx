@@ -13,13 +13,18 @@ import {
   CheckCircle, 
   AlertCircle, 
   Loader2, 
-  Image, 
+  Image as ImageIcon, 
   Zap,
   Wand2,
   Scan
 } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useUserStore } from '@/stores/user-store';
+import { AIResultPanel } from "@/components/ai/AIResultPanel";
 
 export default function RemoveObjectPage() {
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+  const { t } = useLanguage();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [result, setResult] = useState<any>(null);
@@ -86,6 +91,12 @@ export default function RemoveObjectPage() {
         method: 'POST',
         body: formData,
       });
+
+      if (response.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
 
       const data = await response.json();
 
@@ -192,10 +203,10 @@ export default function RemoveObjectPage() {
           className="text-center"
         >
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
-            🗑️ Object Removal Studio
+            {t("ro_title")}
           </h1>
           <p className="text-xl text-gray-600 mb-2">
-            Professional Object Removal with LaMa, Flux.1 Fill, and SAM 2
+            {t("ro_subtitle")}
           </p>
           <div className="flex items-center justify-center gap-4">
             <Badge variant="secondary" className="bg-green-100 text-green-800">
@@ -222,7 +233,7 @@ export default function RemoveObjectPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="w-5 h-5" />
-                Upload Room Photo
+                {t("ro_upload_photo")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -239,12 +250,12 @@ export default function RemoveObjectPage() {
                 className="w-full"
                 disabled={isGenerating}
               >
-                <Image className="w-4 h-4 mr-2" />
-                {selectedFile ? `📸 ${selectedFile.name}` : "Choose Room Image"}
+                <ImageIcon className="w-4 h-4 mr-2" />
+                {selectedFile ? `📸 ${selectedFile.name}` : t("ro_choose_image")}
               </Button>
               {selectedFile && (
                 <div className="mt-2 text-sm text-green-600">
-                  ✓ Ready for object removal
+                  {t("ro_ready")}
                 </div>
               )}
             </CardContent>
@@ -255,7 +266,7 @@ export default function RemoveObjectPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trash2 className="w-5 h-5" />
-                Removal Method
+                {t("ro_method")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -301,12 +312,12 @@ export default function RemoveObjectPage() {
             {isGenerating ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Removing Object...
+                {t("ro_removing")}
               </>
             ) : (
               <>
                 <Trash2 className="w-4 h-4 mr-2" />
-                Remove Object
+                {t("ro_remove_btn")}
               </>
             )}
           </Button>
@@ -314,7 +325,7 @@ export default function RemoveObjectPage() {
           {/* Logs */}
           <Card>
             <CardHeader>
-              <CardTitle>Processing Logs</CardTitle>
+              <CardTitle>{t("ro_logs")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="bg-gray-900 text-green-400 p-3 rounded text-sm font-mono h-48 overflow-y-auto">
@@ -323,7 +334,7 @@ export default function RemoveObjectPage() {
                     <div key={index}>{log}</div>
                   ))
                 ) : (
-                  <div className="text-gray-500">Waiting for configuration...</div>
+                  <div className="text-gray-500">{t("ro_waiting")}</div>
                 )}
               </div>
             </CardContent>
@@ -336,7 +347,7 @@ export default function RemoveObjectPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {methodInfo.icon}
-                Active Method: {methodInfo.name}
+                {t("ro_active_method", { name: methodInfo.name })}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -383,67 +394,19 @@ export default function RemoveObjectPage() {
             exit={{ opacity: 0, y: -20 }}
             className="mt-8"
           >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-600" />
-                  ✅ Object Removal Complete
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>Status:</strong> {result.status}
-                    </div>
-                    <div>
-                      <strong>Processing Time:</strong> {result.processingTime}ms
-                    </div>
-                    <div>
-                      <strong>Method:</strong> {methodInfo.name}
-                    </div>
-                    <div>
-                      <strong>Auto-Detect:</strong> {removalMethod === 'sam2' ? 'Enabled' : 'Manual'}
-                    </div>
-                  </div>
-                  
-                  <BeforeAfterSlider
-                    beforeImage={selectedFile ? URL.createObjectURL(selectedFile) : "/images/hero-before.jpg"}
-                    afterImage={result.generatedImage}
-                    beforeLabel="Original (With Object)"
-                    afterLabel="Object Removed"
-                  />
-                  
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-semibold text-green-800 mb-2 flex items-center gap-2">
-                      <Trash2 className="w-5 h-5" />
-                      🎊 Object Removal Success!
-                    </h3>
-                    <p className="text-sm text-green-700 mb-2">
-                      Object has been removed using {methodInfo.name} with seamless background reconstruction.
-                    </p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                      <div className="flex items-center gap-1">
-                        <Zap className="w-3 h-3" />
-                        <span>8GB Optimized</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" />
-                        <span>Seamless Fill</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Scan className="w-3 h-3" />
-                        <span>Smart Detection</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Wand2 className="w-3 h-3" />
-                        <span>Professional</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <AIResultPanel
+              originalImageUrl={selectedFile ? URL.createObjectURL(selectedFile) : null}
+              resultImageUrl={result.generatedImage}
+              onSaveToProject={() => {
+                addLog("💾 Result saved to project");
+              }}
+              onTryAgain={() => {
+                setResult(null);
+                setLogs([]);
+              }}
+              toolName="Object Removal"
+              showMakeItReal={false}
+            />
           </motion.div>
         )}
       </AnimatePresence>

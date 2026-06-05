@@ -1,0 +1,3774 @@
+{
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/ai-design/page.tsx": {
+    "mtime": 1780140852162.2146,
+    "hash": "9a93c1f6c3ea48eb4ca22f13864bb9cc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/billing/page.tsx": {
+    "mtime": 1780300496439.301,
+    "hash": "5e2c6e197deaa7f87a3d48b780ed8cde"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/ceiling-changer/page.tsx": {
+    "mtime": 1780306045745.1335,
+    "hash": "49097c44939b1c96dbd58213e419d3e5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/color-visualizer/page.tsx": {
+    "mtime": 1780121650769.1848,
+    "hash": "81cbaa99bb316990ed0be1786789315a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/contractor/bookings/page.tsx": {
+    "mtime": 1779994262107.0474,
+    "hash": "14e1befd50c8213676cacf0fc7569e15"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/contractor/dashboard/page.tsx": {
+    "mtime": 1779968739807.2795,
+    "hash": "6bc0f08c7d1c6fe2404f824c395ee156"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/contractor/pricing/page.tsx": {
+    "mtime": 1779968751613.2805,
+    "hash": "35524be92f7f9ad0a5de00754fe22ef0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/contractor/register/page.tsx": {
+    "mtime": 1779969173463.3164,
+    "hash": "5965f48a1c8f4742316e40a96f87d12e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/contractors/page.tsx": {
+    "mtime": 1780301616429.3965,
+    "hash": "3bd68e3504d45f8b7c05e90cb92bb4e4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/dashboard/page.tsx": {
+    "mtime": 1780139475365.097,
+    "hash": "4e0f83021d1e5f6de4373cfecca8834c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/designer/bookings/page.tsx": {
+    "mtime": 1780120186861.7117,
+    "hash": "b73e5ff95c10003e57a0014a37521936"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/designer/dashboard/page.tsx": {
+    "mtime": 1779871927849.0754,
+    "hash": "7c379e0d7b4658e36ccf76521462c6e0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/designer/pricing/page.tsx": {
+    "mtime": 1779887942586.1716,
+    "hash": "10564f173cd640f33d056c8d03a14035"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/designer/register/page.tsx": {
+    "mtime": 1779870085351.918,
+    "hash": "4bb32e5abef0a59655b7c397e871fc07"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/designers/[id]/page.tsx": {
+    "mtime": 1780120427201.0803,
+    "hash": "b54b5fce42a85eff38c1f6549f146cf9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/designers/page.tsx": {
+    "mtime": 1780140700802.2017,
+    "hash": "02e3e0af837f8f6250b96965d1251d9d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/dream-room/page.tsx": {
+    "mtime": 1780121614287.1816,
+    "hash": "0a411e61af34d63b869badbf86fa4bd9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/editor/[projectId]/page.tsx": {
+    "mtime": 1780134164071.2917,
+    "hash": "9864129a8caa884e21a6a9736b6313f8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/editor/page.tsx": {
+    "mtime": 1780140925445.2207,
+    "hash": "5c4a78be0ffa40f55f34e987d1b6c3ba"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/favorites/page.tsx": {
+    "mtime": 1772841195709.034,
+    "hash": "3065f044e6a17bdcd0a227430710068c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/floor-plan/page.tsx": {
+    "mtime": 1780121699729.189,
+    "hash": "d55d4578f0372f44d6d1ee06bed66ffa"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/furniture-placement/page.tsx": {
+    "mtime": 1780306127196.1404,
+    "hash": "39c8c3640747c825674527fe40b3d3e1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/furniture-remover/page.tsx": {
+    "mtime": 1780306891553.2058,
+    "hash": "4ed91a1fa334518e789cca77ee22efa0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/history/page.tsx": {
+    "mtime": 1772841195710.034,
+    "hash": "550b52530f8ae7370bb533ed6cef60a5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/layout.tsx": {
+    "mtime": 1780334261277.0535,
+    "hash": "74560616bacaea8e6cad92f315d8c0a8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/lighting/page.tsx": {
+    "mtime": 1780155649894.033,
+    "hash": "afffc9105fb320a7668828f938e3c505"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/marketplace/contractor/[id]/page.tsx": {
+    "mtime": 1780120445122.0818,
+    "hash": "b197142b70c222100826c74af1df371b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/marketplace/page.tsx": {
+    "mtime": 1779978118746.1277,
+    "hash": "43fd65ca5e0f44b0503380d5cd48e566"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/master-design/page.tsx": {
+    "mtime": 1780306006128.1301,
+    "hash": "bafd07fda24c7ab63a1fea2bfcbe4637"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/my-bookings/page.tsx": {
+    "mtime": 1780120018113.0454,
+    "hash": "3c0297bfa217a0aee11b5cb36d56e560"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/onboarding/layout.tsx": {
+    "mtime": 1780126091502.2864,
+    "hash": "028683800b223bda78617377fd6be166"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/onboarding/page.tsx": {
+    "mtime": 1780138505770.014,
+    "hash": "228ae534d6be97744e894e717e61a7dd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/professional-design/page.tsx": {
+    "mtime": 1780138725645.0327,
+    "hash": "e0558e711c1413fd66f491cb252f8375"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/projects/[id]/multi-room-3d/page.tsx": {
+    "mtime": 1779452243117.47,
+    "hash": "f64dcb480aa055b9a7e55ac8f1b927ef"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/projects/[id]/page.tsx": {
+    "mtime": 1777479793562.8816,
+    "hash": "c72bf238cc40b475e964fc58b94d5690"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/projects/page.tsx": {
+    "mtime": 1780123663942.0789,
+    "hash": "5e1a5698e96f3be17ef0a9d0472af4cd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/remove-object/page.tsx": {
+    "mtime": 1780306170228.1443,
+    "hash": "f96915955f73bcb33ec148e20999945c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/room-3d/page.tsx": {
+    "mtime": 1780161509825.0825,
+    "hash": "6313b79bf9671d8e3501051c443c7873"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/room-changer/page.tsx": {
+    "mtime": 1780306216777.1482,
+    "hash": "b9beebe5464a53218d140f52a9b4399e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/settings/gpu/page.tsx": {
+    "mtime": 1779465362967.0464,
+    "hash": "b834c1144816c17e6c672d1fad01b206"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/settings/page.tsx": {
+    "mtime": 1779563187116.3975,
+    "hash": "13a1c7a7918f565d973ed9c21f6b643f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/staging/page.tsx": {
+    "mtime": 1780121718672.1907,
+    "hash": "f713c26e59fe721185fe3b06b58e6c0d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/studio/page.tsx": {
+    "mtime": 1780154289228.104,
+    "hash": "d79355c59532e3bdf44e4597ff590c4f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/style-transfer/page.tsx": {
+    "mtime": 1780334335279.0598,
+    "hash": "41916e07caaa99ad797d00ea33468139"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(app)/vendors/page.tsx": {
+    "mtime": 1780301623542.3972,
+    "hash": "90f7fbc79c50c3f37612ab3ab0c1b44b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(auth)/forgot-password/page.tsx": {
+    "mtime": 1779468165755.2856,
+    "hash": "1a573189efd22ad8fb1028301bbbe1c1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(auth)/layout.tsx": {
+    "mtime": 1772791817249.121,
+    "hash": "e4ff55da7a33da90ecf60b87669013c2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(auth)/reset-password/page.tsx": {
+    "mtime": 1779468182342.287,
+    "hash": "3587d737d42698d598f91e513b607c9e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(auth)/sign-in/page.tsx": {
+    "mtime": 1780337884088.363,
+    "hash": "aaf04e4bdb5a3f9278cd5e430ed9e866"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(auth)/sign-up/page.tsx": {
+    "mtime": 1780336490208.244,
+    "hash": "8fa8b1842b41b095eb92a8629efbeb80"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(auth)/verify-otp/page.tsx": {
+    "mtime": 1779468191041.2878,
+    "hash": "9b43ff120d0cfe5704251537f1aa09de"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/about/layout.tsx": {
+    "mtime": 1780018326170.0754,
+    "hash": "14145e6948126dc4975fbef5a03030a5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/about/page.tsx": {
+    "mtime": 1772791817252.121,
+    "hash": "b79a1abe19ce364b1ebee1bb8aa88a2b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/blog/[slug]/page.tsx": {
+    "mtime": 1777479793566.1758,
+    "hash": "749fdb2dc57ad6322d331a64b5eac042"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/blog/layout.tsx": {
+    "mtime": 1780018330192.0757,
+    "hash": "986dfdd7001ae7a07cb92f5859b129a9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/blog/page.tsx": {
+    "mtime": 1773852118330.7844,
+    "hash": "3289d0f7f90d933d60113886f077428b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/contact/layout.tsx": {
+    "mtime": 1780018328181.0757,
+    "hash": "33acfb1bc5e9e11ceb3b349478a191bc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/contact/page.tsx": {
+    "mtime": 1773852118330.7844,
+    "hash": "8669f5ed33bc489b94ba64584e4a2056"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/features/layout.tsx": {
+    "mtime": 1780018324142.0752,
+    "hash": "1e85d9eef91a4867f02155ef97315473"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/features/page.tsx": {
+    "mtime": 1773852118330.7844,
+    "hash": "8176a4e78dd9ed9a6cb8d9c4e64f0fcd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/layout.tsx": {
+    "mtime": 1780157510297.192,
+    "hash": "e9ccdc5d211ba3cbd0c7ac550adc79be"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/pricing/layout.tsx": {
+    "mtime": 1780019193480.1494,
+    "hash": "7fe39018f961f1a71f9ff847ae5933b6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/(marketing)/pricing/page.tsx": {
+    "mtime": 1780019177428.1482,
+    "hash": "7ff28d31ac6baf1b5b6c91041378c5f8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/ai/page.tsx": {
+    "mtime": 1779998935018.0603,
+    "hash": "cdc7d1fa796ac2d760e7293d7d1cd681"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/analytics/page.tsx": {
+    "mtime": 1779995144651.1228,
+    "hash": "0e5d0d6598669c26d8abc31d2e38cb2b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/analytics/retention/page.tsx": {
+    "mtime": 1779999129975.0771,
+    "hash": "3d8ffe71365c3c07fd3fa0a44f210bdb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/analytics/revenue/page.tsx": {
+    "mtime": 1779999129921.077,
+    "hash": "b4bbb7d30fa9f66b799f36a4802825b1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/analytics/usage/page.tsx": {
+    "mtime": 1779999129947.0771,
+    "hash": "f9ac7017f7c54447a13728ee1309b3b3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/approvals/page.tsx": {
+    "mtime": 1779993940812.02,
+    "hash": "d0a485d072e2fab231defc3c73dee640"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/cost/page.tsx": {
+    "mtime": 1779998848616.053,
+    "hash": "1db011a42301d3e4b465a67f00aaa57f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/dashboard/page.tsx": {
+    "mtime": 1779994612684.0774,
+    "hash": "39db2dc1ca28077d8c7ddcd4ed63e82d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/designers/page.tsx": {
+    "mtime": 1779878192394.095,
+    "hash": "fb33f053dc02b24a4bf0643a9cf87a4d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/layout.tsx": {
+    "mtime": 1779995185617.1265,
+    "hash": "7721a43462d863034fd04832b38d411b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/renders/flagged/page.tsx": {
+    "mtime": 1779999130036.0771,
+    "hash": "32d329ec40fbde0e76598b514db9d304"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/renders/gallery/page.tsx": {
+    "mtime": 1779999130044.0771,
+    "hash": "d3050b47cad71b19330ccb996cf7524f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/renders/page.tsx": {
+    "mtime": 1779994960484.1072,
+    "hash": "8777559d8da4055d552f9296737be042"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/renders/processing/page.tsx": {
+    "mtime": 1779999130028.0771,
+    "hash": "4c56368f0c261ec488e4b51848960d1c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/settings/api-keys/page.tsx": {
+    "mtime": 1779999130066.0771,
+    "hash": "4aec87a891986189be8414bd6c7b8f63"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/settings/audit-logs/page.tsx": {
+    "mtime": 1779999130101.0771,
+    "hash": "251a9394c497347ddfb1af196b00bdc3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/settings/page.tsx": {
+    "mtime": 1780300521404.303,
+    "hash": "e246df219a9d7224ccf59990e2c6344a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/settings/security/page.tsx": {
+    "mtime": 1779999130055.0771,
+    "hash": "2771ec76e9d0c3bf7a1c045037a3317b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/settings/webhooks/page.tsx": {
+    "mtime": 1779999130082.0771,
+    "hash": "de2577189a7c621bf152681a3e945028"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/storage/page.tsx": {
+    "mtime": 1779999005482.0664,
+    "hash": "e595ffa674de36b8c8c81199506c6e83"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/subscriptions/page.tsx": {
+    "mtime": 1779998649842.036,
+    "hash": "dc413e6c700c4f226275e92aacda4de7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/subscriptions/plans/page.tsx": {
+    "mtime": 1779998683007.0388,
+    "hash": "a9232c4acebdf7ae14534b90c08bfe00"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/subscriptions/refunds/page.tsx": {
+    "mtime": 1779998687257.0393,
+    "hash": "573a185b68b522e581c6e10627c20fcf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/subscriptions/transactions/page.tsx": {
+    "mtime": 1779998685239.039,
+    "hash": "dc2733a7d3d8e2e67d673fcde253b056"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/users/active/page.tsx": {
+    "mtime": 1779999129996.0771,
+    "hash": "14dd3aaacfa83ec312299de9279c34ec"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/users/banned/page.tsx": {
+    "mtime": 1779999130020.0771,
+    "hash": "6bd98d17b498edf3b8423aaf5b26ed7d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/users/page.tsx": {
+    "mtime": 1779994822368.0955,
+    "hash": "dc388144cace46ff46d6dd9fc26785af"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/users/subscribed/page.tsx": {
+    "mtime": 1779999130011.0771,
+    "hash": "ba4ed863974e73b487da9a36f270a137"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/admin/vastu/page.tsx": {
+    "mtime": 1779998746556.0442,
+    "hash": "b8c35e2ae704219b99c2099d2053c506"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/analytics/route.ts": {
+    "mtime": 1779995070711.1165,
+    "hash": "b0fce22adf442e8c449c5a5534daa3c3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/app-mode/route.ts": {
+    "mtime": 1780019978636.2166,
+    "hash": "8cbfdc5a14be0c7b048a71b00ca72634"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/config/route.ts": {
+    "mtime": 1780019728582.1953,
+    "hash": "267bc1d4761c9d02cacde418eea6f4da"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/contractors/[id]/reject/route.ts": {
+    "mtime": 1779967990277.2153,
+    "hash": "0fae2cf239de11612264c7f039a2a724"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/contractors/[id]/verify/route.ts": {
+    "mtime": 1779967981376.2146,
+    "hash": "04303aefe343690e6518caa1873ce5dc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/contractors/pending/route.ts": {
+    "mtime": 1779967976011.214,
+    "hash": "71e2b52c209604a378a5a96a024e6201"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/designers/[id]/reject/route.ts": {
+    "mtime": 1779863692566.3718,
+    "hash": "a62f088cc0effa15d3d53e9ea3832741"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/designers/[id]/verify/route.ts": {
+    "mtime": 1779863677210.3704,
+    "hash": "ba48db9ae907a37c0021532209c539ed"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/designers/pending/route.ts": {
+    "mtime": 1779863664610.3694,
+    "hash": "8965a47913a7a04d4da3a941c1ae7a16"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/renders/route.ts": {
+    "mtime": 1779994915357.1033,
+    "hash": "2aa64b1adb75a761f8bbe6f13901ab2b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/stats/route.ts": {
+    "mtime": 1779994522639.0698,
+    "hash": "ff62afbcf50b420b466feb18d951e660"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/storage/route.ts": {
+    "mtime": 1779998546216.027,
+    "hash": "698eb68a01c47c65c05520b10ce844a9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/subscriptions/route.ts": {
+    "mtime": 1779998460406.0198,
+    "hash": "f18d55799ac40407a8c0d7250dc0c49e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/users/[id]/credits/route.ts": {
+    "mtime": 1780155718288.0388,
+    "hash": "ac0ad68cf0d25f43e4cb5b26a50e3d08"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/users/route.ts": {
+    "mtime": 1779994688222.084,
+    "hash": "36e093b2813a00cb4fd7a0293b2ccb5e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/vendors/[id]/reject/route.ts": {
+    "mtime": 1779968012015.2173,
+    "hash": "2714be0aa2b934b459141296ef7b5977"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/vendors/[id]/verify/route.ts": {
+    "mtime": 1779968007185.2168,
+    "hash": "e33697fd919b1c82d4001fc4a8981bf0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/admin/vendors/pending/route.ts": {
+    "mtime": 1779968002217.2163,
+    "hash": "3df2e02543f70e73bb0c7d17f0ee9a0d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/auto-edit/route.ts": {
+    "mtime": 1780020749419.2825,
+    "hash": "908e57d3884339a94724a43ea561fde9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/background/route.ts": {
+    "mtime": 1780020756080.283,
+    "hash": "d57f4d5a5db5a8cd11ba978c77ad8602"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/ceiling-changer/generate/route.js": {
+    "mtime": 1780020793951.2864,
+    "hash": "ebf151c2dfac89a5993d6d570bd732d9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/collage/route.ts": {
+    "mtime": 1780020762512.2837,
+    "hash": "03efb2183e1b28b58ae4d52ae56b4028"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/edit/route.ts": {
+    "mtime": 1780301587468.394,
+    "hash": "a83b339799f83087d6e68c5781eee22e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/empty-room/route.ts": {
+    "mtime": 1780020820462.2886,
+    "hash": "13ff5e3cfe3138c482b93f258511c62b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/exterior-render/route.ts": {
+    "mtime": 1780301561832.3918,
+    "hash": "38ef9362a4b5352a688179683320ede3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furnish/route.ts": {
+    "mtime": 1780020895885.295,
+    "hash": "041d278d2c547fb304116e2fd0c3eb86"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furniture-placement/composite/route.js": {
+    "mtime": 1780301597952.395,
+    "hash": "2ce80404712fa49fa365cdba10f53737"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furniture-placement/generate/route.js": {
+    "mtime": 1780021061521.309,
+    "hash": "08186d270b76ea7753feee989e5e4cf6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furniture-placement/remove-bg/route.js": {
+    "mtime": 1779690872435.193,
+    "hash": "6a3e6d1e34ff925c7ac12fe3c0dcb734"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furniture-placement/upload-room/route.js": {
+    "mtime": 1779563077594.5466,
+    "hash": "3519e1b4d5a9f540e23d1acdd5648128"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furniture-remover/feedback/route.ts": {
+    "mtime": 1779943466922.1025,
+    "hash": "301972fda7faa9083f734e4c0e1ac179"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/furniture-remover/generate/route.js": {
+    "mtime": 1780020626147.272,
+    "hash": "2d8a3166cbdb8a964cda3efef01af3c5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/gpu-status/route.ts": {
+    "mtime": 1779894996331.337,
+    "hash": "97341ae4c37bac006c694386634aa440"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/history/route.ts": {
+    "mtime": 1780018495233.0898,
+    "hash": "108f7e2a1809f10a1133a28b4b6ce7cb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/interior-render/route.ts": {
+    "mtime": 1780301552489.391,
+    "hash": "029a2bcabe34c7a0b5b654b63ac23d1d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/landscape/route.ts": {
+    "mtime": 1780020833221.2896,
+    "hash": "3dad3d35f5ffe1c25d07d19b01b8e629"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/lighting/route.ts": {
+    "mtime": 1780156553595.11,
+    "hash": "46e71770741c4ada27b40c56896e3ae8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/lineart/route.ts": {
+    "mtime": 1780020768103.2842,
+    "hash": "84e202e199ea0ef802c0a07edb354a70"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/postprocess/route.ts": {
+    "mtime": 1780020775931.2847,
+    "hash": "8086498f532ff555b911caf9dc8526e8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/queue/route.ts": {
+    "mtime": 1779525675704.335,
+    "hash": "6cbf0699a588e3d6b222871ec605536c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/recolor/[projectId]/route.js": {
+    "mtime": 1779525685301.3357,
+    "hash": "c4abc930533b945c3d0b02d76cc81615"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/recolor/[projectId]/status/route.js": {
+    "mtime": 1779525696822.3367,
+    "hash": "214ee03cc1fbbe0bb48aafc9d36525a1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/recolor/presets/route.js": {
+    "mtime": 1779525716436.3384,
+    "hash": "8c667ec320dfc907c535efdbd18f48ec"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/recolor/route.js": {
+    "mtime": 1780020886229.2942,
+    "hash": "12c563d8ab3e3edbe09b958e596af91d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/redesign/[projectId]/route.js": {
+    "mtime": 1779943466930.1025,
+    "hash": "004e4b4284e7f67f7162bfac4226e682"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/redesign/[projectId]/status/route.js": {
+    "mtime": 1779525705464.3374,
+    "hash": "e171986fa2e85d1a22b01acd1bc7c703"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/redesign/route.js": {
+    "mtime": 1780020652445.2742,
+    "hash": "a49920e9cfffa20e1df912607dd2ce96"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/remove-object/[projectId]/route.js": {
+    "mtime": 1779895005263.3376,
+    "hash": "2d597ed3b543a72ec743c8e89a7ae12c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/remove-object/[projectId]/status/route.js": {
+    "mtime": 1779895016819.3389,
+    "hash": "09a9b4ee407b94cc2fe9507e64989dfb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/remove-object/route.js": {
+    "mtime": 1780020806047.2874,
+    "hash": "f931d0c39f29205569208af543177791"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/render/route.ts": {
+    "mtime": 1780020874968.2932,
+    "hash": "5fb20a5f5091ecc54c14422060a04e38"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/room-changer/feedback/route.ts": {
+    "mtime": 1779943466917.0847,
+    "hash": "2c0db2b1eecb8b71c10391fc4bafad0a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/room-changer/generate/route.js": {
+    "mtime": 1780126007186.279,
+    "hash": "8829522b291d6dd001572f52666613fe"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/room-changer/runs/route.js": {
+    "mtime": 1779943466920.1025,
+    "hash": "58cd10f7d20e3b83543a7e74b3dab04f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/segment/route.ts": {
+    "mtime": 1780020742550.282,
+    "hash": "78de26879c5eadf385cdad4ba9934b39"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/status/[promptId]/route.js": {
+    "mtime": 1780020900046.2954,
+    "hash": "13a3c1815afdb4ee413a9c1c419aa1a0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/status/health/route.js": {
+    "mtime": 1773852118364.1953,
+    "hash": "324077465233289482d45af57af87ed1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/status/performance/route.js": {
+    "mtime": 1779895037288.3406,
+    "hash": "2a4697e6cff77efcefb85fd99c6dbb4a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/status/queue/route.js": {
+    "mtime": 1780142255270.3345,
+    "hash": "89941b6b76e860b54ef4284b22daed81"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/status/route.js": {
+    "mtime": 1773852118364.1953,
+    "hash": "2e20a59acc80de747a0f3ab7daf90d24"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/style-transfer/route.ts": {
+    "mtime": 1780334140075.043,
+    "hash": "641349d38119d4127c9cd804ccddb748"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/ultra-pro/route.js": {
+    "mtime": 1780211397518.4077,
+    "hash": "7160e59e3842350874c774547df9a730"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/ai/view-extend/route.ts": {
+    "mtime": 1780020782254.2854,
+    "hash": "1dc8ba898513a1eeb9d1211c1d4bb784"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/forgot-password/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "388efcb23314b9ec1c02de913213e5cb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/google/callback/route.ts": {
+    "mtime": 1780337405690.322,
+    "hash": "6067577f1ddc96eea2394d7e2671dc1b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/google/route.ts": {
+    "mtime": 1779868467839.7798,
+    "hash": "19312b3263f52876bee32b2327d33820"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/login/route.ts": {
+    "mtime": 1780215485012.0857,
+    "hash": "879c7a1e4684641b0c27778a930a7680"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/logout/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "5ecbcda739f1deef287a7c21dee0e85c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/me/route.ts": {
+    "mtime": 1780157110399.1577,
+    "hash": "199f280f85a2def53f3d34be6b247c42"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/resend-otp/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "1ab465cb5284beb7f9aab457a1cad8ff"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/reset-password/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "7883bd8ff480a7ffe018c9a7183ac249"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/signup/route.ts": {
+    "mtime": 1780215477674.085,
+    "hash": "4364e83fe694c91ea992c54e5058f7d4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/auth/verify-otp/route.ts": {
+    "mtime": 1780157020851.1501,
+    "hash": "e62a7d90017a5dfc6fb0b6ebda256346"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/accept/route.ts": {
+    "mtime": 1779993093093.0515,
+    "hash": "72266732a828db7b557a1add4ba58521"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/cancel/route.ts": {
+    "mtime": 1780155794702.0454,
+    "hash": "503619de02f21b8c139aa46abe83f7a3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/complete/route.ts": {
+    "mtime": 1779993105616.0525,
+    "hash": "fd3b6005e4e96cfc83b3167f434b7137"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/messages/read/route.ts": {
+    "mtime": 1779993180538.0588,
+    "hash": "82ea4f390537ca898b1c2b2aca627519"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/messages/route.ts": {
+    "mtime": 1780157323325.176,
+    "hash": "a94cb4c30f2b941d5eca2ceab34d7bb7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/messages/system/route.ts": {
+    "mtime": 1779993073138.0498,
+    "hash": "a12ae585499c216a3805cf7ebaaed65a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/messages/unread-count/route.ts": {
+    "mtime": 1779993053122.048,
+    "hash": "3a21f3dd65f4f2fca85152232f68af1a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/payment-verify/route.ts": {
+    "mtime": 1779993122270.054,
+    "hash": "8adbd8fdeb74366efa6eee2d88d87fff"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/reject/route.ts": {
+    "mtime": 1779993099949.052,
+    "hash": "88fcace233a6fbbc5ae7b2f3217cc8b9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/[id]/route.ts": {
+    "mtime": 1779968131502.2275,
+    "hash": "6fdd11eac1f8e5ea6d00d0bf3a37c8cc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/me/route.ts": {
+    "mtime": 1779968125385.227,
+    "hash": "9e730caa5fb7a9ac606fc4c2b8c374f9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/bookings/route.ts": {
+    "mtime": 1780301611312.3962,
+    "hash": "2c654c88ec8fb23760829d130b0a1e29"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contact/route.ts": {
+    "mtime": 1772841195722.034,
+    "hash": "6155a1b1bbc2ae5ea08bb17732fea1c4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contractor/bookings/route.ts": {
+    "mtime": 1779968785765.2834,
+    "hash": "fdc265a3da3ae721e4f994240ef33c38"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contractor/me/route.ts": {
+    "mtime": 1779968536443.262,
+    "hash": "48962ff6a0e14bfabb670eb52b67aa97"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contractor/register/route.ts": {
+    "mtime": 1779967904125.208,
+    "hash": "de231e3bcd1d9097206b099d69c908e7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contractors/[id]/reviews/route.ts": {
+    "mtime": 1779968344692.2456,
+    "hash": "a95cf3c628a0ece1b822f55a45bcbfb0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contractors/[id]/route.ts": {
+    "mtime": 1779967935022.2107,
+    "hash": "45f40b8225bcc9c5933d5adbfb0c3861"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/contractors/route.ts": {
+    "mtime": 1779967929863.2102,
+    "hash": "8a268447d548a000a724d91a8229ecfb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/cost/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "9deb477ac649445e4d7a585bca295f22"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/customer/inquiries/route.ts": {
+    "mtime": 1779971044281.4763,
+    "hash": "085dc3fe7a3b05b0b2ff9c521b5ab31a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designer/bookings/route.ts": {
+    "mtime": 1779889098596.2703,
+    "hash": "ba9e8a4f704fbb64d3d949af6aa89f31"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designer/me/route.ts": {
+    "mtime": 1779887571081.14,
+    "hash": "13f468e86baa90bd26c3a72015bebc19"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designer/register/route.ts": {
+    "mtime": 1779880803320.3179,
+    "hash": "e4b910bc37430fcbfb8614aef8c7f25a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designers/[id]/reviews/route.ts": {
+    "mtime": 1780155913196.0554,
+    "hash": "889d4ce20c024e886a0937aeac27f9c3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designers/[id]/route.ts": {
+    "mtime": 1779960271403.0918,
+    "hash": "09dd12dfe3e3bc49085e3f386c9032a7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designers/match/route.ts": {
+    "mtime": 1779960278990.0923,
+    "hash": "a30993d787effadd8926c643d6d68109"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/designers/route.ts": {
+    "mtime": 1779960263990.091,
+    "hash": "0ebc45ce9b5ecf50d761c2f1f66702d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/editor/remove-object/route.ts": {
+    "mtime": 1780306453898.1685,
+    "hash": "e45d7999d916370ad26ddb471c718cf1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/enhance/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "77da035571734e6aceb536950e05f0bd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/feedback/route.ts": {
+    "mtime": 1779943466858.1025,
+    "hash": "d2014c314693e5222ea6a4437ed8197c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/fill-room/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "fdf3ad0d54291b7a2f04ce452671fef2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/floor-plan/status/[projectId]/route.js": {
+    "mtime": 1780306244047.1504,
+    "hash": "de711a4d233f8fd4739375775d91cc03"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/floor-plan/upload/route.js": {
+    "mtime": 1780306235341.1497,
+    "hash": "5f83129ce3f88945322fe23d95415abc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/furniture/scrape/route.ts": {
+    "mtime": 1776864236142.0747,
+    "hash": "c97c971ac8a48140a5d296cd913661d2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/health/comfyui/route.ts": {
+    "mtime": 1773852118332.9229,
+    "hash": "5b583447bb0b6c8cf9a1d60945356892"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/invoices/[id]/email/route.ts": {
+    "mtime": 1780306010748.1306,
+    "hash": "18844d3c00b6e2b0d199d3b7202105e8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/invoices/route.ts": {
+    "mtime": 1780305999251.1296,
+    "hash": "4a7bbe58403d35a8f27bc36092c49c5d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/monitoring/dashboard/route.ts": {
+    "mtime": 1773852118333.1685,
+    "hash": "f0e503e8cbed9715ea539e6f701a0f06"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/cancel/[projectId]/route.ts": {
+    "mtime": 1780306188484.1458,
+    "hash": "c1fc63abebdf825974e0a631a725d9f6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/create/route.js": {
+    "mtime": 1780306139340.1416,
+    "hash": "942f2063b3c32231e54f45a59cc62705"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/debug/route.js": {
+    "mtime": 1780306170237.1443,
+    "hash": "de455a077295dd05418a4926857f7531"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/download/[projectId]/route.js": {
+    "mtime": 1780306158606.143,
+    "hash": "fcdad1586e38a40dac9ed0825ed1de11"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/generate-3d/route.js": {
+    "mtime": 1780306207815.1475,
+    "hash": "3b4fd6f3b32f88d87d157104eb49e5ed"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/project-detail/[projectId]/route.js": {
+    "mtime": 1780306198224.1465,
+    "hash": "5d9f2d8a206f87bc832fb8f9ce04117a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/multi-room/status/[projectId]/route.js": {
+    "mtime": 1780306147799.1423,
+    "hash": "8138becfb31fcda23ad33edbb1432ffe"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/object-removal/generate/route.ts": {
+    "mtime": 1780306880072.2048,
+    "hash": "74a263f9c96355d13048d3dab261d2da"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/outdoor/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "b590fcf82282e1b7f09f9b3561b4dbcd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/payment/create-checkout/route.ts": {
+    "mtime": 1780300574509.3076,
+    "hash": "debab683844c6b0f64560c8c37ec2928"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/payment/credits/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "059957550dede415f937e5fb30a7faa4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/payment/subscription/route.ts": {
+    "mtime": 1780300661598.315,
+    "hash": "89aa3853142eeb8b49a20715a4c87677"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/payment/verify/route.ts": {
+    "mtime": 1780300590836.309,
+    "hash": "c67bb9d2450636425c3bc231fb859f17"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/projects/[id]/route.ts": {
+    "mtime": 1780018554422.095,
+    "hash": "6324d47c8334dbdfba2cc46da782c293"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/projects/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "7fb36e723e0378d5a017bbe82508b90e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/pusher/auth/route.ts": {
+    "mtime": 1779994316657.0522,
+    "hash": "0401ff8d8b9234b5f02f0a507f9762ca"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/remove-object/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "396281a28e52fd0dbaf3d6ec0a9eac9c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/renders/[id]/route.ts": {
+    "mtime": 1780018597206.0986,
+    "hash": "61cea669d9dc24f046a073d7cfb059d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/renders/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "4346d34e71435e3ebaf3706dbad693d2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/replace/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "d0ef32e80df1cf56b9a5b2c2d9b7def9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/reviews/[id]/reply/route.ts": {
+    "mtime": 1780157539838.1943,
+    "hash": "917db1db1e7bbbc6d81c28699586a667"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/reviews/route.ts": {
+    "mtime": 1779968164738.2302,
+    "hash": "5ea88db568959d3424584b219e816323"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu-mode/route.ts": {
+    "mtime": 1780306089445.1372,
+    "hash": "201a12b299a14fe92820b95109c06b61"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/drive/callback/route.ts": {
+    "mtime": 1779461717459.119,
+    "hash": "8f731ea0cd21a528e1d6909b51f05ce1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/drive/connect/route.ts": {
+    "mtime": 1779461706894.118,
+    "hash": "1634530b2efe541e6578a682c5096c4a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/drive/disconnect/route.ts": {
+    "mtime": 1779461723329.1194,
+    "hash": "84b1679408651a761964675c3389cc86"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/drive/status/route.ts": {
+    "mtime": 1779461702076.1177,
+    "hash": "1bc7641889f47a557d5fa91d74c32a28"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/drive/upload-notebook/route.ts": {
+    "mtime": 1779463364312.2598,
+    "hash": "be7109159ca7cd7dcebe0061fea158d9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/drive/upload/route.ts": {
+    "mtime": 1779461721315.1194,
+    "hash": "2e826336c00fa10a36338b5999efc27b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/route.ts": {
+    "mtime": 1780306081979.1367,
+    "hash": "d3a8d3ac73be26b07736f1bee79a4d2b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/settings/gpu/status/route.ts": {
+    "mtime": 1779465396868.049,
+    "hash": "c3a2c3d45b994953030d339eed4bad6e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/sketch-to-render/route.ts": {
+    "mtime": 1773852118315.338,
+    "hash": "3c8523f051fdf64ab67afcd5631c69c9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/stats/public/route.ts": {
+    "mtime": 1780018374605.0796,
+    "hash": "cb1441498cf8319f387a6b19d042cd6c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/system/memory/route.ts": {
+    "mtime": 1780208535081.163,
+    "hash": "ef9d4409d49dcb94736d86e18ed6379f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/system/redis/route.ts": {
+    "mtime": 1780215462296.0837,
+    "hash": "9d4174ff2597a5e2a0ffa0ee5a014f9e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/uploadthing/core.ts": {
+    "mtime": 1779968704310.2764,
+    "hash": "49d592bd68bd2b4cd671305f00f225b7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/uploadthing/route.ts": {
+    "mtime": 1772791817269.7302,
+    "hash": "66bdbdb2a3fe3f922894cb5fba7630fe"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/api-key/route.ts": {
+    "mtime": 1780306044468.1335,
+    "hash": "7c40f6182b2757727569fedbbca9b8a6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/complete-onboarding/route.ts": {
+    "mtime": 1780125984566.277,
+    "hash": "c77f4e68ecb7e6b3cd1a499055980ba5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/complete-tour/route.ts": {
+    "mtime": 1780139419718.092,
+    "hash": "2974ea319a9b9088bed2ec64debf2b48"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/credits/route.ts": {
+    "mtime": 1780136609730.5007,
+    "hash": "b168fc24739a33f548bda6db15083527"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/export/route.ts": {
+    "mtime": 1780306032775.1323,
+    "hash": "668e38fd25ce54deeae4cfc20ca52812"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/onboarding-status/route.ts": {
+    "mtime": 1780125982227.277,
+    "hash": "4d8e42b297fb354adb15ec2db297cf77"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/preferences/route.ts": {
+    "mtime": 1779563227775.401,
+    "hash": "dbbc2c5a4d53e621ab06b525540f0256"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/user/route.ts": {
+    "mtime": 1779467428080.2227,
+    "hash": "a6e88d4c40e3c471bb64e7386932469b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/vendors/[id]/inquiry/route.ts": {
+    "mtime": 1779968024191.2183,
+    "hash": "950b4c6d1c9da497d3f01807ccf36d3b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/vendors/[id]/route.ts": {
+    "mtime": 1779967945561.2117,
+    "hash": "5e88cd7cc99fe5d81eedcddc2be0f76f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/vendors/route.ts": {
+    "mtime": 1779967940300.2112,
+    "hash": "11e9edc4a71cbda64bb6642e93864d1b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/webhook/razorpay/route.ts": {
+    "mtime": 1780141935872.3071,
+    "hash": "f32d4f9fda6428aca303b09dcc46842c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/webhook/replicate/route.ts": {
+    "mtime": 1772841195733.034,
+    "hash": "f86005c48e2d12f65d0b932c59eaf020"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/webhook/stripe/route.ts": {
+    "mtime": 1780305982263.1282,
+    "hash": "7bc9be47df86df685b2914160c6ddd28"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/api/webhooks/razorpay/route.ts": {
+    "mtime": 1780300535470.3042,
+    "hash": "da9701a02999c2facb86b1472eb1cca1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/layout.tsx": {
+    "mtime": 1780300401116.2927,
+    "hash": "714e66a1cfc4ac7652778d2c6792d519"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/app/page.tsx": {
+    "mtime": 1780155044998.1687,
+    "hash": "db25c1688871c90854911c440078c2f4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/calibrate_iclight.py": {
+    "mtime": 1779790737995.7307,
+    "hash": "4d8e243c014b843e9d44901f6834ae42"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/ChromeExtensionPopup.tsx": {
+    "mtime": 1772791817280.121,
+    "hash": "c0e4623d6b135680397c30da05358b33"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/CrispChat.tsx": {
+    "mtime": 1773852118315.7844,
+    "hash": "019566ed668d4d7fc85e314fcb3abcaf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/PWAPrompt.tsx": {
+    "mtime": 1776495369376.2095,
+    "hash": "ca58ee2d5d774404ace93147c05ea62e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/Providers.tsx": {
+    "mtime": 1773852118315.7844,
+    "hash": "4303e4bcf1763a5aa816b18fd1591390"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/background.js": {
+    "mtime": 1772791817282.6953,
+    "hash": "a244b2f4b66dc96c20354169c6e6ad04"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/content.js": {
+    "mtime": 1772791817282.6953,
+    "hash": "cae8dd1dc7751ef8e88d3703411f988c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/popup.js": {
+    "mtime": 1772791817283.121,
+    "hash": "e591a0e6f7c770bb5971bbe669c7bb88"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/AnalyticsProvider.tsx": {
+    "mtime": 1780161568791.0874,
+    "hash": "9b7749fcd8cdf83a15cceb60c234eec8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ChromeExtensionPopup.tsx": {
+    "mtime": 1772791817284.121,
+    "hash": "8aa5ffb5814ac1e7334e6db28f0e1f5c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/CrispChat.tsx": {
+    "mtime": 1780161561426.087,
+    "hash": "dbcecd2cbe970eacdad4a5d98dc67f1f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/LanguageProvider.tsx": {
+    "mtime": 1780118446212.231,
+    "hash": "ef64ba95018e905ae186ca8400d345fd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/PWAPrompt.tsx": {
+    "mtime": 1776495344612.2073,
+    "hash": "fea2fd92b2d9259847db60c425b7ef76"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/Providers.tsx": {
+    "mtime": 1780161516285.083,
+    "hash": "d7fec8fa9e1b9953755e003c971ff694"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/AIResultPanel.tsx": {
+    "mtime": 1780305991271.129,
+    "hash": "43f5dd0f941eab869f191efaad16f20c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/DesignerMatchCard.tsx": {
+    "mtime": 1780121113895.139,
+    "hash": "081c4f334b9907acb7a4a3f30df75609"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/LiveFeedbackSidebar.tsx": {
+    "mtime": 1773852118364.3938,
+    "hash": "15387286edc18ba520f8a0dd164f1e07"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/MakeItReal.tsx": {
+    "mtime": 1780142320875.34,
+    "hash": "93ed9669f922f6730817648bc7839c6c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/ObjectRemovalSidebar.tsx": {
+    "mtime": 1776496582237.8376,
+    "hash": "86016a832c046208e64a68460cd46b34"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/StylePresetSelector.tsx": {
+    "mtime": 1780334096634.0393,
+    "hash": "22d6c988237a1fc009975d3b42b4cf93"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ai/StyleReferenceGallery.tsx": {
+    "mtime": 1780334355677.0615,
+    "hash": "c48de31e62d844f15caa91b91659a98e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/auth/AuthProvider.tsx": {
+    "mtime": 1780141833767.2983,
+    "hash": "565d7a06d78e21341a767137a4661114"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/booking/BookingChat.tsx": {
+    "mtime": 1780124128851.1187,
+    "hash": "800e9229b54e3e6c90fa1c92b36ae1cb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/booking/BookingModal.tsx": {
+    "mtime": 1780120640906.0986,
+    "hash": "91f51f606cf742b98a52924666b9b4f2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ceilingChanger/CeilingColorPicker.tsx": {
+    "mtime": 1779364746985.3545,
+    "hash": "27ffccb2e836f1479933777210b61572"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CitySelector.tsx": {
+    "mtime": 1772791817285.121,
+    "hash": "e8585f9d6329a6001c04be1878ee3427"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CostBreakdown.tsx": {
+    "mtime": 1772791817286.6992,
+    "hash": "5addd84037ea4bcbce2e99fa08948f33"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CostChart.tsx": {
+    "mtime": 1772791817286.6992,
+    "hash": "6a9be82d313ab42f073b6a4c418e6816"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CostComparison.tsx": {
+    "mtime": 1773852118333.7844,
+    "hash": "33fc20ddf568dffb7f2931a0154e0cdd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CostExport.tsx": {
+    "mtime": 1773852118333.7844,
+    "hash": "6c7f3123f33b146040ebea1ec5423fd3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CostPanel.tsx": {
+    "mtime": 1772791817288.121,
+    "hash": "0e76ca14d8e9832d0d93f28d78035783"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/CurrencyToggle.tsx": {
+    "mtime": 1772791817289.121,
+    "hash": "636047e2df08a5cc70be3bd071c82515"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/LaborCalculator.tsx": {
+    "mtime": 1772791817289.121,
+    "hash": "e9864e6f7e33679b8e45107b3e3f405c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/cost/MaterialSelector.tsx": {
+    "mtime": 1773852118333.7844,
+    "hash": "7a564d5781ed076e48b5b17239343671"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/CompareSlider.tsx": {
+    "mtime": 1772791817290.121,
+    "hash": "215e119bb28316ced8b3cf5b3680c372"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/CostPanel.tsx": {
+    "mtime": 1778049446578.5967,
+    "hash": "6a4f8ec4384463e92d967516f4afc867"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/EditorCanvas.tsx": {
+    "mtime": 1772791817291.121,
+    "hash": "9a1c377dc9043f0751dacd8c636025ae"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/EditorSidebar.tsx": {
+    "mtime": 1772841195738.034,
+    "hash": "2dd027e178c1357b0fd00894753ca5eb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/EditorToolbar.tsx": {
+    "mtime": 1779285416008.2407,
+    "hash": "5e1d265b54f4b935b8d3369708b237bf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/ExportModal.tsx": {
+    "mtime": 1772791817292.121,
+    "hash": "fdeb5bdbd103cded71f0320670d950c7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/HistoryPanel.tsx": {
+    "mtime": 1772791817293.121,
+    "hash": "1fc1c6a0b1e8cd6444dad5b7ae6798d3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/InpaintBrush.tsx": {
+    "mtime": 1772791817293.121,
+    "hash": "c382f28b3875f6abd816df0765bc2025"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/LayersPanel.tsx": {
+    "mtime": 1772791817294.121,
+    "hash": "775727b403950e96a3455e42e1a848be"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/MaskCanvas.tsx": {
+    "mtime": 1777479719342.8918,
+    "hash": "23aa05005b099f3adcc5c60cae18da98"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/RenderQueue.tsx": {
+    "mtime": 1772791817294.121,
+    "hash": "6c39edc99e585e1905d168e9fc553d49"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/ToolProgressBar.tsx": {
+    "mtime": 1779285416008.2407,
+    "hash": "fab9dad8db178157a4dbc01ac42dfec1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/TransformPanel.tsx": {
+    "mtime": 1772791817295.121,
+    "hash": "21689cded1c6d35c6fa3dea246beecc1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/UndoRedoStack.tsx": {
+    "mtime": 1772791817295.121,
+    "hash": "6b2025b91730293a7edb52cbc6d67813"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/VastuPanel.tsx": {
+    "mtime": 1778044513940.1753,
+    "hash": "584746f73f3cc49ab84b673337f32456"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/editor/ZoomControls.tsx": {
+    "mtime": 1772791817295.121,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/BeforeAfter.tsx": {
+    "mtime": 1772791817296.121,
+    "hash": "d96a9ab4eab41eaee17f829156fbaf40"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/CTA.tsx": {
+    "mtime": 1772791817296.121,
+    "hash": "38f411b69c46e7446c6c4c65dfe1b022"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/FAQ.tsx": {
+    "mtime": 1780157502103.1912,
+    "hash": "253fa0f70cf108052c243b086050407f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Features.tsx": {
+    "mtime": 1772791817296.121,
+    "hash": "92911eacb566646d32118202743775b6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/FinalCTA.tsx": {
+    "mtime": 1780157556500.1958,
+    "hash": "9b12cca381073470bdd45b198c60327d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Footer.tsx": {
+    "mtime": 1780157481646.1895,
+    "hash": "647e5b75127ced33017c94bf51c84e6e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Gallery.tsx": {
+    "mtime": 1772791817297.121,
+    "hash": "3f1c1ed237e9bb34a5f6d4a9874ddc47"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Hero.tsx": {
+    "mtime": 1780157598286.1995,
+    "hash": "06f314776e612d7d85b1a6afb9186513"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/HowItWorks.tsx": {
+    "mtime": 1780157485222.1897,
+    "hash": "0f7499383fa23488ca5926e83ffc51fb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/LogoMarquee.tsx": {
+    "mtime": 1780154991219.164,
+    "hash": "8bac55db3bb83c99451386557ad18fd4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/MarqueeBadges.tsx": {
+    "mtime": 1780154977209.1519,
+    "hash": "b174225df8697ea89e0ab4a98a3c28f1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Navbar.tsx": {
+    "mtime": 1780154949450.1604,
+    "hash": "1ce15b73ca1d766dca4e9925438edabf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/OutcomeCards.tsx": {
+    "mtime": 1780157486052.19,
+    "hash": "5db39a9ddf8f7101d7a7c3e2ca373932"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Pricing.tsx": {
+    "mtime": 1772791817298.7134,
+    "hash": "5ade04d67bda4b1421ef1b63a69d446a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/RoleCards.tsx": {
+    "mtime": 1780155018013.1663,
+    "hash": "c5013afad172e3c0267621c5fcf848bd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/SocialProofStat.tsx": {
+    "mtime": 1780154986549.1636,
+    "hash": "b382a3198848fb4e55146305d9755817"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Stats.tsx": {
+    "mtime": 1772791817298.7134,
+    "hash": "46ab04cc8930e5b2553dc6cd84ed61a1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/Testimonials.tsx": {
+    "mtime": 1780155024560.167,
+    "hash": "7be04d98bfeb4e00195fc28849a09e6a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/ToolsShowcase.tsx": {
+    "mtime": 1780155000172.1648,
+    "hash": "38965086a406ebedacd948ab4dfc403e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/TrustBadges.tsx": {
+    "mtime": 1772791817298.7134,
+    "hash": "4050512627bc06c3298989ebbcf01540"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/landing/VideoDemo.tsx": {
+    "mtime": 1772791817299.121,
+    "hash": "a89ee2cb01e17bed5d8b5bda478c1464"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/Footer.tsx": {
+    "mtime": 1772791817300.121,
+    "hash": "cfbab7579739b304bedae5c27522f74e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/MobileNav.tsx": {
+    "mtime": 1772791817300.121,
+    "hash": "e8ba7a0fa6b7c60d1a2fb934506a56e4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/Navbar.tsx": {
+    "mtime": 1773852118315.7844,
+    "hash": "1498562ac94330f3ceb7f30da7b3db18"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/NotificationBell.tsx": {
+    "mtime": 1772791817300.121,
+    "hash": "6274195b2277ab2d606121cc10ca3444"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/Sidebar.tsx": {
+    "mtime": 1779460703450.0322,
+    "hash": "08101241329448d9cae8fbe1ac3659c3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/TopBar.tsx": {
+    "mtime": 1773852118316.7844,
+    "hash": "9e382b0c34af6d1f874d7120ac30b863"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/layout/UserMenu.tsx": {
+    "mtime": 1779897553145.5554,
+    "hash": "68f29da80f81356e9480901d8829e910"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/CheckoutModal.tsx": {
+    "mtime": 1780300508273.302,
+    "hash": "dc805e486f14c4daee6f17bcd799f7fe"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/CreditBalance.tsx": {
+    "mtime": 1772791817302.121,
+    "hash": "f7e99a0f18bf495f37eaa43124e261d0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/CreditSuccessHandler.tsx": {
+    "mtime": 1780134203832.2952,
+    "hash": "777849869e87ebc47dc9520959045723"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/InsufficientCreditsModal.tsx": {
+    "mtime": 1780161548214.0857,
+    "hash": "41e46d5baaa173e9fb92c9bad84e81b5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/InvoiceHistory.tsx": {
+    "mtime": 1772841195742.034,
+    "hash": "739659f497f2a18ce1ba49bbe7f8c284"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/PaymentMethods.tsx": {
+    "mtime": 1772791817303.61,
+    "hash": "4266413758fbfac543e2bf50b1a5869f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/PricingCard.tsx": {
+    "mtime": 1772791817304.121,
+    "hash": "31b88671d8373206d806e16c65afcf29"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/payment/SubscriptionBadge.tsx": {
+    "mtime": 1772791817304.121,
+    "hash": "ffcde7e4b0ed81e892ac4d98b3e1a6ac"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/project/NewProjectModal.tsx": {
+    "mtime": 1773852118333.7844,
+    "hash": "9267b77aa9f25423ee9ce0ebc7836c47"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/project/ProjectActions.tsx": {
+    "mtime": 1772791817305.121,
+    "hash": "91a45a39cb085a3cb37cd2237e2bdfd0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/project/ProjectCard.tsx": {
+    "mtime": 1777479721353.892,
+    "hash": "3367f9ce68ae9f191bdd99215ecf42fc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/project/ProjectGrid.tsx": {
+    "mtime": 1773852118316.7844,
+    "hash": "4a7ef8f8f9ea4b3e5d574fc66ccb08bf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/project/ProjectHeader.tsx": {
+    "mtime": 1777479754152.895,
+    "hash": "2d7922112572446db986df347a9efbef"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/project/ProjectSettings.tsx": {
+    "mtime": 1773852118333.7844,
+    "hash": "fa81a99ce1096293a2170a001e248f13"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/roomChanger/ColorPicker.tsx": {
+    "mtime": 1779305507884.015,
+    "hash": "ea19af337a992bd2d34fce5733232c1d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/ColorPicker.tsx": {
+    "mtime": 1772791817308.121,
+    "hash": "932d501367a92e1ba8825b89878d0618"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/EmptyState.tsx": {
+    "mtime": 1772791817308.121,
+    "hash": "2464ebb2b6177fa382f3e10ebf21db40"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/ErrorBoundary.tsx": {
+    "mtime": 1772791817308.121,
+    "hash": "1f523da157ac7850f99bf5c4cebfb09d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/ImagePreview.tsx": {
+    "mtime": 1777479677578.8884,
+    "hash": "d7a9b04a540e4b3d3ef48f1810dd24fa"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/ImageUploader.tsx": {
+    "mtime": 1777474198889.4202,
+    "hash": "0baa8d36ac630d307ca0fa6c899b7e5c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/LanguageToggle.tsx": {
+    "mtime": 1780118462957.2322,
+    "hash": "ec4172dc2a355cc1226b1555668208c9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/LoadingDots.tsx": {
+    "mtime": 1772841195744.034,
+    "hash": "e89383aa9eeba5a9bf3ea7728f588bcc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/LoadingShimmer.tsx": {
+    "mtime": 1772791817310.121,
+    "hash": "7d587953928699cac5b4b7de2cd5eb56"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/Logo.tsx": {
+    "mtime": 1772791817311.121,
+    "hash": "f26b44c49c41318618f1740f03db76bd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/ProgressBar.tsx": {
+    "mtime": 1772791817311.121,
+    "hash": "8720a51d8407afb0f905a61d487d426b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/RenderGrid.tsx": {
+    "mtime": 1777479756168.895,
+    "hash": "1b05bac754e50bc36dc3a9239aaf5c68"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/ResizablePanel.tsx": {
+    "mtime": 1773852118334.7844,
+    "hash": "02220a56e59c2b2a839dbaa09ac96dd0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/RoomTypePicker.tsx": {
+    "mtime": 1772791817312.121,
+    "hash": "3f1c2219d09d3a5993bb3cdf66e7d1b3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/StagingView.tsx": {
+    "mtime": 1772841195744.034,
+    "hash": "98a47d556849d6ade2bcaec4431ec24e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/StylePicker.tsx": {
+    "mtime": 1777474229377.4229,
+    "hash": "deba8ed6befd5e993e58017ac2078e82"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/TransformationModes.tsx": {
+    "mtime": 1772791817313.121,
+    "hash": "f18ef2077ebdd735f76d650c9a064be9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/shared/compare-slider.tsx": {
+    "mtime": 1772841195744.034,
+    "hash": "c229560d118a75b310ff8def6d3f627a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/studio/EditPanel.tsx": {
+    "mtime": 1777984629370.4062,
+    "hash": "1f4c35ec5a6a0ba333e92aa31b1a4239"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/studio/FurnishPanel.tsx": {
+    "mtime": 1778053957616.9822,
+    "hash": "d4a981f565c013f78e97954eb2c56d78"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/studio/LightingPanel.tsx": {
+    "mtime": 1777984916828.4307,
+    "hash": "23cea092ca93999a3fa8d69e41b07f52"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/studio/PostProcessPanel.tsx": {
+    "mtime": 1777984799065.4207,
+    "hash": "bde92498f2d90802e9ad3c9ede0f98d6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/studio/RenderPanel.tsx": {
+    "mtime": 1777984673546.41,
+    "hash": "38c98365220624db93ca56a23c1e50c1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/studio/StudioProgressBar.tsx": {
+    "mtime": 1777982518181.2258,
+    "hash": "c60256634f35a328ccc027b101084157"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/GPUModeSwitch.tsx": {
+    "mtime": 1779285416008.2407,
+    "hash": "7a5457dbb7ed54178cf5b2c0d4a71879"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/accordion.tsx": {
+    "mtime": 1772791817313.121,
+    "hash": "fa415d711d05d089eb996123fd5c109b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/alert-dialog.tsx": {
+    "mtime": 1772791817314.4482,
+    "hash": "fd3e036085a2cb3b63ed3a55ade6847e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/alert.tsx": {
+    "mtime": 1772791817314.4482,
+    "hash": "e021346ab4b8a8985c0cf5ac3976311f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/avatar.tsx": {
+    "mtime": 1773852118334.7844,
+    "hash": "be3713e89ba0a4fa635f80edfa662395"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/badge.tsx": {
+    "mtime": 1772791817314.993,
+    "hash": "2c6e9b46d4d77c0f099b038a5e70b178"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/before-after-slider.tsx": {
+    "mtime": 1779786319523.353,
+    "hash": "ff8e27c3343ea0496bb1a0ba37646f47"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/button.tsx": {
+    "mtime": 1776495599601.2292,
+    "hash": "e9d47c6c22f33a25409765198fa7d14c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/calendar.tsx": {
+    "mtime": 1772791817314.993,
+    "hash": "b85cbdab30e541b07ee3ca3eb227e51a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/card.tsx": {
+    "mtime": 1772791817314.993,
+    "hash": "d96445b52b638838a68c9d5cc17c7d38"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/checkbox.tsx": {
+    "mtime": 1772791817314.993,
+    "hash": "86e035537b2139df1a5e83688d9fc27c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/collapsible.tsx": {
+    "mtime": 1772791817314.993,
+    "hash": "c09f5b268ea0eca8b720ac791f8b3732"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/command.tsx": {
+    "mtime": 1772791817315.121,
+    "hash": "ae809b42d1570f87598e0f78af48600c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/dialog.tsx": {
+    "mtime": 1772791817315.121,
+    "hash": "1112ecd7ab5db7d8847a10dd64dfd9e7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/dropdown-menu.tsx": {
+    "mtime": 1772791817315.121,
+    "hash": "764c73914239079f51dd346d0c0e78d6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/input.tsx": {
+    "mtime": 1772791817315.121,
+    "hash": "0ff9216b9d6ff1163e258f777f9573db"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/label.tsx": {
+    "mtime": 1772791817315.121,
+    "hash": "ff763177f001f4bc5600a3b5f819d301"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/master-selector.tsx": {
+    "mtime": 1779531009002.2769,
+    "hash": "8d5e6334d152a12c9e6af35169507c94"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/navigation-menu.tsx": {
+    "mtime": 1772791817316.121,
+    "hash": "d65c78628db4d93e8eeb3e4aa925a6b1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/object-removal-selector.tsx": {
+    "mtime": 1773852118334.7844,
+    "hash": "a69df967a4b3064e4b1b19ce621ab33b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/popover.tsx": {
+    "mtime": 1772791817316.121,
+    "hash": "84bcc5eeab0434edb889f24c6e595c10"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/professional-selector.tsx": {
+    "mtime": 1777446963452.2935,
+    "hash": "96e06664568cb30635e58238e8803887"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/progress.tsx": {
+    "mtime": 1772791817316.121,
+    "hash": "89ef45475a1a0d91801323e5d2c50f2f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/radio-group.tsx": {
+    "mtime": 1772791817316.121,
+    "hash": "3341dfe6150a83f410a2e7753ebdfd97"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/scroll-area.tsx": {
+    "mtime": 1772791817316.121,
+    "hash": "57c5d787ee82748b2089b6cbdabacbbd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/select.tsx": {
+    "mtime": 1772791817316.121,
+    "hash": "aec3b318b3ce7311416791c96902d745"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/separator.tsx": {
+    "mtime": 1772791817317.121,
+    "hash": "38661c5094a383f70526167fcf887408"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/sheet.tsx": {
+    "mtime": 1772791817317.121,
+    "hash": "9e946853e849a091e5596bbfccec7365"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/skeleton.tsx": {
+    "mtime": 1772791817317.121,
+    "hash": "01e3586f7083c9f72fda199e13d23200"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/slider.tsx": {
+    "mtime": 1772791817317.121,
+    "hash": "67322039f5f330687c48a13b8b12a9db"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/style-presets.tsx": {
+    "mtime": 1776494909848.1702,
+    "hash": "454f2326dadd8d8192d7c252349d870f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/switch.tsx": {
+    "mtime": 1772791817317.121,
+    "hash": "51dfcbf273e364e4753988dcfcd5b17a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/table.tsx": {
+    "mtime": 1772791817317.121,
+    "hash": "4dc92910023931d9e880e0c0f80e260d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/tabs.tsx": {
+    "mtime": 1772791817318.121,
+    "hash": "d3ab6042c415fa859eab22d487a87e42"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/textarea.tsx": {
+    "mtime": 1772791817318.121,
+    "hash": "c31af38b2d2126fd1470b206612553a9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/toast.tsx": {
+    "mtime": 1772791817318.121,
+    "hash": "af0d603cd0c15ae30e890e30a4f0b080"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/toaster.tsx": {
+    "mtime": 1772791817318.121,
+    "hash": "b8e940573aadc965b4718ee8207e44b8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/toggle-group.tsx": {
+    "mtime": 1772791817318.121,
+    "hash": "abe4f7a10060a296db43b45716b2aa10"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/toggle.tsx": {
+    "mtime": 1772791817318.121,
+    "hash": "33775d57cb2f2cd4c3985325dcf19379"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/tooltip.tsx": {
+    "mtime": 1772791817319.121,
+    "hash": "a272b5451d334ebfd6456a51f8189f88"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/ui/use-toast.ts": {
+    "mtime": 1772791817319.121,
+    "hash": "d24198c2771423690b55dd63cf9674f7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuAnalyzer.tsx": {
+    "mtime": 1772791817319.121,
+    "hash": "332fc3e0a6d8a9d49fa1f737467bf959"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuCompass.tsx": {
+    "mtime": 1772791817320.121,
+    "hash": "c86b11703226f172b869c834aa1c1fe0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuGrid.tsx": {
+    "mtime": 1772791817320.121,
+    "hash": "e0628eb76005b1439faeb97757c612bf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuPanel.tsx": {
+    "mtime": 1772841195745.034,
+    "hash": "ae906a524d0edf07491f69dc9c37c9eb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuReport.tsx": {
+    "mtime": 1773852118334.7844,
+    "hash": "f4952440c9a0d0bf0b1043ccde5933d8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuRuleCard.tsx": {
+    "mtime": 1773852118334.7844,
+    "hash": "dbdbc4787f4991cd5891b7747febabbc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuScore.tsx": {
+    "mtime": 1772791817323.121,
+    "hash": "11cec8756f07f67e7e4f6ca9aafdba2b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/components/vastu/VastuSuggestions.tsx": {
+    "mtime": 1772791817323.121,
+    "hash": "399c20de14da0aaedd6e7f4715b88ba3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/config/style-presets.ts": {
+    "mtime": 1780333964376.028,
+    "hash": "3aca0f42d246ca84602a9849d13e1267"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/cities.ts": {
+    "mtime": 1772791817324.121,
+    "hash": "1ba4c02f8001213dc9ea61a7d0c48df7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/materials.ts": {
+    "mtime": 1772791817326.4905,
+    "hash": "8318127d6ffab4ab86a3be387239eec6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/pricing-2025-india.ts": {
+    "mtime": 1772791817326.4905,
+    "hash": "10bd6177e6a5eb30b14b3e12ca906d5e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/room-types.ts": {
+    "mtime": 1772791817327.121,
+    "hash": "1f494d4c1d400be81f5f233eea88bb5f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/roomTypes.ts": {
+    "mtime": 1772841195745.034,
+    "hash": "b2a0ec528c954c0951c838c264b3f8eb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/styles-400.ts": {
+    "mtime": 1772791817328.121,
+    "hash": "7bd12b30e82414fbe387bceba209f9e9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/transformation-modes.ts": {
+    "mtime": 1772791817328.121,
+    "hash": "8720174bb813f9392c28d6c019d133ec"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/constants/vastu-rules.ts": {
+    "mtime": 1772791817329.121,
+    "hash": "27d4df208b1c6a8b4a69e880936f29be"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/fast_download.py": {
+    "mtime": 1779368862432.0679,
+    "hash": "f41768dd4f63966bfb4e3873abea08d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/ai_tools.ts": {
+    "mtime": 1780207513944.4326,
+    "hash": "33b53a98c87226442b7bc80f75e3976d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/auth.ts": {
+    "mtime": 1780207513944.517,
+    "hash": "64c8fed7f38870f6d3f3013672fc912c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/booking.ts": {
+    "mtime": 1780207513944.564,
+    "hash": "28f6eccd53d289a300ddfcd14f70b853"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/common.ts": {
+    "mtime": 1780207513944.8215,
+    "hash": "8f1138c17cdcf280562ab0ad382eeda9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/cost.ts": {
+    "mtime": 1780207513947.2046,
+    "hash": "e3ccbf08867faddb181d5b7a303bf8d6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/dashboard.ts": {
+    "mtime": 1780211213355.392,
+    "hash": "eff1404790dd99ff0da1d8300b3688f0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/index.ts": {
+    "mtime": 1780207513947.625,
+    "hash": "a6054787b08eb3f7c8336f1eea734da7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/marketplace.ts": {
+    "mtime": 1780207513947.271,
+    "hash": "7e72d1c23d2c7eebefca6271d2862d24"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/nav.ts": {
+    "mtime": 1780207513947.3035,
+    "hash": "fa11973c86406a03e9b53ad1563e8977"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/split_translations.py": {
+    "mtime": 1780207474150.0725,
+    "hash": "5a9ce657a3cacf61677203d461c059d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/i18n/vastu.ts": {
+    "mtime": 1780207513947.3262,
+    "hash": "dd634b9074270584c809c583d18327a8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useAIGeneration.ts": {
+    "mtime": 1780142111572.3223,
+    "hash": "470fd68ab10b2e431ce8df4cf5182e5a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useAIQueue.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "00738dab0b2ca7076fe33bd53ca9b2df"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useAuth.ts": {
+    "mtime": 1773852118316.7844,
+    "hash": "ce4dc9943ac9adc1c3015d43998652f2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useCost.ts": {
+    "mtime": 1772791817330.121,
+    "hash": "495a5d7df98e543dd80846700fcac1ed"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useDashboardTour.ts": {
+    "mtime": 1780138562164.0188,
+    "hash": "ae8aada7205652a09bfceb9f59a76f71"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useDebounce.ts": {
+    "mtime": 1772791817330.121,
+    "hash": "6f71210aaae74b15e916afb087fe0adc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useEditor.ts": {
+    "mtime": 1780155519328.0217,
+    "hash": "d8504afb9e308d788146bde68a8eeed8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useGPUMode.ts": {
+    "mtime": 1779285416012.4622,
+    "hash": "fe80dd3b3b722d5bf6a0158bf2230d89"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useGPUStatus.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "54adecd6c9b4b9e6a7d757d029378540"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useGenerate.ts": {
+    "mtime": 1772841195747.034,
+    "hash": "ccf50a6dbcb2eac38392a29a98d88c24"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useLanguage.ts": {
+    "mtime": 1780211342878.403,
+    "hash": "e639a4cc22ccfed853544ab4b9949fd9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useLocalStorage.ts": {
+    "mtime": 1772791817332.121,
+    "hash": "9b59840fceff5cfa94e3247739e9182c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useMediaQuery.ts": {
+    "mtime": 1772791817332.121,
+    "hash": "e79826d47099479168eadf729d800fd4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useMobile.ts": {
+    "mtime": 1772791817332.121,
+    "hash": "deb5b58608e64fb0315f3e6133203e16"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/usePageTour.ts": {
+    "mtime": 1780139407737.091,
+    "hash": "71785ff51a939d19a75378d5424f69e9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useProjects.ts": {
+    "mtime": 1772791817333.121,
+    "hash": "8154c5e16f27950fff9920cd42f65764"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/usePusher.ts": {
+    "mtime": 1779994240388.0457,
+    "hash": "8daad301a04e63e377e8d66c293a1ed3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useStudioSocket.ts": {
+    "mtime": 1779285416012.5308,
+    "hash": "ee79664957fad12dbdb47fd3e8744e90"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useSubscription.ts": {
+    "mtime": 1773852118316.7844,
+    "hash": "a51781e6ed4faeec10a3356c0dcdae05"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useUltraProSocket.ts": {
+    "mtime": 1776873669731.8809,
+    "hash": "b2d980dcd81eb90b0487dd9f2d7952e3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useUpload.ts": {
+    "mtime": 1779968708985.2769,
+    "hash": "b4da45d035b9aee94a0da8c38943f450"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/hooks/useVastu.ts": {
+    "mtime": 1780142221223.3315,
+    "hash": "cb7e509dce0bcd4e532cb7e1bd2fbe75"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/instrumentation.ts": {
+    "mtime": 1780208488070.1592,
+    "hash": "c0a4aae2f51edd4f17e877d055561e12"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/appMode.ts": {
+    "mtime": 1780215521510.0889,
+    "hash": "967aea29ff8298162754d8ad29401f42"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/cloud-comfy-adapter.ts": {
+    "mtime": 1779285416012.7046,
+    "hash": "0cb5e4cc60e9458c6397b9937c9a80ef"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-bridge.ts": {
+    "mtime": 1780141974108.3103,
+    "hash": "9b1a56a74e640b33ecbb44a192e82a5e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-errors.ts": {
+    "mtime": 1780141983771.3113,
+    "hash": "0d79b3f9de96b0073eed521b7db23bac"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-monitoring.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "cb142010b251f7521cf722a8407e452a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-test.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "6daca7e801a29592ae7a45e9308f432d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-workflows-master.ts": {
+    "mtime": 1780141995973.3123,
+    "hash": "6f893a8c6448d6a194dc894acee94c3f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-workflows-object-removal.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "a62a4dd7cfadf863c70d823cf6e6aae6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-workflows-professional.ts": {
+    "mtime": 1780142015104.314,
+    "hash": "2d9df2105ddee93c75722a6c38a9f879"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui-workflows.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "7e637967482cd8551c8b2a8886809df5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/comfyui.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "d24424924fc579f4f0e4c851aaab08b2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/deductCredits.ts": {
+    "mtime": 1780126000094.2786,
+    "hash": "d5821ed1cb7d213f631bb332b5fe83a6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/download-multi-room.ts": {
+    "mtime": 1779450920613.357,
+    "hash": "e6c4c9fcb5325bfce82299362fff17ee"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/fal-adapter.ts": {
+    "mtime": 1772841195749.034,
+    "hash": "3b6eb11e3fc10ce2e63857a18e45131a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/gpu-mode-router.ts": {
+    "mtime": 1779460620096.0251,
+    "hash": "ead1b0cab1542764f718eca9f9df9c44"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/groq.ts": {
+    "mtime": 1772791817335.0703,
+    "hash": "71bc40e5fd03cfb3cc66bdc0c732626e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/index.ts": {
+    "mtime": 1772791817335.242,
+    "hash": "fd55ac852280a5542c16cee378e46a07"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/master-selector-options.ts": {
+    "mtime": 1779530930987.2703,
+    "hash": "e09cd70621257f2b36b81af0828e9f36"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/pipeline-orchestrator.ts": {
+    "mtime": 1780142068368.3184,
+    "hash": "b91f8037db5a89353fb2b11444081a22"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/preflight.ts": {
+    "mtime": 1778043983213.13,
+    "hash": "9f0675c4632f37bd15dde47ee94b9719"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/prompts.ts": {
+    "mtime": 1772841195749.034,
+    "hash": "6b551e4765f2c0476020f3f3035f6192"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/replicate.ts": {
+    "mtime": 1772841195749.034,
+    "hash": "d1d633849a955301ad9df5c952f34644"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/save-image-for-comfy.ts": {
+    "mtime": 1779299062838.625,
+    "hash": "ab0667336d558cabf1bf9931dd2c2abf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/stage-1-analysis.ts": {
+    "mtime": 1776863731477.0317,
+    "hash": "1695d421602e3d35c37f29d8ce446ba2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/stage-2-redesign.ts": {
+    "mtime": 1779285416013.2734,
+    "hash": "def444168b0faeda3acb16106635ceeb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/stage-3-furniture.ts": {
+    "mtime": 1777471150967.1597,
+    "hash": "3d6639513f9f2b09fe508be94b8e5f60"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/stage-4-lighting.ts": {
+    "mtime": 1777471137872.1587,
+    "hash": "beab7344117b06cc7fb150b790d1a624"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/stage-5-upscale.ts": {
+    "mtime": 1777471163560.161,
+    "hash": "5ec7399386ae2f4d48ad76e0c7c6c5a7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/stage-6-composite.ts": {
+    "mtime": 1777471174109.1619,
+    "hash": "e3b0beab11a04f23808e743b3845d459"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/types.ts": {
+    "mtime": 1780142062934.3179,
+    "hash": "d0f8915c2ad0d1681524f96bb1a890b6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/ai/workflows/ultra-pro-pipeline.ts": {
+    "mtime": 1779285416014.1245,
+    "hash": "cdf576b8e473dcf928b4b329840210d1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/api-limit.ts": {
+    "mtime": 1773852118316.7844,
+    "hash": "63408a8e91275585f9a219f55059c3fe"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/appendNewToName.ts": {
+    "mtime": 1772841195750.034,
+    "hash": "b485adcb13c25e61d2baafe2cf903662"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/auth/jwt.ts": {
+    "mtime": 1780337418934.3232,
+    "hash": "5c1606621a89f22781886a77feaf1cfb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/auth/otp.ts": {
+    "mtime": 1773852118318.0674,
+    "hash": "188959033926d6466277c0beaee430e3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/auth/requireRole.ts": {
+    "mtime": 1779969132982.313,
+    "hash": "7feacce25485a592d618a80739a47c52"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/auth/safeRedirect.ts": {
+    "mtime": 1779867946236.735,
+    "hash": "11378820f38c4b031f3b3752b0bdb8e6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/booking/expiry.ts": {
+    "mtime": 1779888814081.246,
+    "hash": "44390bae6cb6f347dbb7f39097dd8177"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/booking/money.ts": {
+    "mtime": 1779883069911.5117,
+    "hash": "af37b130be9c382b1846d7f226a70fc1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/booking/refund.ts": {
+    "mtime": 1779887472484.1313,
+    "hash": "9a3774514eb9bbbbb0fb153b3cae7e23"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/booking/validators.ts": {
+    "mtime": 1779883112446.5154,
+    "hash": "985a26e64c57ad11a271ddb6a2b91ee7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/cost-adapter.ts": {
+    "mtime": 1772791817335.242,
+    "hash": "43b262b10cc1c738f0d151a89273bcfd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/cost-engine.ts": {
+    "mtime": 1778048712092.534,
+    "hash": "df0dad18a808beccd9e945ec39ed8611"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/AdminConfig.ts": {
+    "mtime": 1780019525386.178,
+    "hash": "8b8881ff87c0d778bbda0157e7768340"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Booking.ts": {
+    "mtime": 1779967826781.2014,
+    "hash": "f1ba04a2a0850204a873bacd87ece127"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/ChatMessage.ts": {
+    "mtime": 1779978742303.181,
+    "hash": "930c1d04dfc66456c861c4774721e4bf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Contractor.ts": {
+    "mtime": 1779967843353.203,
+    "hash": "64e7350e487fbf52da6d9cfb345029c1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Designer.ts": {
+    "mtime": 1779959647836.0383,
+    "hash": "723cfb7139b0b575f477f7100df4180c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Message.ts": {
+    "mtime": 1779992836942.0295,
+    "hash": "f1b8ed7ffac2c6bf3436fcc9e6110232"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Project.ts": {
+    "mtime": 1772791817336.0522,
+    "hash": "42eca2bb05a0b70d0fd31aa14ce9bf8e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Render.ts": {
+    "mtime": 1773852118335.7844,
+    "hash": "5c541683c66b9dc4e3fc9853480a3997"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Review.ts": {
+    "mtime": 1779967834229.2021,
+    "hash": "41f32a8f22f5ab1f438ed138617d8ed3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Subscription.ts": {
+    "mtime": 1772791817336.185,
+    "hash": "8d9ec4ac24eef06bee460f5c0d911415"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/User.ts": {
+    "mtime": 1780139413310.0916,
+    "hash": "f1332d980a8f73f671efa0dd3aabb6aa"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/Vendor.ts": {
+    "mtime": 1779970872354.4617,
+    "hash": "58666986bf71e48fc743a687b96ddc0b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/VendorInquiry.ts": {
+    "mtime": 1779967853576.2036,
+    "hash": "5e88d6d5e644a9a2d8aa61dbe30d6ec2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/models/index.ts": {
+    "mtime": 1780019529866.1782,
+    "hash": "db5381d1308fc99d74802240fa5b95c1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/db/mongodb.ts": {
+    "mtime": 1779943405010.0972,
+    "hash": "7cd0e24eb97bbae6f506f29411337c00"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/downloadPhoto.ts": {
+    "mtime": 1772841195750.034,
+    "hash": "8a80fa7bbe2784f34b725a12c42156c8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/email.ts": {
+    "mtime": 1773852118318.0674,
+    "hash": "ab654f28df30c4807366809e0edd9689"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/env.ts": {
+    "mtime": 1772841195751.034,
+    "hash": "cea3b7ffb84ef6a4c44b55832e60a28a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/furniture/image-processor.ts": {
+    "mtime": 1776873779606.8904,
+    "hash": "c25ac761d1c0d706e54b1d5ea20d7445"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/furniture/scraper.ts": {
+    "mtime": 1780141898575.304,
+    "hash": "79a45e39a2330ea92fd0e42a17940111"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/messages/system.ts": {
+    "mtime": 1779993068181.0493,
+    "hash": "5474318a7f4e60525c2921aa3bd5b82b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/pusher.ts": {
+    "mtime": 1779994310063.0515,
+    "hash": "0b1dc15a001a944599a11f06aad3289c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/pusher/server.ts": {
+    "mtime": 1779994194738.0417,
+    "hash": "b3b7a85ce15b1654118d2d4396cdfb39"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/pusherClient.ts": {
+    "mtime": 1779994231517.045,
+    "hash": "2658e1626a4a0f4059b24932a93cea30"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/redis/aiQueue.ts": {
+    "mtime": 1780215440244.0818,
+    "hash": "d1a35028ec8caf4c9f36d9df74b5b216"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/redis/cache.ts": {
+    "mtime": 1780215413336.0796,
+    "hash": "5fda9f01e1f98485575e3a2904ecaa0e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/redis/client.ts": {
+    "mtime": 1780215256252.0662,
+    "hash": "4757c819f891c5d49ae2931962ae0800"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/redis/lock.ts": {
+    "mtime": 1780215299757.0698,
+    "hash": "3c9b578f819e29e7f23a87609f1add34"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/redis/rateLimit.ts": {
+    "mtime": 1780215428753.0808,
+    "hash": "32c610ca1051be2bf9e93c755b83dafc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/server/memoryWatchdog.ts": {
+    "mtime": 1780208467313.1575,
+    "hash": "fcdea56eb6a788a44ee3d54bd97840b1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/uploadthing.ts": {
+    "mtime": 1772791817336.185,
+    "hash": "e32c142f8cee9be9b0f7131daba68816"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/utils.ts": {
+    "mtime": 1772791817337.379,
+    "hash": "ed6e33898e156aefd44d3fd5ed779581"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/utils/isValidPortfolioImageUrl.ts": {
+    "mtime": 1779880787024.3167,
+    "hash": "76789cd4e1deb1f6abaa15324b5f6e42"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/validations.ts": {
+    "mtime": 1772791817337.379,
+    "hash": "8f1eb56d4ba7c16519184407ac47b4bb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/lib/vastu-engine.ts": {
+    "mtime": 1778043965211.1284,
+    "hash": "2f6649276116ff25c643f23b0b6b1e47"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/middleware.ts": {
+    "mtime": 1780307232453.2349,
+    "hash": "bf8aebb4e427b20783b2641bc01cee3d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/next.config.mjs": {
+    "mtime": 1780208508929.161,
+    "hash": "689deba3b51c2da8e923e7a868a6fac6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/playwright.config.ts": {
+    "mtime": 1780301633722.3982,
+    "hash": "232d5668ef97af845d13b636cc7547ad"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/postcss.config.mjs": {
+    "mtime": 1772791817346.533,
+    "hash": "b47a1134608cf82fb4b007812004a3a5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/sw.js": {
+    "mtime": 1772791817384.041,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/run-tests.js": {
+    "mtime": 1776537045837.901,
+    "hash": "2ce24b33133c674dee46aacd62bfb124"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scratch/download_direct.py": {
+    "mtime": 1779369040998.083,
+    "hash": "0400e45ced6ac245baf1c55d6df69a26"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/comfyui_setup_assistant.py": {
+    "mtime": 1779729887637.3398,
+    "hash": "833f60dfa422086eaaba566f33a69bb8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/composite_furniture.py": {
+    "mtime": 1779515919798.2488,
+    "hash": "9985ac218ec77e1c0e22f684acbfbbd7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/db-seed-market.js": {
+    "mtime": 1779970135398.3987,
+    "hash": "4bfc04c123e24290d20acac1b60bb925"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/dev-server.ps1": {
+    "mtime": 1772791817384.041,
+    "hash": "a081e8f774c6de6741b00cedc1f60b89"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/find_missing_keys.js": {
+    "mtime": 1780124339023.1365,
+    "hash": "a5f02cd6f2a41d53f5ce0ccbc363aff9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/list-users.js": {
+    "mtime": 1779961538261.2,
+    "hash": "37d674f435020e5025322e9446e87a3b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/make-admin.mjs": {
+    "mtime": 1779863646493.3677,
+    "hash": "0278f36f646531219348307588447b77"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/reconstruct_room.py": {
+    "mtime": 1779442814680.6511,
+    "hash": "3f1117693e85269e34348d8f8412a6b6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/run_rclone_upload.js": {
+    "mtime": 1779514438286.122,
+    "hash": "60cedcc2c4f83aa8e247148395735a78"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/search_repo.ps1": {
+    "mtime": 1772841195769.034,
+    "hash": "f846618fe8be40c2029430102e5996f5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/seed-admin-config.ts": {
+    "mtime": 1780019672655.1904,
+    "hash": "0040e2f500650406223df648a9ea7712"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/setup_search.ps1": {
+    "mtime": 1772841195770.034,
+    "hash": "fd75e0cbf368dc501035b705ba6bba38"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/test_marble.js": {
+    "mtime": 1779455830724.7766,
+    "hash": "5fda646df2e7f4702c9e3ec0f8631c31"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/validate-all.ps1": {
+    "mtime": 1772841195770.034,
+    "hash": "0911bc62dee04aac064b91bf400c4ed6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/validate-skills.ps1": {
+    "mtime": 1772841195770.034,
+    "hash": "a7a120e6ee9349f8ec376ae3569b72e4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/validate-templates.ps1": {
+    "mtime": 1772841195771.034,
+    "hash": "9a57661d429beff05fd38799bffe8d63"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/validate-workflows.ps1": {
+    "mtime": 1772841195771.034,
+    "hash": "74b8260ecb3eb20e6ff2b131a08b3711"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/verify-engines.ts": {
+    "mtime": 1772841195771.034,
+    "hash": "6e240137fe0eea674e73b6c424be20ab"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/verify-phase1.mjs": {
+    "mtime": 1779863458595.3518,
+    "hash": "1ab752e844d23675a96ce9af27666cdc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/verify-phase2.mjs": {
+    "mtime": 1779863589948.363,
+    "hash": "571f00b0fbd5c8a3450d770729fc5bf3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/verify-phase3.mjs": {
+    "mtime": 1779863782995.3794,
+    "hash": "4e4d6e736a2f8dbe4ea0bf2d13972a8d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/scripts/verify-phase4.mjs": {
+    "mtime": 1779863952976.394,
+    "hash": "57a105597b715cea834dde3f98b81755"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/components/RatingFeedback.tsx": {
+    "mtime": 1779453313705.5615,
+    "hash": "496390b151e8bd9e022d7dcdcd20f29b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/asianPaintsPalette.js": {
+    "mtime": 1779305472447.8928,
+    "hash": "c1999201af856d0ee1a1bfedf0cbe208"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/ceilingChangerPrompts.js": {
+    "mtime": 1779364558259.3384,
+    "hash": "e558f5063268e6a1aa8e7edb32a1f4b0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/ceilingColorPalette.js": {
+    "mtime": 1779364564904.3389,
+    "hash": "92c53e2296b86f1a9b1e016600587aec"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/roomChangerPrompts.js": {
+    "mtime": 1779299062838.625,
+    "hash": "ce0ede5d7b01185a96731463aa713b57"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/transferPresets.js": {
+    "mtime": 1779993206897.0315,
+    "hash": "507884b773fe3e98b00a6cb3f5006096"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/transferPresets.ts": {
+    "mtime": 1779993188103.0596,
+    "hash": "85c7ff46185054b923ded4bf947a2d7e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/config/transferPresetsData.js": {
+    "mtime": 1779993162300.0574,
+    "hash": "507884b773fe3e98b00a6cb3f5006096"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/controllers/colorChange.js": {
+    "mtime": 1773852118419.1135,
+    "hash": "fdd0e784f03f77d7f1cb5184e5c63655"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/controllers/gpuStatus.js": {
+    "mtime": 1773852118419.3347,
+    "hash": "475dd18940b8249a056eb33dcb181d67"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/controllers/redesign.js": {
+    "mtime": 1776532454894.5085,
+    "hash": "11291ff784c79c151ded87269680b8b7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/controllers/removal.js": {
+    "mtime": 1773852118419.3347,
+    "hash": "abbe914a76a105107923bd9c795abed6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/lib/appSettings.js": {
+    "mtime": 1779525635734.3315,
+    "hash": "900e33f98a9a827f79a836cc92e1acee"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/lib/comfyWorkflowConverter.js": {
+    "mtime": 1780128885112.2256,
+    "hash": "5496f965b0aa4e1bacf3578c227c76bf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/lib/googleDrive.ts": {
+    "mtime": 1779461678254.1155,
+    "hash": "1d2337bd79334bc84dd69d566d0ab70f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/lib/mongodb.js": {
+    "mtime": 1779943511196.1064,
+    "hash": "be4c7abf4312de46cac85596837ec69c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/lib/resolution-helper.js": {
+    "mtime": 1779979440951.2405,
+    "hash": "1fe6462e872cb174bd76cc246bee5b0e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/AppSettings.js": {
+    "mtime": 1779460573619.0212,
+    "hash": "4faf30d17d01e845acf92939b1ccfcfb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/CeilingChangerRun.js": {
+    "mtime": 1779364566912.339,
+    "hash": "e2e6c6b69525b7d2756e1505abb1ce59"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/FloorPlanProject.js": {
+    "mtime": 1779442505131.6248,
+    "hash": "477ad12bc7c6635308ccbd7e740f1165"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/FurniturePlacementRun.js": {
+    "mtime": 1779515983970.2542,
+    "hash": "c3f20ac8e6f79acc2f1d636e67db978a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/FurnitureRemoverRun.js": {
+    "mtime": 1779363972340.2883,
+    "hash": "e8bfa2a47dc4cfae4128d07b01426e25"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/LightingRun.js": {
+    "mtime": 1779768554680.1096,
+    "hash": "09f4c4fb9124347938e3280a849cbe9a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/MultiRoomProject.js": {
+    "mtime": 1779454126987.6309,
+    "hash": "7a8ac87bc2c491da315be6a6e25e91ea"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/Project.js": {
+    "mtime": 1779768561813.11,
+    "hash": "7fe195d8b4766fd1aaddc00a10b44432"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/RoomChangerRun.js": {
+    "mtime": 1779305106826.8616,
+    "hash": "1607bdd34c31ca85d72ae4f3ca111921"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/models/StyleTransferRun.js": {
+    "mtime": 1779979480944.244,
+    "hash": "68a9ee9c958df76dbea9bdaf73ecc651"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/aiQueue.ts": {
+    "mtime": 1780156731657.1255,
+    "hash": "aca93953b9eba1551a76498061930ddd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/ceilingChangerOrchestrator.js": {
+    "mtime": 1779532320595.006,
+    "hash": "a886a038c79fe2948a52e0b54c2984e5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/comfyBridge.js": {
+    "mtime": 1780155526209.0225,
+    "hash": "de9f6d9ad4fde2982c185f58a64511c8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/furniturePlacementOrchestrator.js": {
+    "mtime": 1779541511526.0283,
+    "hash": "55a855343778db99142d34c6ab02f02e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/furnitureRemoverOrchestrator.js": {
+    "mtime": 1779438924856.3188,
+    "hash": "24e64b6b3c1fe59acfc316c22b4ae651"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/lightingOrchestrator.js": {
+    "mtime": 1779815633133.3425,
+    "hash": "5f55e6cba0e1cae273e3bd3bc506646d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/marbleService.js": {
+    "mtime": 1779455789018.773,
+    "hash": "29cc07667f4d7edee6cbf4e311d2303f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/multiRoomOrchestrator.js": {
+    "mtime": 1780161309201.0652,
+    "hash": "6ace0d5d60774bf0a6aa8675926c46f3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/roomChangerOrchestrator.js": {
+    "mtime": 1779541502649.0276,
+    "hash": "a292239222dc80071841651d06142fbe"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/services/styleTransferOrchestrator.js": {
+    "mtime": 1780334380794.0637,
+    "hash": "3d42379dbea32490246789236304f2f3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/comfyui-export/run_pipeline_test.js": {
+    "mtime": 1779285416017.5464,
+    "hash": "0a96d1fcbd4298bcd38f150ec96543be"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/comfyui-export/test_runner.py": {
+    "mtime": 1779285416017.5464,
+    "hash": "d99dd69e6d760c61e9b579c9aeffbe6f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/ic_light/fix_workflows.py": {
+    "mtime": 1779735367613.808,
+    "hash": "0fcd7d5bbf7f70bf3c94f012f949c049"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/scene-understanding-optimized.ts": {
+    "mtime": 1779447244092.0427,
+    "hash": "294b0c5c48b7e810af8dde85fb5dd7aa"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/scene-understanding-v2.ts": {
+    "mtime": 1779285416017.5813,
+    "hash": "721f765ea50be5049de28866045d3983"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/scene-understanding-v3.ts": {
+    "mtime": 1779285416018.369,
+    "hash": "d5af007050639d9773daeccdfb73d5d7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/scene-understanding.ts": {
+    "mtime": 1780142196255.3293,
+    "hash": "c258529a7a3ccfc9448984f007848feb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/src/workflows/ultraProBuilder.js": {
+    "mtime": 1779285416018.9736,
+    "hash": "a97c774ed31c1a3251f703969695005c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/stores/editor-store.ts": {
+    "mtime": 1780155515038.0215,
+    "hash": "f97fb0f90ca36791f9e2dc2905e31500"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/stores/project-store.ts": {
+    "mtime": 1772791817384.121,
+    "hash": "bcb5d2c7c181a6fd2201080951766997"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/stores/user-store.ts": {
+    "mtime": 1780132012924.1082,
+    "hash": "cb49d3bfbc3e43397fec16c8f7b07557"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tailwind.config.ts": {
+    "mtime": 1779285416019.5679,
+    "hash": "e1fb6a6814409b82b089d4471646ee8b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test-api.js": {
+    "mtime": 1776535291034.7507,
+    "hash": "994ef05a909ccc2acc59da7668d516d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_detect_workflow.js": {
+    "mtime": 1779354586929.2515,
+    "hash": "f3a602d8a945072b7f45cbb8a8e4dc60"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_furniture_remover_api.js": {
+    "mtime": 1779355274619.3103,
+    "hash": "35586ddfcadddb55f92f132c90cc75d1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_nodes.js": {
+    "mtime": 1779769816495.2173,
+    "hash": "0ef73b7be70261a3c5d199fec8323f1d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_re_widgets.js": {
+    "mtime": 1780128873743.2246,
+    "hash": "4438d07e74a276efb31ebf89c78ac6c9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_re_workflow.js": {
+    "mtime": 1780128930652.2295,
+    "hash": "6563123fe4a9b752e79ebd5960aba665"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_swap_mat_workflow.js": {
+    "mtime": 1780118094712.201,
+    "hash": "43d26327589bd4481fec6a20a6ed171b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tests/e2e/multi-room-download.spec.ts": {
+    "mtime": 1779454399698.6543,
+    "hash": "c1070206656e7ab03bd6084ee0588f4d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tests/e2e/multi-room-enhancements.spec.ts": {
+    "mtime": 1779454327706.6482,
+    "hash": "ada4aeb339fcddfc4c00fbebdbc3e6cf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tests/e2e/setup/auth.ts": {
+    "mtime": 1780301639195.3984,
+    "hash": "5233878ea9adcf8f8816f18cf2b3fb4b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/eslint.config.js": {
+    "mtime": 1763959543000,
+    "hash": "b8893da386a89dfd3672dad848f4ec7e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/App.tsx": {
+    "mtime": 1770652098000,
+    "hash": "34ac95c5a1aef2f816885a2f71ba0f3f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/AddMenuItem.tsx": {
+    "mtime": 1769954800000,
+    "hash": "e094ac0b7960518702098d0ef9239dc6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/AddRestaurant.tsx": {
+    "mtime": 1769852167000,
+    "hash": "a24168ff495eabbaf030ec892f0b92f2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/AdminRestaurantCard.tsx": {
+    "mtime": 1770653513000,
+    "hash": "acc1de21d82f81efb2c8205f013b17f0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/MenuItems.tsx": {
+    "mtime": 1770025045000,
+    "hash": "cfd3b37c53ed70b023f7747f1704d2c8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/OrderCard.tsx": {
+    "mtime": 1770617961000,
+    "hash": "d992bbe905e7c930261d212d93d4d809"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RestaurantCard.tsx": {
+    "mtime": 1770015731000,
+    "hash": "0d823b8f952976b7cb6cfb80a2c6d286"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RestaurantOrders.tsx": {
+    "mtime": 1770617229000,
+    "hash": "bf5ed5b8bc0e71c484e4d97c1d74da86"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RestaurantProfile.tsx": {
+    "mtime": 1770481788000,
+    "hash": "57e2b5587f34e6b0103522a6c226c665"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RiderAdmin.tsx": {
+    "mtime": 1770702031000,
+    "hash": "41540b2b44f7359608869d6c18ef0609"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RiderCurrentOrder.tsx": {
+    "mtime": 1770639879000,
+    "hash": "dfcf00e22bdca91455f2edea66146564"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RiderOrderMap.tsx": {
+    "mtime": 1770642441000,
+    "hash": "583bf2166078f18421722a3c9884905c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/RiderOrderRequest.tsx": {
+    "mtime": 1770620978000,
+    "hash": "9753b019fc515aec4db70ef049931cd6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/UserOrderMap.tsx": {
+    "mtime": 1770643771000,
+    "hash": "18469f6acadb66be44cc66fecdca83e4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/navbar.tsx": {
+    "mtime": 1770024783000,
+    "hash": "4c24da2507b6787a78d5abffbc24132e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/protectedRote.tsx": {
+    "mtime": 1770650192000,
+    "hash": "0f135d67cd7bfeb8a19837494cb794a6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/components/publicRoute.tsx": {
+    "mtime": 1769447404000,
+    "hash": "c60ecd5b685629c6ebf33129fd635ec6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/context/AppContext.tsx": {
+    "mtime": 1770024730000,
+    "hash": "9c1e9a4107d6bdfaa4a08bc66075bf7d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/context/SocketContext.tsx": {
+    "mtime": 1770375887000,
+    "hash": "aebade48c98a266ec64b4d221676e21e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/main.tsx": {
+    "mtime": 1770701382000,
+    "hash": "cff25fc9c64797baf8a3fb94de781f47"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Account.tsx": {
+    "mtime": 1769737153000,
+    "hash": "5f03d1a5dba8025e2ef9c12b5a25537e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Address.tsx": {
+    "mtime": 1770136686000,
+    "hash": "e881b6fc31a216a80a4606a2a8708f26"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Admin.tsx": {
+    "mtime": 1770653841000,
+    "hash": "917ff8370bc0a9c375dcccda17d6f693"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Cart.tsx": {
+    "mtime": 1770040533000,
+    "hash": "b9b60d8a4f6f6fe2fa9f22a46f8a7a63"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Checkout.tsx": {
+    "mtime": 1770660711000,
+    "hash": "a575c5605da8ccf8c49de8084c902bc8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Home.tsx": {
+    "mtime": 1770276515000,
+    "hash": "f2306368508ada9209f8362ba4348380"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Login.tsx": {
+    "mtime": 1769735076000,
+    "hash": "59619ff095025a2d9da828f137943acf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/OrderPage.tsx": {
+    "mtime": 1770643466000,
+    "hash": "f3d73ecc6de711d07a2dd0b4bd46e3e4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/OrderSuccess.tsx": {
+    "mtime": 1770362648000,
+    "hash": "bd0bbdf901891ae01ff140ef91209af9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Orders.tsx": {
+    "mtime": 1770617312000,
+    "hash": "49828e8766e03af562910ffd18d4ac9d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/PaymentSuccess.tsx": {
+    "mtime": 1770358387000,
+    "hash": "a2bca98eb7f406d17cd64950ffed211b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/Restaurant.tsx": {
+    "mtime": 1770398505000,
+    "hash": "76fab113677d74ee24ec826fd1b21b30"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/RestaurantPage.tsx": {
+    "mtime": 1770016652000,
+    "hash": "e3b176959d21a9d06a8fb19248a4d284"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/RiderDashboard.tsx": {
+    "mtime": 1770640470000,
+    "hash": "16db931780fe2fd1d1c99f6cbb61a369"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/pages/SelectRole.tsx": {
+    "mtime": 1769580499000,
+    "hash": "1b7831749838b831c535fc11b11bb93a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/types.ts": {
+    "mtime": 1770449057000,
+    "hash": "3c3dd035b4a82dfd9dee3fface857c32"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/utils/orderflow.ts": {
+    "mtime": 1770448994000,
+    "hash": "103b8b3be5d10833018c442eeca43b01"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/vite.config.ts": {
+    "mtime": 1769437662000,
+    "hash": "a545815e9774665a916fe473809fbd87"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/config/db.ts": {
+    "mtime": 1770650885000,
+    "hash": "7f0bc5f3b9df5edd1f14d226d24133d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/controllers/admin.ts": {
+    "mtime": 1770651800000,
+    "hash": "274d90c23d5cc374d83768752a5f27c0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/index.ts": {
+    "mtime": 1770651898000,
+    "hash": "11f8718ffc0e0944d1ab81dc63765393"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/middlewares/isAuth.ts": {
+    "mtime": 1770651209000,
+    "hash": "c0a977ecd0ab583c1bfc14651acb9443"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/middlewares/trycatch.ts": {
+    "mtime": 1769413337000,
+    "hash": "56b0ef53967318fdb6a159fe56f917d3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/routes/admin.ts": {
+    "mtime": 1770652005000,
+    "hash": "8681375ee129617fb6a5ae89e23b083d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/admin/src/util/collection.ts": {
+    "mtime": 1770651000000,
+    "hash": "b91deb73c772b6bb14b31836994b5544"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/config/db.ts": {
+    "mtime": 1769360187000,
+    "hash": "b503cecf111c4e078997aaffe2d17c06"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/config/googleConfig.ts": {
+    "mtime": 1769439587000,
+    "hash": "f27f5da88a3c47f50fa5ecd1fba235cd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/controllers/auth.ts": {
+    "mtime": 1769437382000,
+    "hash": "6c759c7ec80c5c5c22d3be5df4d3d05b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/index.ts": {
+    "mtime": 1769439329000,
+    "hash": "a63d4ff376737359d5bd66cb0d297447"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/middlewares/isAuth.ts": {
+    "mtime": 1769851967000,
+    "hash": "4d5b7b21ce2e8924e685188015fc9cc7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/middlewares/trycatch.ts": {
+    "mtime": 1769413337000,
+    "hash": "56b0ef53967318fdb6a159fe56f917d3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/model/User.ts": {
+    "mtime": 1769733319000,
+    "hash": "e79314b3b36e20101b1a226a34992803"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/auth/src/routes/auth.ts": {
+    "mtime": 1769414839000,
+    "hash": "f5b5c1fd5d455d27a52a8e6b9370f0c0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/realtime/src/index.ts": {
+    "mtime": 1770375226000,
+    "hash": "69c9bb76de93d703bd18bc5ea395668f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/realtime/src/routes/internal.ts": {
+    "mtime": 1770375178000,
+    "hash": "33b20096c979862813173132a967b132"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/realtime/src/socket.ts": {
+    "mtime": 1770374787000,
+    "hash": "bad6a681f436fec5fc2cf8faec0742ea"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/config/datauri.ts": {
+    "mtime": 1769754005000,
+    "hash": "7452434f51f9b8c2de58c3c9604b157b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/config/db.ts": {
+    "mtime": 1769753533000,
+    "hash": "b503cecf111c4e078997aaffe2d17c06"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/config/order.publisher.ts": {
+    "mtime": 1770535689000,
+    "hash": "93eaef97956d53fe95fa54802e37ba45"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/config/payment.consumer.ts": {
+    "mtime": 1770398327000,
+    "hash": "5a30abd1024a1266644a14da2a348624"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/config/rabbitmq.ts": {
+    "mtime": 1770535741000,
+    "hash": "95825874d71e78d689a675862ca8a275"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/controllers/address.ts": {
+    "mtime": 1770136219000,
+    "hash": "1d89797548d7acc53d9dcfebeef4692f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/controllers/cart.ts": {
+    "mtime": 1770038027000,
+    "hash": "e5e1fcec95886e9912681bbeb6e01d49"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/controllers/menuitem.ts": {
+    "mtime": 1769957334000,
+    "hash": "4fb30c395222b086e82a937874c5c0cd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/controllers/order.ts": {
+    "mtime": 1770640305000,
+    "hash": "c1a690f6c04829c17e9ceee3ee9e73c0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/controllers/restaraunt.ts": {
+    "mtime": 1770013718000,
+    "hash": "560e282e8143af32c406911c46717b04"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/index.ts": {
+    "mtime": 1770222032000,
+    "hash": "812a623cb20549bf6f83dcf2b13dde1d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/middlewares/isAuth.ts": {
+    "mtime": 1769851633000,
+    "hash": "d06eb6915adb947302a686833367ba6f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/middlewares/multer.ts": {
+    "mtime": 1769753827000,
+    "hash": "d6cb087bbaf28eefda6d2ff22367ce76"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/middlewares/trycatch.ts": {
+    "mtime": 1769753703000,
+    "hash": "56b0ef53967318fdb6a159fe56f917d3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/models/Address.ts": {
+    "mtime": 1770136202000,
+    "hash": "7159a09ab69eed73460b0f178189ba05"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/models/Cart.ts": {
+    "mtime": 1770023132000,
+    "hash": "5bdb5d1ccb25ddf62a0e8946eb1ab168"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/models/MenuItems.ts": {
+    "mtime": 1769955075000,
+    "hash": "a46dd3d58a26e940ee0dc6a2d3f21bb7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/models/Order.ts": {
+    "mtime": 1770449028000,
+    "hash": "3a7cc64adc75cb7c597cc35688114e92"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/models/Restaurant.ts": {
+    "mtime": 1769754659000,
+    "hash": "4e0435aeedaa5401c5aab5d97676cf2f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/routes/address.ts": {
+    "mtime": 1770134626000,
+    "hash": "1c532424e640edd148284ed6aba1a29b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/routes/cart.ts": {
+    "mtime": 1770038095000,
+    "hash": "18961278a4e09c2c13fd4bcc176e85cf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/routes/menuitem.ts": {
+    "mtime": 1769957339000,
+    "hash": "54551a54901a94307f88c326fc958ed4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/routes/order.ts": {
+    "mtime": 1770615328000,
+    "hash": "b39a541f569dda2b30d47289ec6a3f84"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/restaurant/src/routes/restaraunt.ts": {
+    "mtime": 1770013777000,
+    "hash": "af608bb4dcfdb9d35c4fc6276d73a992"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/config/datauri.ts": {
+    "mtime": 1769754005000,
+    "hash": "7452434f51f9b8c2de58c3c9604b157b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/config/db.ts": {
+    "mtime": 1769753533000,
+    "hash": "b503cecf111c4e078997aaffe2d17c06"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/config/orderReady.consumer.ts": {
+    "mtime": 1770620200000,
+    "hash": "b75c5b488e71a5c353dc8c84499aff53"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/config/rabbitmq.ts": {
+    "mtime": 1770619887000,
+    "hash": "5d1d71e136cacb029b3078858267c45f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/controllers/rider.ts": {
+    "mtime": 1770640058000,
+    "hash": "6a5345b7d714f44dfa541c02bd95be28"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/index.ts": {
+    "mtime": 1770619449000,
+    "hash": "3b4bd3b58eb3ec4c93c9196ce6b6996e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/middlewares/isAuth.ts": {
+    "mtime": 1769851633000,
+    "hash": "d06eb6915adb947302a686833367ba6f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/middlewares/multer.ts": {
+    "mtime": 1769753827000,
+    "hash": "d6cb087bbaf28eefda6d2ff22367ce76"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/middlewares/trycatch.ts": {
+    "mtime": 1769753703000,
+    "hash": "56b0ef53967318fdb6a159fe56f917d3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/model/Rider.ts": {
+    "mtime": 1770480861000,
+    "hash": "cdb3164ab677047a73273c539992e197"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/rider/src/routes/rider.ts": {
+    "mtime": 1770616565000,
+    "hash": "fb91510d2f384de80bd23fe3f2cfd02b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/config/payment.producer.ts": {
+    "mtime": 1770220468000,
+    "hash": "3a2853d18bd06fb81a13a4c173d0005b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/config/rabbitmq.ts": {
+    "mtime": 1770219596000,
+    "hash": "b3e087cba0ec08523eb3425780f02bc8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/config/razorpay.ts": {
+    "mtime": 1770219791000,
+    "hash": "1de6b6cbef53a18fd2ab4eba864ff0cb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/config/verifyRazorpay.ts": {
+    "mtime": 1770220199000,
+    "hash": "d45274b3ab7919cfcd8f9ca2d4dbe0c3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/controllers/payment.ts": {
+    "mtime": 1770359122000,
+    "hash": "ef2c44e648d414ac50cf6f81dd345d3b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/index.ts": {
+    "mtime": 1770221300000,
+    "hash": "d8038b922dcce23b6f697071d555070d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/routes/cloudinary.ts": {
+    "mtime": 1769756021000,
+    "hash": "a2cd300c36cbc263f1347b7b2ff22b94"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/services/utils/src/routes/payment.ts": {
+    "mtime": 1770359419000,
+    "hash": "389bfb65799b1a60bffe41de9497be11"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/api.ts": {
+    "mtime": 1772791817385.4302,
+    "hash": "fdc6dda11c678e1399fe1429852a6cfc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/cost.ts": {
+    "mtime": 1772791817385.6553,
+    "hash": "2fb35e0aff6750b288d3d5333a223bb8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/editor.ts": {
+    "mtime": 1772791817385.921,
+    "hash": "4bee29417b30aa6339147c751bf65184"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/global.d.ts": {
+    "mtime": 1772791817385.921,
+    "hash": "e5365323e2b3d625a04e04aed51bed5e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/index.ts": {
+    "mtime": 1772791817385.921,
+    "hash": "5a4432789c3c91403606aff2187bee59"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/project.ts": {
+    "mtime": 1772791817385.921,
+    "hash": "3940f9f6c98f17cd83e7d11d0bcac904"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/redlock.d.ts": {
+    "mtime": 1780215389612.0776,
+    "hash": "9febd8cec4894104dfabaa7331543bdd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/types/vastu.ts": {
+    "mtime": 1772791817385.921,
+    "hash": "5f4fa0adad48d5a3e2adce5c0e53655b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/.agent/rules/graphify.md": {
+    "mtime": 1776517540452.56,
+    "hash": "70155a199c71df7777df6df4df1ffa63"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/.agent/workflows/graphify.md": {
+    "mtime": 1776517540453.4639,
+    "hash": "10fea19f28cbd104405457cb50c0d364"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/AUDIT.md": {
+    "mtime": 1773852118362.44,
+    "hash": "24bdcbf1b34380e5722be0c609e1e7af"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/AUDIT_REPORT.md": {
+    "mtime": 1780305452842.0828,
+    "hash": "a6803b73f124391bcdaa7a5a23e17f3b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/CLAUDE.md": {
+    "mtime": 1780300351837.2886,
+    "hash": "19f0c0193f80a1a8f3db0bdbb0d765c3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/COMFYUI_PRODUCTION_READY.md": {
+    "mtime": 1773852118327.7844,
+    "hash": "a82bd7170ce79da8269d4375e52c9631"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/DEV-README.md": {
+    "mtime": 1779285416006.3696,
+    "hash": "0cf2aea451abcc0a14a96b77080eecb0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/KNOWN_ISSUES.md": {
+    "mtime": 1780018010336.0483,
+    "hash": "61299beb8e2288bdf62273c6357ecc30"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/PROJECT_RULES.md": {
+    "mtime": 1772841195699.034,
+    "hash": "68411e09cd4e922fce8132cbfc8802d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/README.md": {
+    "mtime": 1772791817235.653,
+    "hash": "a89f56ca5cae858bd5858fa3a1994797"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/adapters/CLAUDE.md": {
+    "mtime": 1772841195699.034,
+    "hash": "b5d411ec63ed1aa6f3ae724d2ca429cc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/adapters/GEMINI.md": {
+    "mtime": 1772841195700.829,
+    "hash": "f2d9a7032742d78dd28720a09dd6b0f1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/adapters/GPT_OSS.md": {
+    "mtime": 1772841195700.829,
+    "hash": "235c7cefe5c64f71eaa0943ec8cacd15"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/chrome-extension/popup.html": {
+    "mtime": 1772791817283.121,
+    "hash": "9ede761421749b4cd399abd6ee57c886"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/docs/COMFYUI_INTEGRATION.md": {
+    "mtime": 1773852118335.7844,
+    "hash": "25cfd32b02f7dcc0f28cccb03bfb024b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/docs/model-selection-playbook.md": {
+    "mtime": 1772841195745.034,
+    "hash": "2e7807bd36bcb7e8ab3f8c7959e4421c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/docs/runbook.md": {
+    "mtime": 1772841195746.7695,
+    "hash": "a917c4f0d6fcbf174e1354b5230735d9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/insufficient_credits_prompt.md": {
+    "mtime": 1780133609959.2446,
+    "hash": "5a2722a2af73c12a7c1543435a691272"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/model_capabilities.yaml": {
+    "mtime": 1772841195752.034,
+    "hash": "609e467924b12f922f455310704da213"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/professor-discussion-script.md": {
+    "mtime": 1775811666509.9045,
+    "hash": "823ec2408346a3b9ae141a137081f5da"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/robots.txt": {
+    "mtime": 1780018281733.0715,
+    "hash": "7ea7062768ff12cb0344eb8f4966a170"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_log.txt": {
+    "mtime": 1776536819727.8816,
+    "hash": "355b9bc78555e9f3f8f0a2e887ace586"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/README.md": {
+    "mtime": 1763959543000,
+    "hash": "cac141da861c855e069a9c32557458ac"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/index.html": {
+    "mtime": 1770274301000,
+    "hash": "2f401f273742f46adc0a243b4138a1ee"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/Project_Setup_Guide.pdf": {
+    "mtime": 1770717800000,
+    "hash": "8aa1a1a6f5c92557f717227fcf5bf54d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/generated/demo_success.png": {
+    "mtime": 1773852118338.7844,
+    "hash": "3c92f4a97ce07e49ec9ed0082b99981c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/generated/test_user_basic-test_00001_.png": {
+    "mtime": 1773852118338.7844,
+    "hash": "c75da240c06dd5f079488d389167533d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/icons/icon-152.png": {
+    "mtime": 1772791817346.7935,
+    "hash": "640c73eb19704deb5b7625a0a4f9f9f5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/icons/icon-192.png": {
+    "mtime": 1772791817347.0845,
+    "hash": "103408000c07dbf4d430fa8f59b9dbfa"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/icons/icon-512.png": {
+    "mtime": 1772791817347.121,
+    "hash": "12e4a228d5cce76f28b7dcb8db17dcea"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/balcony-garden.jpg": {
+    "mtime": 1772791817348.1558,
+    "hash": "d3472207b8176e960a73fb5957929b7f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/bedroom-colors.jpg": {
+    "mtime": 1772791817348.7139,
+    "hash": "f7b1584c993ebcc8ff4c13c85b904784"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/budget-makeover.jpg": {
+    "mtime": 1772791817350.121,
+    "hash": "4321eba7a7da75043ed732403b780f83"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/entrance-vastu.jpg": {
+    "mtime": 1772791817352.121,
+    "hash": "05e995a4f9a7a652a1cd1ebf625a7d99"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/flooring.jpg": {
+    "mtime": 1772791817353.121,
+    "hash": "a4dad878d7ed9026ebb8ab36ca0b88d0"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/kitchen-vastu.jpg": {
+    "mtime": 1772791817354.121,
+    "hash": "74dc9db3230c4d4b1127639d32d0c85e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/pooja-room.jpg": {
+    "mtime": 1772791817355.121,
+    "hash": "6a5a530ad21cf42c53358a215b69799e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/renovation-cost.jpg": {
+    "mtime": 1772791817356.121,
+    "hash": "15877fbfc3c0a66e9940b948c8330284"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/small-apartment.jpg": {
+    "mtime": 1772791817357.121,
+    "hash": "b6d1493290efdd61a7cd0b4b1f6fdbad"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/trends-2025.jpg": {
+    "mtime": 1772791817358.121,
+    "hash": "e3a5e94202d5bf261397a31d3c5afd02"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/blog/vastu-guide.jpg": {
+    "mtime": 1772791817358.121,
+    "hash": "4248b2b187abeb0aa7baac5435bd4796"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/bedroom-after-1.jpg": {
+    "mtime": 1772791817359.121,
+    "hash": "f67e9e5b116cdf91209a5278df378c62"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/bedroom-after-2.jpg": {
+    "mtime": 1772791817361.121,
+    "hash": "778fc4c9e922078039cc590452d1f05d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/bedroom-before-1.jpg": {
+    "mtime": 1772791817362.121,
+    "hash": "f7b1584c993ebcc8ff4c13c85b904784"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/bedroom-before-2.jpg": {
+    "mtime": 1777475397580.1936,
+    "hash": "a5cf4a57c47ea69664438286422c37fd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/kitchen-after-1.jpg": {
+    "mtime": 1772791817363.557,
+    "hash": "74dc9db3230c4d4b1127639d32d0c85e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/kitchen-before-1.jpg": {
+    "mtime": 1772791817364.3713,
+    "hash": "26796654ece4fde83cc8071a318a3984"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/living-after-1.jpg": {
+    "mtime": 1772791817365.0642,
+    "hash": "6ed2527b211084ccd3dacae01e6805dd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/living-after-2.jpg": {
+    "mtime": 1772791817365.391,
+    "hash": "d3472207b8176e960a73fb5957929b7f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/living-before-1.jpg": {
+    "mtime": 1772791817366.4343,
+    "hash": "0b5e3f8c941bbf575c987ee0fd149980"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/living-before-2.jpg": {
+    "mtime": 1777475397573.464,
+    "hash": "d5b7682d7dc0f3490ad6a11188212762"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/outdoor-after-1.jpg": {
+    "mtime": 1772791817367.8174,
+    "hash": "14c681e4789cbeb85bc6121aa65ca78e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/gallery/outdoor-before-1.jpg": {
+    "mtime": 1772791817368.6685,
+    "hash": "8307795e8ca5c22135d826b876861c0f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/grid.svg": {
+    "mtime": 1772791817368.6685,
+    "hash": "a5af034e21b095fb65edd5a1a8c7d965"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/hero-after-2.jpg": {
+    "mtime": 1772791817369.8032,
+    "hash": "bc587b766b5549ae10e8bf37af60b5e8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/hero-after-3.jpg": {
+    "mtime": 1772791817372.699,
+    "hash": "fb19b7423f4627ae5c80cd9d5dbde0f2"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/hero-after.jpg": {
+    "mtime": 1772791817374.2507,
+    "hash": "3330341e079df96e991051f72a2f1d10"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/hero-before-2.jpg": {
+    "mtime": 1772791817375.576,
+    "hash": "4e6f3f41f9a538dc667c2555499f5cb8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/hero-before-3.jpg": {
+    "mtime": 1772791817377.121,
+    "hash": "4403b601bb9d0220ed16b57c12f8513e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/hero-before.jpg": {
+    "mtime": 1772791817379.121,
+    "hash": "c49b7c94de59a3884dd6f30406786698"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/og-image.png": {
+    "mtime": 1772791817380.121,
+    "hash": "0d9d9dab944cb68355c31f13d84b4d03"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/rooms/room1.jpg": {
+    "mtime": 1776851125778.0164,
+    "hash": "395cb46af037a5c838782af8c7775608"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/rooms/room2.jpg": {
+    "mtime": 1776851125778.246,
+    "hash": "939d0e114e2f67fc84441013bddf1c6e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/rooms/room3.jpg": {
+    "mtime": 1776851125778.8076,
+    "hash": "c628e315782780657f1bc3376b61ea9b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/styles/placeholder.jpg": {
+    "mtime": 1772841195769.034,
+    "hash": "62133dd7434614ffb1e98cf25a824e7a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/team/ananya.jpg": {
+    "mtime": 1772791817380.121,
+    "hash": "b26c31d282602861d3f9758934c29c40"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/team/arjun.jpg": {
+    "mtime": 1772791817381.7534,
+    "hash": "db27304284cbef461918e347c93b5615"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/team/priya.jpg": {
+    "mtime": 1772791817382.1387,
+    "hash": "4b05075e1a35f7087865f480c785300d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/team/rajesh.jpg": {
+    "mtime": 1772791817382.4016,
+    "hash": "2e5b7996dcf52e07884da24c8f9ec060"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/team/vikram.jpg": {
+    "mtime": 1772791817382.6243,
+    "hash": "13dbcb2ce6b129d0a673fc1aaf56a6cb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/testimonials/avatar-1.jpg": {
+    "mtime": 1772791817382.6243,
+    "hash": "2e5b7996dcf52e07884da24c8f9ec060"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/testimonials/avatar-2.jpg": {
+    "mtime": 1772791817382.9534,
+    "hash": "4b05075e1a35f7087865f480c785300d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/testimonials/avatar-3.jpg": {
+    "mtime": 1772791817383.424,
+    "hash": "b26c31d282602861d3f9758934c29c40"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/testimonials/avatar-4.jpg": {
+    "mtime": 1772791817383.424,
+    "hash": "13dbcb2ce6b129d0a673fc1aaf56a6cb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/testimonials/avatar-5.jpg": {
+    "mtime": 1772791817383.424,
+    "hash": "db27304284cbef461918e347c93b5615"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/images/testimonials/avatar-6.jpg": {
+    "mtime": 1772791817384.041,
+    "hash": "199b3bcfb9a384fafb639e3a5d17b404"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/logo-dark.svg": {
+    "mtime": 1772791817384.041,
+    "hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/logo.svg": {
+    "mtime": 1772791817384.041,
+    "hash": "6dbec3c5c515425f488615eac2523279"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/basic-test_00001_.png": {
+    "mtime": 1773852118364.3938,
+    "hash": "c75da240c06dd5f079488d389167533d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/refined_00010_.png": {
+    "mtime": 1777474672412.0452,
+    "hash": "c0e2163edaa7e55434b79341fd696005"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation_1773845381315_00001_.png": {
+    "mtime": 1773852118372.7844,
+    "hash": "7451cf6ad22002d24339343046734ab4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation_1773845575281_00001_.png": {
+    "mtime": 1773852118383.1616,
+    "hash": "4227ae8cd454bb6e6dbeb0709528eb9f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation_1773846092776_00001_.png": {
+    "mtime": 1773852118389.7844,
+    "hash": "391300b15e626f19f446f8ebfb8091e1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation_1773846228415_00001_.png": {
+    "mtime": 1773852118397.7844,
+    "hash": "68deda1952bf964326539527b4bc6033"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation_1773849872507_00001_.png": {
+    "mtime": 1773852118406.7844,
+    "hash": "04331482873382a0cc628e19d456447e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation_1773849904224_00001_.png": {
+    "mtime": 1773852118416.4973,
+    "hash": "3c50be13b4d0850ba668f1caf5d267f6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00001_.png": {
+    "mtime": 1773852118416.4973,
+    "hash": "f35ffa226624e74de5789f660783f156"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00002_.png": {
+    "mtime": 1773852118416.7844,
+    "hash": "f92735e633849cb574e81be0075f4f3e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00003_.png": {
+    "mtime": 1773852118416.7844,
+    "hash": "856af52e9480b3296c6e0a1ef5c10b2e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00005_.png": {
+    "mtime": 1773852118994.7844,
+    "hash": "eebc3171e49c9e7fee2ec6d766ff7441"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00006_.png": {
+    "mtime": 1773852118994.7844,
+    "hash": "5086dfc8edf23ce28a61ec1d594cf165"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00007_.png": {
+    "mtime": 1773852526844.0132,
+    "hash": "7b982af64941eb3d59cf80510b8e516f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00008_.png": {
+    "mtime": 1773852618374.8137,
+    "hash": "94d3599dc74ac4bd3f3007bc13e81ac4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00009_.png": {
+    "mtime": 1773853628722.317,
+    "hash": "c01daca7babbd6cade7e126f0cc76bf4"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00010_.png": {
+    "mtime": 1773854845426.7156,
+    "hash": "8fcd56343466135cac664c966c163c7f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00011_.png": {
+    "mtime": 1773855027411.4087,
+    "hash": "c4648d5406896c01d3c41e0a2648dbd8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00014_.png": {
+    "mtime": 1773855290359.1814,
+    "hash": "32e1a94ef848c85d88f6fa2109358c0d"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00015_.png": {
+    "mtime": 1773855884525.9905,
+    "hash": "259b2bacd9899dadad5e0b77adcab361"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00016_.png": {
+    "mtime": 1773855974593.721,
+    "hash": "1eff5ef5060c6feec8af43a91d2d70b8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00018_.png": {
+    "mtime": 1773856057910.3188,
+    "hash": "983607735b1f53e4b828b1b43e37c424"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00019_.png": {
+    "mtime": 1773856162574.47,
+    "hash": "d9fbfb551c895778dfa835e797860a65"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00020_.png": {
+    "mtime": 1774103628844.4011,
+    "hash": "334ee8cc938bca0b85c8330b14e8dc19"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00021_.png": {
+    "mtime": 1774103728851.8396,
+    "hash": "99052b71d46369a6c3ad45bbb27d74df"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00023_.png": {
+    "mtime": 1775452865499.9475,
+    "hash": "7324e9dfe2abe82cb9e295f1abdc916f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00024_.png": {
+    "mtime": 1775452973549.7625,
+    "hash": "690021f16dd7e199ae124b9f7ed7447f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00025_.png": {
+    "mtime": 1775453114559.1206,
+    "hash": "ae19f8fcd1e3bcb8ea07beee3b08ac0f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00026_.png": {
+    "mtime": 1775453140451.4688,
+    "hash": "bd8bc969dabc81423b51fcab7a4f60fc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00028_.png": {
+    "mtime": 1775542600176.9048,
+    "hash": "affabacda1780c62c2d305a6c783c868"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00029_.png": {
+    "mtime": 1775542697008.062,
+    "hash": "ec391234233ea04b8d0c7aa3f76907fb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00030_.png": {
+    "mtime": 1775542836590.074,
+    "hash": "d0b5ba15b86e003be3aeb8b157c44788"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00033_.png": {
+    "mtime": 1775544301967.0518,
+    "hash": "e09b3a179b880b4412dcedf8eae6be84"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00034_.png": {
+    "mtime": 1775544324619.04,
+    "hash": "4e8028c3ff35740a89bfabf414e9f57e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00040_.png": {
+    "mtime": 1775803873990.2642,
+    "hash": "d109fb9ddcb1a6e81545f98461267612"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00041_.png": {
+    "mtime": 1775803906822.0103,
+    "hash": "c94882f7d2650f9b11d8a00e5368b9f9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00042_.png": {
+    "mtime": 1775803927137.8357,
+    "hash": "2fd9ce17487a7d2f516a4fe552300a3b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00045_.png": {
+    "mtime": 1775803959741.273,
+    "hash": "01bfc23d6cc8be4360638d84db0b6409"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00048_.png": {
+    "mtime": 1775805488359.5747,
+    "hash": "6933f1b97a748da14c7d38c10a7439bb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00049_.png": {
+    "mtime": 1775805833118.6013,
+    "hash": "41ad2c5a07fc8ae9bbaa568e25023f4a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00055_.png": {
+    "mtime": 1776500803467.529,
+    "hash": "2e5915497f55502d6c6f1aa8f1397cbc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00056_.png": {
+    "mtime": 1776504801525.0398,
+    "hash": "98e0123fc914bc35115ddfb0dca0565b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00058_.png": {
+    "mtime": 1776517708514.61,
+    "hash": "c1a2bba284b5911e87fb4bcd694ec62b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00059_.png": {
+    "mtime": 1776518885489.2478,
+    "hash": "8538ac09928e7214c1848453c1fd41d5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00060_.png": {
+    "mtime": 1776527588304.0928,
+    "hash": "6107aea54ec5efcbfe21c0ff3c394688"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00061_.png": {
+    "mtime": 1776527754293.107,
+    "hash": "32a13d7c086e427b49c869da0630eb90"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00062_.png": {
+    "mtime": 1776527862138.8872,
+    "hash": "c0ab99f747562b2c856fd970b3e17ff8"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00064_.png": {
+    "mtime": 1776536560676.302,
+    "hash": "ca9bf5b6c18541a16f31853902994afa"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00066_.png": {
+    "mtime": 1776536917842.866,
+    "hash": "6ebe21921830cd1f8a59bde5a589510a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00067_.png": {
+    "mtime": 1776537138531.9087,
+    "hash": "ac4febfa35f0db2f4e6f06f28d0b4ddb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00070_.png": {
+    "mtime": 1776537286230.7168,
+    "hash": "87b80883aa08551952ad4a70cb20fbff"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00071_.png": {
+    "mtime": 1776539161042.0815,
+    "hash": "124ce38ac91e3d4c26234373b944a8bd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00072_.png": {
+    "mtime": 1776539313394.312,
+    "hash": "3b5b3d66841fc047e927c66985146110"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00073_.png": {
+    "mtime": 1776849821516.5024,
+    "hash": "0334bbc773123002e4289b3da73ad7a6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00074_.png": {
+    "mtime": 1776888423274.227,
+    "hash": "35ca29d190d11017651bac157319b09c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00075_.png": {
+    "mtime": 1776888684030.6252,
+    "hash": "30fc8319ce9bdc6fd97b59f882ff3c41"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/removation__00076_.png": {
+    "mtime": 1776888806482.2183,
+    "hash": "46f45e0b58d1fb9355504fc352abb913"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/result_00001_.png": {
+    "mtime": 1779355404900.723,
+    "hash": "cfd0e0ae79f1fd9f7c33e9bfe910eda9"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/simple_test_1773735730423_00001_.png": {
+    "mtime": 1773852118417.7844,
+    "hash": "81dd74a985ed6a4a86730ea1e7d16256"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/test-pipeline.png": {
+    "mtime": 1773852118417.7844,
+    "hash": "0597a1d593421bce6c6153762f9e2937"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00001_.png": {
+    "mtime": 1777441915142.3982,
+    "hash": "351269b4c7269acb9d8ce335592d11fd"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00002_.png": {
+    "mtime": 1777442357537.436,
+    "hash": "acb38ebe8e0efa8979b08876b3f7402f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00003_.png": {
+    "mtime": 1777445550435.1729,
+    "hash": "12b015e0422669d2901d823e1dc3ed51"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00004_.png": {
+    "mtime": 1777446788459.2786,
+    "hash": "c987de02885373b2c1d16019c5c8c897"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00005_.png": {
+    "mtime": 1777448462179.4216,
+    "hash": "f1a95b074abad1b577d2b3f7f7f1d5b3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00006_.png": {
+    "mtime": 1777469815448.4673,
+    "hash": "fbe656cfe104432a1ed59760f833fc0f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00007_.png": {
+    "mtime": 1777471893286.4705,
+    "hash": "2df5a05a8a372cfb121bd4f0ebc56a47"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/renders/ultra_hd_result_00008_.png": {
+    "mtime": 1778054578719.0354,
+    "hash": "1e550d89cd43f73d0e57c520536f6752"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/samples/bedroom.jpg": {
+    "mtime": 1780125951097.6382,
+    "hash": "d95a138e246af1e9c1bec4a4c3e2aed3"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/samples/kitchen.jpg": {
+    "mtime": 1780125951300.2744,
+    "hash": "42253a4255000794682541dc8a11a3db"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/samples/living-room.jpg": {
+    "mtime": 1780125950871.774,
+    "hash": "206638f8c98144efe9b4d58875b0d098"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/bohemian/colorful-plants.jpg": {
+    "mtime": 1780334027691.0334,
+    "hash": "11b0fe296dd263a6db27d2d19c6bd596"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/bohemian/earthy-boho.jpg": {
+    "mtime": 1780334028460.0334,
+    "hash": "6c2d1bab0ce1543da4dbe721442c0af5"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/bohemian/global-traveler.jpg": {
+    "mtime": 1780334029572.0337,
+    "hash": "747106eb4ec73822529014f73dc2646f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/bohemian/moroccan.jpg": {
+    "mtime": 1780334028240.0334,
+    "hash": "5bd86f9eb96e3be5c5fb22d07b57a6d1"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/bohemian/vintage-eclectic.jpg": {
+    "mtime": 1780334029333.997,
+    "hash": "ced13ea336172b5e518a22652327ee12"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/industrial/concrete-steel.jpg": {
+    "mtime": 1780334024841.0332,
+    "hash": "8d6001a6d51e92576959767d8244c5ac"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/industrial/dark-loft.jpg": {
+    "mtime": 1780334025104.0332,
+    "hash": "9c4fdf6553d5f139e438a0dad5922557"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/industrial/raw-brick.jpg": {
+    "mtime": 1780334024256.0332,
+    "hash": "78f307a737b34ad57645a3a0709f040b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/industrial/steampunk.jpg": {
+    "mtime": 1780334025551.0332,
+    "hash": "14da38b09d210bc4b97e85bc94229adf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/industrial/warehouse.jpg": {
+    "mtime": 1780334025326.0332,
+    "hash": "1be6c42056ce89c01485cfa64893a5af"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/japandi/clay-palette.jpg": {
+    "mtime": 1780334019961.0327,
+    "hash": "11b0fe296dd263a6db27d2d19c6bd596"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/japandi/dark-zen.jpg": {
+    "mtime": 1780334018958.0327,
+    "hash": "03b4e0e2b1c87119c245930a751f514f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/japandi/natural-light.jpg": {
+    "mtime": 1780334019167.0327,
+    "hash": "20bf2dfec73685c93e4d01ad305d0b32"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/japandi/rattan-accents.jpg": {
+    "mtime": 1780334019648.0327,
+    "hash": "631c7158169dbd853a1b92feca05f9de"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/japandi/stone-texture.jpg": {
+    "mtime": 1780334019404.0327,
+    "hash": "a2a386c17daf0a5721b4947533893dbf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/japandi/warm-wood.jpg": {
+    "mtime": 1780334018743.0327,
+    "hash": "747106eb4ec73822529014f73dc2646f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/luxury/art-deco.jpg": {
+    "mtime": 1780334027416.0334,
+    "hash": "6813fefd124e279cc8fd9f8193e9062f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/luxury/contemporary-luxury.jpg": {
+    "mtime": 1780334026948.0334,
+    "hash": "a606a918b26ceba421b9f0b3f0793dee"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/luxury/dark-glamour.jpg": {
+    "mtime": 1780334026203.0334,
+    "hash": "f599376959bee59656539df9bbe3e632"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/luxury/french-chateau.jpg": {
+    "mtime": 1780334026690.0334,
+    "hash": "6ded414d266587c2f31b1d1d63d2ee6e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/luxury/marble-gold.jpg": {
+    "mtime": 1780334025789.0332,
+    "hash": "4a06e49d9d60452764ba4d1b18bb863a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/luxury/penthouse.jpg": {
+    "mtime": 1780334027201.0334,
+    "hash": "2b3a09e32573e94a7c8ec26301ab754a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/modern-minimalist/black-white.jpg": {
+    "mtime": 1780334030251.0337,
+    "hash": "800152bef14fb42a1205402c18716a4c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/modern-minimalist/concrete-minimal.jpg": {
+    "mtime": 1780334030526.0337,
+    "hash": "ac656aba9555c2eccaae15343be87991"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/modern-minimalist/japandi-modern.jpg": {
+    "mtime": 1780334030734.0337,
+    "hash": "a2a386c17daf0a5721b4947533893dbf"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/modern-minimalist/warm-neutral.jpg": {
+    "mtime": 1780334030013.0337,
+    "hash": "bcdb522a6feab2ebc65a3ea446839279"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/modern-minimalist/white-clean.jpg": {
+    "mtime": 1780334029798.0337,
+    "hash": "1d47739dbd9a6c693783ab65b7b2364a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/scandinavian/grey-nordic.jpg": {
+    "mtime": 1780334022422.033,
+    "hash": "747106eb4ec73822529014f73dc2646f"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/scandinavian/minimalist-black.jpg": {
+    "mtime": 1780334023205.0332,
+    "hash": "ac656aba9555c2eccaae15343be87991"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/scandinavian/nature-inspired.jpg": {
+    "mtime": 1780334022681.033,
+    "hash": "70517915afff116c290927350e8486d6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/scandinavian/warm-hygge.jpg": {
+    "mtime": 1780334023893.0332,
+    "hash": "a99bb60973f67932b24e3bbc72d042b7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/scandinavian/white-cozy.jpg": {
+    "mtime": 1780334022157.033,
+    "hash": "800152bef14fb42a1205402c18716a4c"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/traditional-indian/bengali.jpg": {
+    "mtime": 1780334021549.033,
+    "hash": "4a06e49d9d60452764ba4d1b18bb863a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/traditional-indian/gujarat.jpg": {
+    "mtime": 1780334021158.033,
+    "hash": "6dc2273b4eee23dc280b855c2cd41232"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/traditional-indian/haveli.jpg": {
+    "mtime": 1780334021956.033,
+    "hash": "1d47739dbd9a6c693783ab65b7b2364a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/traditional-indian/kerala.jpg": {
+    "mtime": 1780334020374.033,
+    "hash": "f0c0b2627333416ae83d2886be129a63"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/traditional-indian/mughal.jpg": {
+    "mtime": 1780334020729.033,
+    "hash": "78f307a737b34ad57645a3a0709f040b"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/traditional-indian/rajasthani.jpg": {
+    "mtime": 1780334020173.0327,
+    "hash": "bcdb522a6feab2ebc65a3ea446839279"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/vastu-traditional/green-harmony.jpg": {
+    "mtime": 1780334031548.0337,
+    "hash": "a99bb60973f67932b24e3bbc72d042b7"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/vastu-traditional/warm-earth.jpg": {
+    "mtime": 1780334031019.5508,
+    "hash": "6dc2273b4eee23dc280b855c2cd41232"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/vastu-traditional/white-serene.jpg": {
+    "mtime": 1780334032067.034,
+    "hash": "70517915afff116c290927350e8486d6"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/public/style-references/vastu-traditional/wood-temple.jpg": {
+    "mtime": 1780334031249.0337,
+    "hash": "a606a918b26ceba421b9f0b3f0793dee"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test-assets/bedroom.jpg": {
+    "mtime": 1778045081941.2239,
+    "hash": "19634120f0ce27e16f52d582f4242deb"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test-assets/empty-room.jpg": {
+    "mtime": 1778045082700.8137,
+    "hash": "5d7d005fcd4a39016e3b8cb34616d99e"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test-assets/kitchen.jpg": {
+    "mtime": 1778045083289.2239,
+    "hash": "ba39688daa1bff274cba6e00fde8fe95"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test-assets/living-room.jpg": {
+    "mtime": 1778045081181.2239,
+    "hash": "eecb52038ef85c44e08c9a462894806a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test-assets/style-ref.jpg": {
+    "mtime": 1778045085317.224,
+    "hash": "9d3adcc14a0c6ac08f639178ab6757cc"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_images/bedroom.jpg": {
+    "mtime": 1777985429519.4746,
+    "hash": "7d0b44f4cc7c1f2c64b55bf567679b46"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/test_images/living_room.jpg": {
+    "mtime": 1777985426653.4744,
+    "hash": "eecb52038ef85c44e08c9a462894806a"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/public/vite.svg": {
+    "mtime": 1763959543000,
+    "hash": "8e3a10e157f75ada21ab742c022d5430"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/assets/react.svg": {
+    "mtime": 1763959543000,
+    "hash": "f0402b67b6ce880f65666bb49e841696"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/assets/faaah.mp3": {
+    "mtime": 1768979465000,
+    "hash": "a0220dd11038add054573c26d2f0b6ac"
+  },
+  "/home/nikhil/Documents/Remo2/Removation_3/tomato-code/frontend/src/assets/quack.mp3": {
+    "mtime": 1767879890000,
+    "hash": "23919f042f718428f0c5b85027925fa9"
+  }
+}

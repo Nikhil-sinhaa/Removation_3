@@ -9,11 +9,14 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -55,6 +58,31 @@ export async function POST(request: Request) {
   await connectDB();
 
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
+
+    const { checkAndDeductCredits } = await import('@/lib/ai/deductCredits');
+    const deductResult = await checkAndDeductCredits(authUser.id, 'edit');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/billing'
+      }, { status: 402 });
+    }
+
     const formData = await safeParseFormData(request);
     const imageFile = formData.get('image');
     const maskFile = formData.get('mask');
@@ -103,7 +131,7 @@ export async function POST(request: Request) {
 
     const project = await Project.create({
       name: `Edit — ${roomType}`,
-      userId: '000000000000000000000000',
+      userId: finalUserId,
       originalImage: `/uploads/${imgFilename}`,
       status: 'queued',
       processingType: 'tab-edit',

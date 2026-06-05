@@ -1,0 +1,82 @@
+{
+  "id": "stage-furniture-erase-lama",
+  "last_node_id": 4,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [80, 100],
+      "size": [260, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [1]},
+        {"name": "MASK",  "type": "MASK",  "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["furniture-detect/adjusted_placeholder.png", "image"],
+      "title": "Adjusted Room Photo (from detect stage)"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [80, 320],
+      "size": [260, 130],
+      "inputs": [],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "slot_index": 0, "links": [2]},
+        {"name": "MASK",  "type": "MASK",  "slot_index": 1, "links": null}
+      ],
+      "widgets_values": ["furniture-detect/mask_placeholder.png", "image"],
+      "title": "Furniture Mask (from detect stage)"
+    },
+    {
+      "id": 3,
+      "type": "LamaRemoverIMG",
+      "pos": [420, 200],
+      "size": [280, 160],
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 1},
+        {"name": "masks",  "type": "IMAGE", "link": 2}
+      ],
+      "outputs": [
+        {"name": "images", "type": "IMAGE", "slot_index": 0, "links": [3]}
+      ],
+      "widgets_values": [200, 3, false],
+      "title": "LaMa Inpainting"
+    },
+    {
+      "id": 4,
+      "type": "SaveImage",
+      "pos": [760, 200],
+      "size": [240, 100],
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 3}
+      ],
+      "outputs": [],
+      "widgets_values": ["furniture-erased/result"],
+      "title": "Save Result"
+    }
+  ],
+  "links": [
+    [1, 1, 0, 3, 0, "IMAGE"],
+    [2, 2, 0, 3, 1, "IMAGE"],
+    [3, 3, 0, 4, 0, "IMAGE"]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "info": {
+      "name": "Stage: Furniture Erase (LaMa)",
+      "description": "Removes furniture using LaMa inpainting. Takes the matched adjusted+mask pair from the detect stage.",
+      "inputs": {
+        "node_1": "furniture-detect/adjusted_*.png — resized room photo from detect. NOT the original upload.",
+        "node_2": "furniture-detect/mask_*.png — furniture mask from detect. Must match node_1 dimensions."
+      },
+      "node_ids_for_orchestrator": "node 1 = room image, node 2 = mask, node 4 = SaveImage output",
+      "why_lama": "MiniMax failed with HalfTensor device mismatch on RTX 4060 8GB. LaMa is CNN-based, 190MB, no VRAM issues.",
+      "mask_polarity": "RMBG outputs white=furniture. LamaRemoverIMG with invert_mask=false internally inverts the mask before processing, so white areas are erased. No InvertMask node needed.",
+      "input_names": "images (IMAGE), masks (IMAGE) — both plural, both IMAGE type (not MASK). Verified from remover.py source."
+    }
+  },
+  "version": 0.4
+}

@@ -21,6 +21,9 @@ import {
   Palette,
   Home
 } from "lucide-react";
+import { MakeItReal } from "@/components/ai/MakeItReal";
+import { AIResultPanel } from "@/components/ai/AIResultPanel";
+import { useToast } from "@/components/ui/use-toast";
 
 const roomTypes = [
   { id: "living_room", name: "Living Room", icon: <Home className="w-4 h-4" /> },
@@ -33,6 +36,7 @@ const roomTypes = [
 ];
 
 export default function MasterDesignPage() {
+  const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [roomType, setRoomType] = useState("living_room");
@@ -334,32 +338,16 @@ export default function MasterDesignPage() {
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.4 }}
               >
-                <Card className="border-green-200">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center gap-2 text-green-700">
-                        <CheckCircle className="w-5 h-5" />
-                        Design Generated!
-                      </CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => { setResult(null); setLogs([]); }}
-                      >
-                        <Palette className="w-4 h-4 mr-1" />
-                        Redesign
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <BeforeAfterSlider
-                      beforeImage={result.originalPreview || "/images/hero-before.jpg"}
-                      afterImage={result.generatedImage}
-                      beforeLabel="Original Room"
-                      afterLabel="AI Redesigned"
-                    />
-                  </CardContent>
-                </Card>
+                <AIResultPanel
+                  originalImageUrl={result.originalPreview || "/images/hero-before.jpg"}
+                  resultImageUrl={result.generatedImage}
+                  projectId={result.projectId}
+                  onSaveToProject={() => toast({ title: 'Saved to project', description: 'Design saved.' })}
+                  onTryAgain={() => { setResult(null); setLogs([]); }}
+                  toolName="Master Design"
+                  showMakeItReal={true}
+                  roomType={roomType}
+                />
               </motion.div>
             ) : (
               <motion.div

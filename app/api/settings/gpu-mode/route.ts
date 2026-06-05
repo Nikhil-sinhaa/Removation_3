@@ -13,10 +13,14 @@ import {
   getActiveComfyBaseUrl,
   type GPUMode,
 } from '@/lib/ai/gpu-mode-router';
+import { requireRole } from '@/lib/auth/requireRole';
 
 export const runtime = 'nodejs';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authResult = await requireRole(req, ['admin']);
+  if (authResult instanceof NextResponse) return authResult;
+
   const mode = getGPUMode();
   const localUrl  = process.env.COMFY_URL      ?? 'http://127.0.0.1:8188';
   const cloudUrl  = process.env.COLAB_COMFY_URL ?? '';
@@ -44,6 +48,9 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const authResult = await requireRole(req, ['admin']);
+    if (authResult instanceof NextResponse) return authResult;
+
     const body = await req.json();
     const { mode, cloudUrl } = body as { mode: GPUMode; cloudUrl?: string };
 

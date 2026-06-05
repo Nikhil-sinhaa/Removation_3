@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import aiQueueService from '@/services/aiQueue';
+import aiQueueService from '@/src/services/aiQueue';
 
 export async function GET() {
   try {

@@ -19,6 +19,8 @@ import axios from "axios";
 import { useToast } from "@/components/ui/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { saveAs } from "file-saver";
+import { CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface StepIconProps {
     step: number;
@@ -37,6 +39,7 @@ function StepIcon({ step, title }: StepIconProps) {
 }
 
 export default function ColorVisualizerPage() {
+    const { t } = useLanguage();
     const [imageUrl, setImageUrl] = useState<string>("");
     const [area, setArea] = useState<"wall" | "ceiling" | "floor">("wall");
     const [color, setColor] = useState<string>("#0543F5");
@@ -62,21 +65,21 @@ export default function ColorVisualizerPage() {
                 setResultImageUrl(res.data.imageUrl);
                 toast({
                     title: "Success",
-                    description: "Room color updated successfully!",
+                    description: t("cv_success"),
                 });
             } else {
                 console.error("Failed to generate image");
                 toast({
-                    title: "Generation Failed",
-                    description: "Something went wrong, please try again later.",
+                    title: t("cv_failed"),
+                    description: t("cv_failed_desc"),
                     variant: "destructive"
                 });
             }
         } catch {
             console.error("Failed to generate image");
             toast({
-                title: "Generation Failed",
-                description: "Something went wrong, please check your API key and try again.",
+                title: t("cv_failed"),
+                description: t("cv_failed_desc"),
                 variant: "destructive"
             });
         }
@@ -89,30 +92,32 @@ export default function ColorVisualizerPage() {
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <Palette className="w-8 h-8 text-violet-600" />
-                    Room Color Visualizer
+                    {t("cv_title")}
                 </h1>
                 <p className="text-gray-500">
-                    Instantly visualize new wall, floor, or ceiling colors in your space using AI.
+                    {t("cv_subtitle")}
                 </p>
             </div>
 
             <div className="flex-1 space-y-12 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
                 {/* Step 1 */}
                 <div className="flex flex-col gap-6 items-center">
-                    <StepIcon step={1} title="Upload your room image" />
+                    <StepIcon step={1} title={t("cv_step1")} />
                     <div className="w-full max-w-[600px]">
                         <ImageUploader
                             onUpload={(url) => setImageUrl(url)}
                             onRemove={() => setImageUrl("")}
                             currentImage={imageUrl}
                             aspectRatio="video"
+                            enableCrop
+                            cropTitle="Crop your room photo"
                         />
                     </div>
                 </div>
 
                 {/* Step 2 */}
                 <div className="flex flex-col gap-6 items-center">
-                    <StepIcon step={2} title="Select area to change the color" />
+                    <StepIcon step={2} title={t("cv_step2")} />
                     <Select
                         value={area}
                         onValueChange={(v: "wall" | "floor" | "ceiling") => {
@@ -123,16 +128,16 @@ export default function ColorVisualizerPage() {
                             <SelectValue placeholder="--- choose your area ---" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="wall">Wall</SelectItem>
-                            <SelectItem value="floor">Floor</SelectItem>
-                            <SelectItem value="ceiling">Ceiling</SelectItem>
+                            <SelectItem value="wall">{t("cv_area_wall")}</SelectItem>
+                            <SelectItem value="floor">{t("cv_area_floor")}</SelectItem>
+                            <SelectItem value="ceiling">{t("cv_area_ceiling")}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
 
                 {/* Step 3 */}
                 <div className="flex flex-col gap-6 items-center">
-                    <StepIcon step={3} title="Choose the color" />
+                    <StepIcon step={3} title={t("cv_step3")} />
                     <div className="flex items-center gap-4">
                         <div
                             className="w-10 h-10 rounded-full border border-gray-200 shadow-sm"
@@ -169,7 +174,7 @@ export default function ColorVisualizerPage() {
                         ) : (
                             <Palette className="w-5 h-5 mr-2" />
                         )}
-                        {isLoading ? "Generating (~30 seconds)..." : "Visualize Color"}
+                        {isLoading ? t("cv_generating") : t("cv_generate_btn")}
                     </Button>
                 </div>
 
@@ -182,7 +187,7 @@ export default function ColorVisualizerPage() {
                                     <div className="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
                                         <CheckCircle2 className="w-5 h-5" />
                                     </div>
-                                    Result
+                                    {t("cv_result")}
                                 </h3>
                                 <div className="flex gap-6 items-center bg-gray-50 px-4 py-2 rounded-lg border border-gray-100">
                                     <div className="flex gap-2 items-center">
@@ -191,7 +196,7 @@ export default function ColorVisualizerPage() {
                                             onCheckedChange={setIsCompare}
                                             id="compare-mode"
                                         />
-                                        <label htmlFor="compare-mode" className="text-sm font-medium text-gray-700 cursor-pointer">Compare Mode</label>
+                                        <label htmlFor="compare-mode" className="text-sm font-medium text-gray-700 cursor-pointer">{t("cv_compare_mode")}</label>
                                     </div>
                                     <div className="w-px h-6 bg-gray-200" />
                                     <Button
@@ -203,7 +208,7 @@ export default function ColorVisualizerPage() {
                                         }}
                                     >
                                         <Download className="w-4 h-4 mr-2" />
-                                        Download
+                                        {t("cv_download")}
                                     </Button>
                                 </div>
                             </div>
@@ -214,7 +219,7 @@ export default function ColorVisualizerPage() {
                                         src={resultImageUrl}
                                         alt="Result Image"
                                         fill
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         style={{
                                             objectFit: "contain",
                                         }}
@@ -234,6 +239,3 @@ export default function ColorVisualizerPage() {
         </div>
     );
 }
-
-// Needed for Lucide icon in result
-import { CheckCircle2 } from "lucide-react";

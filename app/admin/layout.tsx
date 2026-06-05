@@ -123,6 +123,8 @@ import {
   RotateCcw,
   RotateCw,
   Loader2,
+  ArrowRightLeft,
+  GitBranch,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -294,6 +296,12 @@ const mainNavItems: NavItem[] = [
     ],
   },
   {
+    title: 'Approvals',
+    href: '/admin/approvals',
+    icon: ShieldCheck,
+    badge: null,
+  },
+  {
     title: 'Subscriptions',
     href: '/admin/subscriptions',
     icon: CreditCard,
@@ -308,6 +316,11 @@ const mainNavItems: NavItem[] = [
 ];
 
 const systemNavItems: (NavItem | SimpleNavItem)[] = [
+  {
+    title: 'Feedback',
+    href: '/admin/feedback',
+    icon: Star,
+  },
   {
     title: 'Vastu Engine',
     href: '/admin/vastu',
@@ -332,6 +345,36 @@ const systemNavItems: (NavItem | SimpleNavItem)[] = [
     badge: '72%',
     badgeColor: 'bg-yellow-100 text-yellow-700',
   },
+  {
+    title: 'Guided Tours',
+    href: '/admin/tours',
+    icon: HelpCircle,
+  },
+  {
+    title: 'Tags',
+    href: '/admin/tags',
+    icon: Tag,
+  },
+  {
+    title: 'Announcements',
+    href: '/admin/announcements',
+    icon: Megaphone,
+  },
+  {
+    title: 'Redirects',
+    href: '/admin/redirects',
+    icon: ArrowRightLeft,
+  },
+  {
+    title: 'Workflow',
+    href: '/admin/workflow',
+    icon: GitBranch,
+  },
+  {
+    title: 'Queue Monitor',
+    href: '/admin/queue',
+    icon: Activity,
+  },
 ];
 
 const settingsNavItems: SimpleNavItem[] = [
@@ -344,6 +387,11 @@ const settingsNavItems: SimpleNavItem[] = [
     title: 'Security',
     href: '/admin/settings/security',
     icon: Shield,
+  },
+  {
+    title: 'Scheduler',
+    href: '/admin/scheduler',
+    icon: Calendar,
   },
   {
     title: 'API Keys',
@@ -919,9 +967,8 @@ function Header({
   sidebarCollapsed: boolean;
   onMenuClick: () => void;
 }) {
-  const { user, isLoading: isLoaded } = useAuth();
+  const { user, isLoading: isLoaded, logout } = useAuth();
   const isSignedIn = !!user;
-  const { signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -1116,7 +1163,7 @@ function Header({
                   </Avatar>
                   <div className="hidden lg:flex flex-col items-start">
                     <span className="text-sm font-medium text-gray-900">
-                      {user?.fullName || 'Admin User'}
+                      {user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '') || 'Admin User'}
                     </span>
                     <span className="text-xs text-gray-500">Super Admin</span>
                   </div>
@@ -1134,10 +1181,10 @@ function Header({
                     </Avatar>
                     <div>
                       <p className="font-medium text-gray-900">
-                        {user?.fullName || 'Admin User'}
+                        {user?.name || (user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : '') || 'Admin User'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {user?.primaryEmailAddress?.emailAddress}
+                        {user?.email}
                       </p>
                     </div>
                   </div>
@@ -1171,7 +1218,7 @@ function Header({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-red-600"
-                  onClick={() => signOut(() => router.push('/'))}
+                  onClick={() => logout()}
                 >
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
@@ -1496,7 +1543,8 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isLoading: isLoaded } = useAuth();
+  const { user, isLoading } = useAuth();
+  const isLoaded = !isLoading;
   const isSignedIn = !!user;
   const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -1507,16 +1555,15 @@ export default function AdminLayout({
 
   // Check authorization
   useEffect(() => {
-    if (isLoaded) {
-      // In production, check user's role/permissions from database
-      // For demo, we'll allow all authenticated users
-      const hasAdminAccess = !!user;
-      setIsAuthorized(hasAdminAccess);
+    if (!isLoaded) return;
 
-      if (!user) {
-        router.push('/sign-in?redirect_url=/admin/dashboard');
-      }
+    if (!user) {
+      router.push('/sign-in?redirect_url=/admin/dashboard');
+      return;
     }
+
+    const hasAdminAccess = user.role === 'admin';
+    setIsAuthorized(hasAdminAccess);
   }, [isLoaded, user, router]);
 
   // Load sidebar state from localStorage

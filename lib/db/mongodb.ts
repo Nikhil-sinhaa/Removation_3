@@ -32,9 +32,45 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
             bufferCommands: false,
         };
 
-        cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+        cached.promise = mongoose.connect(MONGODB_URI, opts).then(async (mongooseInstance) => {
             console.log('✅ MongoDB connected');
-            return mongoose;
+            
+            // Asynchronously run a quick update to ensure clerkId matches _id for any user missing clerkId
+            (async () => {
+                try {
+                    const { default: User } = await import('./models/User');
+
+                    // Find users where clerkId is missing or empty
+                    const usersToFix = await User.find({
+                        $or: [
+                            { clerkId: { $exists: false } },
+                            { clerkId: null },
+                            { clerkId: '' },
+                        ]
+                    }).select('_id clerkId');
+
+                    if (usersToFix.length === 0) {
+                        console.log(`[Auth Migration] Fixed clerkId for 0 users`);
+                        return;
+                    }
+
+                    // Bulk update — set clerkId = _id.toString()
+                    const bulkOps = usersToFix.map(user => ({
+                        updateOne: {
+                            filter: { _id: user._id },
+                            update: { $set: { clerkId: user._id.toString() } },
+                        }
+                    }));
+
+                    await User.bulkWrite(bulkOps);
+                    console.log(`[Auth Migration] Fixed clerkId for ${usersToFix.length} users`);
+                } catch (err: any) {
+                    // Non-fatal — log and continue
+                    console.error('[Auth Migration] Error:', err.message);
+                }
+            })();
+            
+            return mongooseInstance;
         });
     }
 
@@ -49,3 +85,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 }
 
 export default connectToDatabase;
+
+// NOTE: connectDB is a named alias for connectToDatabase, provided for
+// compatibility with the 35 migrated API routes.
+export const connectDB = connectToDatabase;

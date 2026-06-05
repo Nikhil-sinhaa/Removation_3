@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/db/mongodb";
 import { User } from "@/lib/db/models/User";
+import { getCurrentUser } from "@/lib/auth/jwt";
 
 /**
  * GET /api/invoices
@@ -10,11 +11,11 @@ import { User } from "@/lib/db/models/User";
  */
 export async function GET(req: NextRequest) {
     try {
-        // TESTING: Bypass auth for development
-        const userId = "test-user-123";
-        if (!userId) {
+        const authUser = await getCurrentUser();
+        if (!authUser) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+        const userId = authUser.id;
 
         await connectToDatabase();
         const user = await User.findOne({ clerkId: userId }).lean();

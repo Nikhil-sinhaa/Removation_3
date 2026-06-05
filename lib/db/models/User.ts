@@ -15,6 +15,9 @@ export interface IUser {
     lockoutUntil?: Date;
     failedLoginAttempts?: number;
 
+    // Marketplace role — 'customer' is default, 'designer' set on registration, 'admin' set manually
+    role: 'customer' | 'designer' | 'contractor' | 'vendor' | 'admin';
+
     // Subscription info
     subscription: {
         plan: 'free' | 'pro' | 'team';
@@ -55,6 +58,30 @@ export interface IUser {
         createdAt: Date;
     }>;
 
+    // Preferences
+    preferences?: {
+        theme?: 'light' | 'dark' | 'system';
+        currency?: 'INR' | 'USD';
+        measurementUnit?: 'sqft' | 'sqm';
+        defaultStyle?: string;
+        autoVastu?: boolean;
+        autoCost?: boolean;
+        language?: 'en' | 'hi';
+        emailNotifications?: boolean;
+        marketingEmails?: boolean;
+        showTips?: boolean;
+    };
+
+    // Onboarding
+    onboardingCompleted?: boolean;
+    onboardingCompletedAt?: Date;
+
+    // Tour
+    completedTours?: string[];
+
+    // Admin-managed account status (separate from subscription.status)
+    accountStatus?: 'active' | 'banned' | 'suspended';
+
     // Metadata
     lastRenderAt?: Date;
     createdAt: Date;
@@ -70,6 +97,7 @@ const UserSchema = new Schema<IUser>({
     isVerified: { type: Boolean, default: false },
     lockoutUntil: { type: Date },
     failedLoginAttempts: { type: Number, default: 0 },
+    role: { type: String, enum: ['customer', 'designer', 'admin', 'contractor', 'vendor'], default: 'customer' },
     firstName: String,
     lastName: String,
     imageUrl: String,
@@ -95,7 +123,7 @@ const UserSchema = new Schema<IUser>({
 
     creditHistory: [{
         amount: Number,
-        type: String,
+        type: { type: String },
         description: String,
         createdAt: { type: Date, default: Date.now },
     }],
@@ -106,19 +134,42 @@ const UserSchema = new Schema<IUser>({
         orderId: String,
         amount: Number,
         currency: String,
-        type: String,
+        type: { type: String },
         credits: Number,
         status: String,
         createdAt: { type: Date, default: Date.now },
     }],
+
+    preferences: {
+        theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+        currency: { type: String, enum: ['INR', 'USD'], default: 'INR' },
+        measurementUnit: { type: String, enum: ['sqft', 'sqm'], default: 'sqft' },
+        defaultStyle: { type: String, default: 'modern' },
+        autoVastu: { type: Boolean, default: true },
+        autoCost: { type: Boolean, default: true },
+        language: { type: String, enum: ['en', 'hi'], default: 'en' },
+        emailNotifications: { type: Boolean, default: true },
+        marketingEmails: { type: Boolean, default: false },
+        showTips: { type: Boolean, default: true },
+    },
+
+    onboardingCompleted: { type: Boolean, default: false },
+    onboardingCompletedAt: Date,
+
+    completedTours: { type: [String], default: [] },
+
+    accountStatus: { type: String, enum: ['active', 'banned', 'suspended'], default: 'active' },
 
     lastRenderAt: Date,
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });
 
-// Update the updatedAt timestamp on save
+// Update the clerkId and updatedAt timestamp on save
 UserSchema.pre('save', function (next) {
+    if (!this.clerkId && this._id) {
+        this.clerkId = this._id.toString();
+    }
     this.updatedAt = new Date();
     next();
 });

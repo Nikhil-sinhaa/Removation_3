@@ -3,16 +3,43 @@
  */
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
+
+    const { checkAndDeductCredits } = await import('@/lib/ai/deductCredits');
+    const deductResult = await checkAndDeductCredits(authUser.id, 'exterior-render');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/billing'
+      }, { status: 402 });
+    }
+
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;
     const data = JSON.parse((formData.get('data') as string) || '{}');
@@ -27,7 +54,7 @@ export async function POST(request: Request) {
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
-    const project = await Project.create({ name: `Exterior Render — ${buildingType}`, userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-exterior-render', aiConfig: { buildingType, style, prompt, timeOfDay, strength } });
+    const project = await Project.create({ name: `Exterior Render — ${buildingType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-exterior-render', aiConfig: { buildingType, style, prompt, timeOfDay, strength } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'exterior-render', { imageFilename: fn, buildingType, style, prompt, timeOfDay, strength }).catch((e: any) => console.error('❌ Exterior render error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'exterior-render', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Exterior render failed', message: error.message }, { status: 500 }); }

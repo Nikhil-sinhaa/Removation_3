@@ -3,6 +3,8 @@ import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import JsonLd from '@/components/seo/JsonLd';
+import { buildBlogPostSchema, buildBreadcrumbSchema } from '@/lib/seo/schema';
 import { format } from 'date-fns';
 import {
   ArrowLeft,
@@ -1156,38 +1158,22 @@ export default async function BlogPostPage({
       </section>
 
       {/* JSON-LD Structured Data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'BlogPosting',
-            headline: post.title,
-            description: post.excerpt,
-            image: post.coverImage,
-            author: {
-              '@type': 'Person',
-              name: post.author.name,
-              jobTitle: post.author.role
-            },
-            publisher: {
-              '@type': 'Organization',
-              name: 'Removation.ai',
-              logo: {
-                '@type': 'ImageObject',
-                url: 'https://removation.ai/logo.svg'
-              }
-            },
-            datePublished: post.publishedAt,
-            dateModified: post.updatedAt || post.publishedAt,
-            mainEntityOfPage: {
-              '@type': 'WebPage',
-              '@id': shareUrl
-            },
-            keywords: post.tags.join(', ')
-          })
-        }}
-      />
+      <JsonLd schema={buildBlogPostSchema({
+        title: post.title,
+        description: post.excerpt,
+        image: post.coverImage,
+        authorName: post.author.name,
+        authorRole: post.author.role,
+        datePublished: post.publishedAt,
+        dateModified: post.updatedAt,
+        url: shareUrl,
+        keywords: post.tags.join(', ')
+      })} />
+      <JsonLd schema={buildBreadcrumbSchema([
+        { name: 'Home', item: '/' },
+        { name: 'Blog', item: '/blog' },
+        { name: post.title, item: `/blog/${post.slug}` }
+      ])} />
     </article>
   );
 }

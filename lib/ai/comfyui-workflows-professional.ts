@@ -12,6 +12,7 @@
 // This is a single-stage workflow, not a 6-stage pipeline.
 //
 // lib/ai/comfyui-workflows-professional.ts
+import { GenerationRequest } from "./comfyui-bridge";
 
 
 export interface ProfessionalGenerationRequest extends GenerationRequest {

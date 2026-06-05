@@ -846,7 +846,7 @@ const clamp = (value: number, min: number, max: number): number => Math.max(min,
 const ZOOM_LEVELS = [0.1, 0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5, 8, 10];
 const MIN_ZOOM = 0.1;
 const MAX_ZOOM = 10;
-const MAX_HISTORY = 100;
+const MAX_HISTORY = 15;
 const BRUSH_SIZE_STEP = 5;
 const MIN_BRUSH_SIZE = 1;
 const MAX_BRUSH_SIZE = 500;
@@ -898,6 +898,20 @@ const editorStoreCreator: StateCreator<
   dispose: () => {
     set((state) => {
       state.isInitialized = false;
+      state.originalImage = null;
+      state.currentImage = null;
+      state.processedImage = null;
+      state.mask = null;
+      state.maskHistory = [];
+      state.maskHistoryIndex = -1;
+      state.history = [];
+      state.historyIndex = -1;
+      state.layers = [];
+      state.activeLayerId = null;
+      state.referenceImages = [];
+      state.generationError = null;
+      state.isGenerating = false;
+      state.generationProgress = 0;
     });
   },
 

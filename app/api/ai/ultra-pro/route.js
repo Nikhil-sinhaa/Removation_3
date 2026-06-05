@@ -25,7 +25,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
-import { connectDB } from '../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../lib/db/mongodb';
 import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
@@ -33,6 +33,9 @@ import sharp from 'sharp';
 // Cloud-aware image saving
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { getGPUMode } from '@/lib/ai/gpu-mode-router';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -165,9 +168,20 @@ export async function POST(request) {
     }
 
     // Create project record
+    const authUser = await getCurrentUser();
+    const finalUserId = authUser?.id || null;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return Response.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
+
     const project = await Project.create({
       name:           `Ultra-Pro ${roomType}`,
-      userId:         '000000000000000000000000',
+      userId:         finalUserId,
       originalImage:  previewUrl,
       status:         'queued',
       processingType: 'ultra-pro',

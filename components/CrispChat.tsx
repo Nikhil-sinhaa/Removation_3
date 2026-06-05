@@ -16,15 +16,15 @@ export function CrispChat({ crispWebsiteId }: CrispChatProps) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.$crisp && user && isLoaded) {
+    if (typeof window !== "undefined" && window.$crisp && user && !isLoaded) {
       // Set user data in Crisp
-      window.$crisp.push(["set", "user:email", user.emailAddresses?.[0]?.emailAddress || ""]);
-      window.$crisp.push(["set", "user:nickname", user.fullName || user.username || ""]);
+      window.$crisp.push(["set", "user:email", user.email || ""]);
+      window.$crisp.push(["set", "user:nickname", user.name || (user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : user.email?.split('@')[0] || "")]);
       window.$crisp.push(["set", "user:avatar", user.imageUrl || ""]);
       window.$crisp.push(["set", "session:data", [
         ["user_id", user.id],
-        ["plan", user.publicMetadata?.plan || "free"],
-        ["credits", user.publicMetadata?.credits || 0],
+        ["plan", user.plan || user.subscription?.plan || "free"],
+        ["credits", user.credits || 0],
       ]]);
     }
   }, [user, isLoaded]);

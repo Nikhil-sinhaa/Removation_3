@@ -69,24 +69,24 @@ export function AnalyticsProvider({ children }: AnalyticsProviderProps) {
 
   // Identify user when loaded
   useEffect(() => {
-    if (!isLoaded) return;
+    if (isLoaded) return; // isLoaded is actually isLoading — skip while still loading
 
     if (user) {
       posthog.identify(user.id, {
-        email: user.emailAddresses?.[0]?.emailAddress,
-        name: user.fullName || user.firstName,
-        username: user.username,
+        email: user.email,
+        name: user.name || (user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName),
+        username: user.email.split('@')[0],
         avatar: user.imageUrl,
-        createdAt: user.createdAt?.toISOString(),
-        plan: user.publicMetadata?.plan || 'free',
-        credits: user.publicMetadata?.credits || 0,
+        createdAt: user.createdAt ? (typeof user.createdAt === 'string' ? user.createdAt : user.createdAt.toISOString()) : undefined,
+        plan: user.plan || 'free',
+        credits: user.credits || 0,
       });
 
       // Set user properties for segmentation
       posthog.people.set({
-        plan: user.publicMetadata?.plan || 'free',
-        signupSource: user.publicMetadata?.signupSource,
-        language: user.publicMetadata?.language || 'en',
+        plan: user.plan || 'free',
+        signupSource: (user as any).preferences?.signupSource,
+        language: (user as any).preferences?.language || 'en',
       });
     } else {
       posthog.reset();

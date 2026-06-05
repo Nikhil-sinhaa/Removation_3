@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { ImageCropModal } from "@/components/shared/ImageCropModal";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,11 +24,20 @@ import {
   RefreshCw,
   BookmarkCheck,
 } from "lucide-react";
+import { MakeItReal } from "@/components/ai/MakeItReal";
+import { AIResultPanel } from "@/components/ai/AIResultPanel";
+import { QueuePosition } from "@/components/ai/QueuePosition";
+import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
+import { Slider } from "@/components/ui/slider";
+import { useLanguage } from "@/hooks/useLanguage";
+import { useUserStore } from '@/stores/user-store';
+import { useAuth } from '@/hooks/useAuth';
 
 interface ProgressState {
   stage: number; // 1 = scene analysis, 2 = repainting
   percent: number;
-  label: string;
+  label?: string;
+  labelKey?: string;
 }
 
 interface ResultState {
@@ -37,7 +47,19 @@ interface ResultState {
   canRetryStage3: boolean;
 }
 
+interface FeedbackState {
+  rating: 'up' | 'down' | null;
+  text: string;
+  submitted: boolean;
+  submitting: boolean;
+}
+
 export default function RoomChangerPage() {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+
+
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
@@ -47,6 +69,76 @@ export default function RoomChangerPage() {
   const [result, setResult]             = useState<ResultState | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
+  const [activeJobId, setActiveJobId]   = useState<string | null>(null);
+  const [renderId, setRenderId]         = useState<string | null>(null);
+  const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
+
+  // ── Paint Selection mode (mask editor) ────────────────────────────────────
+  const [paintMode, setPaintMode]       = useState<'whole' | 'selection'>('whole');
+  const [maskIsGenerating, setMaskIsGenerating] = useState(false);
+  const [maskResult, setMaskResult]     = useState<string | null>(null);
+  const [brushSize, setBrushSize]       = useState(30);
+  const maskCanvasRef = useRef<ReactSketchCanvasRef>(null);
+
+  const handleMaskRepaint = async () => {
+    if (!maskCanvasRef.current || !previewUrl) return;
+    setMaskIsGenerating(true);
+    setMaskResult(null);
+    try {
+      const maskDataUrl = await maskCanvasRef.current.exportImage('png');
+
+      // Fetch the blob image and convert to File
+      const imgRes = await fetch(previewUrl);
+      const imgBlob = await imgRes.blob();
+      const imageFile = new File([imgBlob], 'room.png', { type: 'image/png' });
+
+      // Convert mask data URL to File
+      const maskRes = await fetch(maskDataUrl);
+      const maskBlob = await maskRes.blob();
+      const maskFile = new File([maskBlob], 'mask.png', { type: 'image/png' });
+
+      const form = new FormData();
+      form.append('image', imageFile);
+      form.append('mask', maskFile);
+      form.append('data', JSON.stringify({
+        prompt: color.name ? `repaint the selected area in ${color.name}, photorealistic interior` : 'high quality interior, photorealistic',
+        roomType: 'living room',
+        denoise: 0.75,
+      }));
+
+      const res = await fetch('/api/ai/edit', { method: 'POST', body: form });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Inpaint failed');
+
+      const editProjectId = data.projectId;
+
+      // Poll for result
+      const poll = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/ai/edit?projectId=${editProjectId}`);
+          if (!pollRes.ok) return;
+          const proj = await pollRes.json();
+          if (proj.status === 'completed' && proj.resultImage) {
+            clearInterval(poll);
+            setMaskResult(proj.resultImage + '?t=' + Date.now());
+            setResult({ beforeUrl: previewUrl, afterUrl: proj.resultImage + '?t=' + Date.now(), runId: editProjectId, canRetryStage3: false });
+            setMaskIsGenerating(false);
+          } else if (proj.status === 'failed') {
+            clearInterval(poll);
+            toast({ title: 'Inpaint failed', description: proj.error || 'Generation failed', variant: 'destructive' });
+            setMaskIsGenerating(false);
+          }
+        } catch { /* ignore poll errors */ }
+      }, 3000);
+
+      // Timeout after 5 min
+      setTimeout(() => { clearInterval(poll); if (maskIsGenerating) { setMaskIsGenerating(false); toast({ title: 'Timed out', description: 'Try again', variant: 'destructive' }); } }, 300000);
+
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+      setMaskIsGenerating(false);
+    }
+  };
 
   const isGeneratingRef = useRef(isGenerating);
   useEffect(() => {
@@ -73,7 +165,7 @@ export default function RoomChangerPage() {
     });
 
     socket.on("comfy:roomchanger:start", () => {
-      setProgress({ stage: 1, percent: 0, label: "Analyzing room…" });
+      setProgress({ stage: 1, percent: 0, labelKey: "rc_analyzing" });
     });
 
     socket.on("comfy:roomchanger:stage", (data: any) => {
@@ -81,17 +173,18 @@ export default function RoomChangerPage() {
         setProgress({
           stage: 1,
           percent: data.status === "done" || data.status === "skipped" ? 100 : 10,
-          label: data.status === "done" || data.status === "skipped"
-            ? "Room analyzed"
-            : "Analyzing room (detecting walls, floor, objects)…",
+          labelKey: data.status === "done" || data.status === "skipped"
+            ? "rc_analyzing_done"
+            : "rc_analyzing",
         });
       } else if (data.stage === 2) {
         setProgress({
           stage: 2,
           percent: data.status === "done" ? 100 : 20,
-          label: data.status === "done"
-            ? "Repainting complete"
-            : data.name || "Repainting walls…",
+          labelKey: data.status === "done"
+            ? "rc_repainting_done"
+            : undefined,
+          label: data.status === "done" ? undefined : data.name || undefined,
         });
       }
     });
@@ -106,20 +199,23 @@ export default function RoomChangerPage() {
 
     socket.on("comfy:roomchanger:done", (data: any) => {
       stopPolling();
-      setProgress({ stage: 2, percent: 100, label: "Done!" });
+      setProgress({ stage: 2, percent: 100, labelKey: "rc_done" });
       setResult({
         beforeUrl: data.beforeUrl + "?t=" + Date.now(),
         afterUrl:  data.afterUrl  + "?t=" + Date.now(),
         runId: data.runId,
         canRetryStage3: false,
       });
+      setFeedback({ rating: null, text: "", submitted: false, submitting: false });
       setIsGenerating(false);
+      setActiveJobId(null);
     });
 
     socket.on("comfy:roomchanger:error", (data: any) => {
       stopPolling();
-      setError(data.error || "Generation failed");
+      setError(data.error || t("rc_failed"));
       setIsGenerating(false);
+      setActiveJobId(null);
       if (data.canRetryStage3 && data.runId) {
         setResult(prev => prev
           ? { ...prev, canRetryStage3: true }
@@ -132,37 +228,50 @@ export default function RoomChangerPage() {
     return () => { socket.disconnect(); stopPolling(); };
   }, [stopPolling]);
 
+  // ── Crop modal state ───────────────────────────────────────────────────────
+  const [cropOpen,    setCropOpen]    = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl,  setPendingUrl]  = useState("");
+
+  const applyFileSelection = useCallback((file: File, url: string) => {
+    setSelectedFile(file);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(url);
+    setResult(null);
+    setError(null);
+  }, [previewUrl]);
+
+  const openCrop = useCallback((file: File) => {
+    const url = URL.createObjectURL(file);
+    setPendingFile(file);
+    setPendingUrl(url);
+    setCropOpen(true);
+  }, []);
+
   // ── File upload ────────────────────────────────────────────────────────────
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setSelectedFile(file);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(URL.createObjectURL(file));
-    setResult(null);
-    setError(null);
+    e.currentTarget.value = "";
+    openCrop(file);
   };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
-    setSelectedFile(file);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(URL.createObjectURL(file));
-    setResult(null);
-    setError(null);
+    openCrop(file);
   };
 
   // ── Generate ───────────────────────────────────────────────────────────────
   const handleGenerate = async (opts: { retryRunId?: string } = {}) => {
-    if (!color.hex && !opts.retryRunId) { setError("Please select a wall color"); return; }
-    if (!selectedFile && !opts.retryRunId) { setError("Please upload a room photo"); return; }
+    if (!color.hex && !opts.retryRunId) { setError(t("select_wall_color")); return; }
+    if (!selectedFile && !opts.retryRunId) { setError(t("upload_room_photo")); return; }
 
     setIsGenerating(true);
     setError(null);
     setResult(null);
-    setProgress({ stage: 1, percent: 0, label: "Starting…" });
+    setProgress({ stage: 1, percent: 0, labelKey: "rc_starting" });
 
     try {
       const formData = new FormData();
@@ -175,13 +284,22 @@ export default function RoomChangerPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        setIsGenerating(false);
+        setInsufficientCreditsModalOpen(true);
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Submission failed");
+        throw new Error(data.error || t("rc_submission_failed"));
       }
 
       setProjectId(data.projectId);
+      if (data.jobId) setActiveJobId(data.jobId);
+      if (data.renderId) setRenderId(data.renderId);
 
       // Fallback polling in case Socket.IO misses events
       stopPolling();
@@ -199,18 +317,18 @@ export default function RoomChangerPage() {
               runId: proj.runId || "",
               canRetryStage3: false,
             });
-            setProgress({ stage: 2, percent: 100, label: "Done!" });
+            setProgress({ stage: 2, percent: 100, labelKey: "rc_done" });
             setIsGenerating(false);
           } else if (proj.status === "failed") {
             stopPolling();
-            setError(proj.errorMessage || "Pipeline failed");
+            setError(proj.errorMessage || t("rc_pipeline_failed"));
             setIsGenerating(false);
           }
         } catch { /* ignore poll errors */ }
       }, 3000);
 
     } catch (err: any) {
-      setError(err.message || "Network error");
+      setError(err.message || t("rc_network_error"));
       setIsGenerating(false);
     }
   };
@@ -220,6 +338,28 @@ export default function RoomChangerPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
+    setRenderId(null);
+    setPaintMode('whole');
+    setMaskResult(null);
+    setFeedback({ rating: null, text: "", submitted: false, submitting: false });
+  };
+
+  const handleFeedbackRating = (rating: 'up' | 'down') => {
+    if (feedback.submitted || feedback.rating !== null) return;
+    setFeedback(prev => ({ ...prev, rating }));
+  };
+
+  const handleFeedbackSubmit = async () => {
+    if (!result?.runId || !feedback.rating || feedback.submitting || feedback.submitted) return;
+    setFeedback(prev => ({ ...prev, submitting: true }));
+    try {
+      await fetch('/api/ai/room-changer/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ runId: result.runId, rating: feedback.rating, text: feedback.text }),
+      });
+    } catch { /* ignore — best-effort */ }
+    setFeedback(prev => ({ ...prev, submitting: false, submitted: true }));
   };
 
   const canGenerate = !isGenerating;
@@ -231,15 +371,15 @@ export default function RoomChangerPage() {
       <div className="mb-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Room Changer
+            {t("rc_repaint_title")}
           </h1>
           <p className="text-lg text-gray-600 mb-3">
-            Repaint your walls in any color — furniture and floor stay untouched
+            {t("rc_repaint_desc")}
           </p>
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Badge className="bg-violet-100 text-violet-800"><Wand2 className="w-3 h-3 mr-1" />SAM2 Wall Detection</Badge>
-            <Badge className="bg-purple-100 text-purple-800"><Paintbrush className="w-3 h-3 mr-1" />SDXL Inpainting</Badge>
-            <Badge className="bg-indigo-100 text-indigo-800"><CheckCircle className="w-3 h-3 mr-1" />12 Preset Colors</Badge>
+            <Badge className="bg-violet-100 text-violet-800"><Wand2 className="w-3 h-3 mr-1" />{t("rc_repaint_sam2")}</Badge>
+            <Badge className="bg-purple-100 text-purple-800"><Paintbrush className="w-3 h-3 mr-1" />{t("rc_repaint_sdxl")}</Badge>
+            <Badge className="bg-indigo-100 text-indigo-800"><CheckCircle className="w-3 h-3 mr-1" />{t("rc_repaint_preset")}</Badge>
           </div>
         </motion.div>
       </div>
@@ -248,10 +388,10 @@ export default function RoomChangerPage() {
         {/* ─── Left Panel: Inputs ──────────────────────────────────────────── */}
         <div className="space-y-4">
           {/* Image Upload */}
-          <Card>
+          <Card data-tour="rc-uploader">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Upload className="w-4 h-4" />Upload Room Photo
+                <Upload className="w-4 h-4" />{t("rc_repaint_upload_title")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -270,22 +410,83 @@ export default function RoomChangerPage() {
                   onDragOver={e => e.preventDefault()}
                 >
                   <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600 font-medium">Drop photo here or click to browse</p>
-                  <p className="text-xs text-gray-400 mt-1">JPG, PNG up to 20MB</p>
+                  <p className="text-sm text-gray-600 font-medium">{t("rc_repaint_drop_photo")}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("rc_repaint_max_size")}</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <div className="relative rounded-xl overflow-hidden border border-gray-200">
-                    <img src={previewUrl} alt="Room preview" className="w-full h-52 object-cover" />
+                <div className="space-y-3">
+                  {/* Repaint Mode toggle */}
+                  <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm font-medium">
+                    <button
+                      onClick={() => setPaintMode('whole')}
+                      className={`flex-1 px-3 py-2 transition-colors ${paintMode === 'whole' ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      disabled={isGenerating}
+                    >
+                      Repaint Whole Room
+                    </button>
+                    <button
+                      onClick={() => setPaintMode('selection')}
+                      className={`flex-1 px-3 py-2 transition-colors ${paintMode === 'selection' ? 'bg-violet-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                      disabled={isGenerating}
+                    >
+                      Paint Selection
+                    </button>
                   </div>
+
+                  {/* Standard preview OR mask canvas */}
+                  {paintMode === 'whole' ? (
+                    <div className="relative rounded-xl overflow-hidden border border-gray-200">
+                      <img src={previewUrl} alt="Room preview" className="w-full h-52 object-cover" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Canvas with image background */}
+                      <div className="relative rounded-xl overflow-hidden border-2 border-violet-300 bg-gray-100" style={{ minHeight: 240 }}>
+                        {/* Background image */}
+                        <img
+                          src={previewUrl}
+                          alt="Room"
+                          className="w-full object-contain pointer-events-none select-none"
+                          style={{ display: 'block' }}
+                        />
+                        {/* Sketch canvas overlay */}
+                        <div className="absolute inset-0 opacity-60" style={{ cursor: 'crosshair' }}>
+                          <ReactSketchCanvas
+                            ref={maskCanvasRef}
+                            width="100%"
+                            height="100%"
+                            strokeWidth={brushSize}
+                            strokeColor="#ffffff"
+                            canvasColor="transparent"
+                            style={{ border: 'none' }}
+                          />
+                        </div>
+                      </div>
+                      {/* Brush controls */}
+                      <div className="flex items-center gap-3 px-1">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">Brush {brushSize}px</span>
+                        <Slider
+                          value={[brushSize]}
+                          onValueChange={v => setBrushSize(v[0])}
+                          min={5} max={100} step={5}
+                          className="flex-1"
+                          disabled={maskIsGenerating}
+                        />
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => maskCanvasRef.current?.undo()} disabled={maskIsGenerating}>Undo</Button>
+                        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => maskCanvasRef.current?.clearCanvas()} disabled={maskIsGenerating}>Clear</Button>
+                      </div>
+                      <p className="text-xs text-gray-400 text-center">Paint white over the area you want to repaint</p>
+                    </div>
+                  )}
+
                   <Button
                     variant="outline"
                     size="sm"
                     className="w-full"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isGenerating}
+                    disabled={isGenerating || maskIsGenerating}
                   >
-                    <RefreshCw className="w-3.5 h-3.5 mr-2" />Change image
+                    <RefreshCw className="w-3.5 h-3.5 mr-2" />{t("rc_repaint_change_image")}
                   </Button>
                 </div>
               )}
@@ -293,10 +494,10 @@ export default function RoomChangerPage() {
           </Card>
 
           {/* Color Selection */}
-          <Card>
+          <Card data-tour="rc-color-picker">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Paintbrush className="w-4 h-4" />Choose Wall Color
+                <Paintbrush className="w-4 h-4" />{t("rc_repaint_choose_color")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -304,19 +505,35 @@ export default function RoomChangerPage() {
             </CardContent>
           </Card>
 
-          {/* Generate Button */}
-          <Button
-            onClick={() => handleGenerate()}
-            disabled={!canGenerate}
-            className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
-            size="lg"
-          >
-            {isGenerating ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Generating…</>
-            ) : (
-              <><Wand2 className="w-4 h-4 mr-2" />Generate</>
-            )}
-          </Button>
+          {/* Generate Button — whole room or paint selection */}
+          {paintMode === 'whole' ? (
+            <Button
+              data-tour="rc-generate-btn"
+              onClick={() => handleGenerate()}
+              disabled={!canGenerate}
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+              size="lg"
+            >
+              {isGenerating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("rc_repaint_generating")}</>
+              ) : (
+                <><Wand2 className="w-4 h-4 mr-2" />{t("rc_repaint_generate")}</>
+              )}
+            </Button>
+          ) : (
+            <Button
+              onClick={handleMaskRepaint}
+              disabled={!previewUrl || maskIsGenerating}
+              className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white"
+              size="lg"
+            >
+              {maskIsGenerating ? (
+                <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Repainting Selected Area...</>
+              ) : (
+                <><Paintbrush className="w-4 h-4 mr-2" />Repaint Selected Area</>
+              )}
+            </Button>
+          )}
 
           {/* Error */}
           <AnimatePresence>
@@ -337,7 +554,7 @@ export default function RoomChangerPage() {
                       className="mt-2 text-red-600 border-red-300 hover:bg-red-50"
                       onClick={() => handleGenerate({ retryRunId: result.runId })}
                     >
-                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />Retry with saved masks
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />{t("rc_repaint_retry_saved")}
                     </Button>
                   )}
                 </div>
@@ -351,7 +568,7 @@ export default function RoomChangerPage() {
           <Card className="h-full">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <ImageIcon className="w-4 h-4" />Result
+                <ImageIcon className="w-4 h-4" />{t("rc_repaint_result")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -361,9 +578,36 @@ export default function RoomChangerPage() {
                   <div className="w-20 h-20 rounded-2xl bg-gray-100 flex items-center justify-center">
                     <Paintbrush className="w-10 h-10 text-gray-300" />
                   </div>
-                  <p className="text-sm font-medium text-gray-500">Your recolored room will appear here</p>
-                  <p className="text-xs text-gray-400">Upload a photo and pick a color to get started</p>
+                  <p className="text-sm font-medium text-gray-500">{t("rc_repaint_will_appear")}</p>
+                  <p className="text-xs text-gray-400">{t("rc_repaint_instructions")}</p>
                 </div>
+              )}
+
+              {/* Queue position display — shown while waiting in queue before ComfyUI starts */}
+              {isGenerating && activeJobId && !progress && (
+                <QueuePosition
+                  jobId={activeJobId}
+                  featureLabel="Room Changer"
+                  onComplete={() => {
+                    // Worker finished — poll projectId once to get result
+                    const pid = projectId;
+                    if (!pid) return;
+                    fetch(`/api/ai/room-changer/generate?projectId=${pid}`)
+                      .then(r => r.json())
+                      .then(proj => {
+                        if (proj.status === 'completed' && proj.afterUrl) {
+                          stopPolling();
+                          setResult({ beforeUrl: proj.beforeUrl + '?t=' + Date.now(), afterUrl: proj.afterUrl + '?t=' + Date.now(), runId: proj.runId || '', canRetryStage3: false });
+                          setProgress({ stage: 2, percent: 100 });
+                          setIsGenerating(false);
+                          setActiveJobId(null);
+                        }
+                      })
+                      .catch(() => {});
+                  }}
+                  onError={(msg) => { setError(msg); setIsGenerating(false); setActiveJobId(null); }}
+                  onCancel={() => { setIsGenerating(false); setActiveJobId(null); setProgress(null); }}
+                />
               )}
 
               {/* Progress / loading state */}
@@ -378,8 +622,8 @@ export default function RoomChangerPage() {
                   >
                     {/* Two-step progress */}
                     {[
-                      { id: 1, label: "Analyzing room (detecting walls, floor, objects)…" },
-                      { id: 2, label: `Repainting walls in ${color.name || "chosen color"}…` },
+                      { id: 1, label: t("rc_repaint_analyzing") },
+                      { id: 2, label: t("rc_repaint_repainting", { color: color.name || t("rc_repaint_chosen_color_text") }) },
                     ].map(step => {
                       const isDone = progress.stage > step.id;
                       const isActive = progress.stage === step.id;
@@ -441,49 +685,85 @@ export default function RoomChangerPage() {
                     animate={{ opacity: 1, scale: 1 }}
                     className="space-y-4"
                   >
-                    <BeforeAfterSlider
-                      beforeImage={result.beforeUrl}
-                      afterImage={result.afterUrl}
-                      beforeLabel="Original"
-                      afterLabel={color.name || "Recolored"}
+                    <AIResultPanel
+                      originalImageUrl={result.beforeUrl}
+                      resultImageUrl={result.afterUrl}
+                      projectId={projectId || undefined}
+                      renderId={renderId ?? undefined}
+                      featureLabel="Room Changer"
+                      onSaveToProject={() => toast({ title: t("rc_repaint_saved_title"), description: t("rc_repaint_saved_desc", { color: color.name }) })}
+                      onTryAgain={handleTryAnother}
+                      toolName="Room Changer"
+                      showMakeItReal={true}
+                      roomType="living-room"
                     />
 
-                    {/* Action buttons */}
-                    <div className="flex gap-2 flex-wrap">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = result.afterUrl;
-                          a.download = `room-changer-${color.name.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}.png`;
-                          a.click();
-                        }}
-                        className="flex-1"
-                      >
-                        <Download className="w-3.5 h-3.5 mr-1.5" />Download
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          toast({
-                            title: "Saved to project",
-                            description: `${color.name} recolor saved successfully.`,
-                          });
-                        }}
-                        className="flex-1"
-                      >
-                        <BookmarkCheck className="w-3.5 h-3.5 mr-1.5" />Save to Project
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={handleTryAnother}
-                        className="flex-1"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />Try Another Color
-                      </Button>
+                    {/* Feedback */}
+                    <div className="pt-3 border-t border-gray-100">
+                      {feedback.submitted ? (
+                        <p className="text-center text-sm text-green-600 font-medium">{t("rc_repaint_thanks_feedback")}</p>
+                      ) : (
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-gray-700 text-center">{t("rc_repaint_happy_result")}</p>
+                          <div className="flex gap-3 justify-center">
+                            <button
+                              onClick={() => handleFeedbackRating('up')}
+                              disabled={feedback.rating !== null}
+                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-colors ${
+                                feedback.rating === 'up'
+                                  ? 'border-green-500 bg-green-50'
+                                  : feedback.rating !== null
+                                  ? 'border-gray-200 opacity-40 cursor-not-allowed'
+                                  : 'border-gray-200 hover:border-green-400 hover:bg-green-50 cursor-pointer'
+                              }`}
+                              aria-label="Thumbs up"
+                            >
+                              👍
+                            </button>
+                            <button
+                              onClick={() => handleFeedbackRating('down')}
+                              disabled={feedback.rating !== null}
+                              className={`text-2xl px-5 py-2 rounded-xl border-2 transition-colors ${
+                                feedback.rating === 'down'
+                                  ? 'border-red-400 bg-red-50'
+                                  : feedback.rating !== null
+                                  ? 'border-gray-200 opacity-40 cursor-not-allowed'
+                                  : 'border-gray-200 hover:border-red-300 hover:bg-red-50 cursor-pointer'
+                              }`}
+                              aria-label="Thumbs down"
+                            >
+                              👎
+                            </button>
+                          </div>
+                          {feedback.rating && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -4 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className="space-y-2"
+                            >
+                              <p className="text-xs text-gray-500 text-center">
+                                {feedback.rating === 'up' ? t("rc_repaint_glad_liked") : t("rc_repaint_sorry_improve")}
+                              </p>
+                              <textarea
+                                value={feedback.text}
+                                onChange={e => setFeedback(prev => ({ ...prev, text: e.target.value }))}
+                                maxLength={1000}
+                                rows={2}
+                                placeholder={feedback.rating === 'up' ? t("rc_repaint_feedback_worked") : t("rc_repaint_feedback_wrong")}
+                                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-violet-300 placeholder:text-gray-400"
+                              />
+                              <Button
+                                size="sm"
+                                onClick={handleFeedbackSubmit}
+                                disabled={feedback.submitting}
+                                className="w-full bg-violet-600 hover:bg-violet-700 text-white"
+                              >
+                                {feedback.submitting ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />{t("rc_repaint_submitting")}</> : t("rc_repaint_submit")}
+                              </Button>
+                            </motion.div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -492,6 +772,25 @@ export default function RoomChangerPage() {
           </Card>
         </div>
       </div>
+
+      <ImageCropModal
+        isOpen={cropOpen}
+        imageFile={pendingFile}
+        imageUrl={pendingUrl}
+        title="Crop your room photo"
+        onConfirm={(croppedFile, croppedUrl) => {
+          setCropOpen(false);
+          if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+          setPendingFile(null); setPendingUrl("");
+          applyFileSelection(croppedFile, croppedUrl);
+        }}
+        onCancel={() => {
+          setCropOpen(false);
+          const f = pendingFile; const u = pendingUrl;
+          setPendingFile(null); setPendingUrl("");
+          if (f) applyFileSelection(f, u);
+        }}
+      />
     </div>
   );
 }

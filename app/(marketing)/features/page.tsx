@@ -5,6 +5,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
+import JsonLd from "@/components/seo/JsonLd";
+import { buildSoftwareApplicationSchema, buildBreadcrumbSchema } from "@/lib/seo/schema";
 import {
   Sparkles,
   Wand2,
@@ -1399,6 +1401,14 @@ export default function FeaturesPage() {
           </motion.div>
         </div>
       </section>
+
+      <JsonLd schemas={[
+        buildSoftwareApplicationSchema(),
+        buildBreadcrumbSchema([
+          { name: 'Home',     item: '/' },
+          { name: 'Features', item: '/features' },
+        ]),
+      ]} />
     </div>
   );
 }

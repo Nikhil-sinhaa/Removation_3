@@ -3,7 +3,13 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
 const COOKIE_NAME = process.env.COOKIE_NAME || 'auth_token';
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
+const JWT_SECRET = process.env.JWT_SECRET!;
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    'JWT_SECRET environment variable is required. ' +
+    'Generate one with: openssl rand -hex 32'
+  );
+}
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export interface JwtPayload {
@@ -24,12 +30,15 @@ export function issueJwt(res: NextResponse, user: { _id: string; email: string }
     { expiresIn: JWT_EXPIRES_IN as any }
   );
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  const secure = process.env.NEXT_PUBLIC_APP_URL?.startsWith('https://') || false;
+  const sameSite = 'lax';
+
+  console.log('[Auth] Setting cookie:', COOKIE_NAME, '| secure:', secure, '| sameSite:', sameSite);
 
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+    secure,
+    sameSite,
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
     path: '/',
   });

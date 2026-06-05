@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // Enable instrumentation.ts — starts the memory watchdog on server boot
+  experimental: {
+    instrumentationHook: true,
+  },
+
   images: {
     remotePatterns: [
       {
@@ -36,6 +42,16 @@ const nextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.marble3d.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'marble3d.com',
         pathname: '/**',
       },
     ],
@@ -82,16 +98,25 @@ const nextConfig = {
     } else if (!dev) {
       config.devtool = 'source-map';
     }
+
+    // OOM Fix: Exclude large/static directories from the file watcher.
+    // public/renders (582MB) and public/uploads (257MB) don't contain
+    // source files — watching them causes massive inotify overhead.
+    if (dev) {
+      config.watchOptions = {
+        ignored: [
+          '**/public/renders/**',
+          '**/public/uploads/**',
+          '**/node_modules/**',
+          '**/.next/**',
+        ],
+        aggregateTimeout: 300,
+        poll: false,
+      };
+    }
     
     return config;
   },
 };
-
-// Import ComfyUI Bridge to trigger singleton initialization on server startup
-import('./src/services/comfyBridge.js').then(() => {
-  console.log('🚀 ComfyUI Bridge module loaded');
-}).catch(error => {
-  console.error('❌ Failed to load ComfyUI Bridge:', error);
-});
 
 export default nextConfig;

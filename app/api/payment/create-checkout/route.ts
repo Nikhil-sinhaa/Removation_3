@@ -6,9 +6,14 @@ import Razorpay from 'razorpay';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-06-20',
-});
+// Lazy Stripe initialization — safe when STRIPE_SECRET_KEY is not configured (INR users)
+function getStripe() {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || key.startsWith('sk_test_your') || key.length < 20) {
+        return null;
+    }
+    return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID!,
@@ -112,15 +117,42 @@ export async function POST(req: NextRequest) {
             plan,
             paymentMethod = 'stripe',
             successUrl,
-            cancelUrl
+            cancelUrl,
+            planId,
+            billingCycle,
+            isYearly,
+            currency,
         } = body as {
-            plan: PlanType;
-            paymentMethod: 'stripe' | 'razorpay';
+            plan?: PlanType;
+            paymentMethod?: 'stripe' | 'razorpay';
             successUrl?: string;
             cancelUrl?: string;
+            planId?: string;
+            billingCycle?: 'monthly' | 'yearly';
+            isYearly?: boolean;
+            currency?: string;
         };
 
-        if (!plan) {
+        let finalPlan = plan;
+        let finalPaymentMethod = paymentMethod;
+
+        // Normalize 'teams' → 'team' for backward compatibility
+        const normalizedPlanId = planId === 'teams' ? 'team' : planId;
+
+        if (!finalPlan && normalizedPlanId) {
+            const isYearlyBilling = isYearly || billingCycle === 'yearly';
+            if (normalizedPlanId === 'pro' || normalizedPlanId === 'team') {
+                finalPlan = `${normalizedPlanId}_${isYearlyBilling ? 'yearly' : 'monthly'}` as PlanType;
+            } else {
+                finalPlan = normalizedPlanId as PlanType;
+            }
+        }
+
+        if (currency === 'INR') {
+            finalPaymentMethod = 'razorpay';
+        }
+
+        if (!finalPlan) {
             return NextResponse.json(
                 { error: 'Plan is required' },
                 { status: 400 }
@@ -130,6 +162,8 @@ export async function POST(req: NextRequest) {
         await connectToDatabase();
 
         // Get user from database
+        // Note: clerkId field holds MongoDB _id value via pre-save hook.
+        // userId here is the JWT payload id (= MongoDB _id string).
         const user = await User.findOne({ clerkId: userId });
 
         if (!user) {
@@ -143,10 +177,10 @@ export async function POST(req: NextRequest) {
         const finalSuccessUrl = successUrl || `${baseUrl}/dashboard?payment=success`;
         const finalCancelUrl = cancelUrl || `${baseUrl}/pricing?payment=canceled`;
 
-        if (paymentMethod === 'stripe') {
-            return handleStripeCheckout(user, plan, userId, finalSuccessUrl, finalCancelUrl);
-        } else if (paymentMethod === 'razorpay') {
-            return handleRazorpayCheckout(user, plan, userId);
+        if (finalPaymentMethod === 'stripe') {
+            return handleStripeCheckout(user, finalPlan, userId, finalSuccessUrl, finalCancelUrl);
+        } else if (finalPaymentMethod === 'razorpay') {
+            return handleRazorpayCheckout(user, finalPlan, userId);
         } else {
             return NextResponse.json(
                 { error: 'Invalid payment method' },
@@ -165,10 +199,18 @@ export async function POST(req: NextRequest) {
 async function handleStripeCheckout(
     user: any,
     plan: PlanType,
-    clerkId: string,
+    userId: string,
     successUrl: string,
     cancelUrl: string
 ) {
+    const stripe = getStripe();
+    if (!stripe) {
+        return NextResponse.json(
+            { error: 'Stripe is not configured on this server. Use INR/Razorpay payments.' },
+            { status: 503 }
+        );
+    }
+
     const pricing = PRICING.stripe[plan];
 
     if (!pricing) {
@@ -186,14 +228,14 @@ async function handleStripeCheckout(
             email: user.email,
             name: `${user.firstName} ${user.lastName}`.trim() || undefined,
             metadata: {
-                clerkId,
+                clerkId: userId,
             },
         });
         customerId = customer.id;
 
         // Save customer ID
         await User.findOneAndUpdate(
-            { clerkId },
+            { clerkId: userId },
             { stripeCustomerId: customerId }
         );
     }
@@ -216,12 +258,12 @@ async function handleStripeCheckout(
             success_url: `${successUrl}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: cancelUrl,
             metadata: {
-                clerkId,
+                clerkId: userId,
                 plan,
             },
             subscription_data: {
                 metadata: {
-                    clerkId,
+                    clerkId: userId,
                     plan,
                 },
             },
@@ -256,7 +298,7 @@ async function handleStripeCheckout(
             success_url: `${successUrl}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: cancelUrl,
             metadata: {
-                clerkId,
+                clerkId: userId,
                 type: 'credits',
                 credits: String((pricing as any).credits),
             },
@@ -273,7 +315,7 @@ async function handleStripeCheckout(
 async function handleRazorpayCheckout(
     user: any,
     plan: PlanType,
-    clerkId: string
+    userId: string
 ) {
     const pricing = PRICING.razorpay[plan];
 
@@ -293,7 +335,7 @@ async function handleRazorpayCheckout(
             total_count: plan.includes('yearly') ? 1 : 12, // 1 for yearly, 12 for monthly
             quantity: 1,
             notes: {
-                clerkId,
+                clerkId: userId,
                 plan,
                 email: user.email,
             },
@@ -312,7 +354,7 @@ async function handleRazorpayCheckout(
                 email: user.email,
             },
             notes: {
-                clerkId,
+                clerkId: userId,
                 plan,
             },
         });
@@ -322,7 +364,7 @@ async function handleRazorpayCheckout(
             amount: pricing.amount,
             currency: pricing.currency,
             notes: {
-                clerkId,
+                clerkId: userId,
                 type: 'credits',
                 credits: String((pricing as any).credits),
             },
@@ -341,7 +383,7 @@ async function handleRazorpayCheckout(
                 email: user.email,
             },
             notes: {
-                clerkId,
+                clerkId: userId,
                 type: 'credits',
                 credits: String((pricing as any).credits),
             },

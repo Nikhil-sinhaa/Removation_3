@@ -10,7 +10,11 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AnalyticsProvider } from '@/components/AnalyticsProvider';
 import { CrispChat } from './CrispChat';
 import { PWAPrompt } from './PWAPrompt';
+import { InsufficientCreditsModal } from '@/components/payment/InsufficientCreditsModal';
 
+interface ProvidersProps {
+  children: React.ReactNode;
+}
 
 // Create a client
 const queryClient = new QueryClient({
@@ -29,9 +33,24 @@ const queryClient = new QueryClient({
 
 // REMOVE ALL Clerk appearance configuration
 
-interface ProvidersProps {
-  children: React.ReactNode;
+import { useEffect } from 'react';
+import { useTheme as useNextTheme } from 'next-themes';
+import { useUserStore } from '@/stores/user-store';
+
+function PreferenceSync() {
+  const { setTheme, theme } = useNextTheme();
+  const dbTheme = useUserStore((state) => state.preferences?.theme);
+
+  useEffect(() => {
+    if (dbTheme && dbTheme !== theme) {
+      setTheme(dbTheme);
+    }
+  }, [dbTheme, theme, setTheme]);
+
+  return null;
 }
+
+import { LanguageProvider } from '@/components/LanguageProvider';
 
 export function Providers({ children }: ProvidersProps) {
   return (
@@ -44,15 +63,19 @@ export function Providers({ children }: ProvidersProps) {
         disableTransitionOnChange={false}
         storageKey="removation-theme"
       >
-        <TooltipProvider delayDuration={300}>
-          {children}
+        <LanguageProvider>
+          <TooltipProvider delayDuration={300}>
+            <PreferenceSync />
+            <InsufficientCreditsModal />
+            {children}
 
-          {/* Global Components */}
-          <Toaster />
-          <CrispChat />
-          <PWAPrompt />
-          <AnalyticsProvider />
-        </TooltipProvider>
+            {/* Global Components */}
+            <Toaster />
+            <CrispChat />
+            <PWAPrompt />
+            <AnalyticsProvider />
+          </TooltipProvider>
+        </LanguageProvider>
       </ThemeProvider>
 
       {/* React Query DevTools - only in development */}

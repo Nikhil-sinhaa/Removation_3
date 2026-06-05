@@ -39,6 +39,9 @@ export interface Stage2Input {
   masterToggles: MasterToggles;
   styleReferenceImage?: string; // Optional mood-board ref image
   userMaskPath?: string;
+  wallMask?: string;
+  floorMask?: string;
+  objectMask?: string;
 }
 
 export interface Stage2Output {

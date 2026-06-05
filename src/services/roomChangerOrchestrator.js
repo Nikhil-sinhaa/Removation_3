@@ -11,13 +11,13 @@
  *   colorPrompt      ──► Stage 3 nodes 4 & 5
  */
 
-import { readFile } from 'fs/promises';
+import { readFile, writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { buildWallPrompt, NEGATIVE_PROMPT } from '../config/roomChangerPrompts.js';
 import RoomChangerRun from '../models/RoomChangerRun.js';
 import Project from '../models/Project.js';
-import comfyBridge from './comfyBridge.js';
+import comfyBridge, { ensureInputFile, transferComfyFile } from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
 const COMFY_OUTPUT = process.env.COMFY_OUTPUT || '/home/nikhil/Documents/Remo2/ComfyUI/output';
@@ -109,6 +109,12 @@ export async function runRoomChanger({
       );
       const stage1 = JSON.parse(JSON.stringify(guiToApiGraph(stage1Json))); // deep clone
 
+      // Ensure the original room image is uploaded to cloud if running in cloud mode
+      await ensureInputFile({
+        filename: finalComfyFilename,
+        logPrefix: '[RoomChanger] Original Image'
+      });
+
       // Inject uploaded image into node 1
       stage1['1'].inputs.image = finalComfyFilename;
 
@@ -183,6 +189,103 @@ export async function runRoomChanger({
     // Remove control_after_generate so ComfyUI doesn't try to auto-increment the seed
     delete stage3['8'].inputs.control_after_generate;
 
+    // ── Wall mask coverage guard ─────────────────────────────────────────────
+    // If CLIPSeg/SAM failed to detect most of the wall, fail fast with a
+    // clear user-facing error instead of running Stage 3 on a broken mask.
+    try {
+      const sharp = (await import('sharp')).default;
+      const wallMaskPath = path.join(PUBLIC_RENDERS, _safe(wallMaskFilename));
+
+      const { data, info } = await sharp(wallMaskPath)
+        .greyscale()
+        .raw()
+        .toBuffer({ resolveWithObject: true });
+
+      const totalPixels = info.width * info.height;
+      let whitePixels = 0;
+      for (let i = 0; i < data.length; i++) {
+        if (data[i] > 128) whitePixels++;
+      }
+
+      const coveragePercent = (whitePixels / totalPixels) * 100;
+      console.log(`🧱 Wall mask coverage: ${coveragePercent.toFixed(1)}% ` +
+                  `(${whitePixels}/${totalPixels} px) — ${wallMaskFilename}`);
+
+      if (coveragePercent < 15) {
+        const err = new Error(
+          "Couldn't reliably detect walls in this image. Try a photo where " +
+          "walls are clearly visible and well-lit, or a different angle."
+        );
+        err.code = 'WALL_MASK_INSUFFICIENT_COVERAGE';
+        err.coveragePercent = coveragePercent;
+        err.wallMaskFilename = wallMaskFilename;
+        throw err;
+      }
+
+      if (coveragePercent > 75) {
+        console.warn(
+          `⚠️  Wall mask coverage unusually high (${coveragePercent.toFixed(1)}%). ` +
+          `Mask may be over-detecting non-wall regions. Result quality may vary.`
+        );
+      }
+    } catch (maskCheckErr) {
+      if (maskCheckErr.code === 'WALL_MASK_INSUFFICIENT_COVERAGE') {
+        throw maskCheckErr;
+      }
+      console.warn(`⚠️  Wall mask coverage check failed (non-fatal):`, maskCheckErr.message);
+    }
+    // ── End coverage guard ───────────────────────────────────────────────────
+
+    // ── TEMPORARY DIAGNOSTIC ─────────────────────────────────────────────────
+    // Dumps the full Stage 3 API graph + image dimensions to tmp/ so you can
+    // diff the dashboard submission against a ComfyUI Manager submission.
+    // DO NOT DELETE — remove only after the quality-difference bug is fixed.
+    try {
+      const _sharp = (await import('sharp')).default;
+      const _comfyInput = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
+      async function _getDims(filename) {
+        try {
+          const m = await _sharp(path.join(_comfyInput, filename)).metadata();
+          return { width: m.width, height: m.height, format: m.format };
+        } catch (e) { return { error: e.message }; }
+      }
+      const [_roomDims, _maskDims] = await Promise.all([
+        _getDims(finalComfyFilename),
+        _getDims(wallMaskFilename),
+      ]);
+      const _diagnosticPayload = {
+        timestamp: new Date().toISOString(),
+        node1_image: stage3['1'].inputs.image,
+        node2_wallMask: stage3['2'].inputs.image,
+        node4_positivePrompt: stage3['4'].inputs.text,
+        node5_negativePrompt: stage3['5'].inputs.text,
+        node8_sampler: {
+          seed: stage3['8'].inputs.seed,
+          steps: stage3['8'].inputs.steps,
+          cfg: stage3['8'].inputs.cfg,
+          sampler_name: stage3['8'].inputs.sampler_name,
+          scheduler: stage3['8'].inputs.scheduler,
+          denoise: stage3['8'].inputs.denoise,
+        },
+        dimensions: {
+          roomImage: { filename: finalComfyFilename, ..._roomDims },
+          wallMask:  { filename: wallMaskFilename,   ..._maskDims },
+        },
+        stage3_graph: stage3,
+      };
+      const _tmpDir = path.join(process.cwd(), 'tmp');
+      await mkdir(_tmpDir, { recursive: true });
+      await writeFile(
+        path.join(_tmpDir, 'dashboard-stage3-submission.json'),
+        JSON.stringify(_diagnosticPayload, null, 2),
+      );
+      console.log('🔍 DIAGNOSTIC: Stage 3 submission written → tmp/dashboard-stage3-submission.json');
+      console.log('🔍 DIAGNOSTIC: roomImage dims =', _roomDims, '| wallMask dims =', _maskDims);
+    } catch (_diagErr) {
+      console.warn('⚠️ DIAGNOSTIC write failed (non-fatal):', _diagErr.message);
+    }
+    // ── END TEMPORARY DIAGNOSTIC ─────────────────────────────────────────────
+
     const t1 = Date.now();
     const outputs3 = await comfyBridge._submitStageAndWait(stage3);
     const stage3PromptId = outputs3._promptId || null;
@@ -210,6 +313,13 @@ export async function runRoomChanger({
       status: 'completed',
       processingCompletedAt: new Date(),
     });
+
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, outputImageUrl, 'room-changer');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
 
     onProgress({ stage: 2, percent: 100 });
     comfyBridge.notifyFrontend('comfy:roomchanger:done', {
@@ -260,12 +370,15 @@ function _safe(filename) {
 
 /**
  * Copy all output images from ComfyUI/output/ to public/renders/.
- * Searches output subdirectories and flat output root.
+ * Downloads from cloud if in cloud mode, otherwise copies local files.
  */
 async function _copyOutputsToPublic(outputs) {
-  const { mkdir, copyFile, access } = await import('fs/promises');
+  const { mkdir, writeFile, copyFile, access } = await import('fs/promises');
   const pathMod = await import('path');
   await mkdir(PUBLIC_RENDERS, { recursive: true });
+
+  const { resolveComfyURL } = await import('@/lib/ai/gpu-mode-router');
+  const { url: comfyUrl, source } = await resolveComfyURL();
 
   for (const nodeId in outputs) {
     const images = outputs[nodeId]?.images;
@@ -274,17 +387,33 @@ async function _copyOutputsToPublic(outputs) {
       const filename = img.filename || img.name;
       if (!filename) continue;
       const subfolder = img.subfolder || '';
-      const candidates = [
-        pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
-        pathMod.default.join(COMFY_OUTPUT, filename),
-      ];
-      for (const src of candidates) {
+
+      if (source === 'cloud') {
         try {
-          await access(src);
-          const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
-          await copyFile(src, dest);
-          break;
-        } catch { /* try next */ }
+          const viewUrl = `${comfyUrl}/view?filename=${encodeURIComponent(filename)}&subfolder=${encodeURIComponent(subfolder)}&type=output`;
+          const res = await fetch(viewUrl, { headers: { 'bypass-tunnel-reminder': 'true' } });
+          if (res.ok) {
+            const buf = Buffer.from(await res.arrayBuffer());
+            const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
+            await writeFile(dest, buf);
+            console.log(`[RoomChanger] Downloaded cloud stage output to public: ${filename}`);
+          }
+        } catch (e) {
+          console.warn(`[RoomChanger] Could not download cloud stage output:`, e.message);
+        }
+      } else {
+        const candidates = [
+          pathMod.default.join(COMFY_OUTPUT, subfolder, filename),
+          pathMod.default.join(COMFY_OUTPUT, filename),
+        ];
+        for (const src of candidates) {
+          try {
+            await access(src);
+            const dest = pathMod.default.join(PUBLIC_RENDERS, _safe(filename));
+            await copyFile(src, dest);
+            break;
+          } catch { /* try next */ }
+        }
       }
     }
   }

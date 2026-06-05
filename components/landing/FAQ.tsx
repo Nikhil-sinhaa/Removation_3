@@ -1,164 +1,65 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import { Badge } from '@/components/ui/badge';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '@/components/ui/accordion';
-import { HelpCircle } from 'lucide-react';
+} from "@/components/ui/accordion";
 
-const faqs = [
+const FAQS_DATA = [
   {
-    category: 'General',
-    questions: [
-      {
-        q: 'What is Removation.ai?',
-        a: 'Removation.ai is an AI-powered interior design platform that transforms your room photos into stunning redesigns in seconds. It includes unique features like Vastu Shastra analysis and real-time renovation cost calculation.',
-      },
-      {
-        q: 'How does the AI transformation work?',
-        a: 'Simply upload a photo of any room, select your preferred style from 400+ options, and our AI will generate multiple design variations in under 15 seconds. The AI understands room layout, lighting, and architecture to create realistic transformations.',
-      },
-      {
-        q: 'What types of spaces can I redesign?',
-        a: 'You can redesign any interior space including living rooms, bedrooms, kitchens, bathrooms, offices, and more. We also support exterior spaces like gardens, patios, and building facades.',
-      },
-    ],
+    q: "Is it really free to start?",
+    a: "Yes. You get your first 10 credits free — no credit card required. Each AI render costs 1 credit, so you can try 10 different room styles before paying anything.",
   },
   {
-    category: 'Vastu & Cost Features',
-    questions: [
-      {
-        q: 'What is the Vastu Shastra feature?',
-        a: 'Our Vastu engine analyzes your room design against 120+ traditional Vastu principles and provides a score from 0-100. It also suggests specific changes to improve energy flow and compliance with Vastu guidelines.',
-      },
-      {
-        q: 'How accurate is the cost calculator?',
-        a: 'Our cost calculator uses 2025 pricing data from 50+ Indian cities and includes material costs, labor rates, and local taxes. It provides estimates within 10-15% accuracy of actual renovation costs.',
-      },
-      {
-        q: 'Can I get costs in both rupees and dollars?',
-        a: 'Yes! Toggle between ₹ (INR) and $ (USD) with real-time currency conversion. We also support GBP, EUR, AED, and SGD.',
-      },
-    ],
+    q: "How realistic are the AI renders?",
+    a: "Renders are photorealistic and great for visualization and decision-making. They show accurate colors, furniture placement, and lighting. They're not architectural blueprints, so measurements and exact proportions are indicative rather than precise.",
   },
   {
-    category: 'Technical',
-    questions: [
-      {
-        q: 'What image formats are supported?',
-        a: 'We support JPG, PNG, HEIC, and WebP formats. Images can be any resolution - our AI will optimize them automatically.',
-      },
-      {
-        q: 'How long does a render take?',
-        a: 'Most renders complete in 8-15 seconds. Complex transformations or high-resolution outputs may take up to 30 seconds.',
-      },
-      {
-        q: 'Can I edit the AI-generated images?',
-        a: 'Absolutely! Our editor includes inpainting, object removal, furniture replacement, and manual adjustments. You can refine any generated image to perfection.',
-      },
-    ],
+    q: "Are the designers on the platform verified?",
+    a: "Yes. Every designer goes through a portfolio review and admin verification before being listed. Verified designers display a badge on their profile, and every booking includes real customer reviews.",
   },
   {
-    category: 'Pricing & Plans',
-    questions: [
-      {
-        q: 'Is there a free plan?',
-        a: 'Yes! Our free plan includes 5 renders per month, basic styles, and essential features. No credit card required to start.',
-      },
-      {
-        q: 'Can I cancel my subscription anytime?',
-        a: 'Yes, you can cancel anytime. You\'ll retain access until the end of your billing period. We also offer a 7-day money-back guarantee.',
-      },
-      {
-        q: 'Do you offer team/enterprise plans?',
-        a: 'Yes! Our Teams plan includes collaboration features, shared libraries, custom branding, and dedicated support. Contact us for custom enterprise pricing.',
-      },
-    ],
+    q: "What happens if I don't like my render?",
+    a: "Try another style — each attempt costs just 1 credit. If a generation fails due to a technical issue on our end, your credit is automatically refunded to your account.",
+  },
+  {
+    q: "Which cities have designers available?",
+    a: "We currently have verified designers in Mumbai, Bangalore, Delhi, Pune, and Chennai. We're actively expanding to Hyderabad, Kolkata, and Ahmedabad. Check the marketplace for the latest availability in your city.",
+  },
+  {
+    q: "Can I use renders for commercial projects?",
+    a: "Yes. All renders you generate belong to you. You can use them freely for client presentations, proposals, social media, marketing materials, or any commercial purpose.",
   },
 ];
 
 export function FAQ() {
   return (
-    <section id="faq" className="py-24 bg-slate-950 relative overflow-hidden">
-      <div className="container mx-auto px-4">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center max-w-3xl mx-auto mb-16"
-        >
-          <Badge className="mb-4 bg-blue-600/20 text-blue-300 border-blue-500/30">
-            <HelpCircle className="w-4 h-4 mr-2" />
-            FAQ
-          </Badge>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6">
-            Frequently Asked
-            <span className="block bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
-              Questions
-            </span>
+    <section id="faq" className="bg-black py-24 px-6 lg:px-8 border-t border-white/5">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            Frequently Asked Questions
           </h2>
-          <p className="text-lg text-slate-400">
-            Everything you need to know about Removation.ai
-          </p>
-        </motion.div>
-
-        {/* FAQ Sections */}
-        <div className="max-w-4xl mx-auto">
-          {faqs.map((section, sectionIndex) => (
-            <motion.div
-              key={section.category}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: sectionIndex * 0.1 }}
-              className="mb-8"
-            >
-              <h3 className="text-lg font-semibold text-violet-400 mb-4">
-                {section.category}
-              </h3>
-              <Accordion type="single" collapsible className="space-y-4">
-                {section.questions.map((faq, index) => (
-                  <AccordionItem
-                    key={index}
-                    value={`${sectionIndex}-${index}`}
-                    className="bg-slate-900/50 border border-slate-800 rounded-xl px-6 data-[state=open]:border-violet-500/30"
-                  >
-                    <AccordionTrigger className="text-left text-white hover:text-violet-300 hover:no-underline py-4">
-                      {faq.q}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-slate-400 pb-4">
-                      {faq.a}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </motion.div>
-          ))}
         </div>
 
-        {/* Contact CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="mt-16 text-center"
-        >
-          <p className="text-slate-400 mb-4">
-            Still have questions?
-          </p>
-          <a
-            href="mailto:support@removation.ai"
-            className="inline-flex items-center gap-2 text-violet-400 hover:text-violet-300 transition-colors"
-          >
-            Contact our support team →
-          </a>
-        </motion.div>
+        <Accordion type="single" collapsible className="space-y-4">
+          {FAQS_DATA.map((faq, index) => (
+            <AccordionItem
+              key={index}
+              value={`faq-${index}`}
+              className="bg-[#0a0a0a] border border-white/5 rounded-2xl px-6 py-1 data-[state=open]:border-white/10 transition-colors duration-200"
+            >
+              <AccordionTrigger className="text-left text-base sm:text-lg font-bold text-white hover:no-underline py-5">
+                {faq.q}
+              </AccordionTrigger>
+              <AccordionContent className="text-sm sm:text-base text-white/50 leading-relaxed font-medium pb-6">
+                {faq.a}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </section>
   );

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { connectToDatabase } from "@/lib/db/mongodb";
+import User from "@/lib/db/models/User";
 import Project from "@/lib/db/models/Project";
 import Render from "@/lib/db/models/Render";
-
-const isDev = process.env.NODE_ENV === 'development';
+import { createSnapshot, extractProjectData } from "@/lib/versioning/snapshots";
 
 export async function GET(
     request: NextRequest,
@@ -12,19 +12,28 @@ export async function GET(
 ) {
     try {
         const authUser = await getCurrentUser();
-        const userId = authUser?.id || (isDev ? 'dev-user' : null);
-        const { id } = await params;
-
-        if (!userId) {
+        if (!authUser) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const { id } = await params;
+
         await connectToDatabase();
 
-        const project = await Project.findOne({ _id: id });
+        const user = await User.findById(authUser.id).lean();
+        if (!user) {
+            return new NextResponse("User not found", { status: 404 });
+        }
+
+        const project = await Project.findById(id);
 
         if (!project) {
-            return new NextResponse("Project not found", { status: 404 });
+            return NextResponse.json({ message: 'Not found' }, { status: 404 });
+        }
+
+        // Ownership check — admin can see all, others only their own
+        if (project.userId.toString() !== authUser.id && user.role !== 'admin') {
+            return NextResponse.json({ message: 'Not found' }, { status: 404 });
         }
 
         return NextResponse.json(project);
@@ -40,24 +49,45 @@ export async function PATCH(
 ) {
     try {
         const authUser = await getCurrentUser();
-        const userId = authUser?.id || (isDev ? 'dev-user' : null);
-        const { id } = await params;
-        const body = await request.json();
-
-        if (!userId) {
+        if (!authUser) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const { id } = await params;
+        const body = await request.json();
+
         await connectToDatabase();
 
-        const project = await Project.findOneAndUpdate(
-            { _id: id },
+        const user = await User.findById(authUser.id).lean();
+        if (!user) {
+            return new NextResponse("User not found", { status: 404 });
+        }
+
+        // Fetch first to verify ownership before updating
+        const existing = await Project.findById(id);
+        if (!existing) {
+            return NextResponse.json({ message: 'Not found' }, { status: 404 });
+        }
+
+        if (existing.userId.toString() !== authUser.id && user.role !== 'admin') {
+            return NextResponse.json({ message: 'Not found' }, { status: 404 });
+        }
+
+        const project = await Project.findByIdAndUpdate(
+            id,
             { ...body, updatedAt: new Date() },
             { new: true }
         );
 
-        if (!project) {
-            return new NextResponse("Project not found", { status: 404 });
+        // Non-blocking snapshot — never delays the save response
+        if (project) {
+            createSnapshot({
+                projectId:    id,
+                userId:       authUser.id,
+                trigger:      'manual_save',
+                data:         extractProjectData(project.toObject() as unknown as Record<string, unknown>),
+                thumbnailUrl: body.thumbnailUrl,
+            }).catch(err => console.error('[Snapshot] Auto-snapshot on save failed:', err));
         }
 
         return NextResponse.json(project);
@@ -73,20 +103,30 @@ export async function DELETE(
 ) {
     try {
         const authUser = await getCurrentUser();
-        const userId = authUser?.id || (isDev ? 'dev-user' : null);
-        const { id } = await params;
-
-        if (!userId) {
+        if (!authUser) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
+        const { id } = await params;
+
         await connectToDatabase();
 
-        const project = await Project.findOneAndDelete({ _id: id });
-
-        if (!project) {
-            return new NextResponse("Project not found", { status: 404 });
+        const user = await User.findById(authUser.id).lean();
+        if (!user) {
+            return new NextResponse("User not found", { status: 404 });
         }
+
+        // Fetch first to verify ownership before deleting
+        const existing = await Project.findById(id);
+        if (!existing) {
+            return NextResponse.json({ message: 'Not found' }, { status: 404 });
+        }
+
+        if (existing.userId.toString() !== authUser.id && user.role !== 'admin') {
+            return NextResponse.json({ message: 'Not found' }, { status: 404 });
+        }
+
+        const project = await Project.findByIdAndDelete(id);
 
         // Cleanup associated renders
         await Render.deleteMany({ projectId: id });

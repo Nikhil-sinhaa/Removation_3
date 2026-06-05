@@ -4,7 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { connectDB } from '../../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../../lib/db/mongodb';
 import RoomChangerRun from '../../../../../src/models/RoomChangerRun.js';
 
 export const runtime = 'nodejs';

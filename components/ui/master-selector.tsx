@@ -18,7 +18,7 @@ import {
   Wand2,
   Zap
 } from "lucide-react";
-import { MASTER_SELECTOR_OPTIONS, ARCHAI3D_MATERIALS } from "@/lib/ai/comfyui-workflows-master";
+import { MASTER_SELECTOR_OPTIONS, ARCHAI3D_MATERIALS } from "@/lib/ai/master-selector-options";
 
 interface MasterSelectorProps {
   onSelectionChange: (selections: any, toggles: any) => void;

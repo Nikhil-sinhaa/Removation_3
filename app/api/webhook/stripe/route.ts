@@ -6,9 +6,14 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 import { Subscription } from '@/lib/db/models/Subscription';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2024-06-20',
-});
+// Lazy Stripe initialization — safe when STRIPE_SECRET_KEY is not configured (INR users)
+function getStripe() {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key || key.startsWith('sk_test_your') || key.length < 20) {
+        return null;
+    }
+    return new Stripe(key, { apiVersion: '2024-06-20' });
+}
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
@@ -29,6 +34,14 @@ export async function POST(req: NextRequest) {
         return NextResponse.json(
             { error: 'Missing stripe-signature header' },
             { status: 400 }
+        );
+    }
+
+    const stripe = getStripe();
+    if (!stripe) {
+        return NextResponse.json(
+            { error: 'Stripe is not configured on this server.' },
+            { status: 503 }
         );
     }
 
@@ -110,6 +123,12 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
+    const stripe = getStripe();
+    if (!stripe) {
+        console.error('[Stripe webhook] Stripe not configured');
+        return;
+    }
+
     const clerkId = session.metadata?.clerkId;
     const customerId = session.customer as string;
     const subscriptionId = session.subscription as string;
@@ -150,20 +169,24 @@ async function handleSubscriptionCheckout(session: Stripe.Checkout.Session) {
     );
 
     // Create subscription record
-    await Subscription.create({
-        clerkId,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: subscriptionId,
-        plan,
-        status: 'active',
-        priceId,
-        amount: subscription.items.data[0]?.price.unit_amount || 0,
-        currency: subscription.currency,
-        interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
-        currentPeriodStart: new Date(subscription.current_period_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        createdAt: new Date(),
-    });
+    await Subscription.findOneAndUpdate(
+        { clerkId },
+        {
+            clerkId,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: subscriptionId,
+            plan,
+            status: 'active',
+            priceId,
+            amount: subscription.items.data[0]?.price.unit_amount || 0,
+            currency: subscription.currency,
+            interval: subscription.items.data[0]?.price.recurring?.interval || 'month',
+            currentPeriodStart: new Date(subscription.current_period_start * 1000),
+            currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            updatedAt: new Date(),
+        },
+        { upsert: true, new: true }
+    );
 
     console.log(`Subscription created for user: ${clerkId}, plan: ${plan}`);
 }
@@ -184,6 +207,15 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
     );
 
     console.log(`Added ${creditsToAdd} credits to user: ${clerkId}`);
+
+    if (creditsToAdd > 0) {
+        try {
+            const { notifyCreditsPurchased } = await import('@/lib/notifications/send');
+            await notifyCreditsPurchased(clerkId, creditsToAdd);
+        } catch (notifErr) {
+            console.error('[stripe webhook] Credit notification failed:', notifErr);
+        }
+    }
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
@@ -275,6 +307,12 @@ async function handleSubscriptionCanceled(subscription: Stripe.Subscription) {
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+    const stripe = getStripe();
+    if (!stripe) {
+        console.error('[Stripe webhook] Stripe not configured');
+        return;
+    }
+
     const customerId = invoice.customer as string;
     const subscriptionId = invoice.subscription as string;
 

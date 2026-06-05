@@ -8,7 +8,7 @@
  * consistent with the parent route.js.
  */
 
-import { connectDB } from '../../../../../src/lib/mongodb.js';
+import { connectDB } from '../../../../../lib/db/mongodb';
 import Project from '../../../../../src/models/Project.js';
 import { unlink } from 'fs/promises';
 import path from 'path';

@@ -1,0 +1,1096 @@
+{
+  "id": "furniture-remover-clean-v2",
+  "last_node_id": 96,
+  "last_link_id": 220,
+  "nodes": [
+    {
+      "id": 29,
+      "type": "RMBG",
+      "pos": [
+        720,
+        150
+      ],
+      "size": [
+        285.8511657714844,
+        302
+      ],
+      "flags": {
+        "pinned": true
+      },
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 143
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            151
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            150,
+            152
+          ]
+        },
+        {
+          "name": "MASK_IMAGE",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "RMBG",
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "INSPYRENET",
+        1,
+        1024,
+        0,
+        0,
+        false,
+        false,
+        "Color",
+        "#222222"
+      ],
+      "color": "#222e40",
+      "bgcolor": "#364254"
+    },
+    {
+      "id": 40,
+      "type": "MinimaxImageRemover",
+      "pos": [
+        1050,
+        400
+      ],
+      "size": [
+        285.8511657714844,
+        210
+      ],
+      "flags": {
+        "pinned": true
+      },
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 149
+        },
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 150
+        },
+        {
+          "name": "vae",
+          "type": "VAE",
+          "link": 153
+        },
+        {
+          "name": "transformer",
+          "type": "TRANSFORMER",
+          "link": 154
+        },
+        {
+          "name": "scheduler",
+          "type": "SCHEDULER",
+          "link": 155
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            171
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxImageRemover",
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        40,
+        3,
+        819400985168982,
+        "randomize"
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 48,
+      "type": "ImageSizeAdjuster",
+      "pos": [
+        380,
+        300
+      ],
+      "size": [
+        281.1890563964844,
+        150
+      ],
+      "flags": {
+        "collapsed": false,
+        "pinned": true
+      },
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 156
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "adjusted_image",
+          "type": "IMAGE",
+          "links": [
+            143,
+            149,
+            220
+          ]
+        },
+        {
+          "name": "adjusted_mask",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageSizeAdjuster",
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        16,
+        "resize",
+        1,
+        "black"
+      ],
+      "color": "#223",
+      "bgcolor": "#335",
+      "title": "Resize Image (shared)"
+    },
+    {
+      "id": 52,
+      "type": "AILab_Preview",
+      "pos": [
+        1050,
+        50
+      ],
+      "size": [
+        830,
+        620
+      ],
+      "flags": {
+        "pinned": true
+      },
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 151
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 152
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": []
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            208
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "AILab_Preview",
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [],
+      "color": "#2e3e57",
+      "bgcolor": "#4b5b73"
+    },
+    {
+      "id": 53,
+      "type": "MinimaxModelLoader",
+      "pos": [
+        720,
+        500
+      ],
+      "size": [
+        281.1890563964844,
+        170
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "vae",
+          "type": "VAE",
+          "links": [
+            153
+          ]
+        },
+        {
+          "name": "transformer",
+          "type": "TRANSFORMER",
+          "links": [
+            154
+          ]
+        },
+        {
+          "name": "scheduler",
+          "type": "SCHEDULER",
+          "links": [
+            155
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MinimaxModelLoader",
+        "enableTabs": false,
+        "tabWidth": 65,
+        "tabXOffset": 10,
+        "hasSecondTab": false,
+        "secondTabText": "Send Back",
+        "secondTabOffset": 80,
+        "secondTabWidth": 65,
+        "widget_ue_connectable": {}
+      },
+      "widgets_values": [
+        "Auto",
+        "float16",
+        "auto",
+        false
+      ],
+      "color": "#223",
+      "bgcolor": "#335"
+    },
+    {
+      "id": 80,
+      "type": "SAMLoader",
+      "pos": [
+        380,
+        600
+      ],
+      "size": [
+        280,
+        82
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "SAM_MODEL",
+          "type": "SAM_MODEL",
+          "slot_index": 0,
+          "links": [
+            190
+          ]
+        }
+      ],
+      "title": "SAM2 Model",
+      "properties": {
+        "Node name for S&R": "SAMLoader"
+      },
+      "widgets_values": [
+        "sam2_hiera_small.pt",
+        "AUTO"
+      ]
+    },
+    {
+      "id": 83,
+      "type": "SegsToCombinedMask",
+      "pos": [
+        1050,
+        700
+      ],
+      "size": [
+        229.6861328125,
+        46
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "segs",
+          "type": "SEGS",
+          "link": 191
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 0,
+          "links": [
+            192
+          ]
+        }
+      ],
+      "title": "Combine All Furniture Masks",
+      "properties": {
+        "Node name for S&R": "SegsToCombinedMask"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 92,
+      "type": "SaveImage",
+      "pos": [
+        1380,
+        960
+      ],
+      "size": [
+        280,
+        270
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 203
+        }
+      ],
+      "outputs": [],
+      "title": "Save Mask (debug)",
+      "properties": {},
+      "widgets_values": [
+        "furniture-detect/mask"
+      ]
+    },
+    {
+      "id": 85,
+      "type": "MaskToImage",
+      "pos": [
+        1050,
+        860
+      ],
+      "size": [
+        220,
+        30
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 193
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            203,
+            205
+          ]
+        }
+      ],
+      "title": "Mask \u2192 Image for LaMa",
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 96,
+      "type": "ImageToMask",
+      "pos": [
+        1380,
+        800
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 205
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            207
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "ImageToMask"
+      },
+      "widgets_values": [
+        "red"
+      ]
+    },
+    {
+      "id": 56,
+      "type": "MaskToImage",
+      "pos": [
+        1680,
+        300
+      ],
+      "size": [
+        193.2779296875,
+        26
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 211
+        }
+      ],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            177
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "MaskToImage"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 61,
+      "type": "SaveImage",
+      "pos": [
+        2280,
+        300
+      ],
+      "size": [
+        240,
+        270
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 174
+        }
+      ],
+      "outputs": [],
+      "title": "Save Result",
+      "properties": {},
+      "widgets_values": [
+        "furniture-erased/result"
+      ]
+    },
+    {
+      "id": 95,
+      "type": "MaskComposite",
+      "pos": [
+        1380,
+        300
+      ],
+      "size": [
+        280,
+        140
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "destination",
+          "type": "MASK",
+          "link": 208
+        },
+        {
+          "name": "source",
+          "type": "MASK",
+          "link": 207
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            211
+          ]
+        }
+      ],
+      "title": "Combine Two Masks",
+      "properties": {
+        "Node name for S&R": "MaskComposite"
+      },
+      "widgets_values": [
+        0,
+        0,
+        "add"
+      ]
+    },
+    {
+      "id": 62,
+      "type": "LamaRemoverIMG",
+      "pos": [
+        1980,
+        300
+      ],
+      "size": [
+        280,
+        160
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 171
+        },
+        {
+          "name": "masks",
+          "type": "IMAGE",
+          "link": 177
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "slot_index": 0,
+          "links": [
+            174
+          ]
+        }
+      ],
+      "title": "LaMa Inpainting",
+      "properties": {
+        "Node name for S&R": "LamaRemoverIMG"
+      },
+      "widgets_values": [
+        230,
+        12,
+        false
+      ]
+    },
+    {
+      "id": 54,
+      "type": "LoadImage",
+      "pos": [
+        50,
+        300
+      ],
+      "size": [
+        282.798828125,
+        314
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            156
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "contemporary-residential-living-room-background-wall-color-powder-blue-photo.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 82,
+      "type": "ImpactSimpleDetectorSEGS",
+      "pos": [
+        720,
+        650
+      ],
+      "size": [
+        300,
+        320
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "bbox_detector",
+          "type": "BBOX_DETECTOR",
+          "link": 188
+        },
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "link": 220
+        },
+        {
+          "name": "sam_model_opt",
+          "shape": 7,
+          "type": "SAM_MODEL",
+          "link": 190
+        },
+        {
+          "name": "segm_detector_opt",
+          "shape": 7,
+          "type": "SEGM_DETECTOR",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "SEGS",
+          "type": "SEGS",
+          "slot_index": 0,
+          "links": [
+            191
+          ]
+        }
+      ],
+      "title": "Detect Furniture SEGS",
+      "properties": {
+        "Node name for S&R": "ImpactSimpleDetectorSEGS"
+      },
+      "widgets_values": [
+        1,
+        0,
+        3,
+        10,
+        0.46,
+        0,
+        0,
+        0.67,
+        0
+      ]
+    },
+    {
+      "id": 84,
+      "type": "GrowMask",
+      "pos": [
+        1050,
+        780
+      ],
+      "size": [
+        220,
+        82
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "mask",
+          "type": "MASK",
+          "link": 192
+        }
+      ],
+      "outputs": [
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "slot_index": 0,
+          "links": [
+            193
+          ]
+        }
+      ],
+      "title": "Expand Mask Edges",
+      "properties": {
+        "Node name for S&R": "GrowMask"
+      },
+      "widgets_values": [
+        0,
+        true
+      ]
+    },
+    {
+      "id": 81,
+      "type": "CLIPSegDetectorProvider",
+      "pos": [
+        380,
+        720
+      ],
+      "size": [
+        340,
+        130
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "BBOX_DETECTOR",
+          "type": "BBOX_DETECTOR",
+          "slot_index": 0,
+          "links": [
+            188
+          ]
+        }
+      ],
+      "title": "CLIPSeg: Furniture Detector",
+      "properties": {
+        "Node name for S&R": "CLIPSegDetectorProvider"
+      },
+      "widgets_values": [
+        "coffee table, side table, end table, lamp, floor lamp,   TV stand, cabinet, bookshelf, plant, pot, vase,   curtain, cushion",
+        0.1,
+        0.1,
+        3
+      ]
+    }
+  ],
+  "links": [
+    [
+      143,
+      48,
+      0,
+      29,
+      0,
+      "IMAGE"
+    ],
+    [
+      149,
+      48,
+      0,
+      40,
+      0,
+      "IMAGE"
+    ],
+    [
+      150,
+      29,
+      1,
+      40,
+      1,
+      "MASK"
+    ],
+    [
+      151,
+      29,
+      0,
+      52,
+      0,
+      "IMAGE"
+    ],
+    [
+      152,
+      29,
+      1,
+      52,
+      1,
+      "MASK"
+    ],
+    [
+      153,
+      53,
+      0,
+      40,
+      2,
+      "VAE"
+    ],
+    [
+      154,
+      53,
+      1,
+      40,
+      3,
+      "TRANSFORMER"
+    ],
+    [
+      155,
+      53,
+      2,
+      40,
+      4,
+      "SCHEDULER"
+    ],
+    [
+      156,
+      54,
+      0,
+      48,
+      0,
+      "IMAGE"
+    ],
+    [
+      171,
+      40,
+      0,
+      62,
+      0,
+      "IMAGE"
+    ],
+    [
+      174,
+      62,
+      0,
+      61,
+      0,
+      "IMAGE"
+    ],
+    [
+      177,
+      56,
+      0,
+      62,
+      1,
+      "IMAGE"
+    ],
+    [
+      188,
+      81,
+      0,
+      82,
+      0,
+      "BBOX_DETECTOR"
+    ],
+    [
+      190,
+      80,
+      0,
+      82,
+      2,
+      "SAM_MODEL"
+    ],
+    [
+      191,
+      82,
+      0,
+      83,
+      0,
+      "SEGS"
+    ],
+    [
+      192,
+      83,
+      0,
+      84,
+      0,
+      "MASK"
+    ],
+    [
+      193,
+      84,
+      0,
+      85,
+      0,
+      "MASK"
+    ],
+    [
+      203,
+      85,
+      0,
+      92,
+      0,
+      "IMAGE"
+    ],
+    [
+      205,
+      85,
+      0,
+      96,
+      0,
+      "IMAGE"
+    ],
+    [
+      207,
+      96,
+      0,
+      95,
+      1,
+      "MASK"
+    ],
+    [
+      208,
+      52,
+      1,
+      95,
+      0,
+      "MASK"
+    ],
+    [
+      211,
+      95,
+      0,
+      56,
+      0,
+      "MASK"
+    ],
+    [
+      220,
+      48,
+      0,
+      82,
+      1,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "title": "INPUT",
+      "bounding": [
+        30,
+        250,
+        340,
+        400
+      ],
+      "color": "#3f789e",
+      "font_size": 18
+    },
+    {
+      "title": "RMBG Detection (salient objects)",
+      "bounding": [
+        700,
+        100,
+        720,
+        320
+      ],
+      "color": "#264653",
+      "font_size": 18
+    },
+    {
+      "title": "CLIPSeg + SAM2 Detection (named objects)",
+      "bounding": [
+        360,
+        570,
+        1080,
+        430
+      ],
+      "color": "#8A2BE2",
+      "font_size": 18
+    },
+    {
+      "title": "Mask Combine + LaMa Removal",
+      "bounding": [
+        1030,
+        250,
+        1520,
+        300
+      ],
+      "color": "#e76f51",
+      "font_size": 18
+    },
+    {
+      "title": "MiniMax Removal",
+      "bounding": [
+        700,
+        380,
+        720,
+        200
+      ],
+      "color": "#2a9d8f",
+      "font_size": 18
+    }
+  ],
+  "config": {},
+  "extra": {
+    "info": {
+      "pipeline": "LoadImage -> ImageSizeAdjuster -> [RMBG + CLIPSeg+SAM2] -> MaskComposite -> MiniMax -> LaMa -> SaveImage",
+      "mask_strategy": "RMBG detects salient foreground. CLIPSeg detects named furniture. Both masks combined via MaskComposite. Combined mask used for MiniMax removal + LaMa cleanup.",
+      "clipseg_prompt": "Edit node 81 to change what gets detected",
+      "tuning": {
+        "missing_furniture": "Lower CLIPSeg threshold (node 81) from 0.28 to 0.20",
+        "detecting_walls": "Raise CLIPSeg threshold to 0.40",
+        "blurry_edges": "Lower LamaRemoverIMG gaussblur_radius from 3 to 1",
+        "expand_mask": "Increase GrowMask expand (node 84) from 12 to 25"
+      }
+    }
+  },
+  "version": 0.4
+}

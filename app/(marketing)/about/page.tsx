@@ -4,14 +4,16 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Sparkles, 
-  Target, 
-  Users, 
-  Globe, 
-  Award, 
-  Zap, 
-  Heart, 
+import JsonLd from "@/components/seo/JsonLd";
+import { buildOrganizationSchema, buildBreadcrumbSchema } from "@/lib/seo/schema";
+import {
+  Sparkles,
+  Target,
+  Users,
+  Globe,
+  Award,
+  Zap,
+  Heart,
   Shield,
   MapPin,
   Building,
@@ -29,8 +31,8 @@ import { Card, CardContent } from "@/components/ui/card";
 // Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -38,8 +40,8 @@ const fadeInUp = {
 
 const fadeInLeft = {
   hidden: { opacity: 0, x: -20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     x: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -47,8 +49,8 @@ const fadeInLeft = {
 
 const fadeInRight = {
   hidden: { opacity: 0, x: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     x: 0,
     transition: { duration: 0.6, ease: "easeOut" }
   }
@@ -67,8 +69,8 @@ const staggerContainer = {
 
 const scaleIn = {
   hidden: { opacity: 0, scale: 0.9 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     scale: 1,
     transition: { duration: 0.5, ease: "easeOut" }
   }
@@ -229,7 +231,7 @@ export default function AboutPage() {
               </Badge>
             </motion.div>
 
-            <motion.h1 
+            <motion.h1
               variants={fadeInUp}
               className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-slate-900 via-violet-700 to-orange-600 dark:from-white dark:via-violet-400 dark:to-orange-400 bg-clip-text text-transparent"
             >
@@ -238,16 +240,16 @@ export default function AboutPage() {
               AI + Indian Wisdom
             </motion.h1>
 
-            <motion.p 
+            <motion.p
               variants={fadeInUp}
               className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed"
             >
-              We're on a mission to make professional interior design accessible to every 
-              Indian household. By combining cutting-edge AI with ancient Vastu Shastra 
+              We're on a mission to make professional interior design accessible to every
+              Indian household. By combining cutting-edge AI with ancient Vastu Shastra
               principles, we're creating the future of home renovation.
             </motion.p>
 
-            <motion.div 
+            <motion.div
               variants={fadeInUp}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
@@ -312,25 +314,25 @@ export default function AboutPage() {
               </h2>
               <div className="space-y-4 text-slate-600 dark:text-slate-300">
                 <p>
-                  In 2023, our founders Arjun and Priya were renovating their new home 
-                  in Bangalore. They spent months going back and forth with designers, 
-                  struggling to visualize ideas, and constantly worried about Vastu 
+                  In 2023, our founders Arjun and Priya were renovating their new home
+                  in Bangalore. They spent months going back and forth with designers,
+                  struggling to visualize ideas, and constantly worried about Vastu
                   compliance.
                 </p>
                 <p>
-                  "Why can't I just see what my living room will look like before 
-                  spending lakhs?" Arjun asked. And "Why is there no tool that 
+                  "Why can't I just see what my living room will look like before
+                  spending lakhs?" Arjun asked. And "Why is there no tool that
                   understands Vastu?" Priya wondered.
                 </p>
                 <p>
-                  That frustration sparked an idea: What if AI could instantly 
-                  visualize any design change while ensuring Vastu compliance? 
-                  What if everyone could afford professional-quality design 
+                  That frustration sparked an idea: What if AI could instantly
+                  visualize any design change while ensuring Vastu compliance?
+                  What if everyone could afford professional-quality design
                   visualization?
                 </p>
                 <p className="font-semibold text-slate-900 dark:text-white">
-                  Removation.ai was born—the world's first AI interior design 
-                  platform built specifically for Indian homes, with Vastu 
+                  Removation.ai was born—the world's first AI interior design
+                  platform built specifically for Indian homes, with Vastu
                   Shastra at its core.
                 </p>
               </div>
@@ -389,9 +391,9 @@ export default function AboutPage() {
                     Our Mission
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                    To democratize professional interior design by making it 
-                    accessible, affordable, and culturally relevant for every 
-                    Indian household. We believe beautiful, Vastu-compliant 
+                    To democratize professional interior design by making it
+                    accessible, affordable, and culturally relevant for every
+                    Indian household. We believe beautiful, Vastu-compliant
                     homes shouldn't be a luxury—they should be the norm.
                   </p>
                   <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
@@ -424,9 +426,9 @@ export default function AboutPage() {
                     Our Vision
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                    To become the world's leading AI-powered design platform 
-                    that bridges modern technology with ancient wisdom. We 
-                    envision a future where every renovation decision is 
+                    To become the world's leading AI-powered design platform
+                    that bridges modern technology with ancient wisdom. We
+                    envision a future where every renovation decision is
                     informed, confident, and culturally meaningful.
                   </p>
                   <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
@@ -466,7 +468,7 @@ export default function AboutPage() {
               Built for India, Loved Globally
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-300">
-              We're not just another design tool. We're a cultural bridge between 
+              We're not just another design tool. We're a cultural bridge between
               ancient wisdom and modern technology.
             </p>
           </motion.div>
@@ -488,7 +490,7 @@ export default function AboutPage() {
                     Vastu Shastra AI
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 mb-4">
-                    World's first AI that understands and applies Vastu principles. 
+                    World's first AI that understands and applies Vastu principles.
                     Get a 0-100 Vastu score with every design and auto-fix suggestions.
                   </p>
                   <ul className="space-y-2">
@@ -519,7 +521,7 @@ export default function AboutPage() {
                     Real-Time Cost Calculator
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 mb-4">
-                    Instant renovation cost estimates in ₹ and $. Includes materials, 
+                    Instant renovation cost estimates in ₹ and $. Includes materials,
                     labor, and GST based on your city.
                   </p>
                   <ul className="space-y-2">
@@ -550,7 +552,7 @@ export default function AboutPage() {
                     400+ Indian Styles
                   </h3>
                   <p className="text-slate-600 dark:text-slate-300 mb-4">
-                    From Rajasthani haveli to Kerala traditional, South Indian temple 
+                    From Rajasthani haveli to Kerala traditional, South Indian temple
                     to Punjabi farmhouse—styles that resonate with India.
                   </p>
                   <ul className="space-y-2">
@@ -641,7 +643,7 @@ export default function AboutPage() {
             <div className="relative">
               {/* Timeline line */}
               <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-violet-500 via-orange-500 to-emerald-500 hidden md:block" />
-              
+
               <motion.div
                 initial="hidden"
                 whileInView="visible"
@@ -661,7 +663,7 @@ export default function AboutPage() {
                         {milestone.year.slice(2)}
                       </div>
                     </div>
-                    
+
                     {/* Content */}
                     <Card className="flex-1 hover:shadow-lg transition-shadow">
                       <CardContent className="p-6">
@@ -701,7 +703,7 @@ export default function AboutPage() {
               Meet the Visionaries
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-300">
-              A diverse team of architects, engineers, designers, and Vastu experts 
+              A diverse team of architects, engineers, designers, and Vastu experts
               united by a common mission.
             </p>
           </motion.div>
@@ -923,25 +925,25 @@ export default function AboutPage() {
             variants={staggerContainer}
             className="max-w-3xl mx-auto text-center text-white"
           >
-            <motion.h2 
+            <motion.h2
               variants={fadeInUp}
               className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6"
             >
               Ready to Transform Your Space?
             </motion.h2>
-            <motion.p 
+            <motion.p
               variants={fadeInUp}
               className="text-xl opacity-90 mb-8"
             >
-              Join 50,000+ homeowners who are already designing their dream homes 
+              Join 50,000+ homeowners who are already designing their dream homes
               with AI + Vastu intelligence.
             </motion.p>
-            <motion.div 
+            <motion.div
               variants={fadeInUp}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-white text-violet-700 hover:bg-slate-100 text-lg px-8"
                 asChild
               >
@@ -950,9 +952,9 @@ export default function AboutPage() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
+              <Button
+                size="lg"
+                variant="outline"
                 className="border-white text-white hover:bg-white/10 text-lg px-8"
                 asChild
               >
@@ -962,7 +964,7 @@ export default function AboutPage() {
               </Button>
             </motion.div>
 
-            <motion.p 
+            <motion.p
               variants={fadeInUp}
               className="mt-6 text-sm opacity-70"
             >
@@ -971,6 +973,14 @@ export default function AboutPage() {
           </motion.div>
         </div>
       </section>
+
+      <JsonLd schemas={[
+        buildOrganizationSchema(),
+        buildBreadcrumbSchema([
+          { name: 'Home',  item: '/' },
+          { name: 'About', item: '/about' },
+        ]),
+      ]} />
     </div>
   );
 }

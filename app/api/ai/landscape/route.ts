@@ -1,18 +1,43 @@
-/**
- * Tool 5: Creative Landscape
- */
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
+
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'landscape');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const formData = await request.formData();
     const imageFile = formData.get('image') as File;
     const data = JSON.parse((formData.get('data') as string) || '{}');
@@ -28,9 +53,20 @@ export async function POST(request: Request) {
     let referenceImage: string | null = null;
     const refFile = formData.get('referenceImage') as File | null;
     if (refFile) { const rb = Buffer.from(await refFile.arrayBuffer()); const rf = `landscape_ref_${Date.now()}.png`; await sharp(rb).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, rf)); referenceImage = rf; }
-    const project = await Project.create({ name: `Landscape — ${landscapeType}`, userId: '000000000000000000000000', originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-landscape', aiConfig: { landscapeType, style, prompt, strength } });
+    const project = await Project.create({ name: `Landscape — ${landscapeType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-landscape', aiConfig: { landscapeType, style, prompt, strength } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'landscape', { imageFilename: fn, landscapeType, style, prompt, strength, referenceImage }).catch((e: any) => console.error('❌ Landscape error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'landscape', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Landscape failed', message: error.message }, { status: 500 }); }
 }
-export async function GET(request: Request) { await connectDB(); const projectId = new URL(request.url).searchParams.get('projectId'); if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 }); const project = await Project.findById(projectId); return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 }); }
+
+export async function GET(request: Request) {
+  await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  const projectId = new URL(request.url).searchParams.get('projectId');
+  if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
+  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+  return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
+}

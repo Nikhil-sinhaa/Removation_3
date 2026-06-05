@@ -194,7 +194,7 @@ export function BeforeAfterSlider({
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className={`relative w-full aspect-square max-h-[80vh] bg-gray-100 rounded-xl overflow-hidden ${className}`}>
+      <div className={`relative w-full aspect-video bg-gray-100 rounded-xl overflow-hidden ${className}`}>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
@@ -211,8 +211,9 @@ export function BeforeAfterSlider({
       <div
         ref={containerRef}
         className={`relative w-full overflow-hidden rounded-xl bg-gray-900 select-none touch-none ${
-          isFullscreen ? "h-screen" : "aspect-square max-h-[80vh]"
+          isFullscreen ? "h-screen" : ""
         } ${zoom > 1 ? "cursor-grab" : "cursor-col-resize"}`}
+        style={isFullscreen ? undefined : undefined}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -222,6 +223,15 @@ export function BeforeAfterSlider({
         onMouseEnter={() => setShowOverlay(true)}
         onMouseLeave={() => { if (!isDraggingSlider) setShowOverlay(false); }}
       >
+        {/* Invisible Sizer Image to naturally drive the container's height */}
+        {!isFullscreen && (
+          <img
+            src={beforeImage}
+            alt="sizer"
+            className="w-full h-auto opacity-0 block pointer-events-none select-none"
+          />
+        )}
+
         {/* Before Image (full background) */}
         <img
           src={beforeImage}

@@ -9,13 +9,15 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
-import { connectDB } from '@/src/lib/mongodb';
+import { connectDB } from '@/lib/db/mongodb';
 import Project from '@/src/models/Project';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { checkIPAdapterModels, IPADAPTER_MISSING_ERROR } from '@/lib/ai/preflight';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
+import { getCurrentUser } from '@/lib/auth/jwt';
+import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 
 export const runtime = 'nodejs';
 
@@ -58,6 +60,22 @@ export async function POST(request: Request) {
   await connectDB();
 
   try {
+    const authUser = await getCurrentUser();
+    if (!authUser || !authUser.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const finalUserId = authUser.id;
+
+    const deductResult = await checkAndDeductCredits(finalUserId, 'render');
+    if (!deductResult.success) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: deductResult.reason,
+        remainingCredits: deductResult.remaining,
+        upgradeUrl: '/pricing'
+      }, { status: 402 });
+    }
+
     const formData = await safeParseFormData(request);
     const imageFile = formData.get('image');
     const rawData = formData.get('data');
@@ -104,7 +122,7 @@ export async function POST(request: Request) {
     // Create project
     const project = await Project.create({
       name: `Render — ${roomType}`,
-      userId: '000000000000000000000000',
+      userId: finalUserId,
       originalImage: previewUrl,
       status: 'queued',
       processingType: 'tab-render',
@@ -140,10 +158,15 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   await connectDB();
+  const authUser = await getCurrentUser();
+  if (!authUser || !authUser.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findById(projectId);
+  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(project);
 }
