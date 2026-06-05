@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 // REMOVE THIS: import { ClerkProvider } from '@clerk/nextjs';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/toaster';
@@ -73,7 +73,9 @@ export function Providers({ children }: ProvidersProps) {
             <Toaster />
             <CrispChat />
             <PWAPrompt />
-            <AnalyticsProvider />
+            <Suspense fallback={null}>
+              <AnalyticsProvider />
+            </Suspense>
           </TooltipProvider>
         </LanguageProvider>
       </ThemeProvider>

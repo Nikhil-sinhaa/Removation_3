@@ -6,7 +6,6 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Wand2, Cpu, Zap, AlertTriangle, CheckCircle } from 'lucide-react';
-import { useAIQueue } from '@/hooks/useAIQueue';
 import { useGPUStatus } from '@/hooks/useGPUStatus';
 
 interface Point {
@@ -32,7 +31,7 @@ export function ObjectRemovalSidebar({ imageUrl, onImageUpdate }: {
   const imageRef = useRef<HTMLImageElement>(null);
 
   const { gpuStatus, checkGPUStatus } = useGPUStatus();
-  const { queueRequest, isInQueue } = useAIQueue();
+  const [isInQueue, setIsInQueue] = useState(false);
 
   // Handle canvas click for object selection
   const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
@@ -95,15 +94,18 @@ export function ObjectRemovalSidebar({ imageUrl, onImageUpdate }: {
       setCurrentStep('inpainting');
       setProgress(50);
 
-      const response = await queueRequest({
-        type: 'object_removal',
-        imageUrl,
-        point: selectedPoint,
-        mask: maskPreview.mask,
-        onProgress: (progress) => {
-          setProgress(50 + (progress * 0.4)); // 50-90% range
-        }
+      setIsInQueue(true);
+      const res = await fetch('/api/ai/object-removal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl,
+          point: selectedPoint,
+          mask: maskPreview.mask,
+        }),
       });
+      setIsInQueue(false);
+      const response = await res.json();
 
       if (response.success) {
         setProgress(100);
@@ -123,6 +125,7 @@ export function ObjectRemovalSidebar({ imageUrl, onImageUpdate }: {
       setCurrentStep('idle');
     } finally {
       setIsGenerating(false);
+      setIsInQueue(false);
     }
   };
 

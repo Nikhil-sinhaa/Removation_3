@@ -1,5 +1,7 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
+import { Suspense } from 'react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Cpu, Cloud, RefreshCw, Save, CheckCircle, XCircle,
@@ -44,7 +46,7 @@ interface UploadFile {
   error?: string;
 }
 
-export default function GPUSettingsPage() {
+function GPUSettingsPageContent() {
   const searchParams = useSearchParams();
 
   // GPU mode state
@@ -560,5 +562,13 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`}
         </div>
       )}
     </div>
+  );
+}
+
+export default function GPUSettingsPage() {
+  return (
+    <Suspense fallback={null}>
+      <GPUSettingsPageContent />
+    </Suspense>
   );
 }

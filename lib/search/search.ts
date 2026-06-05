@@ -193,16 +193,13 @@ async function searchStylePresets(query: string, limit: number): Promise<SearchR
 
 async function searchPages(query: string, limit: number): Promise<SearchResult[]> {
   const PAGES = [
-    { title: 'Dream Room',          url: '/dream-room',          keywords: ['dream','redesign','ai','room'] },
     { title: 'Room Changer',        url: '/room-changer',        keywords: ['room','changer','style','transform'] },
     { title: 'Furniture Remover',   url: '/furniture-remover',   keywords: ['furniture','remove','remover','clean'] },
     { title: 'Furniture Placement', url: '/furniture-placement', keywords: ['furniture','place','placement','add'] },
     { title: 'Ceiling Changer',     url: '/ceiling-changer',     keywords: ['ceiling','changer','roof'] },
-    { title: 'Color Visualizer',    url: '/color-visualizer',    keywords: ['color','colour','paint','wall'] },
     { title: 'Style Transfer',      url: '/style-transfer',      keywords: ['style','transfer','preset'] },
     { title: 'Floor Plan',          url: '/floor-plan',          keywords: ['floor','plan','layout','blueprint'] },
     { title: '3D Room View',        url: '/room-3d',             keywords: ['3d','three','dimension','view'] },
-    { title: 'Master Design',       url: '/master-design',       keywords: ['master','design','professional','full'] },
     { title: 'Lighting Studio',     url: '/lighting',            keywords: ['light','lighting','lamp','bright'] },
     { title: 'AI Design Studio',    url: '/studio',              keywords: ['studio','ai','design','advanced'] },
     { title: 'Dashboard',           url: '/dashboard',           keywords: ['dashboard','home','projects'] },

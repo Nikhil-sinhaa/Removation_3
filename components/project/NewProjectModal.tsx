@@ -358,11 +358,10 @@ export function NewProjectModal({
 
               {!skipUpload ? (
                 <ImageUploader
-                  value={uploadedImage}
-                  onChange={setUploadedImage}
+                  currentImage={uploadedImage}
+                  onUpload={setUploadedImage}
                   className="h-64"
-                  accept="image/*"
-                  maxSize={10 * 1024 * 1024}
+                  maxSize={10}
                 />
               ) : (
                 <div className="h-64 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center text-gray-400">

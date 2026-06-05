@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Send, AlertCircle, MessageSquare, Check, CheckCheck, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import Pusher from 'pusher-js';
 import { getPusherClient } from '@/lib/pusherClient';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -64,7 +65,7 @@ export function BookingChat({ open, onClose, bookingId, currentUserId, providerN
     const [sending, setSending] = useState(false);
     const [sendError, setSendError] = useState<string | null>(null);
     const bottomRef = useRef<HTMLDivElement>(null);
-    const channelRef = useRef<ReturnType<ReturnType<typeof getPusherClient>['subscribe']> | null>(null);
+    const channelRef = useRef<ReturnType<Pusher['subscribe']> | null>(null);
 
     const scrollToBottom = useCallback((behavior: 'auto' | 'smooth' = 'smooth') => {
         setTimeout(() => {

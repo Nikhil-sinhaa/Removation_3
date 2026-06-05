@@ -15,9 +15,6 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { runRoomChanger } from '../../../../../src/services/roomChangerOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
-import { getQueueDepth } from '@/lib/redis/aiQueue';
-import { enqueueGeneration } from '@/lib/ai/queuedGeneration';
-import { ensureWorkerRunning } from '@/lib/ai/workerInit';
 
 export const runtime = 'nodejs';
 
@@ -56,20 +53,11 @@ async function safeParseFormData(request) {
 
 export async function POST(request) {
   await connectDB();
-  ensureWorkerRunning();
 
   try {
     const authUser = await getCurrentUser();
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const queueDepth = await getQueueDepth();
-    if (queueDepth >= 10) {
-      return NextResponse.json(
-        { error: 'Queue is full. Please try again in a few minutes.' },
-        { status: 503 }
-      );
     }
 
     const finalUserId = authUser.id;
@@ -118,47 +106,38 @@ export async function POST(request) {
       }
     }
 
-    // ── Create Project document for status polling ────────────────────────
+    // ── Create Project document for status tracking ────────────────────────
     const project = await Project.create({
       name: `Room Changer — ${colorName}`,
       userId: finalUserId,
       originalImage: inputImageUrl || '',
-      status: 'queued',
+      status: 'processing',
       processingType: 'room-changer',
       aiConfig: { colorName, hex },
     });
 
     const projId = String(project._id);
 
-    // ── Enqueue ───────────────────────────────────────────────────────────────
-    const queueResult = await enqueueGeneration({
+    // ── Run synchronously ────────────────────────────────────────────────────
+    const creditResult = await checkAndDeductCredits(finalUserId, 'room-changer', { source });
+    if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
+
+    const output = await runRoomChanger({
+      comfyFilename,
+      inputImageUrl,
+      colorName,
+      hex,
+      projectId: projId,
       userId: finalUserId,
-      featureType: 'room-changer',
-      generateFn: async () => {
-        const creditResult = await checkAndDeductCredits(finalUserId, 'room-changer', { source });
-        if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
-        await runRoomChanger({
-          comfyFilename,
-          inputImageUrl,
-          colorName,
-          hex,
-          projectId: projId,
-          userId: finalUserId,
-          runId: retryRunId || undefined,
-          retryStage3: !!retryRunId,
-        });
-      },
+      runId: retryRunId || undefined,
+      retryStage3: !!retryRunId,
     });
 
     return NextResponse.json({
       success: true,
       projectId: projId,
-      renderId: queueResult.renderId,
-      jobId: queueResult.jobId,
-      queuePosition: queueResult.queuePosition,
-      estimatedWaitSeconds: queueResult.estimatedWaitSeconds,
-      message: queueResult.message,
-    }, { status: 202 });
+      imageUrl: output?.imageUrl || null,
+    }, { status: 200 });
 
   } catch (error) {
     console.error('❌ /api/ai/room-changer/generate POST error:', error.message);
@@ -167,9 +146,6 @@ export async function POST(request) {
         error: 'insufficient_credits',
         message: error.message,
       }, { status: 402 });
-    }
-    if (error?.code === 'QUEUE_FULL') {
-      return NextResponse.json({ error: error.message }, { status: 503 });
     }
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }

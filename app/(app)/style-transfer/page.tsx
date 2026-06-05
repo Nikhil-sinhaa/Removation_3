@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { useUserStore } from "@/stores/user-store";
 import { AIResultPanel } from "@/components/ai/AIResultPanel";
-import { QueuePosition } from "@/components/ai/QueuePosition";
 import {
   STYLE_PRESETS, StylePreset, RoomType,
   ROOM_TYPES, getPresetsByRoomType,
@@ -63,7 +62,6 @@ export default function StyleTransferPage() {
   const [error,        setError]        = useState<string | null>(null);
   const [projectId,    setProjectId]    = useState<string | null>(null);
   const [renderId,     setRenderId]     = useState<string | null>(null);
-  const [activeJobId,  setActiveJobId]  = useState<string | null>(null);
 
   const isGeneratingRef = useRef(isGenerating);
   useEffect(() => { isGeneratingRef.current = isGenerating; }, [isGenerating]);
@@ -213,8 +211,7 @@ export default function StyleTransferPage() {
       const pid = data.projectId;
       setProjectId(pid);
       if (data.renderId) setRenderId(data.renderId);
-      if (data.jobId) setActiveJobId(data.jobId);
-      setProgress(null); // QueuePosition takes over while waiting
+      setProgress(null);
       startPolling(pid);
     } catch (err: any) {
       setIsGenerating(false);
@@ -237,7 +234,6 @@ export default function StyleTransferPage() {
     setProgress(null);
     setProjectId(null);
     setRenderId(null);
-    setActiveJobId(null);
     setIsGenerating(false);
     setStrength(0.7);
     setPreserveStructure(true);
@@ -696,30 +692,6 @@ export default function StyleTransferPage() {
                           />
                         </div>
                       </div>
-
-                      {/* Queue position — shown while waiting in queue or processing */}
-                      {isGenerating && activeJobId && !progress && (
-                        <QueuePosition
-                          jobId={activeJobId}
-                          featureLabel="Style Transfer"
-                          onComplete={() => {
-                            if (!projectId) return;
-                            stopPolling();
-                            fetch(`/api/ai/style-transfer?projectId=${projectId}`)
-                              .then(r => r.json())
-                              .then(d => {
-                                if (d.status === 'completed' && d.resultImage) {
-                                  setResult({ beforeUrl: roomPreview || '', afterUrl: d.resultImage, runId: d._id || '' });
-                                  setIsGenerating(false);
-                                  setActiveJobId(null);
-                                }
-                              })
-                              .catch(() => {});
-                          }}
-                          onError={(msg) => { setError(msg); setIsGenerating(false); setActiveJobId(null); }}
-                          onCancel={() => { setIsGenerating(false); setActiveJobId(null); setProgress(null); stopPolling(); }}
-                        />
-                      )}
 
                       {/* Error */}
                       <AnimatePresence>

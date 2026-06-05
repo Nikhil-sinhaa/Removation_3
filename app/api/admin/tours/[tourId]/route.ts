@@ -5,13 +5,13 @@ import { requireRole } from '@/lib/auth/requireRole';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { tourId: string } }
+  { params }: { params: Promise<{ tourId: string }> }
 ) {
   try {
     const authError = await requireRole(req, ['admin']);
     if (authError instanceof NextResponse) return authError;
 
-    const { tourId } = params;
+    const { tourId } = await params;
     const body = await req.json();
 
     await connectToDatabase();
@@ -35,13 +35,13 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { tourId: string } }
+  { params }: { params: Promise<{ tourId: string }> }
 ) {
   try {
     const authError = await requireRole(req, ['admin']);
     if (authError instanceof NextResponse) return authError;
 
-    const { tourId } = params;
+    const { tourId } = await params;
 
     await connectToDatabase();
 

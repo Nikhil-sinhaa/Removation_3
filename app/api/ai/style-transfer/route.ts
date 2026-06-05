@@ -22,30 +22,17 @@ import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 import { getPresetById, getReferenceById, getVariantById } from '@/config/style-presets';
 import { getStyleReferenceImage } from '@/lib/utils/styleReferences';
-import { enqueueGeneration } from '@/lib/ai/queuedGeneration';
-import { ensureWorkerRunning } from '@/lib/ai/workerInit';
-
-import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
-  ensureWorkerRunning();
   try {
     const authUser = await getCurrentUser();
     if (!authUser || !authUser.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const finalUserId = authUser.id;
-
-    const queueDepth = await getQueueDepth();
-    if (queueDepth >= 10) {
-      return NextResponse.json(
-        { error: 'Queue is full. Please try again in a few minutes.' },
-        { status: 503 }
-      );
-    }
 
     const formData = await request.formData();
 
@@ -179,37 +166,27 @@ export async function POST(request: Request) {
 
     const projId = project._id.toString();
 
-    // ── Enqueue orchestrator ─────────────────────────────────────────────────
-    const queueResult = await enqueueGeneration({
+    // ── Run synchronously ─────────────────────────────────────────────────────
+    const creditResult = await checkAndDeductCredits(finalUserId, 'style-transfer');
+    if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
+
+    const output = await runStyleTransfer({
+      roomImageFilename: roomFn,
+      styleImageFilename: styleFn || roomFn,
+      inputImageUrl: `/uploads/${roomFn}`,
+      styleImageUrl: styleFn ? `/uploads/${styleFn}` : `/uploads/${roomFn}`,
+      stylePresetId: presetId,
+      positivePrompt,
+      negativePrompt,
+      projectId: projId,
       userId: finalUserId,
-      featureType: 'style-transfer',
-      generateFn: async () => {
-        const creditResult = await checkAndDeductCredits(finalUserId, 'style-transfer');
-        if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
-        await runStyleTransfer({
-          roomImageFilename: roomFn,
-          styleImageFilename: styleFn || roomFn,
-          inputImageUrl: `/uploads/${roomFn}`,
-          styleImageUrl: styleFn ? `/uploads/${styleFn}` : `/uploads/${roomFn}`,
-          stylePresetId: presetId,
-          positivePrompt,
-          negativePrompt,
-          projectId: projId,
-          userId: finalUserId,
-        });
-      },
     });
 
     return NextResponse.json({
       success: true,
       projectId: project._id,
-      processingType: 'tool-style-transfer',
-      status: 'queued',
-      renderId: queueResult.renderId,
-      jobId: queueResult.jobId,
-      queuePosition: queueResult.queuePosition,
-      estimatedWaitSeconds: queueResult.estimatedWaitSeconds,
-    }, { status: 202 });
+      imageUrl: (output as any)?.imageUrl || null,
+    }, { status: 200 });
 
   } catch (error: any) {
     console.error('❌ Style transfer POST error:', error);
@@ -219,11 +196,8 @@ export async function POST(request: Request) {
         message: error.message,
       }, { status: 402 });
     }
-    if (error?.code === 'QUEUE_FULL') {
-      return NextResponse.json({ error: error.message }, { status: 503 });
-    }
     return NextResponse.json(
-      { error: 'Style transfer failed to start', message: error.message },
+      { error: 'Style transfer failed', message: error.message },
       { status: 500 }
     );
   }

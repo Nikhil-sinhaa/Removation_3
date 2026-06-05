@@ -48,14 +48,7 @@ const TOOLS_DATA: ToolTab[] = [
     description: "Change false ceiling layouts, drop lighting elements, and inspect beautiful wooden and POP integrations.",
     link: "/ceiling-changer",
   },
-  {
-    id: "object-removal",
-    name: "Object Removal",
-    beforeImage: "/images/hero-before-2.jpg",
-    afterImage: "/images/hero-after-2.jpg",
-    description: "Erase cluttered items, unwanted wiring, or old furniture in seconds with smart LaMa-inpaint technology.",
-    link: "/furniture-remover",
-  },
+
 ];
 
 export function ToolsShowcase() {

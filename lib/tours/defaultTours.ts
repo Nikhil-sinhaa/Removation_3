@@ -30,41 +30,7 @@ export const defaultTours: Partial<ITour>[] = [
       }
     ]
   },
-  {
-    id: 'dream-room-intro',
-    name: 'Dream Room Intro',
-    description: 'Learn how to generate your dream room.',
-    pages: ['/dream-room'],
-    isActive: true,
-    isDismissible: true,
-    priority: 90,
-    steps: [
-      {
-        target: '[data-tour="dream-room-theme"]',
-        title: 'Choose a Style',
-        content: 'Start by picking the design style you want — Modern, Vintage, Industrial, and more.',
-        placement: 'bottom',
-      },
-      {
-        target: '[data-tour="dream-room-room"]',
-        title: 'Select a Room Type',
-        content: 'Tell the AI which room to design — living room, bedroom, office, and more.',
-        placement: 'bottom',
-      },
-      {
-        target: '[data-tour="dream-room-upload"]',
-        title: 'Upload Your Photo',
-        content: 'Upload a clear photo of your room. The AI will use it as the base for the redesign.',
-        placement: 'top',
-      },
-      {
-        target: '[data-tour="dream-room-generate"]',
-        title: 'Generate!',
-        content: 'Click here when you\'re ready to see your dream room come to life.',
-        placement: 'top',
-      }
-    ]
-  },
+
   {
     id: 'room-changer-intro',
     name: 'Room Changer Intro',

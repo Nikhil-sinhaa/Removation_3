@@ -5,7 +5,7 @@
 import { google } from 'googleapis';
 import path from 'path';
 import fs from 'fs';
-import { setSetting, getSetting } from '@/src/lib/appSettings.ts';
+import { setSetting, getSetting } from '@/src/lib/appSettings';
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 

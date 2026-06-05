@@ -194,7 +194,7 @@ export function Sidebar({ className }: SidebarProps) {
         isCollapsed && "justify-center px-2"
       )}>
         <Link href="/dashboard" className="flex items-center gap-2">
-          <Logo iconOnly={isCollapsed} className="h-8 w-auto" />
+          <Logo variant={isCollapsed ? "icon-only" : "default"} className="h-8 w-auto" />
         </Link>
       </div>
 
@@ -256,7 +256,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Credits Card */}
       {!isCollapsed && (
         <div className="mx-3 mb-3">
-          <CreditBalance compact />
+          <CreditBalance variant="compact" />
         </div>
       )}
 

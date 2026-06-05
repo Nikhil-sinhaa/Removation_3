@@ -6,7 +6,18 @@
  * Outputs: wall_mask.png, floor_mask.png, ceiling_mask.png, object_mask.png, empty_space_mask.png, depth_map.png
  */
 
-import { ComfyUIWorkflow } from '@/lib/ai/comfyui-workflows';
+interface ComfyUIWorkflow {
+  id: string;
+  revision: number;
+  last_node_id: number;
+  last_link_id: number;
+  nodes: any[];
+  links: any[];
+  groups: any[];
+  config: Record<string, any>;
+  extra: Record<string, any>;
+  version: number;
+}
 
 interface SceneUnderstandingConfig {
   imageBase64: string;
