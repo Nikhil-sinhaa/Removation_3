@@ -1,0 +1,6 @@
+public/renders
+node_modules
+.env*.local
+src/workflows
+scripts
+*.ipynb
