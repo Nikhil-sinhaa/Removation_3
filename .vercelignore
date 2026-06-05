@@ -8,4 +8,3 @@ venv
 scripts/rclone
 .env*.local
 *.ipynb
-src/workflows
