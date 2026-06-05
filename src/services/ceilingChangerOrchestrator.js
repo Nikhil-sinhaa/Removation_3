@@ -257,6 +257,13 @@ export async function runCeilingChanger({
       processingCompletedAt: new Date(),
     });
 
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, outputImageUrl, 'ceiling-changer');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
+
     onProgress({ stage: 2, percent: 100 });
     comfyBridge.notifyFrontend('comfy:ceiling-changer:done', {
       projectId,

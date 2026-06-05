@@ -12,11 +12,9 @@ type Category = StylePreset['category'] | 'all';
 const CATEGORY_TABS: { id: Category; label: string; labelHi: string }[] = [
   { id: 'all', label: 'All', labelHi: 'सभी' },
   { id: 'minimal', label: 'Minimal', labelHi: 'मिनिमल' },
-  { id: 'traditional', label: 'Traditional', labelHi: 'पारंपरिक' },
   { id: 'modern', label: 'Modern', labelHi: 'आधुनिक' },
   { id: 'luxury', label: 'Luxury', labelHi: 'लग्जरी' },
-  { id: 'nature', label: 'Nature', labelHi: 'नेचर' },
-  { id: 'industrial', label: 'Industrial', labelHi: 'इंडस्ट्रियल' },
+  { id: 'traditional', label: 'Traditional', labelHi: 'पारंपरिक' },
 ];
 
 interface StylePresetSelectorProps {

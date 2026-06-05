@@ -20,12 +20,18 @@ import sharp from 'sharp';
 import { checkIPAdapterModels, IPADAPTER_MISSING_ERROR } from '@/lib/ai/preflight';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
-import { getPresetById, getReferenceById } from '@/config/style-presets';
+import { getPresetById, getReferenceById, getVariantById } from '@/config/style-presets';
+import { getStyleReferenceImage } from '@/lib/utils/styleReferences';
+import { enqueueGeneration } from '@/lib/ai/queuedGeneration';
+import { ensureWorkerRunning } from '@/lib/ai/workerInit';
+
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   await connectDB();
+  ensureWorkerRunning();
   try {
     const authUser = await getCurrentUser();
     if (!authUser || !authUser.id) {
@@ -33,14 +39,12 @@ export async function POST(request: Request) {
     }
     const finalUserId = authUser.id;
 
-    const deductResult = await checkAndDeductCredits(finalUserId, 'style-transfer');
-    if (!deductResult.success) {
-      return NextResponse.json({
-        error: 'insufficient_credits',
-        message: deductResult.reason,
-        remainingCredits: deductResult.remaining,
-        upgradeUrl: '/pricing'
-      }, { status: 402 });
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Queue is full. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
     const formData = await request.formData();
@@ -52,24 +56,27 @@ export async function POST(request: Request) {
     }
 
     // ── Preset & reference metadata ─────────────────────────────────────────
-    const presetId    = (formData.get('presetId')     || formData.get('stylePreset') || 'japandi') as string;
-    const referenceId = (formData.get('referenceId')  || '') as string;
-    const promptOverride     = (formData.get('prompt')         || '') as string;
-    const negativeOverride   = (formData.get('negativePrompt') || '') as string;
+    const presetId         = (formData.get('presetId')       || formData.get('stylePreset') || 'japandi') as string;
+    const roomType         = (formData.get('roomType')        || 'livingroom') as string;
+    const variantId        = (formData.get('variantId')       || '') as string;
+    const referenceId      = (formData.get('referenceId')     || '') as string;
+    const promptOverride   = (formData.get('prompt')          || '') as string;
+    const negativeOverride = (formData.get('negativePrompt')  || '') as string;
+    const strength         = parseFloat((formData.get('strength') || '0.7') as string);
+    const preserveStructure = (formData.get('preserveStructure') || 'true') === 'true';
 
-    // ── Style reference resolution (priority: custom file > preset URL > fallback) ──
-    // 1. Custom file upload
+    // ── Style reference resolution (priority: custom file > legacy URL > auto-pick) ──
     const referenceImageFile = formData.get('referenceImageFile') as File | null;
-    // 2. Preset gallery URL
     const referenceImageUrl  = (formData.get('referenceImageUrl') || '') as string;
 
-    // Resolve prompt from preset config
+    // Resolve prompt from preset + variant config
     const preset = getPresetById(presetId);
     const referenceConfig = referenceId ? getReferenceById(presetId, referenceId) : null;
+    const variant = variantId ? getVariantById(presetId, variantId) : null;
 
     const positivePrompt = promptOverride
       || referenceConfig?.prompt
-      || preset?.defaultPrompt
+      || ((preset?.defaultPrompt || '') + (variant?.promptSuffix || ''))
       || 'interior design, high quality, photorealistic, (professional architectural photography:1.3)';
 
     const negativePrompt = negativeOverride
@@ -107,19 +114,17 @@ export async function POST(request: Request) {
     let styleBuffer: Buffer | null = null;
 
     if (referenceImageFile) {
-      // Custom uploaded file takes highest priority
+      // Priority 1: custom uploaded file
       styleBuffer = Buffer.from(await referenceImageFile.arrayBuffer());
       styleFn     = `style_ref_custom_${timestamp}.png`;
     } else if (referenceImageUrl) {
-      // Preset gallery image — the URL is a local public path or absolute URL
+      // Priority 2: legacy referenceImageUrl field (backward compat)
       try {
         let rawBuf: Buffer;
         if (referenceImageUrl.startsWith('/')) {
-          // Local public asset
           const localPath = path.join(process.cwd(), 'public', referenceImageUrl);
           rawBuf = await import('fs/promises').then(fs => fs.readFile(localPath));
         } else {
-          // External URL (shouldn't happen in normal flow, but handle gracefully)
           const res = await fetch(referenceImageUrl);
           if (!res.ok) throw new Error(`Failed to fetch reference image: ${res.status}`);
           rawBuf = Buffer.from(await res.arrayBuffer());
@@ -128,7 +133,17 @@ export async function POST(request: Request) {
         styleFn     = `style_ref_preset_${timestamp}.png`;
       } catch (err: any) {
         console.error('[StyleTransferRoute] Failed to load reference image:', err.message);
-        // Fallback: proceed without image reference (text-prompt only)
+        styleFn = '';
+      }
+    } else {
+      // Priority 3: auto-pick from style-references based on presetId + roomType
+      const autoRefPath = getStyleReferenceImage(presetId, roomType);
+      try {
+        const localPath = path.join(process.cwd(), 'public', autoRefPath);
+        styleBuffer = await import('fs/promises').then(fs => fs.readFile(localPath));
+        styleFn     = `style_ref_auto_${timestamp}.png`;
+      } catch (err: any) {
+        console.error('[StyleTransferRoute] Failed to load auto reference:', err.message);
         styleFn = '';
       }
     }
@@ -151,26 +166,38 @@ export async function POST(request: Request) {
       processingType: 'tool-style-transfer',
       aiConfig: {
         presetId,
+        roomType,
+        variantId: variantId || null,
         referenceId: referenceId || null,
         styleImage: styleFn ? `/uploads/${styleFn}` : null,
         prompt: positivePrompt,
         negativePrompt,
+        strength,
+        preserveStructure,
       },
     });
 
-    // ── Fire and forget orchestrator ─────────────────────────────────────────
-    runStyleTransfer({
-      roomImageFilename: roomFn,
-      styleImageFilename: styleFn || roomFn, // fallback to room if no reference
-      inputImageUrl: `/uploads/${roomFn}`,
-      styleImageUrl: styleFn ? `/uploads/${styleFn}` : `/uploads/${roomFn}`,
-      stylePresetId: presetId,
-      positivePrompt,
-      negativePrompt,
-      projectId: project._id.toString(),
+    const projId = project._id.toString();
+
+    // ── Enqueue orchestrator ─────────────────────────────────────────────────
+    const queueResult = await enqueueGeneration({
       userId: finalUserId,
-    }).catch((err) => {
-      console.error(`[StyleTransferRoute] Background orchestration failed for project ${project._id}:`, err);
+      featureType: 'style-transfer',
+      generateFn: async () => {
+        const creditResult = await checkAndDeductCredits(finalUserId, 'style-transfer');
+        if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
+        await runStyleTransfer({
+          roomImageFilename: roomFn,
+          styleImageFilename: styleFn || roomFn,
+          inputImageUrl: `/uploads/${roomFn}`,
+          styleImageUrl: styleFn ? `/uploads/${styleFn}` : `/uploads/${roomFn}`,
+          stylePresetId: presetId,
+          positivePrompt,
+          negativePrompt,
+          projectId: projId,
+          userId: finalUserId,
+        });
+      },
     });
 
     return NextResponse.json({
@@ -178,10 +205,23 @@ export async function POST(request: Request) {
       projectId: project._id,
       processingType: 'tool-style-transfer',
       status: 'queued',
-    });
+      renderId: queueResult.renderId,
+      jobId: queueResult.jobId,
+      queuePosition: queueResult.queuePosition,
+      estimatedWaitSeconds: queueResult.estimatedWaitSeconds,
+    }, { status: 202 });
 
   } catch (error: any) {
     console.error('❌ Style transfer POST error:', error);
+    if (error?.code === 'insufficient_credits' || error?.message?.includes('insufficient_credits')) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: error.message,
+      }, { status: 402 });
+    }
+    if (error?.code === 'QUEUE_FULL') {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
     return NextResponse.json(
       { error: 'Style transfer failed to start', message: error.message },
       { status: 500 }

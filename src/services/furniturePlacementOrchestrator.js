@@ -282,6 +282,13 @@ export async function runFurniturePlacement({
       processingCompletedAt:  new Date(),
     });
 
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, resultUrl, 'furniture-placement');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
+
     comfyBridge.notifyFrontend('comfy:furniture-placement:done', {
       runId, projectId,
       beforeUrl: roomImageUrl,

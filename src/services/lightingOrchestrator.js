@@ -346,6 +346,13 @@ export async function runLightingWorkflow({
       }
     });
 
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, primaryUrl, 'lighting');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
+
     const mappedResults = allUrls.map((url, i) => ({
       label: `view_${i + 1}`,
       url

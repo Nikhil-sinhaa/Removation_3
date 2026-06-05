@@ -130,6 +130,15 @@ async function handlePaymentCaptured(payment: any) {
         updatedAt: new Date(),
       }
     );
+
+    if (credits > 0) {
+      try {
+        const { notifyCreditsPurchased } = await import('@/lib/notifications/send');
+        await notifyCreditsPurchased(clerkId, credits);
+      } catch (notifErr) {
+        console.error('[razorpay webhook] Credit notification failed:', notifErr);
+      }
+    }
   }
 }
 

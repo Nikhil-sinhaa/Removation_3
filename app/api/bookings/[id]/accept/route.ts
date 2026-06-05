@@ -74,6 +74,14 @@ export async function POST(
             console.error('[accept] Failed to send system message:', msgErr);
         }
 
+        try {
+            const { notifyBookingAccepted } = await import('@/lib/notifications/send');
+            const designerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+            await notifyBookingAccepted(booking.customerId.toString(), id, designerName);
+        } catch (notifErr) {
+            console.error('[accept] Notification failed:', notifErr);
+        }
+
         return NextResponse.json({
             success:  true,
             status:   result.newState,

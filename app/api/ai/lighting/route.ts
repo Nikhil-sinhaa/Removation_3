@@ -11,6 +11,10 @@ import { getCurrentUser } from '@/lib/auth/jwt';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runLightingWorkflow, LIGHTING_PRESETS } from '@/src/services/lightingOrchestrator';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { enqueueGeneration } from '@/lib/ai/queuedGeneration';
+import { ensureWorkerRunning } from '@/lib/ai/workerInit';
+
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -49,6 +53,7 @@ async function safeParseFormData(request: Request): Promise<any> {
 
 export async function POST(request: Request) {
   await connectDB();
+  ensureWorkerRunning();
 
   try {
     // ── Authentication ────────────────────────────────────────────────────────
@@ -63,14 +68,12 @@ export async function POST(request: Request) {
     }
     const userId = String(user._id);
 
-    const deductResult = await checkAndDeductCredits(clerkId, 'lighting');
-    if (!deductResult.success) {
-      return NextResponse.json({
-        error: 'insufficient_credits',
-        message: deductResult.reason,
-        remainingCredits: deductResult.remaining,
-        upgradeUrl: '/pricing'
-      }, { status: 402 });
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Queue is full. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
     // ── Parse Body ───────────────────────────────────────────────────────────
@@ -174,42 +177,64 @@ export async function POST(request: Request) {
 
     const projId = String(project._id);
 
-    // ── Asynchronous Execution (Fire-and-forget) ─────────────────────────────
-    runLightingWorkflow({
-      comfyFilename,
-      imageWidth: finalImageWidth,
-      imageHeight: finalImageHeight,
-      preset,
-      manualPrompt,
-      shape,
-      lightX,
-      lightY,
-      canvasWidth,
-      canvasHeight,
-      lightWidth,
-      lightHeight,
-      spread,
-      softness,
-      invertLight,
-      intensity,
-      icMultiplier,
-      denoise,
-      cfg,
-      frames,
-      saveFilename: `lighting_${projId}`,
-      projectId: projId,
+    // ── Enqueue ───────────────────────────────────────────────────────────────
+    const queueResult = await enqueueGeneration({
       userId,
-      clerkId,
-      inputImageUrl,
-      emitProgress: () => {}
-    }).catch(err => {
-      console.error('❌ runLightingWorkflow background execution error:', err.message);
+      featureType: 'lighting',
+      generateFn: async () => {
+        const creditResult = await checkAndDeductCredits(clerkId, 'lighting');
+        if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
+        await runLightingWorkflow({
+          comfyFilename,
+          imageWidth: finalImageWidth,
+          imageHeight: finalImageHeight,
+          preset,
+          manualPrompt,
+          shape,
+          lightX,
+          lightY,
+          canvasWidth,
+          canvasHeight,
+          lightWidth,
+          lightHeight,
+          spread,
+          softness,
+          invertLight,
+          intensity,
+          icMultiplier,
+          denoise,
+          cfg,
+          frames,
+          saveFilename: `lighting_${projId}`,
+          projectId: projId,
+          userId,
+          clerkId,
+          inputImageUrl,
+          emitProgress: () => {},
+        });
+      },
     });
 
-    return NextResponse.json({ success: true, projectId: projId });
+    return NextResponse.json({
+      success: true,
+      projectId: projId,
+      renderId: queueResult.renderId,
+      jobId: queueResult.jobId,
+      queuePosition: queueResult.queuePosition,
+      estimatedWaitSeconds: queueResult.estimatedWaitSeconds,
+    }, { status: 202 });
 
   } catch (error: any) {
     console.error('❌ /api/ai/lighting POST error:', error.message);
+    if (error?.code === 'insufficient_credits' || error?.message?.includes('insufficient_credits')) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: error.message,
+      }, { status: 402 });
+    }
+    if (error?.code === 'QUEUE_FULL') {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

@@ -9,6 +9,9 @@ import { redisCacheFlushTask }              from './tasks/redisCacheFlush';
 import { dbStatsSnapshotTask }              from './tasks/dbStatsSnapshot';
 import { purge404LogsTask }                 from './tasks/purge404Logs';
 import { purgeOldSnapshotsTask }            from './tasks/purgeOldSnapshots';
+import { expireAnnouncementsTask }          from './tasks/expireAnnouncements';
+import { notifyLowCreditsTask }             from './tasks/notifyLowCredits';
+import { feedbackReminderTask }             from './tasks/feedbackReminder';
 
 let initialized = false;
 
@@ -31,8 +34,11 @@ export async function initializeScheduler() {
   registerTask('db.stats.snapshot',              dbStatsSnapshotTask);
   registerTask('purge.404.logs',                 purge404LogsTask);
   registerTask('purge.old.snapshots',            purgeOldSnapshotsTask);
+  registerTask('expire.announcements',           expireAnnouncementsTask);
+  registerTask('notify.low.credits',             notifyLowCreditsTask);
+  registerTask('feedback.reminder',              feedbackReminderTask);
 
   await seedDefaultTasks();
 
-  console.log('[Scheduler] Initialized with 10 registered task handlers');
+  console.log('[Scheduler] Initialized with 13 registered task handlers');
 }

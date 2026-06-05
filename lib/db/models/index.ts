@@ -25,3 +25,6 @@ export { default as WorkflowState, type IWorkflowState, type BookingStateId } fr
 export { default as WorkflowTransition, type IWorkflowTransition } from './WorkflowTransition';
 export { default as WorkflowEvent, type IWorkflowEvent } from './WorkflowEvent';
 export { default as Snapshot, type ISnapshot, type SnapshotTrigger } from './Snapshot';
+export { default as Announcement, type IAnnouncement, type AnnouncementType, type AnnouncementTarget } from './Announcement';
+export { default as DismissedAnnouncement, type IDismissedAnnouncement } from './DismissedAnnouncement';
+export { default as Notification, type INotification, type NotificationType } from './Notification';

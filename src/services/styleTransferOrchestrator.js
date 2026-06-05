@@ -205,8 +205,15 @@ export async function runStyleTransfer({
       processingCompletedAt: new Date(),
     });
 
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, outputImageUrl, 'style-transfer');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
+
     onProgress({ stage: 'done', percent: 100 });
-    
+
     comfyBridge.notifyFrontend('comfy:style-transfer:done', {
       projectId,
       runId: String(run._id),

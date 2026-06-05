@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { MakeItReal } from "@/components/ai/MakeItReal";
 import { AIResultPanel } from "@/components/ai/AIResultPanel";
+import { QueuePosition } from "@/components/ai/QueuePosition";
 import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
 import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -68,6 +69,8 @@ export default function RoomChangerPage() {
   const [result, setResult]             = useState<ResultState | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
+  const [activeJobId, setActiveJobId]   = useState<string | null>(null);
+  const [renderId, setRenderId]         = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
 
   // ── Paint Selection mode (mask editor) ────────────────────────────────────
@@ -205,12 +208,14 @@ export default function RoomChangerPage() {
       });
       setFeedback({ rating: null, text: "", submitted: false, submitting: false });
       setIsGenerating(false);
+      setActiveJobId(null);
     });
 
     socket.on("comfy:roomchanger:error", (data: any) => {
       stopPolling();
       setError(data.error || t("rc_failed"));
       setIsGenerating(false);
+      setActiveJobId(null);
       if (data.canRetryStage3 && data.runId) {
         setResult(prev => prev
           ? { ...prev, canRetryStage3: true }
@@ -293,6 +298,8 @@ export default function RoomChangerPage() {
       }
 
       setProjectId(data.projectId);
+      if (data.jobId) setActiveJobId(data.jobId);
+      if (data.renderId) setRenderId(data.renderId);
 
       // Fallback polling in case Socket.IO misses events
       stopPolling();
@@ -331,6 +338,7 @@ export default function RoomChangerPage() {
     setError(null);
     setProgress(null);
     setProjectId(null);
+    setRenderId(null);
     setPaintMode('whole');
     setMaskResult(null);
     setFeedback({ rating: null, text: "", submitted: false, submitting: false });
@@ -575,6 +583,33 @@ export default function RoomChangerPage() {
                 </div>
               )}
 
+              {/* Queue position display — shown while waiting in queue before ComfyUI starts */}
+              {isGenerating && activeJobId && !progress && (
+                <QueuePosition
+                  jobId={activeJobId}
+                  featureLabel="Room Changer"
+                  onComplete={() => {
+                    // Worker finished — poll projectId once to get result
+                    const pid = projectId;
+                    if (!pid) return;
+                    fetch(`/api/ai/room-changer/generate?projectId=${pid}`)
+                      .then(r => r.json())
+                      .then(proj => {
+                        if (proj.status === 'completed' && proj.afterUrl) {
+                          stopPolling();
+                          setResult({ beforeUrl: proj.beforeUrl + '?t=' + Date.now(), afterUrl: proj.afterUrl + '?t=' + Date.now(), runId: proj.runId || '', canRetryStage3: false });
+                          setProgress({ stage: 2, percent: 100 });
+                          setIsGenerating(false);
+                          setActiveJobId(null);
+                        }
+                      })
+                      .catch(() => {});
+                  }}
+                  onError={(msg) => { setError(msg); setIsGenerating(false); setActiveJobId(null); }}
+                  onCancel={() => { setIsGenerating(false); setActiveJobId(null); setProgress(null); }}
+                />
+              )}
+
               {/* Progress / loading state */}
               <AnimatePresence>
                 {isGenerating && progress && (
@@ -654,6 +689,8 @@ export default function RoomChangerPage() {
                       originalImageUrl={result.beforeUrl}
                       resultImageUrl={result.afterUrl}
                       projectId={projectId || undefined}
+                      renderId={renderId ?? undefined}
+                      featureLabel="Room Changer"
                       onSaveToProject={() => toast({ title: t("rc_repaint_saved_title"), description: t("rc_repaint_saved_desc", { color: color.name }) })}
                       onTryAgain={handleTryAnother}
                       toolName="Room Changer"

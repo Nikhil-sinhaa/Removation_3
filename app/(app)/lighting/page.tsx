@@ -29,6 +29,8 @@ import {
   Sparkle
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
+import { RenderFeedback } from '@/components/shared/RenderFeedback';
+import { QueuePosition } from "@/components/ai/QueuePosition";
 
 interface ResultImage {
   label: string;
@@ -230,6 +232,8 @@ export default function LightingPage() {
   const [progress, setProgress]         = useState<ProgressState | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
+  const [renderId, setRenderId]         = useState<string | null>(null);
+  const [activeJobId, setActiveJobId]   = useState<string | null>(null);
 
   // Output states
   const [singleResult, setSingleResult] = useState<SingleResultState | null>(null);
@@ -450,6 +454,9 @@ export default function LightingPage() {
       }
 
       setProjectId(data.projectId);
+      if (data.renderId) setRenderId(data.renderId);
+      if (data.jobId) setActiveJobId(data.jobId);
+      setProgress(null); // QueuePosition takes over while waiting
 
       // Start Polling Fallback
       stopPolling();
@@ -945,6 +952,31 @@ export default function LightingPage() {
                 </div>
               )}
 
+              {/* Queue position — shown while waiting in queue or processing */}
+              {isGenerating && activeJobId && !progress && (
+                <QueuePosition
+                  jobId={activeJobId}
+                  featureLabel="AI Lighting Studio"
+                  onComplete={() => {
+                    if (!projectId) return;
+                    stopPolling();
+                    fetch(`/api/ai/lighting?projectId=${projectId}`)
+                      .then(r => r.json())
+                      .then(d => {
+                        if (d.status === 'completed' && d.results && d.results.length > 0) {
+                          setSingleResult({ beforeUrl: previewUrl || '', results: d.results });
+                          setActiveResultUrl(d.results[0]?.url || null);
+                          setIsGenerating(false);
+                          setActiveJobId(null);
+                        }
+                      })
+                      .catch(() => {});
+                  }}
+                  onError={(msg) => { setError(msg); setIsGenerating(false); setActiveJobId(null); }}
+                  onCancel={() => { setIsGenerating(false); setActiveJobId(null); setProgress(null); stopPolling(); }}
+                />
+              )}
+
               {/* Progress Bar & Stage view */}
               {isGenerating && progress && (
                 <div className="space-y-6 py-10 max-w-xl mx-auto w-full">
@@ -1019,7 +1051,7 @@ export default function LightingPage() {
                     >
                       <Download className="w-4 h-4 mr-1.5" />Download PNG
                     </Button>
-                    
+
                     <Button
                       variant="outline"
                       size="sm"
@@ -1034,6 +1066,16 @@ export default function LightingPage() {
                       <BookmarkCheck className="w-4 h-4 mr-1.5 text-green-600" />Save Render
                     </Button>
                   </div>
+
+                  {renderId && (
+                    <div className="pt-2 border-t border-slate-100">
+                      <RenderFeedback
+                        renderId={renderId}
+                        featureLabel="AI Lighting Studio"
+                        variant="inline"
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 

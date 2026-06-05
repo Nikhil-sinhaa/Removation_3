@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/components/ui/use-toast";
 import { CompareSliderMini } from "@/components/editor/CompareSlider";
 import { useLanguage } from "@/hooks/useLanguage";
+import { StarDisplay } from "@/components/shared/StarDisplay";
 
 export interface Render {
   id: string;
@@ -41,6 +42,7 @@ export interface Render {
   createdAt: Date;
   isFavorite?: boolean;
   vastuScore?: number;
+  rating?: number | null;
   estimatedCost?: {
     inr: number;
     usd: number;
@@ -358,6 +360,9 @@ export function RenderGrid({
                 </Badge>
                 {render.isFavorite && (
                   <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
+                )}
+                {render.rating != null && (
+                  <StarDisplay rating={render.rating} size="sm" />
                 )}
               </div>
             </motion.div>

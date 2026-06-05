@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
   const PrivacyRequest  = mongoose.models['PrivacyRequest'];
   const WorkflowEvent   = mongoose.models['WorkflowEvent'];
   const Booking         = mongoose.models['Booking'];
+  const Notification    = mongoose.models['Notification'];
+  const Render          = mongoose.models['Render'];
 
   const users = User
     ? await User.find({ email: { $in: testEmails } }).lean()
@@ -50,6 +52,8 @@ export async function POST(req: NextRequest) {
     Redirect?.deleteMany({ sourceUrl: { $regex: '/test-redirect' } }),
     Tag?.deleteMany({ userId: { $in: userIds }, isGlobal: false }),
     Tagging?.deleteMany({ userId: { $in: userIds } }),
+    Notification?.deleteMany({ userId: { $in: userIds } }),
+    Render?.deleteMany({ userId: { $in: userIds } }),
   ]);
 
   return NextResponse.json({ success: true, cleaned: userIds.length });

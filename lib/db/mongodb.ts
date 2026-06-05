@@ -38,8 +38,7 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
             // Asynchronously run a quick update to ensure clerkId matches _id for any user missing clerkId
             (async () => {
                 try {
-                    const User = mongooseInstance.models.User || mongooseInstance.model('User');
-                    if (!User) return;
+                    const { default: User } = await import('./models/User');
 
                     // Find users where clerkId is missing or empty
                     const usersToFix = await User.find({

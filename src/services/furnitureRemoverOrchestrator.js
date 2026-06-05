@@ -115,6 +115,13 @@ export async function runFurnitureRemover({
       processingCompletedAt: new Date(),
     });
 
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, outputImageUrl, 'furniture-remover');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
+
     onProgress({ stage: 1, percent: 100 });
     comfyBridge.notifyFrontend('comfy:furniture-remover:done', {
       projectId,
@@ -231,6 +238,13 @@ export async function runManualFurnitureErase({
       status: 'completed',
       processingCompletedAt: new Date(),
     });
+
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, outputImageUrl, 'furniture-remover');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
 
     onProgress({ stage: 1, percent: 100 });
     comfyBridge.notifyFrontend('comfy:furniture-remover:done', {

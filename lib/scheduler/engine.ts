@@ -194,6 +194,36 @@ export async function seedDefaultTasks() {
       runCount:       0,
       failCount:      0,
     },
+    {
+      taskId:         'expire.announcements',
+      name:           'Expire Old Announcements',
+      description:    'Auto-deactivate announcements whose end date has passed',
+      cronExpression: '*/30 * * * *',
+      enabled:        true,
+      status:         'idle',
+      runCount:       0,
+      failCount:      0,
+    },
+    {
+      taskId:         'notify.low.credits',
+      name:           'Notify Low Credits',
+      description:    'Notify users whose credits are running low (once per 7 days)',
+      cronExpression: '0 10 * * *',
+      enabled:        true,
+      status:         'idle',
+      runCount:       0,
+      failCount:      0,
+    },
+    {
+      taskId:         'feedback.reminder',
+      name:           'Feedback Reminder',
+      description:    'Remind users to rate renders created in the last 24-48 hours',
+      cronExpression: '0 18 * * *',
+      enabled:        true,
+      status:         'idle',
+      runCount:       0,
+      failCount:      0,
+    },
   ];
 
   for (const task of defaults) {

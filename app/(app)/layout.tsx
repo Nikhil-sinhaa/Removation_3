@@ -6,10 +6,12 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
+import { NotificationBell } from '@/components/layout/NotificationBell';
 import { CreditSuccessHandler } from '@/components/payment/CreditSuccessHandler';
 import { TourProvider } from '@/components/tours/TourProvider';
 import { TourHelpMenu } from '@/components/tours/TourHelpMenu';
 import { SearchBar } from '@/components/search/SearchBar';
+import { AnnouncementBanner } from '@/components/announcements/AnnouncementBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -540,14 +542,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Right */}
             <div className="flex items-center gap-2">
-              <button
-                className="w-8 h-8 flex items-center justify-center rounded-lg"
-                style={{ color: '#a1a1aa' }}
-                onMouseEnter={(e) => { e.currentTarget.style.background = '#161616'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <Bell className="w-4 h-4" />
-              </button>
+              <NotificationBell />
 
               <TourHelpMenu />
 
@@ -573,6 +568,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
             </div>
           </div>
         </header>
+
+        {/* ── Announcement Banners ── */}
+        <AnnouncementBanner />
 
         {/* ── Page Content ── */}
         <main className="flex-1 p-4 lg:p-6">

@@ -314,6 +314,13 @@ export async function runRoomChanger({
       processingCompletedAt: new Date(),
     });
 
+    try {
+      const { notifyGenerationComplete } = await import('@/lib/notifications/send');
+      await notifyGenerationComplete(userId, projectId, outputImageUrl, 'room-changer');
+    } catch (notifErr) {
+      console.error('[Notify] Generation notification failed:', notifErr);
+    }
+
     onProgress({ stage: 2, percent: 100 });
     comfyBridge.notifyFrontend('comfy:roomchanger:done', {
       projectId,

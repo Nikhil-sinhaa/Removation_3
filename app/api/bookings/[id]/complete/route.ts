@@ -74,6 +74,13 @@ export async function POST(
             console.error('[complete] Failed to send system message:', msgErr);
         }
 
+        try {
+            const { notifyBookingCompleted } = await import('@/lib/notifications/send');
+            await notifyBookingCompleted(booking.customerId.toString(), id);
+        } catch (notifErr) {
+            console.error('[complete] Notification failed:', notifErr);
+        }
+
         return NextResponse.json({
             success:     true,
             status:      result.newState,

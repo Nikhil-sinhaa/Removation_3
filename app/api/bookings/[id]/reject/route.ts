@@ -135,6 +135,14 @@ export async function POST(
             console.error('[reject] Failed to send system message:', msgErr);
         }
 
+        try {
+            const { notifyBookingRejected } = await import('@/lib/notifications/send');
+            const designerName = [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email;
+            await notifyBookingRejected(booking.customerId.toString(), id, designerName);
+        } catch (notifErr) {
+            console.error('[reject] Notification failed:', notifErr);
+        }
+
         return NextResponse.json({
             success:          true,
             status:           result.newState,

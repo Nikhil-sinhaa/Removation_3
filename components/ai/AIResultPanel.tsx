@@ -7,6 +7,7 @@ import { Download, BookmarkCheck, Sparkles, Check, Loader2, RefreshCw } from 'lu
 import { cn } from '@/lib/utils';
 import { useToast } from '@/components/ui/use-toast';
 import { MakeItReal } from '@/components/ai/MakeItReal';
+import { RenderFeedback } from '@/components/shared/RenderFeedback';
 
 export interface AIResultPanelProps {
   originalImageUrl: string | null;    // "before" image
@@ -14,6 +15,8 @@ export interface AIResultPanelProps {
   isLoading?: boolean;
   toolName: string;                   // e.g. "Ceiling Changer"
   projectId?: string;
+  renderId?: string;                  // Render model ID for feedback
+  featureLabel?: string;              // display name for feedback modal
   onDownload?: () => void;
   onSaveToProject?: () => void;
   onTryAgain?: () => void;
@@ -30,6 +33,8 @@ export function AIResultPanel({
   isLoading = false,
   toolName,
   projectId,
+  renderId,
+  featureLabel,
   onDownload,
   onSaveToProject,
   onTryAgain,
@@ -224,6 +229,15 @@ export function AIResultPanel({
             </Button>
           )}
         </div>
+
+        {/* Rating feedback */}
+        {renderId && (
+          <RenderFeedback
+            renderId={renderId}
+            featureLabel={featureLabel ?? toolName}
+            variant="inline"
+          />
+        )}
 
         {/* Optional Extra Actions Passed from Parent */}
         {children && <div className="pt-2 border-t border-zinc-800/80">{children}</div>}

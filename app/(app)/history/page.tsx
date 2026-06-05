@@ -97,6 +97,8 @@ import CompareSlider from "@/components/editor/CompareSlider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
 import { format, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { RenderFeedback } from "@/components/shared/RenderFeedback";
+import { StarDisplay } from "@/components/shared/StarDisplay";
 
 // Render types with icons
 const renderTypes = [
@@ -139,8 +141,28 @@ const datePresets = [
   { label: "All time", labelHi: "सभी समय", days: -1 },
 ];
 
+// Extend mock data type to support rating
+type MockRender = {
+  id: string;
+  projectId: string;
+  projectName: string;
+  originalImage: string;
+  renderedImage: string;
+  type: string;
+  style: string;
+  roomType: string;
+  createdAt: string;
+  isFavorite: boolean;
+  hasVastu: boolean;
+  vastuScore: number | null;
+  hasCost: boolean;
+  estimatedCost: number | null;
+  status: string;
+  rating?: number | null;
+};
+
 // Mock render history data
-const mockRenders = [
+const mockRenders: MockRender[] = [
   {
     id: "render-1",
     projectId: "proj-1",
@@ -281,12 +303,13 @@ const mockRenders = [
 
 // Render card component
 interface RenderCardProps {
-  render: typeof mockRenders[0];
+  render: MockRender;
   isSelected: boolean;
   onSelect: (id: string) => void;
-  onView: (render: typeof mockRenders[0]) => void;
+  onView: (render: MockRender) => void;
   onFavorite: (id: string) => void;
   onDelete: (id: string) => void;
+  onRatingUpdate: (id: string, rating: number) => void;
   viewMode: "grid" | "list";
   language: string;
 }
@@ -298,6 +321,7 @@ function RenderCard({
   onView,
   onFavorite,
   onDelete,
+  onRatingUpdate,
   viewMode,
   language,
 }: RenderCardProps) {
@@ -599,6 +623,22 @@ function RenderCard({
             </Badge>
           )}
         </div>
+
+        {/* Rating row */}
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed">
+          {render.rating != null ? (
+            <StarDisplay rating={render.rating} size="sm" />
+          ) : (
+            <span className="text-xs text-muted-foreground">Not rated yet</span>
+          )}
+          <RenderFeedback
+            renderId={render.id}
+            featureLabel={render.type}
+            initialRating={render.rating ?? undefined}
+            variant="modal"
+            onFeedbackSubmitted={(rating) => onRatingUpdate(render.id, rating)}
+          />
+        </div>
       </div>
     </motion.div>
   );
@@ -610,7 +650,7 @@ export default function HistoryPage() {
 
   // State
   const [isLoading, setIsLoading] = useState(true);
-  const [renders, setRenders] = useState<typeof mockRenders>([]);
+  const [renders, setRenders] = useState<MockRender[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRenderType, setSelectedRenderType] = useState("all");
@@ -622,7 +662,7 @@ export default function HistoryPage() {
   });
   const [selectedPreset, setSelectedPreset] = useState(-1); // -1 = all time
   const [selectedRenders, setSelectedRenders] = useState<string[]>([]);
-  const [viewingRender, setViewingRender] = useState<typeof mockRenders[0] | null>(null);
+  const [viewingRender, setViewingRender] = useState<MockRender | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
@@ -706,6 +746,12 @@ export default function HistoryPage() {
     } else {
       setSelectedRenders(filteredRenders.map((r) => r.id));
     }
+  };
+
+  const handleRatingUpdate = (id: string, rating: number) => {
+    setRenders((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, rating } : r))
+    );
   };
 
   const handleFavorite = (id: string) => {
@@ -1051,6 +1097,7 @@ export default function HistoryPage() {
                   onView={setViewingRender}
                   onFavorite={handleFavorite}
                   onDelete={(id) => setDeleteConfirm(id)}
+                  onRatingUpdate={handleRatingUpdate}
                   viewMode={viewMode}
                   language={language}
                 />

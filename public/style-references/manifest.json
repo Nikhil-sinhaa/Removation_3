@@ -1,337 +1,269 @@
 [
   {
     "id": "japandi",
-    "folder": "japandi",
-    "references": [
+    "roomTypes": [
       {
-        "id": "warm-wood",
-        "label": "Warm wood tones",
-        "imageUrl": "/style-references/japandi/warm-wood.jpg",
-        "exists": true
+        "id": "bathroom",
+        "images": [
+          "/style-references/japandi/bathroom/ref-1.jpeg",
+          "/style-references/japandi/bathroom/ref-2.jpeg",
+          "/style-references/japandi/bathroom/ref-3.jpeg",
+          "/style-references/japandi/bathroom/ref-4.jpeg",
+          "/style-references/japandi/bathroom/ref-5.jpeg",
+          "/style-references/japandi/bathroom/ref-6.jpeg"
+        ]
       },
       {
-        "id": "dark-zen",
-        "label": "Dark zen palette",
-        "imageUrl": "/style-references/japandi/dark-zen.jpg",
-        "exists": true
+        "id": "bedroom",
+        "images": [
+          "/style-references/japandi/bedroom/ref-1.jpeg",
+          "/style-references/japandi/bedroom/ref-2.jpeg",
+          "/style-references/japandi/bedroom/ref-3.jpeg",
+          "/style-references/japandi/bedroom/ref-4.jpeg",
+          "/style-references/japandi/bedroom/ref-5.jpeg",
+          "/style-references/japandi/bedroom/ref-6.jpeg",
+          "/style-references/japandi/bedroom/ref-7.jpeg"
+        ]
       },
       {
-        "id": "natural-light",
-        "label": "Natural light",
-        "imageUrl": "/style-references/japandi/natural-light.jpg",
-        "exists": true
+        "id": "kitchen",
+        "images": [
+          "/style-references/japandi/kitchen/ref-1.jpeg",
+          "/style-references/japandi/kitchen/ref-2.jpeg",
+          "/style-references/japandi/kitchen/ref-3.jpeg",
+          "/style-references/japandi/kitchen/ref-4.jpeg"
+        ]
       },
       {
-        "id": "wabi-sabi",
-        "label": "Wabi-sabi textures",
-        "imageUrl": "/style-references/japandi/wabi-sabi.jpg",
-        "exists": false
-      },
-      {
-        "id": "earthy-minimal",
-        "label": "Earthy minimal",
-        "imageUrl": "/style-references/japandi/earthy-minimal.jpg",
-        "exists": false
-      },
-      {
-        "id": "nordic-japanese",
-        "label": "Nordic-Japanese fusion",
-        "imageUrl": "/style-references/japandi/nordic-japanese.jpg",
-        "exists": false
-      }
-    ]
-  },
-  {
-    "id": "traditional-indian",
-    "folder": "traditional-indian",
-    "references": [
-      {
-        "id": "rajasthani",
-        "label": "Rajasthani royal",
-        "imageUrl": "/style-references/traditional-indian/rajasthani.jpg",
-        "exists": true
-      },
-      {
-        "id": "kerala",
-        "label": "Kerala teak",
-        "imageUrl": "/style-references/traditional-indian/kerala.jpg",
-        "exists": true
-      },
-      {
-        "id": "mughal",
-        "label": "Mughal inspired",
-        "imageUrl": "/style-references/traditional-indian/mughal.jpg",
-        "exists": true
-      },
-      {
-        "id": "haveli",
-        "label": "Haveli style",
-        "imageUrl": "/style-references/traditional-indian/haveli.jpg",
-        "exists": true
-      },
-      {
-        "id": "brass-accents",
-        "label": "Brass accents",
-        "imageUrl": "/style-references/traditional-indian/brass-accents.jpg",
-        "exists": false
-      },
-      {
-        "id": "block-print",
-        "label": "Block print",
-        "imageUrl": "/style-references/traditional-indian/block-print.jpg",
-        "exists": false
-      }
-    ]
-  },
-  {
-    "id": "scandinavian",
-    "folder": "scandinavian",
-    "references": [
-      {
-        "id": "white-cozy",
-        "label": "White and cozy",
-        "imageUrl": "/style-references/scandinavian/white-cozy.jpg",
-        "exists": true
-      },
-      {
-        "id": "pine-wood",
-        "label": "Pine wood",
-        "imageUrl": "/style-references/scandinavian/pine-wood.jpg",
-        "exists": false
-      },
-      {
-        "id": "dark-hygge",
-        "label": "Dark hygge",
-        "imageUrl": "/style-references/scandinavian/dark-hygge.jpg",
-        "exists": false
-      },
-      {
-        "id": "grey-calm",
-        "label": "Grey calm",
-        "imageUrl": "/style-references/scandinavian/grey-calm.jpg",
-        "exists": false
-      },
-      {
-        "id": "natural-linen",
-        "label": "Natural linen",
-        "imageUrl": "/style-references/scandinavian/natural-linen.jpg",
-        "exists": false
-      },
-      {
-        "id": "open-plan",
-        "label": "Open plan",
-        "imageUrl": "/style-references/scandinavian/open-plan.jpg",
-        "exists": false
-      }
-    ]
-  },
-  {
-    "id": "industrial",
-    "folder": "industrial",
-    "references": [
-      {
-        "id": "raw-brick",
-        "label": "Raw exposed brick",
-        "imageUrl": "/style-references/industrial/raw-brick.jpg",
-        "exists": true
-      },
-      {
-        "id": "concrete",
-        "label": "Concrete and metal",
-        "imageUrl": "/style-references/industrial/concrete.jpg",
-        "exists": false
-      },
-      {
-        "id": "warehouse",
-        "label": "Warehouse conversion",
-        "imageUrl": "/style-references/industrial/warehouse.jpg",
-        "exists": true
-      },
-      {
-        "id": "dark-iron",
-        "label": "Dark iron",
-        "imageUrl": "/style-references/industrial/dark-iron.jpg",
-        "exists": false
-      },
-      {
-        "id": "rustic-wood",
-        "label": "Rustic reclaimed",
-        "imageUrl": "/style-references/industrial/rustic-wood.jpg",
-        "exists": false
-      },
-      {
-        "id": "minimal-raw",
-        "label": "Minimal raw",
-        "imageUrl": "/style-references/industrial/minimal-raw.jpg",
-        "exists": false
+        "id": "livingroom",
+        "images": [
+          "/style-references/japandi/livingroom/ref-1.jpeg",
+          "/style-references/japandi/livingroom/ref-2.jpeg",
+          "/style-references/japandi/livingroom/ref-3.jpeg",
+          "/style-references/japandi/livingroom/ref-4.jpeg",
+          "/style-references/japandi/livingroom/ref-5.jpeg",
+          "/style-references/japandi/livingroom/ref-6.jpeg",
+          "/style-references/japandi/livingroom/ref-7.jpeg",
+          "/style-references/japandi/livingroom/ref-8.jpeg"
+        ]
       }
     ]
   },
   {
     "id": "luxury",
-    "folder": "luxury",
-    "references": [
+    "roomTypes": [
       {
-        "id": "marble-gold",
-        "label": "Marble and gold",
-        "imageUrl": "/style-references/luxury/marble-gold.jpg",
-        "exists": true
+        "id": "bathroom",
+        "images": [
+          "/style-references/luxury/bathroom/ref-1.jpeg",
+          "/style-references/luxury/bathroom/ref-2.jpeg",
+          "/style-references/luxury/bathroom/ref-3.jpeg",
+          "/style-references/luxury/bathroom/ref-4.jpeg"
+        ]
       },
       {
-        "id": "velvet-dark",
-        "label": "Dark velvet",
-        "imageUrl": "/style-references/luxury/velvet-dark.jpg",
-        "exists": false
+        "id": "bedroom",
+        "images": [
+          "/style-references/luxury/bedroom/ref-1.jpeg",
+          "/style-references/luxury/bedroom/ref-2.jpeg",
+          "/style-references/luxury/bedroom/ref-3.jpeg",
+          "/style-references/luxury/bedroom/ref-4.jpeg"
+        ]
       },
       {
-        "id": "white-luxury",
-        "label": "White luxury",
-        "imageUrl": "/style-references/luxury/white-luxury.jpg",
-        "exists": false
+        "id": "kitchen",
+        "images": [
+          "/style-references/luxury/kitchen/ref-1.jpeg",
+          "/style-references/luxury/kitchen/ref-2.jpeg",
+          "/style-references/luxury/kitchen/ref-3.jpeg",
+          "/style-references/luxury/kitchen/ref-4.jpeg"
+        ]
       },
       {
-        "id": "art-deco",
-        "label": "Art deco",
-        "imageUrl": "/style-references/luxury/art-deco.jpg",
-        "exists": true
-      },
-      {
-        "id": "modern-luxury",
-        "label": "Modern luxury",
-        "imageUrl": "/style-references/luxury/modern-luxury.jpg",
-        "exists": false
-      },
-      {
-        "id": "classic-grand",
-        "label": "Classic grand",
-        "imageUrl": "/style-references/luxury/classic-grand.jpg",
-        "exists": false
+        "id": "livingroom",
+        "images": [
+          "/style-references/luxury/livingroom/ref-1.jpeg",
+          "/style-references/luxury/livingroom/ref-2.jpeg",
+          "/style-references/luxury/livingroom/ref-3.jpeg",
+          "/style-references/luxury/livingroom/ref-4.jpeg",
+          "/style-references/luxury/livingroom/ref-5.jpeg"
+        ]
       }
     ]
   },
   {
-    "id": "bohemian",
-    "folder": "bohemian",
-    "references": [
+    "id": "minimalistic",
+    "roomTypes": [
       {
-        "id": "colorful",
-        "label": "Colorful boho",
-        "imageUrl": "/style-references/bohemian/colorful.jpg",
-        "exists": false
+        "id": "bathroom",
+        "images": [
+          "/style-references/minimalistic/bathroom/ref-1.jpeg",
+          "/style-references/minimalistic/bathroom/ref-2.jpeg",
+          "/style-references/minimalistic/bathroom/ref-3.jpeg",
+          "/style-references/minimalistic/bathroom/ref-4.jpeg",
+          "/style-references/minimalistic/bathroom/ref-5.jpeg",
+          "/style-references/minimalistic/bathroom/ref-6.jpeg",
+          "/style-references/minimalistic/bathroom/ref-7.jpeg",
+          "/style-references/minimalistic/bathroom/ref-8.jpeg",
+          "/style-references/minimalistic/bathroom/ref-9.jpeg",
+          "/style-references/minimalistic/bathroom/ref-10.jpeg",
+          "/style-references/minimalistic/bathroom/ref-11.jpeg",
+          "/style-references/minimalistic/bathroom/ref-12.jpeg",
+          "/style-references/minimalistic/bathroom/ref-13.jpeg"
+        ]
       },
       {
-        "id": "earthy-boho",
-        "label": "Earthy boho",
-        "imageUrl": "/style-references/bohemian/earthy-boho.jpg",
-        "exists": true
+        "id": "bedroom",
+        "images": [
+          "/style-references/minimalistic/bedroom/ref-1.jpeg",
+          "/style-references/minimalistic/bedroom/ref-2.jpeg",
+          "/style-references/minimalistic/bedroom/ref-3.jpeg",
+          "/style-references/minimalistic/bedroom/ref-4.jpeg",
+          "/style-references/minimalistic/bedroom/ref-5.jpeg",
+          "/style-references/minimalistic/bedroom/ref-6.jpeg",
+          "/style-references/minimalistic/bedroom/ref-7.jpeg",
+          "/style-references/minimalistic/bedroom/ref-8.jpeg",
+          "/style-references/minimalistic/bedroom/ref-9.jpeg",
+          "/style-references/minimalistic/bedroom/ref-10.jpeg",
+          "/style-references/minimalistic/bedroom/ref-11.jpeg",
+          "/style-references/minimalistic/bedroom/ref-12.jpeg",
+          "/style-references/minimalistic/bedroom/ref-13.jpeg"
+        ]
       },
       {
-        "id": "dark-boho",
-        "label": "Dark moody boho",
-        "imageUrl": "/style-references/bohemian/dark-boho.jpg",
-        "exists": false
+        "id": "kitchen",
+        "images": [
+          "/style-references/minimalistic/kitchen/ref-1.jpeg",
+          "/style-references/minimalistic/kitchen/ref-2.jpeg",
+          "/style-references/minimalistic/kitchen/ref-3.jpeg",
+          "/style-references/minimalistic/kitchen/ref-4.jpeg",
+          "/style-references/minimalistic/kitchen/ref-5.jpeg",
+          "/style-references/minimalistic/kitchen/ref-6.jpeg"
+        ]
       },
       {
-        "id": "desert-boho",
-        "label": "Desert boho",
-        "imageUrl": "/style-references/bohemian/desert-boho.jpg",
-        "exists": false
-      },
-      {
-        "id": "global-boho",
-        "label": "Global nomad",
-        "imageUrl": "/style-references/bohemian/global-boho.jpg",
-        "exists": false
-      },
-      {
-        "id": "minimal-boho",
-        "label": "Minimal boho",
-        "imageUrl": "/style-references/bohemian/minimal-boho.jpg",
-        "exists": false
+        "id": "livingroom",
+        "images": [
+          "/style-references/minimalistic/livingroom/ref-1.jpeg",
+          "/style-references/minimalistic/livingroom/ref-2.jpeg",
+          "/style-references/minimalistic/livingroom/ref-3.jpeg",
+          "/style-references/minimalistic/livingroom/ref-4.jpeg",
+          "/style-references/minimalistic/livingroom/ref-5.jpeg",
+          "/style-references/minimalistic/livingroom/ref-6.jpeg",
+          "/style-references/minimalistic/livingroom/ref-7.jpeg",
+          "/style-references/minimalistic/livingroom/ref-8.jpeg",
+          "/style-references/minimalistic/livingroom/ref-9.jpeg",
+          "/style-references/minimalistic/livingroom/ref-10.jpeg",
+          "/style-references/minimalistic/livingroom/ref-11.jpeg",
+          "/style-references/minimalistic/livingroom/ref-12.jpeg"
+        ]
       }
     ]
   },
   {
-    "id": "modern-minimalist",
-    "folder": "modern-minimalist",
-    "references": [
+    "id": "modern",
+    "roomTypes": [
       {
-        "id": "all-white",
-        "label": "All white clean",
-        "imageUrl": "/style-references/modern-minimalist/all-white.jpg",
-        "exists": false
+        "id": "bathroom",
+        "images": [
+          "/style-references/modern/bathroom/ref-1.jpeg",
+          "/style-references/modern/bathroom/ref-2.jpeg",
+          "/style-references/modern/bathroom/ref-3.jpeg",
+          "/style-references/modern/bathroom/ref-4.jpeg",
+          "/style-references/modern/bathroom/ref-5.jpeg",
+          "/style-references/modern/bathroom/ref-6.jpeg"
+        ]
       },
       {
-        "id": "warm-neutral",
-        "label": "Warm neutral",
-        "imageUrl": "/style-references/modern-minimalist/warm-neutral.jpg",
-        "exists": true
+        "id": "bedroom",
+        "images": [
+          "/style-references/modern/bedroom/ref-1.jpeg",
+          "/style-references/modern/bedroom/ref-2.jpeg",
+          "/style-references/modern/bedroom/ref-3.jpeg",
+          "/style-references/modern/bedroom/ref-4.jpeg",
+          "/style-references/modern/bedroom/ref-5.jpeg",
+          "/style-references/modern/bedroom/ref-6.jpeg",
+          "/style-references/modern/bedroom/ref-7.jpeg",
+          "/style-references/modern/bedroom/ref-8.jpeg",
+          "/style-references/modern/bedroom/ref-9.jpeg",
+          "/style-references/modern/bedroom/ref-10.jpeg",
+          "/style-references/modern/bedroom/ref-11.jpeg",
+          "/style-references/modern/bedroom/ref-12.jpeg",
+          "/style-references/modern/bedroom/ref-13.jpeg"
+        ]
       },
       {
-        "id": "dark-minimal",
-        "label": "Dark minimal",
-        "imageUrl": "/style-references/modern-minimalist/dark-minimal.jpg",
-        "exists": false
+        "id": "kitchen",
+        "images": [
+          "/style-references/modern/kitchen/ref-1.jpeg",
+          "/style-references/modern/kitchen/ref-2.jpeg",
+          "/style-references/modern/kitchen/ref-3.jpeg",
+          "/style-references/modern/kitchen/ref-4.jpeg",
+          "/style-references/modern/kitchen/ref-5.jpeg",
+          "/style-references/modern/kitchen/ref-6.jpeg"
+        ]
       },
       {
-        "id": "wood-white",
-        "label": "Wood and white",
-        "imageUrl": "/style-references/modern-minimalist/wood-white.jpg",
-        "exists": false
-      },
-      {
-        "id": "concrete-min",
-        "label": "Concrete minimal",
-        "imageUrl": "/style-references/modern-minimalist/concrete-min.jpg",
-        "exists": false
-      },
-      {
-        "id": "zen-modern",
-        "label": "Zen modern",
-        "imageUrl": "/style-references/modern-minimalist/zen-modern.jpg",
-        "exists": false
+        "id": "livingroom",
+        "images": [
+          "/style-references/modern/livingroom/ref-1.jpeg",
+          "/style-references/modern/livingroom/ref-2.jpeg",
+          "/style-references/modern/livingroom/ref-3.jpeg",
+          "/style-references/modern/livingroom/ref-4.jpeg",
+          "/style-references/modern/livingroom/ref-5.jpeg",
+          "/style-references/modern/livingroom/ref-6.jpeg",
+          "/style-references/modern/livingroom/ref-7.jpeg"
+        ]
       }
     ]
   },
   {
-    "id": "vastu-traditional",
-    "folder": "vastu-traditional",
-    "references": [
+    "id": "traditional-indian",
+    "roomTypes": [
       {
-        "id": "warm-earth",
-        "label": "Warm earth",
-        "imageUrl": "/style-references/vastu-traditional/warm-earth.jpg",
-        "exists": true
+        "id": "bathroom",
+        "images": [
+          "/style-references/traditional-indian/bathroom/ref-1.jpeg",
+          "/style-references/traditional-indian/bathroom/ref-2.jpeg",
+          "/style-references/traditional-indian/bathroom/ref-3.jpeg",
+          "/style-references/traditional-indian/bathroom/ref-4.jpeg",
+          "/style-references/traditional-indian/bathroom/ref-5.jpeg",
+          "/style-references/traditional-indian/bathroom/ref-6.jpeg",
+          "/style-references/traditional-indian/bathroom/ref-7.jpeg"
+        ]
       },
       {
-        "id": "natural-wood",
-        "label": "Natural wood",
-        "imageUrl": "/style-references/vastu-traditional/natural-wood.jpg",
-        "exists": false
+        "id": "bedroom",
+        "images": [
+          "/style-references/traditional-indian/bedroom/ref-1.jpeg",
+          "/style-references/traditional-indian/bedroom/ref-2.jpeg",
+          "/style-references/traditional-indian/bedroom/ref-3.jpeg",
+          "/style-references/traditional-indian/bedroom/ref-4.jpeg",
+          "/style-references/traditional-indian/bedroom/ref-5.jpeg",
+          "/style-references/traditional-indian/bedroom/ref-6.jpeg"
+        ]
       },
       {
-        "id": "peaceful-home",
-        "label": "Peaceful home",
-        "imageUrl": "/style-references/vastu-traditional/peaceful-home.jpg",
-        "exists": false
+        "id": "kitchen",
+        "images": [
+          "/style-references/traditional-indian/kitchen/ref-1.jpeg",
+          "/style-references/traditional-indian/kitchen/ref-2.jpeg",
+          "/style-references/traditional-indian/kitchen/ref-3.jpeg",
+          "/style-references/traditional-indian/kitchen/ref-4.jpeg",
+          "/style-references/traditional-indian/kitchen/ref-5.jpeg"
+        ]
       },
       {
-        "id": "brass-lamp",
-        "label": "Brass lamp corner",
-        "imageUrl": "/style-references/vastu-traditional/brass-lamp.jpg",
-        "exists": false
-      },
-      {
-        "id": "courtyard",
-        "label": "Courtyard light",
-        "imageUrl": "/style-references/vastu-traditional/courtyard.jpg",
-        "exists": false
-      },
-      {
-        "id": "south-indian",
-        "label": "South Indian",
-        "imageUrl": "/style-references/vastu-traditional/south-indian.jpg",
-        "exists": false
+        "id": "livingroom",
+        "images": [
+          "/style-references/traditional-indian/livingroom/ref-1.jpeg",
+          "/style-references/traditional-indian/livingroom/ref-2.jpeg",
+          "/style-references/traditional-indian/livingroom/ref-3.jpeg",
+          "/style-references/traditional-indian/livingroom/ref-4.jpeg",
+          "/style-references/traditional-indian/livingroom/ref-5.jpeg",
+          "/style-references/traditional-indian/livingroom/ref-6.jpeg",
+          "/style-references/traditional-indian/livingroom/ref-7.jpeg"
+        ]
       }
     ]
   }

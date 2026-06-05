@@ -13,7 +13,10 @@ export type TaskId =
   | 'render.stuck.cleanup'
   | 'db.stats.snapshot'
   | 'purge.404.logs'
-  | 'purge.old.snapshots';
+  | 'purge.old.snapshots'
+  | 'expire.announcements'
+  | 'notify.low.credits'
+  | 'feedback.reminder';
 
 export interface IScheduledTask extends Document {
   taskId:           TaskId;

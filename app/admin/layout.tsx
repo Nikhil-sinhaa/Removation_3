@@ -317,6 +317,11 @@ const mainNavItems: NavItem[] = [
 
 const systemNavItems: (NavItem | SimpleNavItem)[] = [
   {
+    title: 'Feedback',
+    href: '/admin/feedback',
+    icon: Star,
+  },
+  {
     title: 'Vastu Engine',
     href: '/admin/vastu',
     icon: Compass,
@@ -351,6 +356,11 @@ const systemNavItems: (NavItem | SimpleNavItem)[] = [
     icon: Tag,
   },
   {
+    title: 'Announcements',
+    href: '/admin/announcements',
+    icon: Megaphone,
+  },
+  {
     title: 'Redirects',
     href: '/admin/redirects',
     icon: ArrowRightLeft,
@@ -359,6 +369,11 @@ const systemNavItems: (NavItem | SimpleNavItem)[] = [
     title: 'Workflow',
     href: '/admin/workflow',
     icon: GitBranch,
+  },
+  {
+    title: 'Queue Monitor',
+    href: '/admin/queue',
+    icon: Activity,
   },
 ];
 

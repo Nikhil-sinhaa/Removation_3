@@ -21,5 +21,8 @@ export async function register() {
 
     const { seedWorkflow } = await import('./lib/workflow/defaultWorkflow');
     await seedWorkflow().catch(console.error);
+
+    const { seedDefaultAnnouncement } = await import('./lib/announcements/seedAnnouncement');
+    await seedDefaultAnnouncement().catch(console.error);
   }
 }

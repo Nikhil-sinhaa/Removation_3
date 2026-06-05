@@ -15,6 +15,7 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { runFurniturePlacement } from '../../../../../src/services/furniturePlacementOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -76,6 +77,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const finalUserId = authUser.id;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
 
     const deductResult = await checkAndDeductCredits(finalUserId, 'furniture-placement/generate');
     if (!deductResult.success) {

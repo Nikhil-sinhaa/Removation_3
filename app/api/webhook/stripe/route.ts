@@ -207,6 +207,15 @@ async function handleOneTimePayment(session: Stripe.Checkout.Session) {
     );
 
     console.log(`Added ${creditsToAdd} credits to user: ${clerkId}`);
+
+    if (creditsToAdd > 0) {
+        try {
+            const { notifyCreditsPurchased } = await import('@/lib/notifications/send');
+            await notifyCreditsPurchased(clerkId, creditsToAdd);
+        } catch (notifErr) {
+            console.error('[stripe webhook] Credit notification failed:', notifErr);
+        }
+    }
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {

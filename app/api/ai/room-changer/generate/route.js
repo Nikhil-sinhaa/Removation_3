@@ -15,6 +15,9 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { runRoomChanger } from '../../../../../src/services/roomChangerOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
+import { enqueueGeneration } from '@/lib/ai/queuedGeneration';
+import { ensureWorkerRunning } from '@/lib/ai/workerInit';
 
 export const runtime = 'nodejs';
 
@@ -53,6 +56,7 @@ async function safeParseFormData(request) {
 
 export async function POST(request) {
   await connectDB();
+  ensureWorkerRunning();
 
   try {
     const authUser = await getCurrentUser();
@@ -60,19 +64,18 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const formDataEarly = await safeParseFormData(request.clone ? request.clone() : request);
-    const source = formDataEarly.get('source') || '';
-    const deductResult = await checkAndDeductCredits(authUser.id, 'room-changer', { source });
-    if (!deductResult.success) {
-      return NextResponse.json({
-        error: 'insufficient_credits',
-        message: deductResult.reason,
-        remainingCredits: deductResult.remaining,
-        upgradeUrl: '/pricing'
-      }, { status: 402 });
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Queue is full. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
     const finalUserId = authUser.id;
+
+    const formDataEarly = await safeParseFormData(request.clone ? request.clone() : request);
+    const source = formDataEarly.get('source') || '';
 
     const formData = await safeParseFormData(request);
     const imageFile  = formData.get('roomImage');
@@ -95,15 +98,13 @@ export async function POST(request) {
     let comfyFilename, inputImageUrl;
 
     if (retryRunId) {
-      // Retry Stage 3 with existing masks — no new image upload needed
       const existingRun = await RoomChangerRun.findById(retryRunId);
       if (!existingRun) {
         return NextResponse.json({ error: 'Run not found' }, { status: 404 });
       }
-      comfyFilename = null; // orchestrator will use saved stage1Outputs
+      comfyFilename = null;
       inputImageUrl = existingRun.inputImageUrl;
     } else {
-      // Save image for ComfyUI and as preview
       const bytes = await imageFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const uploadFilename = `roomchanger_${Date.now()}_${imageFile.name || 'room.png'}`;
@@ -129,32 +130,47 @@ export async function POST(request) {
 
     const projId = String(project._id);
 
-    // ── Fire-and-forget pipeline ──────────────────────────────────────────
-    runRoomChanger({
-      comfyFilename,
-      inputImageUrl,
-      colorName,
-      hex,
-      projectId: projId,
+    // ── Enqueue ───────────────────────────────────────────────────────────────
+    const queueResult = await enqueueGeneration({
       userId: finalUserId,
-      runId: retryRunId || undefined,
-      retryStage3: !!retryRunId,
-    }).catch(err => {
-      // WALL_MASK_INSUFFICIENT_COVERAGE is a user-recoverable input error, not a
-      // system fault. The orchestrator already wrote the clean message to
-      // Project.errorMessage and emitted comfy:roomchanger:error via Socket.IO —
-      // no further action needed here other than a less alarming log level.
-      if (err.code === 'WALL_MASK_INSUFFICIENT_COVERAGE') {
-        console.warn(`⚠️  Room Changer: wall detection failed (project ${projId}): ${err.message}`);
-      } else {
-        console.error('Room Changer background error:', err.message);
-      }
+      featureType: 'room-changer',
+      generateFn: async () => {
+        const creditResult = await checkAndDeductCredits(finalUserId, 'room-changer', { source });
+        if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
+        await runRoomChanger({
+          comfyFilename,
+          inputImageUrl,
+          colorName,
+          hex,
+          projectId: projId,
+          userId: finalUserId,
+          runId: retryRunId || undefined,
+          retryStage3: !!retryRunId,
+        });
+      },
     });
 
-    return NextResponse.json({ success: true, projectId: projId });
+    return NextResponse.json({
+      success: true,
+      projectId: projId,
+      renderId: queueResult.renderId,
+      jobId: queueResult.jobId,
+      queuePosition: queueResult.queuePosition,
+      estimatedWaitSeconds: queueResult.estimatedWaitSeconds,
+      message: queueResult.message,
+    }, { status: 202 });
 
   } catch (error) {
     console.error('❌ /api/ai/room-changer/generate POST error:', error.message);
+    if (error?.code === 'insufficient_credits' || error?.message?.includes('insufficient_credits')) {
+      return NextResponse.json({
+        error: 'insufficient_credits',
+        message: error.message,
+      }, { status: 402 });
+    }
+    if (error?.code === 'QUEUE_FULL') {
+      return NextResponse.json({ error: error.message }, { status: 503 });
+    }
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
 }

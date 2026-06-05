@@ -1,5 +1,24 @@
 // lib/db/models/Render.ts
 import mongoose, { Schema, Model, Types } from 'mongoose';
+import { FEEDBACK_TAGS, FeedbackTag } from '@/lib/constants/feedbackTags';
+
+// Re-export so existing server-side importers of this module still work.
+export { FEEDBACK_TAGS };
+export type { FeedbackTag };
+
+// ── Queue job state machine ──────────────────────────────────────────────────
+
+export const JOB_STATUSES = {
+  PENDING:    'pending',     // created, not yet queued
+  QUEUED:     'queued',      // in Redis queue, waiting
+  PROCESSING: 'processing',  // ComfyUI is running it right now
+  COMPLETED:  'completed',   // done
+  FAILED:     'failed',      // ComfyUI errored or timed out
+  CANCELLED:  'cancelled',   // user cancelled or credit refunded
+} as const;
+
+export type JobStatus = typeof JOB_STATUSES[keyof typeof JOB_STATUSES];
+
 
 export interface IRender {
     userId: Types.ObjectId;
@@ -31,13 +50,28 @@ export interface IRender {
     predictionId?: string; // Added for Replicate tracking
     logs?: string; // Added for debugging
 
+    // Feedback
+    rating?: number | null;
+    feedbackTags?: string[];
+    feedbackComment?: string;
+    feedbackSubmittedAt?: Date | null;
+
     // Metadata
     variationIndex?: number;
     processingTime?: number;
     createdAt: Date;
-    startedAt?: Date; // Added for tracking
+    startedAt?: Date;
     completedAt?: Date;
     updatedAt: Date;
+
+    // Queue tracking fields — added for AI generation queue system
+    featureType?: string;
+    jobId?: string;
+    queuePosition?: number | null;
+    jobStatus?: JobStatus;
+    processingStartedAt?: Date | null;
+    estimatedWaitSeconds?: number | null;
+    queuedAt?: Date | null;
 }
 
 const RenderSchema = new Schema<IRender>({
@@ -76,12 +110,32 @@ const RenderSchema = new Schema<IRender>({
     predictionId: { type: String, index: true },
     logs: String,
 
+    // Feedback
+    rating: { type: Number, min: 1, max: 5, default: null, index: true },
+    feedbackTags: { type: [String], default: [] },
+    feedbackComment: { type: String, default: '', maxlength: 500 },
+    feedbackSubmittedAt: { type: Date, default: null },
+
     variationIndex: Number,
     processingTime: Number,
     createdAt: { type: Date, default: Date.now, index: true },
     startedAt: Date,
     completedAt: Date,
     updatedAt: { type: Date, default: Date.now },
+
+    // Queue tracking fields
+    featureType: { type: String, default: null },
+    jobId: { type: String, default: null, index: true, sparse: true },
+    queuePosition: { type: Number, default: null },
+    jobStatus: {
+        type: String,
+        enum: ['pending', 'queued', 'processing', 'completed', 'failed', 'cancelled'],
+        default: null,
+        index: true,
+    },
+    processingStartedAt: { type: Date, default: null },
+    estimatedWaitSeconds: { type: Number, default: null },
+    queuedAt: { type: Date, default: null },
 });
 
 // Update the updatedAt timestamp on save

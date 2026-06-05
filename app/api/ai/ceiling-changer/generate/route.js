@@ -15,6 +15,7 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { runCeilingChanger } from '../../../../../src/services/ceilingChangerOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -58,6 +59,14 @@ export async function POST(request) {
     const authUser = await getCurrentUser();
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
     const deductResult = await checkAndDeductCredits(authUser.id, 'ceiling-changer');
@@ -104,7 +113,7 @@ export async function POST(request) {
     // ── Create Project document for status polling ──────────────────────────
     const project = await Project.create({
       name: `Ceiling Changer — ${colorName}`,
-      userId: finalUserId,
+      userId: authUser.id,
       originalImage: inputImageUrl || '',
       status: 'queued',
       processingType: 'ceiling-changer',
@@ -120,7 +129,7 @@ export async function POST(request) {
       colorName,
       hex,
       projectId: projId,
-      userId: finalUserId,
+      userId: authUser.id,
     }).catch(err => {
       // CEILING_MASK_INSUFFICIENT_COVERAGE is a user-recoverable input error, not a
       // system fault. The orchestrator already wrote the clean message to

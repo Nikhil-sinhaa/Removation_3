@@ -32,6 +32,7 @@ import FurniturePlacementRun from '@/src/models/FurniturePlacementRun.js';
 import comfyBridge     from '@/src/services/comfyBridge';
 import { guiToApiGraph } from '@/src/lib/comfyWorkflowConverter.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -48,6 +49,14 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const finalUserId = authUser.id;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return NextResponse.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
 
     const body = await request.json();
     const {

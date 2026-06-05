@@ -5,16 +5,27 @@
 
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { connectDB } from '../../../../lib/db/mongodb';
 import Project from '../../../../src/models/Project.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export async function POST(request) {
+  await connectDB();
   try {
     const authUser = await getCurrentUser();
     if (!authUser) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return Response.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
     const deductResult = await checkAndDeductCredits(authUser.id, 'remove-object');
@@ -117,7 +128,7 @@ export async function POST(request) {
     // Create MongoDB Project
     const project = await Project.create({
       name: `Remove ${objectName}`,
-      userId: finalUserId,
+      userId: authUser.id,
       originalImage: `/uploads/${filename}`,
       status: 'queued',
       processingType: 'object_removal',

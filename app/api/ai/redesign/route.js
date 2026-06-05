@@ -16,6 +16,7 @@ import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 // Force Node.js runtime (Turbopack edge runtime can't do formData)
 export const runtime = 'nodejs';
@@ -308,6 +309,14 @@ export async function POST(request) {
     const authUser = await getCurrentUser();
     if (!authUser) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return Response.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
     }
 
     const deductResult = await checkAndDeductCredits(authUser.id, 'redesign');

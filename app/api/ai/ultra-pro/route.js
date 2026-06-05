@@ -35,6 +35,7 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { getGPUMode } from '@/lib/ai/gpu-mode-router';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
 
@@ -169,6 +170,14 @@ export async function POST(request) {
     // Create project record
     const authUser = await getCurrentUser();
     const finalUserId = authUser?.id || null;
+
+    const queueDepth = await getQueueDepth();
+    if (queueDepth >= 10) {
+      return Response.json(
+        { error: 'Server is busy. Please try again in a few minutes.' },
+        { status: 503 }
+      );
+    }
 
     const project = await Project.create({
       name:           `Ultra-Pro ${roomType}`,
