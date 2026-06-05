@@ -21,12 +21,12 @@ export async function seedDefaultAnnouncement() {
 
   await Announcement.create({
     title:         'Welcome to Removation.ai!',
-    message:       'AI-powered interior design is now live. Try Dream Room to redesign your space instantly.',
+    message:       'AI-powered interior design is now live. Start designing your space instantly.',
     type:          'success',
     icon:          '🎉',
     target:        'all',
-    ctaLabel:      'Try Dream Room',
-    ctaUrl:        '/dream-room',
+    ctaLabel:      'Go to Dashboard',
+    ctaUrl:        '/dashboard',
     isDismissable: true,
     isActive:      true,
     startsAt:      new Date(),

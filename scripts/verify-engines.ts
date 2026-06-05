@@ -13,7 +13,7 @@ try {
         language: 'en'
     });
 
-    if (vastuResult.score >= 80 && vastuResult.rating === 'excellent') {
+    if (vastuResult.overallScore.value >= 80 && vastuResult.overallScore.grade === 'excellent') {
         console.log("✅ Vastu Analysis (Ideal Case): Passed");
     } else {
         console.error("❌ Vastu Analysis (Ideal Case): Failed", vastuResult);
@@ -25,7 +25,7 @@ try {
         language: 'en'
     });
 
-    if (vastuBadResult.score < 80 && vastuBadResult.violations.length > 0) {
+    if (vastuBadResult.overallScore.value < 80 && vastuBadResult.violations.length > 0) {
         console.log("✅ Vastu Analysis (Non-Ideal Case): Passed");
     } else {
         console.error("❌ Vastu Analysis (Non-Ideal Case): Failed", vastuBadResult);

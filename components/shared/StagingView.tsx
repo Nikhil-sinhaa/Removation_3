@@ -102,8 +102,7 @@ export function StagingView() {
                         {!originalImage ? (
                             <div className="h-48 border-2 border-dashed rounded-xl overflow-hidden hover:bg-muted/50 transition-colors">
                                 <ImageUploader
-                                    onClientUploadComplete={(res: any) => setOriginalImage(res?.[0]?.url || res)}
-                                    onUploadError={(error: Error) => toast({ title: 'Error', description: error.message, variant: 'destructive' })}
+                                    onUpload={(url: string) => setOriginalImage(url)}
                                 />
                             </div>
                         ) : (

@@ -5,7 +5,7 @@ import { TourProgress } from '@/lib/db/models/TourProgress';
 
 export async function POST(
   req: Request,
-  { params }: { params: { tourId: string } }
+  { params }: { params: Promise<{ tourId: string }> }
 ) {
   try {
     const authUser = await getCurrentUser();
@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const tourId = params.tourId;
+    const { tourId } = await params;
     const body = await req.json();
     const { step, action } = body;
 

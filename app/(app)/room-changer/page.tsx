@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { MakeItReal } from "@/components/ai/MakeItReal";
 import { AIResultPanel } from "@/components/ai/AIResultPanel";
-import { QueuePosition } from "@/components/ai/QueuePosition";
 import { ReactSketchCanvas, ReactSketchCanvasRef } from "react-sketch-canvas";
 import { Slider } from "@/components/ui/slider";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -69,7 +68,6 @@ export default function RoomChangerPage() {
   const [result, setResult]             = useState<ResultState | null>(null);
   const [error, setError]               = useState<string | null>(null);
   const [projectId, setProjectId]       = useState<string | null>(null);
-  const [activeJobId, setActiveJobId]   = useState<string | null>(null);
   const [renderId, setRenderId]         = useState<string | null>(null);
   const [feedback, setFeedback]         = useState<FeedbackState>({ rating: null, text: "", submitted: false, submitting: false });
 
@@ -208,14 +206,12 @@ export default function RoomChangerPage() {
       });
       setFeedback({ rating: null, text: "", submitted: false, submitting: false });
       setIsGenerating(false);
-      setActiveJobId(null);
     });
 
     socket.on("comfy:roomchanger:error", (data: any) => {
       stopPolling();
       setError(data.error || t("rc_failed"));
       setIsGenerating(false);
-      setActiveJobId(null);
       if (data.canRetryStage3 && data.runId) {
         setResult(prev => prev
           ? { ...prev, canRetryStage3: true }
@@ -298,7 +294,6 @@ export default function RoomChangerPage() {
       }
 
       setProjectId(data.projectId);
-      if (data.jobId) setActiveJobId(data.jobId);
       if (data.renderId) setRenderId(data.renderId);
 
       // Fallback polling in case Socket.IO misses events
@@ -581,33 +576,6 @@ export default function RoomChangerPage() {
                   <p className="text-sm font-medium text-gray-500">{t("rc_repaint_will_appear")}</p>
                   <p className="text-xs text-gray-400">{t("rc_repaint_instructions")}</p>
                 </div>
-              )}
-
-              {/* Queue position display — shown while waiting in queue before ComfyUI starts */}
-              {isGenerating && activeJobId && !progress && (
-                <QueuePosition
-                  jobId={activeJobId}
-                  featureLabel="Room Changer"
-                  onComplete={() => {
-                    // Worker finished — poll projectId once to get result
-                    const pid = projectId;
-                    if (!pid) return;
-                    fetch(`/api/ai/room-changer/generate?projectId=${pid}`)
-                      .then(r => r.json())
-                      .then(proj => {
-                        if (proj.status === 'completed' && proj.afterUrl) {
-                          stopPolling();
-                          setResult({ beforeUrl: proj.beforeUrl + '?t=' + Date.now(), afterUrl: proj.afterUrl + '?t=' + Date.now(), runId: proj.runId || '', canRetryStage3: false });
-                          setProgress({ stage: 2, percent: 100 });
-                          setIsGenerating(false);
-                          setActiveJobId(null);
-                        }
-                      })
-                      .catch(() => {});
-                  }}
-                  onError={(msg) => { setError(msg); setIsGenerating(false); setActiveJobId(null); }}
-                  onCancel={() => { setIsGenerating(false); setActiveJobId(null); setProgress(null); }}
-                />
               )}
 
               {/* Progress / loading state */}

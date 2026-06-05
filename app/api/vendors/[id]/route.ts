@@ -35,9 +35,9 @@ export async function GET(
         }
 
         const isOwner = authUser && vendor.userId && (
-            (vendor.userId as any)._id 
-                ? (vendor.userId as any)._id.toString() === authUser._id.toString() 
-                : vendor.userId.toString() === authUser._id.toString()
+            (vendor.userId as any)._id
+                ? (vendor.userId as any)._id.toString() === authUser.id.toString()
+                : vendor.userId.toString() === authUser.id.toString()
         );
 
         if (!isOwner && (!vendor.isVerified || !vendor.isActive)) {

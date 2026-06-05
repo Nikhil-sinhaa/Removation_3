@@ -1,7 +1,7 @@
 // app/(app)/layout.tsx
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, Suspense } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,7 +29,7 @@ import {
   ChevronRight,
   Sparkles,
   Bell,
-  Shield,
+
   Search,
   HelpCircle,
   Zap,
@@ -83,16 +83,11 @@ const sidebarNavigation: NavSection[] = [
       { name: 'AI Design Studio', href: '/ai-design', icon: Wand2, tourId: 'sidebar-ai-studio' },
       { name: 'Room Changer', href: '/room-changer', icon: Paintbrush },
       { name: 'Ceiling Changer', href: '/ceiling-changer', icon: Layers },
-      { name: 'Object Removal', href: '/remove-object', icon: Eraser },
       { name: 'Furniture Remover', href: '/furniture-remover', icon: Eraser },
       { name: 'Furniture Placement', href: '/furniture-placement', icon: Sofa },
       { name: 'AI Lighting Studio', href: '/lighting', icon: Lightbulb },
       { name: '3D Room View', href: '/room-3d', icon: Box },
-      { name: 'Color Visualizer', href: '/color-visualizer', icon: Palette },
-      { name: 'Dream Room', href: '/dream-room', icon: Sparkles },
       { name: 'Style Transfer', href: '/style-transfer', icon: Palette },
-      { name: 'Master Design Studio', href: '/master-design', icon: Settings },
-      { name: 'Pro Design Studio', href: '/professional-design', icon: Shield },
     ],
   },
   {
@@ -500,7 +495,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
         )}
       </AnimatePresence>
 
-      <CreditSuccessHandler />
+      <Suspense fallback={null}>
+        <CreditSuccessHandler />
+      </Suspense>
 
       {/* ── Main Content ── */}
       <div

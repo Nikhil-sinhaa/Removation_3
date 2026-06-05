@@ -94,7 +94,7 @@ export function LanguageToggle({
     return (
       <div className={cn("flex flex-col gap-2", className)}>
         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {t("Language", "भाषा")}
+          {language === "hi" ? "भाषा" : "Language"}
         </label>
         <div className="grid grid-cols-2 gap-2">
           {languages.map((lang) => (

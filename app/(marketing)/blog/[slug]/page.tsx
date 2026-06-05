@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent } from '@/components/ui/card';
+import { CopyLinkButton, ShareCopyButton } from './CopyLinkButton';
 
 // Blog post type definition
 interface BlogPost {
@@ -671,20 +672,7 @@ function ShareButton({
   };
 
   if (platform === 'copy') {
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="gap-2"
-        onClick={() => {
-          navigator.clipboard.writeText(url);
-          // In a real app, show a toast notification
-        }}
-      >
-        {icons[platform]}
-        <span className="hidden sm:inline">{labels[platform]}</span>
-      </Button>
-    );
+    return <ShareCopyButton url={url} />;
   }
 
   return (
@@ -919,14 +907,10 @@ export default async function BlogPostPage({
                     <Linkedin className="h-4 w-4" />
                   </a>
                 </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
+                <CopyLinkButton
+                  url={shareUrl}
                   className="h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-                  onClick={() => navigator.clipboard.writeText(shareUrl)}
-                >
-                  <Link2 className="h-4 w-4" />
-                </Button>
+                />
               </div>
 
               <Separator className="my-4" />

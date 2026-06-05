@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Suspense } from 'react'
 import { Outfit, DM_Sans, Inter } from 'next/font/google'
 import Script from 'next/script'
 import { AuthProvider } from '@/components/auth/AuthProvider'
@@ -310,7 +311,9 @@ export default function RootLayout({
         >
           <Providers>
             {/* Analytics tracking */}
-            <AnalyticsProvider />
+            <Suspense fallback={null}>
+              <AnalyticsProvider />
+            </Suspense>
 
             {/* Main content */}
             <main id="main-content" className="relative">

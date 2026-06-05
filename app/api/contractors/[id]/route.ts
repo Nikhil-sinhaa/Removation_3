@@ -35,9 +35,9 @@ export async function GET(
         }
 
         const isOwner = authUser && contractor.userId && (
-            (contractor.userId as any)._id 
-                ? (contractor.userId as any)._id.toString() === authUser._id.toString() 
-                : contractor.userId.toString() === authUser._id.toString()
+            (contractor.userId as any)._id
+                ? (contractor.userId as any)._id.toString() === authUser.id.toString()
+                : contractor.userId.toString() === authUser.id.toString()
         );
 
         if (!isOwner && (!contractor.isVerified || !contractor.isActive)) {

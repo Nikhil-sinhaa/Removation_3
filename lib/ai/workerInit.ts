@@ -10,6 +10,7 @@ import { QueueWorker } from '@/lib/ai/queueWorker';
 let workerStarted = false;
 
 export function ensureWorkerRunning(): void {
+  if (process.env.DISABLE_QUEUE === 'true') return;
   if (workerStarted) return;
   workerStarted = true;
 

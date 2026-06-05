@@ -37,9 +37,9 @@ export function StylePicker({
   const [selectedCategory, setSelectedCategory] = useState<StyleCategory | 'all' | 'popular' | 'indian'>('all');
 
   const categories = useMemo(() => {
-    const items = [
-      { id: 'all' as const, label: 'All Styles', labelHi: 'सभी शैलियाँ' },
-      { id: 'popular' as const, label: 'Popular', labelHi: 'लोकप्रिय' },
+    const items: Array<{ id: 'all' | 'popular' | 'indian' | StyleCategory; label: string; labelHi: string }> = [
+      { id: 'all', label: 'All Styles', labelHi: 'सभी शैलियाँ' },
+      { id: 'popular', label: 'Popular', labelHi: 'लोकप्रिय' },
       ...Object.entries(STYLE_CATEGORIES).map(([id, { name, nameHi }]) => ({
         id: id as StyleCategory,
         label: name,

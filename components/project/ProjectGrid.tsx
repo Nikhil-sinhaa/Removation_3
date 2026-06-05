@@ -374,17 +374,18 @@ export function ProjectGrid({
               ? "Try adjusting your search or filters"
               : "Create your first project to get started with AI-powered design"
           }
-          action={
+          actionLabel={
             onCreateNew && !searchQuery && !hasActiveFilters
-              ? {
-                  label: "Create Project",
-                  onClick: onCreateNew,
-                }
+              ? "Create Project"
               : hasActiveFilters
-              ? {
-                  label: "Clear Filters",
-                  onClick: clearFilters,
-                }
+              ? "Clear Filters"
+              : undefined
+          }
+          onAction={
+            onCreateNew && !searchQuery && !hasActiveFilters
+              ? onCreateNew
+              : hasActiveFilters
+              ? clearFilters
               : undefined
           }
         />

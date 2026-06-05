@@ -45,12 +45,7 @@ const features = [
     color: 'from-green-500 to-emerald-500',
     tag: '₹ & $ Support',
   },
-  {
-    icon: Eraser,
-    title: 'Object Removal',
-    description: 'Remove unwanted furniture or objects and fill with AI-generated content.',
-    color: 'from-pink-500 to-rose-500',
-  },
+
   {
     icon: Paintbrush,
     title: 'Inpainting',

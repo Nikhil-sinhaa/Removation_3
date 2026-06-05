@@ -40,6 +40,8 @@ export interface VastuAnalysis {
   // Suggestions
   suggestions: VastuSuggestion[];
   autoFixAvailable: boolean;
+  positiveAspects?: any[];
+  compass?: any;
 
   // Room details
   roomDirection: CompassDirection | null;
