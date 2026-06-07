@@ -4,13 +4,12 @@
  */
 
 import { NextResponse } from 'next/server';
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 export async function GET() {
   try {
-    const comfyUIUrl = process.env.COMFYUI_URL || 'http://127.0.0.1:8188';
-    
-    const response = await fetch(`${comfyUIUrl}/system_stats`, {
-      timeout: 3000
+    const response = await fetch(`${getActiveComfyBaseUrl()}/system_stats`, {
+      signal: AbortSignal.timeout(3000),
     });
 
     if (!response.ok) {

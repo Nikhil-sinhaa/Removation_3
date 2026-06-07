@@ -3,9 +3,19 @@ import { connectToDatabase } from '@/lib/db/mongodb';
 import { User } from '@/lib/db/models/User';
 import { verifyOtp } from '@/lib/auth/otp';
 import { issueJwt } from '@/lib/auth/jwt';
+import { rateLimiters } from '@/lib/redis/rateLimit';
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? '127.0.0.1';
+    const rl = await rateLimiters.auth(ip);
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { message: 'Too many attempts. Please try again later.' },
+        { status: 429 }
+      );
+    }
+
     const { email, otp } = await req.json();
 
     if (!email || !otp) {

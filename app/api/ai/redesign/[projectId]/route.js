@@ -9,7 +9,7 @@
  */
 
 import { connectDB } from '../../../../../lib/db/mongodb';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import { unlink } from 'fs/promises';
 import path from 'path';
 
@@ -25,7 +25,7 @@ export async function GET(request, { params }) {
   }
 
   try {
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
 
     if (!project) {
       return Response.json({ error: 'Project not found' }, { status: 404 });
@@ -65,7 +65,7 @@ export async function DELETE(request, { params }) {
   }
 
   try {
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
 
     if (!project) {
       return Response.json({ error: 'Project not found' }, { status: 404 });
@@ -83,7 +83,7 @@ export async function DELETE(request, { params }) {
       console.warn('⚠️ Failed to delete files:', fileError.message);
     }
 
-    await Project.findByIdAndDelete(projectId);
+    await AIRun.findByIdAndDelete(projectId);
 
     return Response.json({ message: 'Project deleted successfully' });
   } catch (error) {

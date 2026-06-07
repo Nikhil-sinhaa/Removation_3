@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
-    const project = await Project.create({ name: 'Empty Room', userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-empty-room', aiConfig: { useLama } });
+    const project = await AIRun.create({ name: 'Empty Room', userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-empty-room', aiConfig: { useLama } });
     // Stage 1 provides object_mask for precise furniture detection before removal
     comfyBridge.enqueueSmartTabJob(project._id.toString(), 'empty-room', { imageFilename: fn, objectsToRemove, useLama }).catch((e: any) => console.error('❌ Empty-room error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'empty-room', status: 'queued', useLama });
@@ -80,6 +80,6 @@ export async function GET(request: Request) {
   }
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+  const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

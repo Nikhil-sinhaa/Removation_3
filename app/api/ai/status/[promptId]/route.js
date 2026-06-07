@@ -1,5 +1,5 @@
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 export async function GET(request, { params }) {
@@ -19,7 +19,7 @@ export async function GET(request, { params }) {
     }
 
     // Find project by ID (using promptId as projectId) and verify ownership
-    const project = await Project.findOne({ _id: promptId, userId: authUser.id });
+    const project = await AIRun.findOne({ _id: promptId, userId: authUser.id });
     
     if (!project) {
       return Response.json({ 

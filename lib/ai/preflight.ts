@@ -3,9 +3,9 @@
  * Shared utility used by API routes before enqueueing jobs.
  */
 import { access } from 'fs/promises';
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 const COMFY_BASE = process.env.COMFY_BASE || '/home/nikhil/Documents/Remo2/ComfyUI';
-const COMFY_URL = process.env.COMFY_URL || 'http://127.0.0.1:8188';
 
 /**
  * Verify that IPAdapter + CLIP Vision models are installed.
@@ -27,7 +27,7 @@ export async function checkIPAdapterModels(): Promise<boolean> {
  */
 export async function checkNodeAvailable(className: string): Promise<boolean> {
   try {
-    const res = await fetch(`${COMFY_URL}/object_info/${className}`, {
+    const res = await fetch(`${getActiveComfyBaseUrl()}/object_info/${className}`, {
       signal: AbortSignal.timeout(5000),
     });
     return res.ok;

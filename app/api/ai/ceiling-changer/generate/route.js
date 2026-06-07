@@ -9,7 +9,7 @@
 import { Readable } from 'stream';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db/mongodb';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import CeilingChangerRun from '../../../../../src/models/CeilingChangerRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runCeilingChanger } from '../../../../../src/services/ceilingChangerOrchestrator.js';
@@ -111,7 +111,7 @@ export async function POST(request) {
     }
 
     // ── Create Project document for status polling ──────────────────────────
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: `Ceiling Changer — ${colorName}`,
       userId: authUser.id,
       originalImage: inputImageUrl || '',
@@ -163,7 +163,7 @@ export async function GET(request) {
     return NextResponse.json({ error: 'projectId required' }, { status: 400 });
   }
   try {
-    const project = await Project.findOne({ _id: projectId, userId: authUser.id }).lean();
+    const project = await AIRun.findOne({ _id: projectId, userId: authUser.id }).lean();
     if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     // Also fetch the latest run for this project

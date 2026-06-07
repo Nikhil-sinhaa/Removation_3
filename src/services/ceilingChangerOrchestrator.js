@@ -17,7 +17,7 @@ import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { buildCeilingPrompt, CEILING_NEGATIVE_PROMPT } from '../config/ceilingChangerPrompts.js';
 import CeilingChangerRun from '../models/CeilingChangerRun.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge, { transferComfyFile, ensureInputFile } from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
@@ -251,7 +251,7 @@ export async function runCeilingChanger({
     });
 
     // Update Project
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage: outputImageUrl,
       status: 'completed',
       processingCompletedAt: new Date(),
@@ -281,7 +281,7 @@ export async function runCeilingChanger({
   } catch (error) {
     console.error('❌ Ceiling Changer failed:', error.message);
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Ceiling Changer error: ${error.message}`,
       processingCompletedAt: new Date(),

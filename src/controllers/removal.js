@@ -7,7 +7,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge from '../services/comfyBridge.js';
 import objectRemovalWorkflow from '../workflows/object_removal.json' assert { type: 'json' };
 
@@ -77,7 +77,7 @@ export const removeObject = async (req, res) => {
 
       try {
         // Create project record
-        const project = new Project({
+        const project = new AIRun({
           name: `Remove ${objectName}`,
           userId: req.user?.id || 'demo-user', // Fallback for demo
           originalImage: `/uploads/${req.file.filename}`,
@@ -159,7 +159,7 @@ export const getRemovalStatus = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
     
     if (!project) {
       return res.status(404).json({ 
@@ -202,7 +202,7 @@ export const getRemovalProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId).populate('userId', 'name email');
+    const project = await AIRun.findById(projectId).populate('userId', 'name email');
     
     if (!project) {
       return res.status(404).json({ 
@@ -235,7 +235,7 @@ export const deleteRemovalProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
     
     if (!project) {
       return res.status(404).json({ 
@@ -261,7 +261,7 @@ export const deleteRemovalProject = async (req, res) => {
       console.warn('⚠️ Failed to delete files:', fileError.message);
     }
 
-    await Project.findByIdAndDelete(projectId);
+    await AIRun.findByIdAndDelete(projectId);
 
     res.json({
       message: 'Object removal project deleted successfully'
@@ -315,7 +315,7 @@ export const batchRemoveObjects = async (req, res) => {
         
         // Create a project for each object to remove
         for (const objectName of objectNames) {
-          const project = new Project({
+          const project = new AIRun({
             name: `Remove ${objectName}`,
             userId: req.user?.id || 'demo-user',
             originalImage: `/uploads/${req.file.filename}`,

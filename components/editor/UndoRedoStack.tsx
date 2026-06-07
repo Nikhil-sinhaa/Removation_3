@@ -21,7 +21,7 @@ import {
   Eraser,
   Upload,
   Trash2,
-  Image,
+  Image as ImageIcon,
   Palette,
   DollarSign,
   Home,
@@ -62,7 +62,7 @@ export function UndoRedoStack({ className }: UndoRedoStackProps) {
       case 'cost_update':
         return <DollarSign className="w-3 h-3" />;
       case 'edit':
-        return <Image className="w-3 h-3" />;
+        return <ImageIcon className="w-3 h-3" />;
       default:
         return <History className="w-3 h-3" />;
     }

@@ -16,7 +16,7 @@ import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { buildWallPrompt, NEGATIVE_PROMPT } from '../config/roomChangerPrompts.js';
 import RoomChangerRun from '../models/RoomChangerRun.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge, { ensureInputFile, transferComfyFile } from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
@@ -308,7 +308,7 @@ export async function runRoomChanger({
     });
 
     // Update Project
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage: outputImageUrl,
       status: 'completed',
       processingCompletedAt: new Date(),
@@ -339,7 +339,7 @@ export async function runRoomChanger({
     console.error('❌ Room Changer failed:', error.message);
 
     // Partial state already saved — Stage 1 outputs remain for retry
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Room Changer error: ${error.message}`,
       processingCompletedAt: new Date(),

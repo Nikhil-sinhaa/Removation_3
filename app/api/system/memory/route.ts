@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs';
+import { requireRole } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +9,10 @@ export const dynamic = 'force-dynamic';
  * Returns current system RAM and process memory stats.
  * Used for health monitoring and debugging OOM conditions.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authResult = await requireRole(req, ['admin']);
+  if (authResult instanceof NextResponse) return authResult;
+
   const mem = process.memoryUsage();
   try {
     const raw = fs.readFileSync('/proc/meminfo', 'utf8');

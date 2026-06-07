@@ -7,7 +7,10 @@ import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
 
 import { getFreeCreditsOnSignup } from '@/lib/ai/appMode';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
+const JWT_SECRET = process.env.JWT_SECRET!;
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required.');
+}
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export async function GET(req: Request) {
@@ -133,21 +136,26 @@ export async function GET(req: Request) {
     let postLoginRedirect = '/dashboard';
 
     // Read and verify the OAuth state JWT (CSRF + redirect).
-    // On any failure: still log the user in, just send them to '/'.
+    // On any failure: redirect to sign-in with invalid_state.
     // On success: re-validate the redirect path as defense in depth.
     const stateParam = searchParams.get('state');
-    if (stateParam) {
-      try {
-        const payload = jwt.verify(stateParam, JWT_SECRET) as { csrf?: string; redirect?: unknown };
-        // Re-validate redirect with isSafeRedirectPath (defense in depth).
-        if (isSafeRedirectPath(payload.redirect)) {
-          postLoginRedirect = payload.redirect;
-        }
-      } catch (err) {
-        // Verification failed (bad signature, expired, malformed) — fall back to '/dashboard'.
-        // This is expected for tampered or timed-out state params.
-        console.warn('OAuth state verification failed, redirecting to /dashboard:', (err as Error).message);
+    if (!stateParam) {
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/sign-in?error=invalid_state`
+      );
+    }
+
+    try {
+      const payload = jwt.verify(stateParam, JWT_SECRET) as { csrf?: string; redirect?: unknown };
+      // Re-validate redirect with isSafeRedirectPath (defense in depth).
+      if (isSafeRedirectPath(payload.redirect)) {
+        postLoginRedirect = payload.redirect;
       }
+    } catch (err) {
+      console.warn('OAuth state verification failed:', err);
+      return NextResponse.redirect(
+        `${process.env.NEXT_PUBLIC_APP_URL}/sign-in?error=invalid_state`
+      );
     }
 
     // Safety net: never redirect to bare '/' — the marketing homepage doesn't show

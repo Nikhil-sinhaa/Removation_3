@@ -11,7 +11,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge from '../services/comfyBridge.js';
 import redesignWorkflow from '../workflows/redesign.json' assert { type: 'json' };
 
@@ -81,7 +81,7 @@ export const redesignRoom = async (req, res) => {
 
       try {
         // Create project record
-        const project = new Project({
+        const project = new AIRun({
           name: `${style} ${roomType} Redesign`,
           userId: req.user?.id || 'demo-user', // Fallback for demo
           originalImage: `/uploads/${req.file.filename}`,
@@ -264,7 +264,7 @@ export const getRedesignStatus = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
     
     if (!project) {
       return res.status(404).json({ 
@@ -307,7 +307,7 @@ export const getRedesignProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId).populate('userId', 'name email');
+    const project = await AIRun.findById(projectId).populate('userId', 'name email');
     
     if (!project) {
       return res.status(404).json({ 
@@ -340,7 +340,7 @@ export const deleteRedesignProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
     
     if (!project) {
       return res.status(404).json({ 
@@ -366,7 +366,7 @@ export const deleteRedesignProject = async (req, res) => {
       console.warn('⚠️ Failed to delete files:', fileError.message);
     }
 
-    await Project.findByIdAndDelete(projectId);
+    await AIRun.findByIdAndDelete(projectId);
 
     res.json({
       message: 'Project deleted successfully'

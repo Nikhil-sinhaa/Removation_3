@@ -235,6 +235,7 @@ export function ObjectRemovalSidebar({ imageUrl, onImageUpdate }: {
           <img
             ref={imageRef}
             src={imageUrl}
+            alt=""
             className="hidden"
             crossOrigin="anonymous"
             onLoad={() => {

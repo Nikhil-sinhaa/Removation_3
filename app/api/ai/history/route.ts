@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/db/mongodb";
-import Project from "@/lib/db/models/Project";
+// AIRun is the AI render tracking model (collection: 'projects')
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const AIRun = require("../../../../src/models/AIRun.js").default;
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { existsSync } from 'fs';
 import path from 'path';
@@ -19,7 +21,7 @@ export async function GET(request: Request) {
     await connectDB();
 
     // Only fetch completed projects belonging to the authenticated user
-    const projects = await Project.find({
+    const projects = await AIRun.find({
       userId: authUser.id,
       processingType: { $in: ['redesign', 'room-changer', 'furniture-remover', 'ceiling-changer', 'floor-plan', 'multi-room-3d', 'furniture-placement', 'lighting', 'tool-style-transfer'] },
       status: 'completed',

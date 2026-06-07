@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import FurnitureRemoverRun from '../models/FurnitureRemoverRun.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
@@ -109,7 +109,7 @@ export async function runFurnitureRemover({
       ...(promptId && { $push: { comfyPromptIds: promptId } }),
     });
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage: outputImageUrl,
       status: 'completed',
       processingCompletedAt: new Date(),
@@ -138,7 +138,7 @@ export async function runFurnitureRemover({
   } catch (error) {
     console.error('❌ FurnitureRemover failed:', error.message);
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Furniture Remover error: ${error.message}`,
       processingCompletedAt: new Date(),
@@ -183,7 +183,7 @@ export async function runManualFurnitureErase({
   let run;
 
   try {
-    const project = await Project.findById(projectId).lean();
+    const project = await AIRun.findById(projectId).lean();
     const inputImageUrl = project?.originalImage || '';
 
     run = await FurnitureRemoverRun.create({
@@ -233,7 +233,7 @@ export async function runManualFurnitureErase({
       ...(promptId && { $push: { comfyPromptIds: promptId } }),
     });
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage: outputImageUrl,
       status: 'completed',
       processingCompletedAt: new Date(),
@@ -262,7 +262,7 @@ export async function runManualFurnitureErase({
   } catch (error) {
     console.error('❌ Manual FurnitureRemover failed:', error.message);
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Furniture Remover error: ${error.message}`,
       processingCompletedAt: new Date(),

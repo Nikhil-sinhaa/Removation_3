@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db/mongodb';
 import MultiRoomProject from '../../../../../src/models/MultiRoomProject.js';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 
 export const runtime = 'nodejs';
@@ -28,15 +28,15 @@ export async function GET(req, { params }) {
 
   // Try direct MultiRoomProject lookup first
   try {
-    multiRoomProject = await MultiRoomProject.findById(projectId);
+    multiRoomProject = await MultiRoomAIRun.findById(projectId);
   } catch (e) {}
 
   // If not found, look up via main Project aiConfig
   if (!multiRoomProject) {
     try {
-      const mainProject = await Project.findById(projectId);
+      const mainProject = await AIRun.findById(projectId);
       if (mainProject?.aiConfig?.multiRoomProjectId) {
-        multiRoomProject = await MultiRoomProject.findById(
+        multiRoomProject = await MultiRoomAIRun.findById(
           mainProject.aiConfig.multiRoomProjectId
         );
       }

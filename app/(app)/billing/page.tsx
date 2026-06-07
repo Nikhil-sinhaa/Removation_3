@@ -1150,7 +1150,7 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {[
                   { credits: 50, price: { usd: 10, inr: 799 }, bonus: 0 },
                   { credits: 100, price: { usd: 18, inr: 1499 }, bonus: 5, popular: true },

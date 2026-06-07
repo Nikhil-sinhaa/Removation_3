@@ -4,7 +4,6 @@ const nextConfig = {
 
   // Enable instrumentation.ts — starts the memory watchdog on server boot
   experimental: {
-    instrumentationHook: true,
   },
 
   images: {

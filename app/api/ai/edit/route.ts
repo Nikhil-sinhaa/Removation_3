@@ -10,7 +10,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     await mkdir(uploadsDir, { recursive: true });
     await writeFile(path.join(uploadsDir, imgFilename), imgBuffer);
 
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: `Edit — ${roomType}`,
       userId: finalUserId,
       originalImage: `/uploads/${imgFilename}`,
@@ -169,7 +169,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const projectId = searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findById(projectId);
+  const project = await AIRun.findById(projectId);
   if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   return NextResponse.json(project);
 }

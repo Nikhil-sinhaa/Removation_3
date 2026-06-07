@@ -9,7 +9,7 @@
 import { Readable } from 'stream';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db/mongodb';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import FurniturePlacementRun from '../../../../../src/models/FurniturePlacementRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runFurniturePlacement } from '../../../../../src/services/furniturePlacementOrchestrator.js';
@@ -125,7 +125,7 @@ export async function POST(request) {
     } = await saveFile(furnitureFile, 'furnplacement_furniture');
 
     // ── Create Project + Run documents ────────────────────────────────────────
-    const project = await Project.create({
+    const project = await AIRun.create({
       name:           'Furniture Placement',
       userId:         finalUserId,
       originalImage:  roomImageUrl,

@@ -9,7 +9,7 @@
 import WebSocket from 'ws';
 import { Server } from 'socket.io';
 import http from 'http';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 
 const LOCAL_HOST = '127.0.0.1';
 const LOCAL_PORT = '8188';
@@ -78,6 +78,8 @@ class ComfyBridgeService {
     this.queue = [];
     this.isProcessingQueue = false;
     this._ultraProRunning = false;  // Gap 4: concurrent job guard
+    this._reconnectTimer = null;    // Leak fix: cancellable reconnect timer
+    this._queueTimer = null;        // Leak fix: cancellable queue timer
 
     // ── ComfyUI URLs — resolved dynamically from gpu-mode-router ─────────────
     // Always call this.getComfyRestUrl() / this.getComfyWsUrl() instead of
@@ -188,6 +190,7 @@ class ComfyBridgeService {
         console.log('🔌 Disconnected from ComfyUI');
         this.comfyUIConnected = false;
         this.currentProcessing = null;
+        this._activeProgressCallback = null; // Leak fix: clear stuck callback on disconnect
         this.notifyFrontend('comfy:status', { status: 'disconnected' });
         this.attemptReconnect();
       });
@@ -320,7 +323,7 @@ class ComfyBridgeService {
 
       // 3. Update MongoDB
       const imageUrl = `/renders/${filename}` 
-      await Project.findByIdAndUpdate(this.currentProcessing.projectId, {
+      await AIRun.findByIdAndUpdate(this.currentProcessing.projectId, {
         resultImage: imageUrl,
         status: 'completed',
         processingCompletedAt: new Date()
@@ -342,6 +345,11 @@ class ComfyBridgeService {
         projectId: this.currentProcessing.projectId
       });
     } finally {
+      await this._flushVRAM();
+      if (global.gc) {
+        global.gc();
+        console.log('[ComfyBridge] GC triggered');
+      }
       this.currentProcessing = null;
       this.processQueue();
     }
@@ -369,7 +377,7 @@ class ComfyBridgeService {
       if (polls > maxPolls) {
         console.warn(`⏰ Polling timeout for prompt ${promptId}`);
         clearInterval(interval);
-        await Project.findByIdAndUpdate(projectId, {
+        await AIRun.findByIdAndUpdate(projectId, {
           status: 'failed',
           errorMessage: 'Generation timed out after 5 minutes',
           processingCompletedAt: new Date()
@@ -395,7 +403,7 @@ class ComfyBridgeService {
         if (status.status_str === 'error' || (status.messages || []).some(m => m[0] === 'execution_error')) {
           console.error(`❌ ComfyUI execution error for prompt ${promptId}`);
           clearInterval(interval);
-          await Project.findByIdAndUpdate(projectId, {
+          await AIRun.findByIdAndUpdate(projectId, {
             status: 'failed',
             errorMessage: 'ComfyUI execution error — check VRAM or workflow',
             processingCompletedAt: new Date()
@@ -433,7 +441,12 @@ class ComfyBridgeService {
         message: `Execution error: ${error}`,
         projectId: this.currentProcessing.projectId
       });
-      
+
+      await this._flushVRAM();
+      if (global.gc) {
+        global.gc();
+        console.log('[ComfyBridge] GC triggered');
+      }
       this.currentProcessing = null;
       this.processQueue();
     }
@@ -604,7 +617,7 @@ class ComfyBridgeService {
    */
   async updateProjectResult(projectId, imageUrl, status) {
     try {
-      const project = await Project.findById(projectId);
+      const project = await AIRun.findById(projectId);
       if (project) {
         project.resultImage = imageUrl;
         project.status = status;
@@ -805,7 +818,7 @@ class ComfyBridgeService {
     } finally {
       this.isProcessingQueue = false;
       // Process next job after short delay
-      setTimeout(() => this.processQueue(), 1000);
+      this._queueTimer = setTimeout(() => this.processQueue(), 1000);
     }
   }
 
@@ -831,7 +844,7 @@ class ComfyBridgeService {
       
       console.log(`🔄 Reconnecting to ComfyUI in ${delay}ms (attempt ${this.reconnectAttempts})`);
       
-      setTimeout(() => {
+      this._reconnectTimer = setTimeout(() => {
         this.connectToComfyUI();
       }, delay);
     } else {
@@ -854,6 +867,22 @@ class ComfyBridgeService {
       currentProcessing: this.currentProcessing,
       reconnectAttempts: this.reconnectAttempts
     };
+  }
+
+  /**
+   * Gracefully stop the bridge: cancel pending timers and clear callbacks.
+   */
+  stop() {
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer);
+      this._reconnectTimer = null;
+    }
+    if (this._queueTimer) {
+      clearTimeout(this._queueTimer);
+      this._queueTimer = null;
+    }
+    this._activeProgressCallback = null;
+    console.log('[ComfyBridge] Stopped — timers cleared');
   }
 
   /**
@@ -1058,6 +1087,7 @@ class ComfyBridgeService {
         timings.stage6 = Date.now() - t0;
 
         this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 6, status: 'done', ms: timings.stage6 });
+        await this._flushVRAM(); // Flush after final stage
       }
 
       // ═══ FINAL: Copy result to public/renders + update MongoDB ═══
@@ -1106,7 +1136,7 @@ class ComfyBridgeService {
       }
 
       const imageUrl = `/renders/${finalFilename.replace(/\//g, '_')}`;
-      await Project.findByIdAndUpdate(projectId, {
+      await AIRun.findByIdAndUpdate(projectId, {
         resultImage: imageUrl,
         status: 'completed',
         processingCompletedAt: new Date(),
@@ -1125,7 +1155,7 @@ class ComfyBridgeService {
 
     } catch (error) {
       console.error('❌ Ultra-Pro pipeline failed:', error.message);
-      await Project.findByIdAndUpdate(projectId, {
+      await AIRun.findByIdAndUpdate(projectId, {
         status: 'failed',
         errorMessage: `Ultra-Pro pipeline error: ${error.message}`,
         processingCompletedAt: new Date(),
@@ -1133,6 +1163,11 @@ class ComfyBridgeService {
       this.notifyFrontend('comfy:ultrapro:error', { projectId, error: error.message });
       return { success: false, error: error.message };
     } finally {
+      await this._flushVRAM();
+      if (global.gc) {
+        global.gc();
+        console.log('[ComfyBridge] GC triggered');
+      }
       this._ultraProRunning = false;  // Release mutex
       // Resume regular queue if jobs are pending
       if (this.queue.length > 0) {
@@ -1308,7 +1343,7 @@ class ComfyBridgeService {
       }
 
       const imageUrl = `/renders/${safeName}`;
-      await Project.findByIdAndUpdate(projectId, {
+      await AIRun.findByIdAndUpdate(projectId, {
         resultImage: imageUrl,
         status: 'completed',
         processingCompletedAt: new Date(),
@@ -1325,7 +1360,7 @@ class ComfyBridgeService {
 
     } catch (error) {
       console.error(`❌ Tab ${tab} failed:`, error.message);
-      await Project.findByIdAndUpdate(projectId, {
+      await AIRun.findByIdAndUpdate(projectId, {
         status: 'failed',
         errorMessage: `Tab ${tab} error: ${error.message}`,
         processingCompletedAt: new Date(),
@@ -1333,6 +1368,11 @@ class ComfyBridgeService {
       this.notifyFrontend('comfy:tab:error', { projectId, tab, error: error.message });
       return { success: false, error: error.message };
     } finally {
+      await this._flushVRAM();
+      if (global.gc) {
+        global.gc();
+        console.log('[ComfyBridge] GC triggered');
+      }
       this._ultraProRunning = false;  // Release mutex
       if (this.queue.length > 0) {
         setTimeout(() => this.processQueue(), 2000);
@@ -1450,7 +1490,7 @@ class ComfyBridgeService {
 
     } catch (error) {
       console.error(`❌ SmartTab ${tab} failed:`, error.message);
-      await Project.findByIdAndUpdate(projectId, {
+      await AIRun.findByIdAndUpdate(projectId, {
         status: 'failed',
         errorMessage: `SmartTab ${tab} error: ${error.message}`,
         processingCompletedAt: new Date(),
@@ -1581,8 +1621,8 @@ class ComfyBridgeService {
         },
         body: JSON.stringify({ unload_models: true, free_memory: true }),
       });
-      await new Promise(r => setTimeout(r, 1000));
-      console.log('🧹 VRAM flushed');
+      await new Promise(r => setTimeout(r, 2000));
+      console.log('[ComfyBridge] VRAM flushed');
     } catch (e) {
       console.warn('⚠️ VRAM flush failed:', e.message);
     }

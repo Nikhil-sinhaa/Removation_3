@@ -19,6 +19,7 @@ const PERMANENT_ERROR_CODES = [
   'forbidden',
   'validation_error',
   'not_found',
+  'generation function expired',
 ]
 
 function isTransientError(err: unknown): boolean {

@@ -32,8 +32,8 @@ export async function GET(req, { params }) {
   // Try via main Project metadata or aiConfig
   if (!project) {
     try {
-      const { default: Project } = await import('@/src/models/Project');
-      const mainProject = await Project.findById(projectId);
+      const { default: AIRun } = await import('@/src/models/AIRun');
+      const mainProject = await AIRun.findById(projectId);
       const multiRoomProjectId = mainProject?.metadata?.multiRoomProjectId || mainProject?.aiConfig?.multiRoomProjectId;
       if (multiRoomProjectId) {
         project = await MultiRoomProject.findById(multiRoomProjectId);

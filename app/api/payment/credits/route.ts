@@ -1,5 +1,6 @@
 // app/api/payment/credits/route.ts
 import { getCurrentUser } from '@/lib/auth/jwt';
+import { requireRole } from '@/lib/auth/requireRole';
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import Razorpay from 'razorpay';
@@ -219,6 +220,9 @@ export async function POST(req: NextRequest) {
 // PUT - Use credits (internal API for deducting credits)
 export async function PUT(req: NextRequest) {
     try {
+        const authResult = await requireRole(req, ['admin']);
+        if (authResult instanceof NextResponse) return authResult;
+
         const authUser = await getCurrentUser();
   const userId = authUser?.id;
 

@@ -1,6 +1,7 @@
 // lib/ai/comfyui.ts
 import axios from 'axios';
 import { createInteriorDesignWorkflow, createInpaintingWorkflow, getRoomTypePrompt, getModePrompt, STYLE_CONFIGS } from './comfyui-workflows';
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 export interface ComfyUIInput {
   image: string; // URL or base64
@@ -31,11 +32,9 @@ export interface ComfyUIOutput {
 }
 
 class ComfyUIClient {
-  private baseUrl: string;
   private clientId: string;
 
   constructor() {
-    this.baseUrl = process.env.COMFYUI_URL || 'http://127.0.0.1:8188';
     this.clientId = `removation-${Date.now()}`;
   }
 
@@ -43,7 +42,7 @@ class ComfyUIClient {
     try {
       // If it's already a data URL, return as-is
       if (imageUrl.startsWith('data:')) {
-        const response = await axios.post(`${this.baseUrl}/view/upload`, {
+        const response = await axios.post(`${getActiveComfyBaseUrl()}/view/upload`, {
           image: imageUrl,
           overwrite: true
         }, {
@@ -61,7 +60,7 @@ class ComfyUIClient {
       const mimeType = imageResponse.headers['content-type'] || 'image/jpeg';
       const dataUrl = `data:${mimeType};base64,${base64}`;
 
-      const uploadResponse = await axios.post(`${this.baseUrl}/view/upload`, {
+      const uploadResponse = await axios.post(`${getActiveComfyBaseUrl()}/view/upload`, {
         image: dataUrl,
         overwrite: true
       }, {
@@ -81,7 +80,7 @@ class ComfyUIClient {
     const roomTypePrompt = getRoomTypePrompt(input.roomType);
     const modePrompt = getModePrompt(input.mode);
     const fullPrompt = `${roomTypePrompt}, ${modePrompt}, ${input.prompt}`;
-    
+
     return createInteriorDesignWorkflow({
       mode: input.mode,
       style: input.style,
@@ -101,8 +100,8 @@ class ComfyUIClient {
 
   private async getWorkflowImage(workflowId: string): Promise<string> {
     try {
-      const response = await axios.get(`${this.baseUrl}/view?filename=${workflowId}.png`);
-      return `${this.baseUrl}/view?filename=${workflowId}.png`;
+      const response = await axios.get(`${getActiveComfyBaseUrl()}/view?filename=${workflowId}.png`);
+      return `${getActiveComfyBaseUrl()}/view?filename=${workflowId}.png`;
     } catch (error) {
       console.error('Failed to get workflow image:', error);
       throw new Error('Failed to retrieve generated image');
@@ -111,22 +110,22 @@ class ComfyUIClient {
 
   async generate(input: ComfyUIInput): Promise<ComfyUIOutput> {
     const startTime = Date.now();
-    
+
     try {
       // Upload input image
       const imageName = await this.uploadImage(input.image);
-      
+
       // Create workflow
       const workflow = this.createWorkflow({ ...input, image: imageName });
 
       // Submit workflow to ComfyUI
-      const promptResponse = await axios.post(`${this.baseUrl}/prompt`, {
+      const promptResponse = await axios.post(`${getActiveComfyBaseUrl()}/prompt`, {
         prompt: workflow,
         client_id: this.clientId
       });
 
       const promptId = promptResponse.data.prompt_id;
-      
+
       // Poll for completion
       let completed = false;
       let attempts = 0;
@@ -134,20 +133,20 @@ class ComfyUIClient {
 
       while (!completed && attempts < maxAttempts) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        
+
         try {
-          const historyResponse = await axios.get(`${this.baseUrl}/history/${promptId}`);
+          const historyResponse = await axios.get(`${getActiveComfyBaseUrl()}/history/${promptId}`);
           const history = historyResponse.data[promptId];
-          
+
           if (history) {
             completed = history.outputs !== undefined;
-            
+
             if (completed && history.outputs) {
               const outputImages = history.outputs['7']?.images || [];
               if (outputImages.length > 0) {
                 const filename = outputImages[0].filename;
-                const imageUrl = `${this.baseUrl}/view?filename=${filename}`;
-                
+                const imageUrl = `${getActiveComfyBaseUrl()}/view?filename=${filename}`;
+
                 return {
                   output: imageUrl,
                   processingTime: Date.now() - startTime,
@@ -159,7 +158,7 @@ class ComfyUIClient {
         } catch (error) {
           console.log(`Attempt ${attempts + 1}: Checking workflow status...`);
         }
-        
+
         attempts++;
       }
 
@@ -173,7 +172,7 @@ class ComfyUIClient {
 
   async checkHealth(): Promise<boolean> {
     try {
-      const response = await axios.get(`${this.baseUrl}/system_stats`, { timeout: 5000 });
+      const response = await axios.get(`${getActiveComfyBaseUrl()}/system_stats`, { timeout: 5000 });
       return response.status === 200;
     } catch (error) {
       return false;
@@ -182,7 +181,7 @@ class ComfyUIClient {
 
   async getQueueStatus(): Promise<any> {
     try {
-      const response = await axios.get(`${this.baseUrl}/queue`);
+      const response = await axios.get(`${getActiveComfyBaseUrl()}/queue`);
       return response.data;
     } catch (error) {
       console.error('Failed to get queue status:', error);
@@ -203,7 +202,7 @@ export function getComfyUIClient(): ComfyUIClient {
 
 export async function generateWithComfyUI(input: ComfyUIInput): Promise<ComfyUIOutput> {
   const client = getComfyUIClient();
-  
+
   // Check if ComfyUI is running
   const isHealthy = await client.checkHealth();
   if (!isHealthy) {

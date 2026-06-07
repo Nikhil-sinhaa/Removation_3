@@ -26,7 +26,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
 import { connectDB } from '../../../../lib/db/mongodb';
-import Project from '../../../../src/models/Project.js';
+import AIRun from '../../../../src/models/AIRun.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -171,6 +171,17 @@ export async function POST(request) {
     const authUser = await getCurrentUser();
     const finalUserId = authUser?.id || null;
 
+    // ── Credit check (PAY-02) ────────────────────────────────────────────────
+    if (finalUserId) {
+      const creditResult = await checkAndDeductCredits(finalUserId, 'ultra-pro');
+      if (!creditResult.success) {
+        return NextResponse.json(
+          { error: 'insufficient_credits', reason: creditResult.reason },
+          { status: 402 }
+        );
+      }
+    }
+
     const queueDepth = await getQueueDepth();
     if (queueDepth >= 10) {
       return Response.json(
@@ -179,7 +190,7 @@ export async function POST(request) {
       );
     }
 
-    const project = await Project.create({
+    const project = await AIRun.create({
       name:           `Ultra-Pro ${roomType}`,
       userId:         finalUserId,
       originalImage:  previewUrl,
@@ -243,7 +254,7 @@ export async function GET(request) {
     return Response.json({ error: 'projectId required' }, { status: 400 });
   }
 
-  const project = await Project.findById(projectId);
+  const project = await AIRun.findById(projectId);
   if (!project) {
     return Response.json({ error: 'Project not found' }, { status: 404 });
   }

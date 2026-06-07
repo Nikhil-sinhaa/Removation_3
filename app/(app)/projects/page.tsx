@@ -1232,7 +1232,7 @@ export default function ProjectsPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="max-w-7xl mx-auto pb-8"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8"
       >
         {/* Header */}
         <motion.div
@@ -1489,8 +1489,8 @@ export default function ProjectsPage() {
               exit={{ opacity: 0, y: -10, height: 0 }}
               className="mb-4"
             >
-              <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+              <div className="bg-violet-50 border border-violet-200 rounded-xl p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Checkbox
                     checked={selectedProjects.size === filteredProjects.length}
                     onCheckedChange={selectAll}
@@ -1506,19 +1506,19 @@ export default function ProjectsPage() {
                   </button>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
                     <Download className="w-4 h-4" />
                     {language === 'hi' ? 'निर्यात करें' : 'Export'}
                   </Button>
-                  <Button variant="outline" size="sm" className="gap-2">
+                  <Button variant="outline" size="sm" className="gap-2 flex-1 sm:flex-none">
                     <Archive className="w-4 h-4" />
                     {language === 'hi' ? 'संग्रह करें' : 'Archive'}
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
-                    className="gap-2"
+                    className="gap-2 flex-1 sm:flex-none"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="w-4 h-4" />

@@ -1,9 +1,13 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getRedisClient } from '@/lib/redis/client';
+import { requireRole } from '@/lib/auth/requireRole';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authResult = await requireRole(req, ['admin']);
+  if (authResult instanceof NextResponse) return authResult;
+
   try {
     const client = getRedisClient();
     const start = Date.now();

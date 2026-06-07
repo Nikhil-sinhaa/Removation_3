@@ -41,7 +41,7 @@ export function createMasterSelectorWorkflow(request: MasterGenerationRequest) {
 
 
   if (useArchAi3d) {
-    return createArchAi3dWorkflow(request);
+    throw new Error('ArchAi3d nodes are not installed. Set useArchAi3d to false.');
   }
 
   // Master Selector Workflow with String Concatenation

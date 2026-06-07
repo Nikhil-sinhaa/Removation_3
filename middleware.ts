@@ -22,6 +22,7 @@ const PUBLIC_PREFIXES = [
   '/api/webhooks',
   '/api/uploadthing',
   '/api/auth',
+  '/api/health',
   '/api/stats/public',
   '/api/designers',
   '/api/contractors',

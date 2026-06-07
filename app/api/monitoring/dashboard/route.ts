@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { comfyUIMonitor } from "@/lib/ai/comfyui-monitoring";
 import { comfyUIErrorLogger } from "@/lib/ai/comfyui-errors";
+import { requireRole } from '@/lib/auth/requireRole';
 
 export async function GET(req: NextRequest) {
+  const authResult = await requireRole(req, ['admin']);
+  if (authResult instanceof NextResponse) return authResult;
+
   try {
     const health = await comfyUIMonitor.checkSystemHealth();
     const recentErrors = comfyUIErrorLogger.getRecentErrors(20);

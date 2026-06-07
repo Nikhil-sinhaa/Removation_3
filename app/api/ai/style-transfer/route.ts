@@ -13,7 +13,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import { runStyleTransfer } from '@/src/services/styleTransferOrchestrator';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -43,18 +43,18 @@ export async function POST(request: Request) {
     }
 
     // ── Preset & reference metadata ─────────────────────────────────────────
-    const presetId         = (formData.get('presetId')       || formData.get('stylePreset') || 'japandi') as string;
-    const roomType         = (formData.get('roomType')        || 'livingroom') as string;
-    const variantId        = (formData.get('variantId')       || '') as string;
-    const referenceId      = (formData.get('referenceId')     || '') as string;
-    const promptOverride   = (formData.get('prompt')          || '') as string;
-    const negativeOverride = (formData.get('negativePrompt')  || '') as string;
-    const strength         = parseFloat((formData.get('strength') || '0.7') as string);
+    const presetId = (formData.get('presetId') || formData.get('stylePreset') || 'japandi') as string;
+    const roomType = (formData.get('roomType') || 'livingroom') as string;
+    const variantId = (formData.get('variantId') || '') as string;
+    const referenceId = (formData.get('referenceId') || '') as string;
+    const promptOverride = (formData.get('prompt') || '') as string;
+    const negativeOverride = (formData.get('negativePrompt') || '') as string;
+    const strength = parseFloat((formData.get('strength') || '0.7') as string);
     const preserveStructure = (formData.get('preserveStructure') || 'true') === 'true';
 
     // ── Style reference resolution (priority: custom file > legacy URL > auto-pick) ──
     const referenceImageFile = formData.get('referenceImageFile') as File | null;
-    const referenceImageUrl  = (formData.get('referenceImageUrl') || '') as string;
+    const referenceImageUrl = (formData.get('referenceImageUrl') || '') as string;
 
     // Resolve prompt from preset + variant config
     const preset = getPresetById(presetId);
@@ -78,14 +78,14 @@ export async function POST(request: Request) {
     }
 
     const comfyInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
-    const uploadsDir    = path.join(process.cwd(), 'public', 'uploads');
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
 
     await mkdir(comfyInputDir, { recursive: true });
-    await mkdir(uploadsDir,    { recursive: true });
+    await mkdir(uploadsDir, { recursive: true });
 
     const timestamp = Date.now();
-    const roomFn    = `style_room_${timestamp}.png`;
-    let   styleFn   = '';
+    const roomFn = `style_room_${timestamp}.png`;
+    let styleFn = '';
 
     // ── Process room image ───────────────────────────────────────────────────
     const roomBuffer = Buffer.from(await roomImageFile.arrayBuffer());
@@ -95,7 +95,7 @@ export async function POST(request: Request) {
       .toBuffer();
 
     await writeFile(path.join(comfyInputDir, roomFn), processedRoom);
-    await writeFile(path.join(uploadsDir,    roomFn), processedRoom);
+    await writeFile(path.join(uploadsDir, roomFn), processedRoom);
 
     // ── Process style reference image ────────────────────────────────────────
     let styleBuffer: Buffer | null = null;
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
     if (referenceImageFile) {
       // Priority 1: custom uploaded file
       styleBuffer = Buffer.from(await referenceImageFile.arrayBuffer());
-      styleFn     = `style_ref_custom_${timestamp}.png`;
+      styleFn = `style_ref_custom_${timestamp}.png`;
     } else if (referenceImageUrl) {
       // Priority 2: legacy referenceImageUrl field (backward compat)
       try {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
           rawBuf = Buffer.from(await res.arrayBuffer());
         }
         styleBuffer = rawBuf;
-        styleFn     = `style_ref_preset_${timestamp}.png`;
+        styleFn = `style_ref_preset_${timestamp}.png`;
       } catch (err: any) {
         console.error('[StyleTransferRoute] Failed to load reference image:', err.message);
         styleFn = '';
@@ -128,7 +128,7 @@ export async function POST(request: Request) {
       try {
         const localPath = path.join(process.cwd(), 'public', autoRefPath);
         styleBuffer = await import('fs/promises').then(fs => fs.readFile(localPath));
-        styleFn     = `style_ref_auto_${timestamp}.png`;
+        styleFn = `style_ref_auto_${timestamp}.png`;
       } catch (err: any) {
         console.error('[StyleTransferRoute] Failed to load auto reference:', err.message);
         styleFn = '';
@@ -141,11 +141,11 @@ export async function POST(request: Request) {
         .png()
         .toBuffer();
       await writeFile(path.join(comfyInputDir, styleFn), processedStyle);
-      await writeFile(path.join(uploadsDir,    styleFn), processedStyle);
+      await writeFile(path.join(uploadsDir, styleFn), processedStyle);
     }
 
     // ── Create Project record ────────────────────────────────────────────────
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: `Style Transfer (${preset?.label || presetId})`,
       userId: finalUserId,
       originalImage: `/uploads/${roomFn}`,
@@ -216,7 +216,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'projectId is required' }, { status: 400 });
     }
 
-    const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+    const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

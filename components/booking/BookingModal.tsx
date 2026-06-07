@@ -152,6 +152,8 @@ export function BookingModal({
     const [error, setError] = useState<string | null>(null);
     const [successBookingId, setSuccessBookingId] = useState<string | null>(null);
     const [isRazorpayOpen, setIsRazorpayOpen] = useState(false);
+    // Tracks the booking already created so we can inform the user if they dismiss Razorpay
+    const [pendingBookingId, setPendingBookingId] = useState<string | null>(null);
 
     const slots = generateSlots(14);
 
@@ -166,6 +168,7 @@ export function BookingModal({
             setPreferredStartDate('');
             setError(null);
             setSuccessBookingId(null);
+            setPendingBookingId(null);
             setIsLoading(false);
         }
     }, [isOpen, initialProjectDescription]);
@@ -234,6 +237,9 @@ export function BookingModal({
 
             const { bookingId, razorpayOrderId, amount, currency, key } = createData;
 
+            // Track the pending booking so ondismiss can warn the user
+            setPendingBookingId(bookingId);
+
             // 2. Load Razorpay script (idempotent) then open checkout
             await loadRazorpayScript();
 
@@ -246,30 +252,42 @@ export function BookingModal({
                     ? `Consultation with ${designer.displayName}`
                     : `Project with ${designer.displayName}`,
                 order_id: razorpayOrderId,
+                // BUG FIX: handler is called by Razorpay SDK *outside* the outer try/catch,
+                // so any async errors thrown here are unhandled promise rejections that
+                // silently freeze the modal on the 'processing' step.
+                // Fix: wrap the entire handler body in its own try/catch.
                 handler: async function (rzpResponse: {
                     razorpay_payment_id: string;
                     razorpay_order_id: string;
                     razorpay_signature: string;
                 }) {
-                    setIsRazorpayOpen(false);
-                    // 3. Verify payment
-                    const verifyRes = await fetch(`/api/bookings/${bookingId}/payment-verify`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            razorpayPaymentId: rzpResponse.razorpay_payment_id,
-                            razorpayOrderId: rzpResponse.razorpay_order_id,
-                            razorpaySignature: rzpResponse.razorpay_signature,
-                        }),
-                    });
+                    try {
+                        setIsRazorpayOpen(false);
+                        // 3. Verify payment
+                        const verifyRes = await fetch(`/api/bookings/${bookingId}/payment-verify`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                razorpayPaymentId: rzpResponse.razorpay_payment_id,
+                                razorpayOrderId: rzpResponse.razorpay_order_id,
+                                razorpaySignature: rzpResponse.razorpay_signature,
+                            }),
+                        });
 
-                    if (verifyRes.ok) {
-                        setSuccessBookingId(bookingId);
-                        setStep('success');
-                        onSuccess?.(bookingId);
-                    } else {
-                        const vData = await verifyRes.json();
-                        throw new Error(vData.message || 'Payment verification failed');
+                        if (verifyRes.ok) {
+                            setPendingBookingId(null);
+                            setSuccessBookingId(bookingId);
+                            setStep('success');
+                            onSuccess?.(bookingId);
+                        } else {
+                            const vData = await verifyRes.json().catch(() => ({}));
+                            throw new Error(vData.message || 'Payment verification failed');
+                        }
+                    } catch (handlerErr: any) {
+                        setIsRazorpayOpen(false);
+                        setError(handlerErr.message || t('bk_err_payment_failed'));
+                        setStep('error');
+                        setIsLoading(false);
                     }
                 },
                 prefill: {},
@@ -277,10 +295,21 @@ export function BookingModal({
                     color: '#7c3aed',
                 },
                 modal: {
+                    // BUG FIX: Previously returned silently to 'details', letting the user
+                    // click Pay again and create a *second* booking while the first
+                    // pending_payment booking is orphaned.
+                    // Fix: surface an informative error so the user knows what happened.
                     ondismiss: () => {
                         setIsRazorpayOpen(false);
-                        setStep('details');
                         setIsLoading(false);
+                        if (pendingBookingId) {
+                            setError(
+                                'Payment window was closed. Your booking has been reserved — visit My Bookings or try again below. If you were charged, it will be refunded automatically.'
+                            );
+                            setStep('error');
+                        } else {
+                            setStep('details');
+                        }
                     },
                 },
             };

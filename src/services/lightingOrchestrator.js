@@ -2,7 +2,7 @@ import { readFile } from 'fs/promises';
 import fs from 'fs';
 import path from 'path';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import LightingRun from '../models/LightingRun.js';
 import comfyBridge, { ensureInputFile } from './comfyBridge.js';
 
@@ -311,7 +311,7 @@ export async function runLightingWorkflow({
     console.log('ICLIGHTCOND NODE 44:', JSON.stringify(apiGraph['44']));
 
     // Update Project to processing
-    await Project.findByIdAndUpdate(projectId, { status: 'processing', processingStartedAt: new Date() });
+    await AIRun.findByIdAndUpdate(projectId, { status: 'processing', processingStartedAt: new Date() });
 
     emitProgress?.({ step: 'starting', label: preset || 'custom' });
 
@@ -332,7 +332,7 @@ export async function runLightingWorkflow({
     const allUrls = await comfyBridge.getAllOutputUrls(result, saveFilename);
 
     const primaryUrl = allUrls[0] || '';
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage: primaryUrl,
       status: 'completed',
       processingCompletedAt: new Date(),
@@ -390,7 +390,7 @@ export async function runLightingWorkflow({
   } catch (error) {
     console.error('❌ LightingOrchestrator failed:', error.message);
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Lighting failed: ${error.message}`,
       processingCompletedAt: new Date()

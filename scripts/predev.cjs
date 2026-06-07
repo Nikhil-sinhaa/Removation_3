@@ -74,4 +74,18 @@ try {
   // ps failed — non-fatal
 }
 
+
+// ── 5. Check ComfyUI RAM status (async, non-blocking) ────────────────────────
+;(async () => {
+  try {
+    const res = await fetch('http://127.0.0.1:8188/system_stats');
+    const stats = await res.json();
+    if (stats?.system?.ram_free_mb) {
+      console.log(`📊 ComfyUI RAM: ${stats.system.ram_free_mb}MB free`);
+    }
+  } catch {
+    // ComfyUI not running yet — skip
+  }
+})();
+
 console.log('🚀 Starting dev server with memory watchdog...\n');

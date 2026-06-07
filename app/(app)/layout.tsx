@@ -2,6 +2,7 @@
 'use client';
 
 import { ReactNode, useState, useEffect, Suspense } from 'react';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,6 +15,7 @@ import { SearchBar } from '@/components/search/SearchBar';
 import { AnnouncementBanner } from '@/components/announcements/AnnouncementBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useMobile } from '@/hooks/useMobile';
 
 import {
   Home,
@@ -138,6 +140,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isLoading: isLoaded } = useAuth();
+  const { isMobile } = useMobile();
   const plan = user?.plan || user?.subscription?.plan || 'free';
   const MAX_CREDITS = plan === 'pro' ? 500 : plan === 'team' ? 1000 : 50;
   const remainingPercent = Math.min(
@@ -501,8 +504,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
       {/* ── Main Content ── */}
       <div
-        className={cn('flex-1 flex flex-col min-w-0 transition-all duration-200')}
-        style={{ marginLeft: sidebarOpen ? '260px' : '68px' }}
+        className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
+          isMobile ? '' : sidebarOpen ? 'ml-[260px]' : 'ml-[68px]'
+        }`}
       >
         {/* ── Top Bar ── */}
         <header
@@ -570,9 +574,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <AnnouncementBanner />
 
         {/* ── Page Content ── */}
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-4 lg:p-6 pb-16 lg:pb-0">
           {children}
         </main>
+
+        {/* ── Mobile Bottom Navigation ── */}
+        <MobileNav className="md:hidden" />
       </div>
     </div>
     </TourProvider>

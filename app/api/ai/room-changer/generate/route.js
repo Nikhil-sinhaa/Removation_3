@@ -9,7 +9,7 @@
 import { Readable } from 'stream';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db/mongodb';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import RoomChangerRun from '../../../../../src/models/RoomChangerRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runRoomChanger } from '../../../../../src/services/roomChangerOrchestrator.js';
@@ -66,10 +66,10 @@ export async function POST(request) {
     const source = formDataEarly.get('source') || '';
 
     const formData = await safeParseFormData(request);
-    const imageFile  = formData.get('roomImage');
-    const colorName  = formData.get('colorName') || '';
-    const hex        = formData.get('hex') || '';
-    const projectId  = formData.get('projectId') || null;
+    const imageFile = formData.get('roomImage');
+    const colorName = formData.get('colorName') || '';
+    const hex = formData.get('hex') || '';
+    const projectId = formData.get('projectId') || null;
     const retryRunId = formData.get('retryRunId') || null;
 
     // ── Validation ──────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ export async function POST(request) {
     }
 
     // ── Create Project document for status tracking ────────────────────────
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: `Room Changer — ${colorName}`,
       userId: finalUserId,
       originalImage: inputImageUrl || '',
@@ -160,7 +160,7 @@ export async function GET(request) {
     return NextResponse.json({ error: 'projectId required' }, { status: 400 });
   }
   try {
-    const project = await Project.findById(projectId).lean();
+    const project = await AIRun.findById(projectId).lean();
     if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     // Also fetch the latest run for this project

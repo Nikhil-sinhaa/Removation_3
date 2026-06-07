@@ -58,7 +58,9 @@ export async function checkAndDeductCredits(
                 { _id: user._id },
                 { $set: { lastRenderAt: new Date() } }
             );
-            const remaining = user.subscription.credits - user.subscription.creditsUsed;
+            const remaining = user.subscription
+            ? user.subscription.credits - user.subscription.creditsUsed
+            : (user.credits ?? 0);
             return { success: true, mode: 'development', cost: 0, remaining };
         }
 
@@ -72,7 +74,9 @@ export async function checkAndDeductCredits(
                 { $set: { lastRenderAt: new Date() } }
             );
 
-            const remaining = user.subscription.credits - user.subscription.creditsUsed;
+            const remaining = user.subscription
+                ? user.subscription.credits - user.subscription.creditsUsed
+                : (user.credits ?? 0);
             return {
                 success: true,
                 mode: 'development',
@@ -111,7 +115,25 @@ export async function checkAndDeductCredits(
         const creditCosts = await getCreditCosts();
         const cost = creditCosts[actionKey] ?? DEFAULT_TOOL_COSTS[actionKey] ?? 1;
 
-        const remainingBefore = user.subscription.credits - user.subscription.creditsUsed;
+        const remainingBefore = user.subscription
+            ? user.subscription.credits - user.subscription.creditsUsed
+            : (user.credits ?? 0);
+
+        // PAY-07: Block canceled/past_due/halted/unpaid paid-plan subscriptions
+        // Free plan users (plan='free', status='inactive') must NOT be blocked
+        const blockedStatuses = ['canceled', 'past_due', 'halted', 'unpaid'];
+        const isPaidPlan = user.subscription?.plan === 'pro' || user.subscription?.plan === 'team';
+        const isBlocked = isPaidPlan && blockedStatuses.includes(user.subscription?.status ?? '');
+        if (isBlocked) {
+            return {
+                success: false,
+                mode: 'production',
+                cost: 0,
+                remaining: 0,
+                reason: 'Subscription is not active',
+                code: 'INSUFFICIENT_CREDITS'
+            };
+        }
 
         if (remainingBefore < cost) {
             return {
@@ -164,7 +186,9 @@ export async function checkAndDeductCredits(
             };
         }
 
-        const remainingAfter = updatedUser.subscription.credits - updatedUser.subscription.creditsUsed;
+        const remainingAfter = updatedUser.subscription
+            ? updatedUser.subscription.credits - updatedUser.subscription.creditsUsed
+            : (updatedUser.credits ?? 0);
 
         return {
             success: true,

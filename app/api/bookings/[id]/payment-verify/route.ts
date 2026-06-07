@@ -116,8 +116,35 @@ export async function POST(
             .update(`${razorpayOrderId}|${razorpayPaymentId}`)
             .digest('hex');
 
-        if (razorpaySignature !== expectedSignature) {
-            return NextResponse.json({ message: 'Invalid payment signature' }, { status: 400 });
+        // PAY-05: timing-safe comparison (length check required — timingSafeEqual throws on mismatch)
+        const expectedBuffer = Buffer.from(expectedSignature, 'utf8');
+        const receivedBuffer = Buffer.from(razorpaySignature, 'utf8');
+        if (
+            expectedBuffer.length !== receivedBuffer.length ||
+            !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)
+        ) {
+            return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
+        }
+
+        // PAY-06: amount validation — fetch payment from Razorpay and verify amount matches booking
+        try {
+            const Razorpay = (await import('razorpay')).default;
+            const razorpayInstance = new Razorpay({
+                key_id: process.env.RAZORPAY_KEY_ID!,
+                key_secret: process.env.RAZORPAY_KEY_SECRET!,
+            });
+            const paymentDetails = await razorpayInstance.payments.fetch(razorpayPaymentId);
+            if (paymentDetails.amount !== booking.amount) {
+                return NextResponse.json(
+                    { error: 'Payment amount does not match booking amount' },
+                    { status: 400 }
+                );
+            }
+        } catch (err) {
+            return NextResponse.json(
+                { error: 'Could not verify payment amount. Please try again.' },
+                { status: 502 }
+            );
         }
 
         // ── Transition booking: pending_payment → pending_designer ──────────────

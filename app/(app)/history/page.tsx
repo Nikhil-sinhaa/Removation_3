@@ -988,7 +988,7 @@ export default function HistoryPage() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="flex items-center gap-3 p-4 mb-6 bg-primary/10 border border-primary/20 rounded-lg"
+              className="flex flex-wrap items-center gap-3 p-4 mb-6 bg-primary/10 border border-primary/20 rounded-lg"
             >
               <Checkbox
                 checked={selectedRenders.length === filteredRenders.length}

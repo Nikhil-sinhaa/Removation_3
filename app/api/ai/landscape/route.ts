@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     let referenceImage: string | null = null;
     const refFile = formData.get('referenceImage') as File | null;
     if (refFile) { const rb = Buffer.from(await refFile.arrayBuffer()); const rf = `landscape_ref_${Date.now()}.png`; await sharp(rb).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, rf)); referenceImage = rf; }
-    const project = await Project.create({ name: `Landscape — ${landscapeType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-landscape', aiConfig: { landscapeType, style, prompt, strength } });
+    const project = await AIRun.create({ name: `Landscape — ${landscapeType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-landscape', aiConfig: { landscapeType, style, prompt, strength } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'landscape', { imageFilename: fn, landscapeType, style, prompt, strength, referenceImage }).catch((e: any) => console.error('❌ Landscape error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'landscape', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Landscape failed', message: error.message }, { status: 500 }); }
@@ -67,6 +67,6 @@ export async function GET(request: Request) {
   }
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+  const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

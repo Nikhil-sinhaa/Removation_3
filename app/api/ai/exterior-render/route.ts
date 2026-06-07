@@ -4,7 +4,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
-    const project = await Project.create({ name: `Exterior Render — ${buildingType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-exterior-render', aiConfig: { buildingType, style, prompt, timeOfDay, strength } });
+    const project = await AIRun.create({ name: `Exterior Render — ${buildingType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-exterior-render', aiConfig: { buildingType, style, prompt, timeOfDay, strength } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'exterior-render', { imageFilename: fn, buildingType, style, prompt, timeOfDay, strength }).catch((e: any) => console.error('❌ Exterior render error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'exterior-render', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Exterior render failed', message: error.message }, { status: 500 }); }
@@ -64,6 +64,6 @@ export async function GET(request: Request) {
   await connectDB();
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findById(projectId);
+  const project = await AIRun.findById(projectId);
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

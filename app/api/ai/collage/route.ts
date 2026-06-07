@@ -4,7 +4,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       const ref = formData.get(`reference${i}`) as File | null;
       if (ref) { const rb = Buffer.from(await ref.arrayBuffer()); const rf = `collage_ref${i}_${Date.now()}.png`; await sharp(rb).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, rf)); referenceImages.push(rf); }
     }
-    const project = await Project.create({ name: 'Collage', userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-collage', aiConfig: { prompt, strength } });
+    const project = await AIRun.create({ name: 'Collage', userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-collage', aiConfig: { prompt, strength } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'collage', { imageFilename: fn, referenceImages, prompt, strength }).catch((e: any) => console.error('❌ Collage error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'collage', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Collage failed', message: error.message }, { status: 500 }); }
@@ -72,6 +72,6 @@ export async function GET(request: Request) {
   }
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+  const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

@@ -4,7 +4,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const refFile = formData.get('referenceImage') as File | null;
     if (refFile) { const rb = Buffer.from(await refFile.arrayBuffer()); const rf = `interior_ref_${Date.now()}.png`; await sharp(rb).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, rf)); referenceImage = rf; }
 
-    const project = await Project.create({ name: `Interior Render — ${roomType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-interior-render', aiConfig: { roomType, style, prompt, strength } });
+    const project = await AIRun.create({ name: `Interior Render — ${roomType}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-interior-render', aiConfig: { roomType, style, prompt, strength } });
     comfyBridge.enqueueSmartTabJob(project._id.toString(), 'interior-render', { imageFilename: fn, roomType, style, prompt, strength, referenceImage }).catch((e: any) => console.error('❌ Interior render error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'interior-render', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Interior render failed', message: error.message }, { status: 500 }); }
@@ -69,6 +69,6 @@ export async function GET(request: Request) {
   await connectDB();
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findById(projectId);
+  const project = await AIRun.findById(projectId);
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

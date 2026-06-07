@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import  User  from '@/lib/db/models/User';
 import  Subscription  from '@/lib/db/models/Subscription';
+import { Booking } from '@/lib/db/models/Booking';
 
 const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET!;
 
@@ -107,10 +108,24 @@ export async function POST(req: NextRequest) {
 
 async function handlePaymentCaptured(payment: any) {
   const clerkId = payment.notes?.clerkId;
+
+  // ── Booking payment safety net (PAY-04) ────────────────────────────────
+  if (payment.notes?.bookingId) {
+    await handleBookingPaymentCaptured(payment);
+    return;
+  }
+
   if (!clerkId) return;
 
   if (payment.notes?.type === "credits") {
     const credits = parseInt(payment.notes?.credits || "0");
+
+    // ── Idempotency check (PAY-03) ────────────────────────────────────────
+    const alreadyProcessed = await User.findOne({
+      clerkId,
+      'paymentHistory.paymentId': payment.id,
+    });
+    if (alreadyProcessed) return;
 
     await User.findOneAndUpdate(
       { clerkId },
@@ -140,6 +155,30 @@ async function handlePaymentCaptured(payment: any) {
       }
     }
   }
+}
+
+// ── PAY-04: Booking payment safety net ──────────────────────────────────────
+async function handleBookingPaymentCaptured(payment: any) {
+  const bookingId = payment.notes?.bookingId;
+  if (!bookingId) return;
+
+  await connectToDatabase();
+
+  const booking = await Booking.findById(bookingId);
+
+  // Idempotent: if not found or already past pending_payment, return early
+  if (!booking || booking.status !== 'pending_payment') return;
+
+  // Verify the Razorpay order ID matches what we stored
+  if (booking.razorpayOrderId && booking.razorpayOrderId !== payment.order_id) return;
+
+  // Transition booking: pending_payment → pending_designer
+  booking.status = 'pending_designer';
+  booking.razorpayPaymentId = payment.id;
+  booking.paidAt = new Date();
+
+  await booking.save();
+  console.log(`[razorpay webhook] Booking ${bookingId} transitioned to pending_designer via webhook`);
 }
 
 async function handlePaymentFailed(payment: any) {
@@ -324,10 +363,29 @@ async function handleOrderPaid(order: any) {
   const credits = parseInt(order.notes?.credits || "0");
 
   if (credits > 0) {
+    // ── Idempotency check (PAY-03) ──────────────────────────────────────────
+    const paymentId = order.payment_id || order.id;
+    const alreadyProcessed = await User.findOne({
+      clerkId,
+      'paymentHistory.paymentId': paymentId,
+    });
+    if (alreadyProcessed) return;
+
     await User.findOneAndUpdate(
       { clerkId },
       {
         $inc: { "subscription.credits": credits },
+        $push: {
+          paymentHistory: {
+            paymentId,
+            amount: (order.amount || 0) / 100,
+            currency: order.currency,
+            type: "credit_purchase",
+            credits,
+            status: "captured",
+            createdAt: new Date(),
+          },
+        },
         updatedAt: new Date(),
       }
     );

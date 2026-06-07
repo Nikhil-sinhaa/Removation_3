@@ -16,7 +16,7 @@ Type=simple
 User=nikhil
 WorkingDirectory=/home/nikhil/Documents/Remo2/ComfyUI
 Environment=PATH=/home/nikhil/Documents/Remo2/ComfyUI/venv/bin
-ExecStart=/home/nikhil/Documents/Remo2/ComfyUI/venv/bin/python main.py --listen 127.0.0.1 --port 8188 --highvram --enable-xformers
+ExecStart=/home/nikhil/Documents/Remo2/ComfyUI/venv/bin/python main.py --listen 127.0.0.1 --port 8188 --lowvram --fp8_e4m3fn-unet --enable-xformers
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -94,7 +94,7 @@ if ! curl -s http://127.0.0.1:8188/system_stats > /dev/null; then
     echo "🎯 Starting ComfyUI (production mode)..."
     cd /home/nikhil/Documents/Remo2/ComfyUI
     source venv/bin/activate
-    nohup python main.py --listen 127.0.0.1 --port 8188 --highvram --enable-xformers --gpu-only > /var/log/comfyui.log 2>&1 &
+    nohup python main.py --listen 127.0.0.1 --port 8188 --lowvram --fp8_e4m3fn-unet --enable-xformers --gpu-only > /var/log/comfyui.log 2>&1 &
     echo $! > /var/run/comfyui.pid
     echo "ComfyUI started with PID: $(cat /var/run/comfyui.pid)"
     

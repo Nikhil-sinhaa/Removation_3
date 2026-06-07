@@ -14,7 +14,7 @@ import {
   CheckCircle, 
   AlertCircle, 
   Loader2, 
-  Image, 
+  Image as ImageIcon, 
   Settings,
   Zap,
   Sparkles,
@@ -248,7 +248,7 @@ export default function MasterDesignPage() {
                 className="w-full"
                 disabled={isGenerating}
               >
-                <Image className="w-4 h-4 mr-2" />
+                <ImageIcon className="w-4 h-4 mr-2" />
                 {selectedFile ? `📸 ${selectedFile.name}` : "Choose Room Image"}
               </Button>
               {selectedFile && (

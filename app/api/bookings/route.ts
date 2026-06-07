@@ -266,13 +266,21 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // RAZORPAY_KEY_ID and NEXT_PUBLIC_RAZORPAY_KEY_ID must hold the same
+        // public-facing key_id value. We send the NEXT_PUBLIC variant here so
+        // the client receives the canonical public key and the intent is explicit.
+        const clientKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID;
+        if (!clientKey) {
+            console.error('[bookings] NEXT_PUBLIC_RAZORPAY_KEY_ID is not set — client will not be able to open Razorpay checkout');
+        }
+
         return NextResponse.json(
             {
                 bookingId: booking._id.toString(),
                 razorpayOrderId: razorpayOrderId,
                 amount: feeAmount,
                 currency,
-                key: process.env.RAZORPAY_KEY_ID,
+                key: clientKey,
             },
             { status: 201 }
         );

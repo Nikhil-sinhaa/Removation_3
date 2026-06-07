@@ -14,7 +14,7 @@
 import fs from 'fs';
 import path from 'path';
 import MultiRoomProject from '../models/MultiRoomProject.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import { runRoomChanger } from './roomChangerOrchestrator.js';
 import {
   uploadImageToMarble,
@@ -54,7 +54,7 @@ export async function paintAllPhotos(multiProjectId) {
 
       // Create a lightweight Project doc so roomChangerOrchestrator can
       // persist its result (it always needs a projectId).
-      const subProject = await Project.create({
+      const subProject = await AIRun.create({
         name: `Multi-Room — ${mp.colorName} — photo ${photo.order + 1}`,
         userId: mp.userId || '000000000000000000000000',
         originalImage: photo.originalUrl,
@@ -275,7 +275,7 @@ export async function generateMarbleView(projectId) {
         const updatedProject = await MultiRoomProject.findById(projectId);
 
         // Save completed 3D room to general projects list
-        await Project.create({
+        await AIRun.create({
           userId: updatedProject.userId || null,
           name: `3D Room View — ${updatedProject.roomName}`,
           processingType: 'multi-room-3d',

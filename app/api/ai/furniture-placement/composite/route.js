@@ -27,7 +27,7 @@ import { mkdir, copyFile } from 'fs/promises';
 import path from 'path';
 import fs from 'fs';
 import { connectDB }   from '@/lib/db/mongodb';
-import Project         from '@/src/models/Project.js';
+import AIRun          from '@/src/models/AIRun.js';
 import FurniturePlacementRun from '@/src/models/FurniturePlacementRun.js';
 import comfyBridge     from '@/src/services/comfyBridge';
 import { guiToApiGraph } from '@/src/lib/comfyWorkflowConverter.js';
@@ -217,7 +217,7 @@ export async function POST(request) {
     const resultUrl = `/renders/${destFilename}`;
 
     // ── Persist to MongoDB ────────────────────────────────────────────────────
-    const project = await Project.create({
+    const project = await AIRun.create({
       name:           'Furniture Placement',
       userId:         finalUserId,
       originalImage:  roomImageUrl || '',

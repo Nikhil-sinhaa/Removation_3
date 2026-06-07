@@ -7,7 +7,7 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import fs from 'fs/promises';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge from '../services/comfyBridge.js';
 
 // Configure multer for image uploads
@@ -86,7 +86,7 @@ export const recolorImage = async (req, res) => {
 
       try {
         // Create project record
-        const project = new Project({
+        const project = new AIRun({
           name: `${target} recolor to ${color}`,
           userId: req.user?.id || 'demo-user', // Fallback for demo
           originalImage: `/uploads/${req.file.filename}`,
@@ -322,7 +322,7 @@ export const getRecolorStatus = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
     
     if (!project) {
       return res.status(404).json({ 
@@ -365,7 +365,7 @@ export const getRecolorProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId).populate('userId', 'name email');
+    const project = await AIRun.findById(projectId).populate('userId', 'name email');
     
     if (!project) {
       return res.status(404).json({ 
@@ -398,7 +398,7 @@ export const deleteRecolorProject = async (req, res) => {
   try {
     const { projectId } = req.params;
     
-    const project = await Project.findById(projectId);
+    const project = await AIRun.findById(projectId);
     
     if (!project) {
       return res.status(404).json({ 
@@ -424,7 +424,7 @@ export const deleteRecolorProject = async (req, res) => {
       console.warn('⚠️ Failed to delete files:', fileError.message);
     }
 
-    await Project.findByIdAndDelete(projectId);
+    await AIRun.findByIdAndDelete(projectId);
 
     res.json({
       message: 'Recolor project deleted successfully'

@@ -1,5 +1,6 @@
 // lib/ai/comfyui-monitoring.ts
 import axios from 'axios';
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 export interface SystemHealth {
   status: 'healthy' | 'degraded' | 'critical';
@@ -19,7 +20,6 @@ export interface SystemHealth {
 }
 
 export class ComfyUIMonitor {
-  private baseUrl: string;
   private healthThresholds = {
     max_vram_usage: 0.85, // 85%
     max_temperature: 80,  // 80°C
@@ -27,15 +27,11 @@ export class ComfyUIMonitor {
     min_vram_free: 1000, // 1GB
   };
 
-  constructor() {
-    this.baseUrl = process.env.COMFYUI_URL || 'http://127.0.0.1:8188';
-  }
-
   async getGPUStats(): Promise<SystemHealth['gpu']> {
     try {
-      const response = await axios.get(`${this.baseUrl}/system_stats`, { timeout: 5000 });
+      const response = await axios.get(`${getActiveComfyBaseUrl()}/system_stats`, { timeout: 5000 });
       const device = response.data.devices?.[0];
-      
+
       if (!device) {
         throw new Error('No GPU device found');
       }
@@ -55,9 +51,9 @@ export class ComfyUIMonitor {
 
   async getComfyUIStats(): Promise<SystemHealth['comfyui']> {
     try {
-      const response = await axios.get(`${this.baseUrl}/queue`, { timeout: 5000 });
+      const response = await axios.get(`${getActiveComfyBaseUrl()}/queue`, { timeout: 5000 });
       const queue = response.data;
-      
+
       return {
         running: true,
         queue_size: (queue.queue_pending?.length || 0) + (queue.queue_running?.length || 0),
@@ -78,10 +74,10 @@ export class ComfyUIMonitor {
       const { exec } = require('child_process');
       const util = require('util');
       const execAsync = util.promisify(exec);
-      
+
       const { stdout } = await execAsync('nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits');
       const [utilization, temperature] = stdout.trim().split(', ').map(Number);
-      
+
       return { utilization, temperature };
     } catch (error) {
       console.error('Failed to get nvidia-smi stats:', error);
@@ -96,7 +92,7 @@ export class ComfyUIMonitor {
     try {
       // Get ComfyUI stats
       const comfyui = await this.getComfyUIStats();
-      
+
       if (!comfyui.running) {
         errors.push('ComfyUI server is not running');
         status = 'critical';
@@ -104,7 +100,7 @@ export class ComfyUIMonitor {
 
       // Get GPU stats
       const gpu = await this.getGPUStats();
-      
+
       // Get nvidia-smi stats
       const nvidiaStats = await this.getNvidiaSMIStats();
       gpu.utilization = nvidiaStats.utilization;
@@ -157,14 +153,14 @@ export class ComfyUIMonitor {
 
   async logHealthCheck(): Promise<void> {
     const health = await this.checkSystemHealth();
-    
+
     console.log(`🏥 ComfyUI Health Check [${health.status.toUpperCase()}]`);
     console.log(`🎯 GPU: ${health.gpu.name}`);
     console.log(`💾 VRAM: ${health.gpu.vram_used}MB / ${health.gpu.vram_total}MB (${((health.gpu.vram_used / health.gpu.vram_total) * 100).toFixed(1)}%)`);
     console.log(`🌡️ Temp: ${health.gpu.temperature}°C`);
     console.log(`⚡ Util: ${health.gpu.utilization}%`);
     console.log(`🔄 Queue: ${health.comfyui.queue_size} jobs (${health.comfyui.active_generations} running)`);
-    
+
     if (health.errors.length > 0) {
       console.log('❌ Errors:');
       health.errors.forEach(error => console.log(`   - ${error}`));
@@ -173,17 +169,17 @@ export class ComfyUIMonitor {
 
   async waitForHealthy(timeoutMs: number = 30000): Promise<boolean> {
     const startTime = Date.now();
-    
+
     while (Date.now() - startTime < timeoutMs) {
       const health = await this.checkSystemHealth();
-      
+
       if (health.status === 'healthy') {
         return true;
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, 2000));
     }
-    
+
     return false;
   }
 }

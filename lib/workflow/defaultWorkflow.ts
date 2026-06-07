@@ -12,19 +12,19 @@ export async function seedWorkflow() {
 
   // ── States ────────────────────────────────────────────────────────────────
   const states = [
-    { stateId: 'draft',         label: 'Draft',         description: 'Booking created but not yet submitted',          color: '#9CA3AF', isInitial: true,  isFinal: false, allowedRoles: ['customer','admin'] },
-    { stateId: 'pending',       label: 'Pending',       description: 'Awaiting provider response',                     color: '#F59E0B', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'accepted',      label: 'Accepted',      description: 'Provider has accepted the booking',              color: '#3B82F6', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'in_progress',   label: 'In Progress',   description: 'Work is underway',                               color: '#8B5CF6', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'review',        label: 'Under Review',  description: 'Work submitted, awaiting customer approval',     color: '#06B6D4', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'completed',     label: 'Completed',     description: 'Booking completed and payment released',         color: '#10B981', isInitial: false, isFinal: true,  allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'rejected',      label: 'Rejected',      description: 'Provider declined the booking',                 color: '#EF4444', isInitial: false, isFinal: true,  allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'cancelled',     label: 'Cancelled',     description: 'Booking cancelled by customer or admin',        color: '#6B7280', isInitial: false, isFinal: true,  allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'disputed',      label: 'Disputed',      description: 'Payment or quality dispute in progress',        color: '#DC2626', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'refunded',      label: 'Refunded',      description: 'Payment has been refunded',                     color: '#7C3AED', isInitial: false, isFinal: true,  allowedRoles: ['customer','designer','contractor','admin'] },
+    { stateId: 'draft', label: 'Draft', description: 'Booking created but not yet submitted', color: '#9CA3AF', isInitial: true, isFinal: false, allowedRoles: ['customer', 'admin'] },
+    { stateId: 'pending', label: 'Pending', description: 'Awaiting provider response', color: '#F59E0B', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'accepted', label: 'Accepted', description: 'Provider has accepted the booking', color: '#3B82F6', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'in_progress', label: 'In Progress', description: 'Work is underway', color: '#8B5CF6', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'review', label: 'Under Review', description: 'Work submitted, awaiting customer approval', color: '#06B6D4', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'completed', label: 'Completed', description: 'Booking completed and payment released', color: '#10B981', isInitial: false, isFinal: true, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'rejected', label: 'Rejected', description: 'Provider declined the booking', color: '#EF4444', isInitial: false, isFinal: true, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'cancelled', label: 'Cancelled', description: 'Booking cancelled by customer or admin', color: '#6B7280', isInitial: false, isFinal: true, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'disputed', label: 'Disputed', description: 'Payment or quality dispute in progress', color: '#DC2626', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'refunded', label: 'Refunded', description: 'Payment has been refunded', color: '#7C3AED', isInitial: false, isFinal: true, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
     // Existing status values
-    { stateId: 'pending_designer', label: 'Pending Designer', description: 'Waiting for designer acceptance', color: '#F59E0B', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
-    { stateId: 'confirmed',     label: 'Confirmed',     description: 'Designer confirmed the booking',                color: '#3B82F6', isInitial: false, isFinal: false, allowedRoles: ['customer','designer','contractor','admin'] },
+    { stateId: 'pending_designer', label: 'Pending Designer', description: 'Waiting for designer acceptance', color: '#F59E0B', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
+    { stateId: 'confirmed', label: 'Confirmed', description: 'Designer confirmed the booking', color: '#3B82F6', isInitial: false, isFinal: false, allowedRoles: ['customer', 'designer', 'contractor', 'admin'] },
   ];
 
   for (const state of states) {

@@ -9,7 +9,7 @@
 import { Readable } from 'stream';
 import { NextResponse } from 'next/server';
 import { connectDB } from '../../../../../lib/db/mongodb';
-import Project from '../../../../../src/models/Project.js';
+import AIRun from '../../../../../src/models/AIRun.js';
 import FurnitureRemoverRun from '../../../../../src/models/FurnitureRemoverRun.js';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runFurnitureRemover, runManualFurnitureErase } from '../../../../../src/services/furnitureRemoverOrchestrator.js';
@@ -112,7 +112,7 @@ export async function POST(request) {
     const { inputImageUrl, comfyFilename } = await saveUploadAndComfy(roomImageFile, false);
 
     // ── Create Project document for status polling ────────────────────────────
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: 'Furniture Remover',
       userId: finalUserId,
       originalImage: inputImageUrl || '',
@@ -162,7 +162,7 @@ export async function GET(request) {
     return NextResponse.json({ error: 'projectId required' }, { status: 400 });
   }
   try {
-    const project = await Project.findById(projectId).lean();
+    const project = await AIRun.findById(projectId).lean();
     if (!project) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const run = await FurnitureRemoverRun.findOne({ projectId }).sort({ createdAt: -1 }).lean();

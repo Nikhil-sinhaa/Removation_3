@@ -6,7 +6,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
 
-    const project = await Project.create({ name: `Auto Edit — ${objectToEdit}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-auto-edit', aiConfig: { objectToEdit, editDescription, denoise } });
+    const project = await AIRun.create({ name: `Auto Edit — ${objectToEdit}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-auto-edit', aiConfig: { objectToEdit, editDescription, denoise } });
     comfyBridge.enqueueSmartTabJob(project._id.toString(), 'auto-edit', { imageFilename: fn, objectToEdit, editDescription, denoise, detectThreshold }).catch((e: any) => console.error('❌ Auto-edit error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'auto-edit', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'Auto-edit failed', message: error.message }, { status: 500 }); }
@@ -72,6 +72,6 @@ export async function GET(request: Request) {
   }
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+  const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

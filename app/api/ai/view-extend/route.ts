@@ -4,7 +4,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import comfyBridge from '@/src/services/comfyBridge';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     await sharp(buffer).resize(1024, 1024, { fit: 'inside', withoutEnlargement: true }).png().toFile(path.join(comfyInputDir, fn));
     await mkdir(path.join(process.cwd(), 'public', 'uploads'), { recursive: true });
     await writeFile(path.join(process.cwd(), 'public', 'uploads', fn), buffer);
-    const project = await Project.create({ name: `View Extend — ${direction}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-view-extend', aiConfig: { direction, extendPercent, prompt } });
+    const project = await AIRun.create({ name: `View Extend — ${direction}`, userId: finalUserId, originalImage: `/uploads/${fn}`, status: 'queued', processingType: 'tool-view-extend', aiConfig: { direction, extendPercent, prompt } });
     comfyBridge.enqueueTabJob(project._id.toString(), 'view-extend', { imageFilename: fn, direction, extendPercent, prompt }).catch((e: any) => console.error('❌ View extend error:', e.message));
     return NextResponse.json({ success: true, projectId: project._id, tab: 'view-extend', status: 'queued' });
   } catch (error: any) { return NextResponse.json({ error: 'View extend failed', message: error.message }, { status: 500 }); }
@@ -67,6 +67,6 @@ export async function GET(request: Request) {
   }
   const projectId = new URL(request.url).searchParams.get('projectId');
   if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-  const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+  const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
   return project ? NextResponse.json(project) : NextResponse.json({ error: 'Not found' }, { status: 404 });
 }

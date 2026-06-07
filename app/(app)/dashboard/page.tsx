@@ -528,7 +528,7 @@ export default function DashboardPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-7xl mx-auto space-y-8 pb-8"
+        className="max-w-7xl mx-auto space-y-8 px-4 sm:px-6 lg:px-8 pb-8"
       >
         {/* Welcome Banner (First Visit) */}
         <AnimatePresence>
@@ -813,15 +813,15 @@ export default function DashboardPage() {
 
         {/* AI Design Studio - Featured Section */}
         <motion.div variants={itemVariants}>
-          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-8 border border-blue-100">
-            <div className="flex items-center justify-between mb-6">
+          <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 rounded-3xl p-6 md:p-8 border border-blue-100">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">🎨 {t('db_studio_title')}</h2>
                 <p className="text-gray-600">{t('db_studio_subtitle')}</p>
               </div>
               <Link
                 href="/ai-design"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-medium hover:from-blue-500 hover:to-purple-500 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 w-fit"
               >
                 <Zap className="w-4 h-4" />
                 {t('db_studio_launch')}
@@ -1518,7 +1518,7 @@ export default function DashboardPage() {
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.5, type: "spring", stiffness: 300, damping: 20 }}
-          className="fixed bottom-8 right-8 z-50"
+          className="fixed bottom-8 right-8 z-50 hidden md:block"
         >
           <Link href="/ai-design">
             <Button

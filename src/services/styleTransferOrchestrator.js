@@ -19,7 +19,7 @@ import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import { getTargetDimensions } from '../lib/resolution-helper.js';
 import { TRANSFER_PRESETS, DEFAULT_NEGATIVE_PROMPT } from '../config/transferPresetsData.js';
 import StyleTransferRun from '../models/StyleTransferRun.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 import comfyBridge, { ensureInputFile } from './comfyBridge.js';
 
 const WORKFLOWS_DIR = path.join(process.cwd(), 'src', 'workflows');
@@ -199,7 +199,7 @@ export async function runStyleTransfer({
       ...(comfyPromptId && { $push: { comfyPromptIds: comfyPromptId } }),
     });
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage: outputImageUrl,
       status: 'completed',
       processingCompletedAt: new Date(),
@@ -230,7 +230,7 @@ export async function runStyleTransfer({
   } catch (error) {
     console.error('❌ Style Transfer failed:', error.message);
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Style Transfer failed: ${error.message}`,
       processingCompletedAt: new Date(),

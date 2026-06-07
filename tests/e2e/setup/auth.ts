@@ -4,3 +4,7 @@ export const testUser = {
   email: 'e2e@test.com',
   role: 'customer',
 };
+
+export default async function globalSetup() {
+  // No-op to satisfy Playwright globalSetup requirement
+}

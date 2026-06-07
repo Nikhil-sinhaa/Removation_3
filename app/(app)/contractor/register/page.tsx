@@ -22,7 +22,7 @@ import {
   Plus,
   ChevronRight,
   AlertCircle,
-  Image,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useUpload } from '@/hooks/useUpload';
@@ -378,7 +378,7 @@ export default function ContractorRegisterPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-semibold text-gray-900 uppercase tracking-wider flex items-center gap-2">
-              <Image className="w-4 h-4 text-violet-600" />
+              <ImageIcon className="w-4 h-4 text-violet-600" />
               Portfolio Gallery
             </h2>
             <span className="text-xs text-gray-400">

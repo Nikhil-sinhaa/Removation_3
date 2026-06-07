@@ -22,7 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import {
   Download,
-  Image,
+  Image as ImageIcon,
   FileImage,
   Share2,
   Copy,
@@ -98,7 +98,7 @@ const exportFormats: ExportFormat[] = [
     name: "JPEG",
     extension: ".jpg",
     mimeType: "image/jpeg",
-    icon: <Image className="w-5 h-5" />,
+    icon: <ImageIcon className="w-5 h-5" />,
     description: "Smaller file size, great for web sharing",
     quality: [60, 80, 90, 100],
     isPro: false,

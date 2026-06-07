@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '../../../../src/models/Project.js';
+import AIRun from '../../../../src/models/AIRun.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
@@ -147,7 +147,7 @@ export async function POST(request) {
     };
 
     // Create MongoDB Project
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: `Recolor ${target}`,
       userId: finalUserId,
       originalImage: `/uploads/${filename}`,
@@ -216,7 +216,7 @@ export async function GET(request) {
   }
   
   if (projectId) {
-    const project = await Project.findOne({ _id: projectId, userId: authUser.id });
+    const project = await AIRun.findOne({ _id: projectId, userId: authUser.id });
     if (!project) {
       return Response.json({ error: 'Project not found' }, { status: 404 });
     }
@@ -239,7 +239,7 @@ export async function DELETE(request) {
     return Response.json({ error: 'Project ID required' }, { status: 400 });
   }
   
-  const project = await Project.findOneAndDelete({ _id: projectId, userId: authUser.id });
+  const project = await AIRun.findOneAndDelete({ _id: projectId, userId: authUser.id });
   if (!project) {
     return Response.json({ error: 'Project not found' }, { status: 404 });
   }

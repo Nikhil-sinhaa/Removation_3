@@ -16,7 +16,7 @@ import { execSync } from 'child_process';
 import { guiToApiGraph } from '../lib/comfyWorkflowConverter.js';
 import comfyBridge, { ensureInputFile, transferComfyFile } from './comfyBridge.js';
 import FurniturePlacementRun from '../models/FurniturePlacementRun.js';
-import Project from '../models/Project.js';
+import AIRun from '../models/AIRun.js';
 
 const WORKFLOWS_DIR  = path.join(process.cwd(), 'src', 'workflows');
 const COMFY_INPUT    = process.env.COMFY_INPUT  || '/home/nikhil/Documents/Remo2/ComfyUI/input';
@@ -276,7 +276,7 @@ export async function runFurniturePlacement({
       status: 'done',
     });
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       resultImage:            resultUrl,
       status:                 'completed',
       processingCompletedAt:  new Date(),
@@ -306,7 +306,7 @@ export async function runFurniturePlacement({
       errorMessage: err.message,
     }).catch(() => {});
 
-    await Project.findByIdAndUpdate(projectId, {
+    await AIRun.findByIdAndUpdate(projectId, {
       status: 'failed',
       errorMessage: `Furniture Placement error: ${err.message}`,
       processingCompletedAt: new Date(),

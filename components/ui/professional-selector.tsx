@@ -19,7 +19,7 @@ import {
   HardDrive,
   AlertTriangle
 } from "lucide-react";
-import { PROFESSIONAL_PRESETS } from "@/lib/ai/comfyui-workflows-professional";
+import { PROFESSIONAL_PRESETS } from "@/lib/ai/professional-presets";
 
 interface ProfessionalSelectorProps {
   onSelectionChange: (selections: any) => void;

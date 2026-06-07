@@ -25,7 +25,7 @@ import {
   Copy,
   MoreHorizontal,
   Plus,
-  Image,
+  Image as ImageIcon,
   Type,
   Square,
   ChevronUp,
@@ -85,7 +85,7 @@ export function LayersPanel({ className }: LayersPanelProps) {
   const getLayerIcon = (type: Layer['type']) => {
     switch (type) {
       case 'image':
-        return <Image className="w-4 h-4" />;
+        return <ImageIcon className="w-4 h-4" />;
       case 'mask':
         return <Square className="w-4 h-4 text-purple-400" />;
       case 'text':

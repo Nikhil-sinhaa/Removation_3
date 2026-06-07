@@ -3,7 +3,10 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me-in-production';
+const JWT_SECRET = process.env.JWT_SECRET!;
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required.');
+}
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);

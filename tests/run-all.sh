@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─── Removation.ai Feature Test Suite ──────────────────────────────────────────
-# Runs all 9 Joomla-inspired feature tests against the running dev server.
+# Runs all 18 feature tests against the running dev server.
 # Commits each passing feature automatically.
 #
 # Usage:
@@ -74,15 +74,24 @@ EOF
 }
 
 # ── Run each feature suite ─────────────────────────────────────────────────────
-run_feature "1" "Audit Logs"       "tests/features/01-audit-logs.test.ts"
-run_feature "2" "Privacy GDPR"     "tests/features/02-privacy-gdpr.test.ts"
-run_feature "3" "Task Scheduler"   "tests/features/03-task-scheduler.test.ts"
-run_feature "4" "Guided Tours"     "tests/features/04-guided-tours.test.ts"
-run_feature "5" "Smart Search"     "tests/features/05-smart-search.test.ts"
-run_feature "6" "Tags"             "tests/features/06-tags.test.ts"
-run_feature "7" "Redirect Manager" "tests/features/07-redirect-manager.test.ts"
-run_feature "8" "Workflow Engine"  "tests/features/08-workflow-engine.test.ts"
-run_feature "9" "Schema.org SEO"   "tests/features/09-schema-seo.test.ts"
+run_feature "1"  "Audit Logs"            "tests/features/01-audit-logs.test.ts"
+run_feature "2"  "Privacy GDPR"          "tests/features/02-privacy-gdpr.test.ts"
+run_feature "3"  "Task Scheduler"        "tests/features/03-task-scheduler.test.ts"
+run_feature "4"  "Guided Tours"          "tests/features/04-guided-tours.test.ts"
+run_feature "5"  "Smart Search"          "tests/features/05-smart-search.test.ts"
+run_feature "6"  "Tags"                  "tests/features/06-tags.test.ts"
+run_feature "7"  "Redirect Manager"      "tests/features/07-redirect-manager.test.ts"
+run_feature "8"  "Workflow Engine"       "tests/features/08-workflow-engine.test.ts"
+run_feature "9"  "Schema.org SEO"        "tests/features/09-schema-seo.test.ts"
+run_feature "10" "Notification System"   "tests/features/10-notification-system.test.ts"
+run_feature "11" "Render Feedback"       "tests/features/11-render-feedback.test.ts"
+run_feature "12" "AI Queue"              "tests/features/12-ai-queue.test.ts"
+run_feature "13" "Style Transfer"        "tests/features/13-style-transfer.test.ts"
+run_feature "14" "Notification Triggers" "tests/features/14-notification-triggers.test.ts"
+run_feature "15" "Admin Dashboards"      "tests/features/15-admin-dashboards.test.ts"
+run_feature "16" "Security Checks"       "tests/features/16-security-checks.test.ts"
+run_feature "17" "Credit Safety"         "tests/features/17-credit-safety.test.ts"
+run_feature "18" "Payments Security"     "tests/features/18-payments-security.test.ts"
 
 # ── Cleanup test data ──────────────────────────────────────────────────────────
 echo ""
@@ -111,7 +120,7 @@ fi
 echo ""
 
 if [[ ${#FAILED[@]} -eq 0 ]]; then
-  echo "  🎉 All ${#PASSED[@]}/9 features passing!"
+  echo "  🎉 All ${#PASSED[@]}/18 features passing!"
 else
   echo "  ⚠  ${#FAILED[@]} feature(s) failed"
   exit 1

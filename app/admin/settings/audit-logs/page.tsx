@@ -8,7 +8,7 @@ import {
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
   User, Tag, Globe, Clock, CheckCircle2, XCircle,
   ChevronDown, ChevronUp, AlertTriangle, Activity,
-  Users, Paintbrush, Wrench, ShoppingBag, Image, Settings,
+  Users, Paintbrush, Wrench, ShoppingBag, Image as ImageIcon, Settings,
   CreditCard, Trash2, Ban, RotateCcw,
 } from 'lucide-react';
 
@@ -56,7 +56,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
   designers:     <Paintbrush className="w-3.5 h-3.5" />,
   contractors:   <Wrench className="w-3.5 h-3.5" />,
   vendors:       <ShoppingBag className="w-3.5 h-3.5" />,
-  renders:       <Image className="w-3.5 h-3.5" />,
+  renders:       <ImageIcon className="w-3.5 h-3.5" />,
   subscriptions: <CreditCard className="w-3.5 h-3.5" />,
   system:        <Settings className="w-3.5 h-3.5" />,
   auth:          <Shield className="w-3.5 h-3.5" />,

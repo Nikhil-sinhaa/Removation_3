@@ -17,7 +17,7 @@ import {
   CheckCircle,
   AlertCircle,
   Loader2,
-  Image,
+  Image as ImageIcon,
   Shield,
   Zap,
   Lock,
@@ -439,7 +439,7 @@ export default function ProfessionalDesignPage() {
             <CardContent>
               <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileSelect} className="hidden" />
               <Button onClick={() => fileInputRef.current?.click()} variant="outline" className="w-full" disabled={isGenerating}>
-                <Image className="w-4 h-4 mr-2" />
+                <ImageIcon className="w-4 h-4 mr-2" />
                 {selectedFile ? `📸 ${selectedFile.name}` : "Choose Room Image"}
               </Button>
               {previewUrl && (

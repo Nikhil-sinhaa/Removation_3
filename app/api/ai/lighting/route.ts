@@ -4,7 +4,7 @@ import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import sharp from 'sharp';
 import { connectDB } from '@/lib/db/mongodb';
-import Project from '@/src/models/Project';
+import AIRun from '@/src/models/AIRun';
 import User from '@/lib/db/models/User';
 import LightingRun from '@/src/models/LightingRun';
 import { getCurrentUser } from '@/lib/auth/jwt';
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
 
     // ── Create Project document ──────────────────────────────────────────────
     const label = preset ? (presets[preset]?.label || preset) : 'Custom Studio';
-    const project = await Project.create({
+    const project = await AIRun.create({
       name: `Lighting — ${label}`,
       userId,
       originalImage: inputImageUrl || '',
@@ -233,7 +233,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const project = await Project.findOne({ _id: projectId, userId: user._id }).lean();
+    const project: any = await AIRun.findOne({ _id: projectId, userId: user._id }).lean();
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

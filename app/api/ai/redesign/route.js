@@ -10,7 +10,7 @@ import { writeFile, mkdir, copyFile, unlink } from 'fs/promises';
 import path from 'path';
 import { Readable } from 'stream';
 import { connectDB } from '../../../../lib/db/mongodb';
-import Project from '../../../../src/models/Project.js';
+import AIRun from '../../../../src/models/AIRun.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { NextResponse } from 'next/server';
 import sharp from 'sharp';
@@ -388,7 +388,7 @@ export async function POST(request) {
       ? `Master Design - ${roomType}`
       : `${style} ${roomType}`;
 
-    const project = await Project.create({
+    const project = await AIRun.create({
       name:          projectName,
       userId:        finalUserId,
       originalImage: `/uploads/${uploadFilename}`,
@@ -455,7 +455,7 @@ export async function GET(request) {
     return Response.json({ message: 'Project ID required' }, { status: 400 });
   }
 
-  const project = await Project.findById(projectId);
+  const project = await AIRun.findById(projectId);
   if (!project) {
     return Response.json({ error: 'Project not found' }, { status: 404 });
   }
@@ -473,7 +473,7 @@ export async function DELETE(request) {
     return Response.json({ error: 'Project ID required' }, { status: 400 });
   }
 
-  const project = await Project.findByIdAndDelete(projectId);
+  const project = await AIRun.findByIdAndDelete(projectId);
   if (!project) {
     return Response.json({ error: 'Project not found' }, { status: 404 });
   }

@@ -412,6 +412,18 @@ async function verifyRazorpayPayment(
         // One-time payment for credits
         const credits = parseInt((payment.notes as any)?.credits || '0');
 
+        // ── Idempotency check (PAY-03) ───────────────────────────────────────
+        const alreadyProcessed = await User.findOne({
+            _id: user._id,
+            'paymentHistory.paymentId': paymentId,
+        });
+        if (alreadyProcessed) {
+            if (isRedirect) {
+                return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL || ''}/dashboard?upgrade=success`);
+            }
+            return NextResponse.json({ success: true, message: 'Payment already processed' }, { status: 200 });
+        }
+
         await User.findOneAndUpdate(
             { clerkId: finalUserId },
             {

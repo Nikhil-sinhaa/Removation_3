@@ -1,6 +1,7 @@
 /**
- * Mongoose Project Model for Removation.ai
- * Stores AI project data and processing status
+ * Mongoose AIRun Model for Removation.ai
+ * Stores AI render run data and processing status.
+ * Collection: 'projects' (unchanged for zero-data-migration rename from Project.js)
  */
 
 import mongoose from 'mongoose';
@@ -65,7 +66,7 @@ const aiConfigSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
-const projectSchema = new mongoose.Schema({
+const aiRunSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
@@ -128,46 +129,46 @@ const projectSchema = new mongoose.Schema({
 });
 
 // Indexes for better query performance
-projectSchema.index({ userId: 1, createdAt: -1 });
-projectSchema.index({ status: 1 });
-projectSchema.index({ comfyPromptId: 1 });
-projectSchema.index({ processingType: 1 });
+aiRunSchema.index({ userId: 1, createdAt: -1 });
+aiRunSchema.index({ status: 1 });
+aiRunSchema.index({ comfyPromptId: 1 });
+aiRunSchema.index({ processingType: 1 });
 
 // Pre-save middleware to set timestamps
-projectSchema.pre('save', function(next) {
+aiRunSchema.pre('save', function(next) {
   if (this.isModified('status') && this.status === 'processing' && !this.processingStartedAt) {
     this.processingStartedAt = new Date();
   }
-  
+
   if (this.isModified('status') && (this.status === 'completed' || this.status === 'failed') && !this.processingCompletedAt) {
     this.processingCompletedAt = new Date();
   }
-  
+
   next();
 });
 
 // Static methods
-projectSchema.statics.findByUserId = function(userId) {
+aiRunSchema.statics.findByUserId = function(userId) {
   return this.find({ userId }).sort({ createdAt: -1 });
 };
 
-projectSchema.statics.findQueuedProjects = function() {
+aiRunSchema.statics.findQueuedProjects = function() {
   return this.find({ status: 'queued' }).sort({ createdAt: 1 });
 };
 
-projectSchema.statics.findProcessingProjects = function() {
+aiRunSchema.statics.findProcessingProjects = function() {
   return this.find({ status: 'processing' });
 };
 
 // Instance methods
-projectSchema.methods.markAsProcessing = function(promptId) {
+aiRunSchema.methods.markAsProcessing = function(promptId) {
   this.status = 'processing';
   this.comfyPromptId = promptId;
   this.processingStartedAt = new Date();
   return this.save();
 };
 
-projectSchema.methods.markAsCompleted = function(resultImage) {
+aiRunSchema.methods.markAsCompleted = function(resultImage) {
   this.status = 'completed';
   this.resultImage = resultImage;
   this.processingCompletedAt = new Date();
@@ -175,33 +176,30 @@ projectSchema.methods.markAsCompleted = function(resultImage) {
   return this.save();
 };
 
-projectSchema.methods.markAsFailed = function(errorMessage) {
+aiRunSchema.methods.markAsFailed = function(errorMessage) {
   this.status = 'failed';
   this.errorMessage = errorMessage;
   this.processingCompletedAt = new Date();
   return this.save();
 };
 
-projectSchema.methods.getProcessingDuration = function() {
+aiRunSchema.methods.getProcessingDuration = function() {
   if (!this.processingStartedAt) return null;
   const endTime = this.processingCompletedAt || new Date();
   return endTime - this.processingStartedAt;
 };
 
 // Virtual for processing duration in seconds
-projectSchema.virtual('processingDurationSeconds').get(function() {
+aiRunSchema.virtual('processingDurationSeconds').get(function() {
   const duration = this.getProcessingDuration();
   return duration ? Math.round(duration / 1000) : null;
 });
 
 // Ensure virtuals are included in JSON output
-projectSchema.set('toJSON', { virtuals: true });
-projectSchema.set('toObject', { virtuals: true });
+aiRunSchema.set('toJSON', { virtuals: true });
+aiRunSchema.set('toObject', { virtuals: true });
 
-// Delete cached model to force schema re-registration during hot reload
-if (mongoose.models.Project) {
-  delete mongoose.models.Project;
-}
-const Project = mongoose.model('Project', projectSchema);
+// Safe model registration — collection stays 'projects' for zero-migration rename
+const AIRun = mongoose.models.AIRun || mongoose.model('AIRun', aiRunSchema, 'projects');
 
-export default Project;
+export default AIRun;
