@@ -14,6 +14,7 @@ import {
   type GPUMode,
 } from '@/lib/ai/gpu-mode-router';
 import { requireRole } from '@/lib/auth/requireRole';
+import { setSetting } from '@/src/lib/appSettings';
 
 export const runtime = 'nodejs';
 
@@ -22,8 +23,8 @@ export async function GET(req: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
 
   const mode = getGPUMode();
-  const localUrl  = process.env.COMFY_URL      ?? 'http://127.0.0.1:8188';
-  const cloudUrl  = process.env.COLAB_COMFY_URL ?? '';
+  const localUrl = process.env.COMFY_URL ?? 'http://127.0.0.1:8188';
+  const cloudUrl = process.env.COLAB_COMFY_URL ?? '';
   const activeUrl = getActiveComfyBaseUrl();
 
   // Run health checks in parallel
@@ -88,6 +89,11 @@ export async function POST(req: NextRequest) {
       }
 
       setGPUModeRuntime('cloud', { comfyUrl: resolvedCloudUrl });
+
+      // Persist to MongoDB so mode survives PM2 restart
+      await setSetting('COMFYUI_MODE', 'cloud');
+      await setSetting('COMFYUI_CLOUD_URL', resolvedCloudUrl);
+
       return NextResponse.json({
         success: true,
         mode: 'cloud',
@@ -102,6 +108,10 @@ export async function POST(req: NextRequest) {
     const health = await checkComfyHealth(localUrl, 5000);
 
     resetGPUMode(); // clears runtime override, falls back to env
+
+    // Persist to MongoDB so mode survives PM2 restart
+    await setSetting('COMFYUI_MODE', 'local');
+
     return NextResponse.json({
       success: true,
       mode: 'local',

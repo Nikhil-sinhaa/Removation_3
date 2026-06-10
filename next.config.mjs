@@ -94,8 +94,6 @@ const nextConfig = {
     // Use 'cheap-module-source-map' for dev to avoid Turbopack issues
     if (dev && !isServer) {
       config.devtool = 'cheap-module-source-map';
-    } else if (!dev) {
-      config.devtool = 'source-map';
     }
 
     // OOM Fix: Exclude large/static directories from the file watcher.

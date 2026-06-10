@@ -150,7 +150,7 @@ export function StagingView() {
                 </div>
 
                 {/* Right Side: Preview / Comparison */}
-                <div className="w-full md:w-2/3 h-[600px] bg-muted/30 border rounded-2xl overflow-hidden relative flex flex-col items-center justify-center shadow-sm">
+                <div className="w-full md:w-2/3 h-[300px] md:h-[600px] bg-muted/30 border rounded-2xl overflow-hidden relative flex flex-col items-center justify-center shadow-sm">
                     {!originalImage ? (
                         <div className="text-center p-8 space-y-4 text-muted-foreground">
                             <Sparkles className="w-12 h-12 mx-auto opacity-20" />

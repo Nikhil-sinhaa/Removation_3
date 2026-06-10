@@ -399,7 +399,7 @@ export default function RoomChangerPage() {
               />
               {!previewUrl ? (
                 <div
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors"
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 min-h-[120px] flex flex-col items-center justify-center text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors"
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={e => e.preventDefault()}

@@ -270,7 +270,7 @@ export default function StyleTransferPage() {
     <div className="min-h-screen" style={{ background: "#0a0a0a", fontFamily: "'Inter', sans-serif" }}>
       {/* ── Hero ──────────────────────────────────────────────────────────── */}
       <div
-        className="relative px-6 py-8 mb-4"
+        className="relative px-3 py-6 md:px-6 md:py-8 mb-4"
         style={{
           background: "linear-gradient(135deg, rgba(124,58,237,0.12) 0%, rgba(59,130,246,0.06) 100%)",
           borderBottom: "1px solid rgba(255,255,255,0.07)",

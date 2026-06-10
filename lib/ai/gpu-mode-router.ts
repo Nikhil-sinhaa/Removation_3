@@ -13,6 +13,8 @@
  * full process restart — MongoDB is the authoritative store.
  */
 
+import { connectToDatabase } from '@/lib/db/mongodb';
+
 export type GPUMode = 'local' | 'auto' | 'cloud';
 
 const LOCAL_URL = process.env.COMFY_URL ?? 'http://127.0.0.1:8188';
@@ -144,6 +146,35 @@ export function getActiveComfyWsUrl(): string {
   }
 
   return process.env.COMFY_WS_URL ?? 'ws://127.0.0.1:8188/ws?clientId=removation_main';
+}
+
+/**
+ * Initialize GPU mode from MongoDB on process boot.
+ * Reads COMFYUI_MODE and COMFYUI_CLOUD_URL from AppSettings key/value store.
+ * Call once from instrumentation.ts — after DB is connected.
+ * Fails gracefully: if DB is unreachable, env vars remain active.
+ */
+export async function initGPUModeFromDB(): Promise<void> {
+  try {
+    await connectToDatabase();
+    const { getSetting } = await import('@/src/lib/appSettings');
+
+    const [mode, cloudUrl] = await Promise.all([
+      getSetting('COMFYUI_MODE'),
+      getSetting('COMFYUI_CLOUD_URL'),
+    ]);
+
+    if (mode && (mode === 'local' || mode === 'auto' || mode === 'cloud')) {
+      globalThis.__gpuModeOverride = mode as GPUMode;
+    }
+    if (cloudUrl) {
+      globalThis.__cloudComfyUrl = cloudUrl;
+    }
+
+    console.log('[GPU Router] Initialized from DB:', mode ?? 'none', cloudUrl || 'no cloud URL');
+  } catch (err) {
+    console.error('[GPU Router] Failed to initialize from DB — using env defaults:', err);
+  }
 }
 
 /** True when using cloud or auto ComfyUI. */

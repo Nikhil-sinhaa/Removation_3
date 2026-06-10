@@ -244,15 +244,21 @@ export default function RemoveObjectPage() {
                 onChange={handleFileSelect}
                 className="hidden"
               />
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                className="w-full"
-                disabled={isGenerating}
+              <div
+                className="border-2 border-dashed border-gray-200 rounded-xl p-6 min-h-[120px] flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors"
+                onClick={() => !isGenerating && fileInputRef.current?.click()}
               >
-                <ImageIcon className="w-4 h-4 mr-2" />
-                {selectedFile ? `📸 ${selectedFile.name}` : t("ro_choose_image")}
-              </Button>
+                <ImageIcon className="w-10 h-10 text-gray-300" />
+                <Button
+                  onClick={e => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  variant="outline"
+                  className="w-full"
+                  disabled={isGenerating}
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  {selectedFile ? `📸 ${selectedFile.name}` : t("ro_choose_image")}
+                </Button>
+              </div>
               {selectedFile && (
                 <div className="mt-2 text-sm text-green-600">
                   {t("ro_ready")}

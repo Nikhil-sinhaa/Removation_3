@@ -90,7 +90,7 @@ export default function ColorVisualizerPage() {
     return (
         <div className="flex flex-col min-h-[calc(100vh-4rem)] max-w-5xl mx-auto py-8 px-4">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <Palette className="w-8 h-8 text-violet-600" />
                     {t("cv_title")}
                 </h1>

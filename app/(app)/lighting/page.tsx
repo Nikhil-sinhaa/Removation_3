@@ -26,10 +26,12 @@ import {
   Compass,
   Lightbulb,
   Layers,
-  Sparkle
+  Sparkle,
+  ChevronDown,
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
 import { RenderFeedback } from '@/components/shared/RenderFeedback';
+import { useIsMobile } from '@/hooks/useMobile';
 
 interface ResultImage {
   label: string;
@@ -197,6 +199,12 @@ const LIGHTING_PRESETS: Record<string, {
 export default function LightingPage() {
   const { toast } = useToast();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+  const isMobile = useIsMobile();
+  const [advancedOpen, setAdvancedOpen] = useState(true);
+
+  useEffect(() => {
+    setAdvancedOpen(!isMobile);
+  }, [isMobile]);
 
   // ── Core Input State ────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -502,7 +510,7 @@ export default function LightingPage() {
             <Badge className="bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300 px-3 py-1 mb-3 rounded-full text-xs font-bold tracking-wider">
               ✨ ADVANCED STUDIO INTERFACE
             </Badge>
-            <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-orange-500 to-amber-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-2xl lg:text-4xl xl:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-orange-500 to-amber-500 bg-clip-text text-transparent mb-2">
               AI Lighting Studio
             </h1>
             <p className="text-base text-slate-500 max-w-3xl">
@@ -534,7 +542,7 @@ export default function LightingPage() {
               />
               {!previewUrl ? (
                 <div
-                  className="border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-8 text-center cursor-pointer hover:bg-amber-50/20 transition-all duration-300"
+                  className="border-2 border-dashed border-slate-200 hover:border-amber-400 rounded-xl p-6 min-h-[120px] text-center cursor-pointer hover:bg-amber-50/20 transition-all duration-300 flex flex-col items-center justify-center"
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={e => e.preventDefault()}
@@ -617,11 +625,18 @@ export default function LightingPage() {
 
           {/* Relighting Parameters Panel */}
           <Card className="border border-slate-100 shadow-sm rounded-2xl">
-            <CardHeader className="pb-3 bg-slate-50/50">
+            <CardHeader
+              className="pb-3 bg-slate-50/50 cursor-pointer select-none"
+              onClick={() => isMobile && setAdvancedOpen(o => !o)}
+            >
               <CardTitle className="flex items-center gap-2 text-base font-bold text-slate-800">
                 <Sliders className="w-5 h-5 text-amber-600" />Studio Control Sliders
+                {isMobile && (
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+                )}
               </CardTitle>
             </CardHeader>
+            {(!isMobile || advancedOpen) && (
             <CardContent className="pt-4 space-y-4">
               
               {/* Shape selection */}
@@ -838,6 +853,7 @@ export default function LightingPage() {
               </div>
 
             </CardContent>
+            )}
           </Card>
 
           {/* Action Render Button */}

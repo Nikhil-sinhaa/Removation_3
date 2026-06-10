@@ -447,8 +447,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Link>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg"
+                className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg"
                 style={{ color: '#a1a1aa', background: '#1c1c1c' }}
+                aria-label="Close menu"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -523,8 +524,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg"
+                className="lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg"
                 style={{ color: '#a1a1aa', background: '#1c1c1c' }}
+                aria-label="Open navigation menu"
               >
                 <Menu className="w-4 h-4" />
               </button>
@@ -533,7 +535,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <SearchBar className="hidden sm:block w-56 lg:w-72" />
               <Link
                 href="/search"
-                className="sm:hidden w-8 h-8 flex items-center justify-center rounded-lg"
+                className="sm:hidden min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg"
                 style={{ color: '#a1a1aa', background: '#1c1c1c' }}
                 aria-label="Search"
               >
@@ -543,6 +545,19 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
             {/* Right */}
             <div className="flex items-center gap-2">
+              {/* Credits badge — visible on mobile outside hamburger */}
+              {!isLoaded && user && user.credits !== undefined && (
+                <Link
+                  href="/billing"
+                  className="lg:hidden flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold"
+                  style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', color: '#a78bfa' }}
+                  aria-label={`${user.credits} credits remaining`}
+                >
+                  <Zap className="w-3 h-3" />
+                  {user.credits}
+                </Link>
+              )}
+
               <NotificationBell />
 
               <TourHelpMenu />

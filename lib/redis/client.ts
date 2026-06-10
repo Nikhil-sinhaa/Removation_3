@@ -60,24 +60,18 @@ function createRedisClient(): Redis {
 }
 
 export function getRedisClient(): Redis {
-  if (process.env.NODE_ENV === 'development') {
-    if (!global._redisClient) {
-      global._redisClient = createRedisClient();
-    }
-    return global._redisClient;
+  if (!global._redisClient) {
+    global._redisClient = createRedisClient();
   }
-  return createRedisClient();
+  return global._redisClient;
 }
 
 // Separate subscriber client — pub/sub requires a dedicated connection
 export function getRedisSubscriber(): Redis {
-  if (process.env.NODE_ENV === 'development') {
-    if (!global._redisSubscriber) {
-      global._redisSubscriber = createRedisClient();
-    }
-    return global._redisSubscriber;
+  if (!global._redisSubscriber) {
+    global._redisSubscriber = createRedisClient();
   }
-  return createRedisClient();
+  return global._redisSubscriber;
 }
 
 export async function closeRedisConnections(): Promise<void> {

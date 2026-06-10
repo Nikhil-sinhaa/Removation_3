@@ -114,7 +114,7 @@ export default function DreamRoomPage() {
     return (
         <div className="flex flex-col min-h-[calc(100vh-4rem)] max-w-5xl mx-auto py-8 px-4">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2 flex items-center gap-2">
                     <Wand2 className="w-8 h-8 text-violet-600" />
                     {t("dr_title")}
                 </h1>

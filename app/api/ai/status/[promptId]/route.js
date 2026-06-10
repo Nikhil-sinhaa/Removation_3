@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/db/mongodb';
 import AIRun from '../../../../../src/models/AIRun.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 export async function GET(request, { params }) {
   await connectDB();
@@ -27,10 +28,14 @@ export async function GET(request, { params }) {
       }, { status: 404 });
     }
 
+    const comfyUrl = getActiveComfyBaseUrl();
+
     // Check ComfyUI queue for status
     let comfyStatus = 'unknown';
     try {
-      const queueResponse = await fetch('http://127.0.0.1:8188/queue');
+      const queueResponse = await fetch(`${comfyUrl}/queue`, {
+        headers: { 'bypass-tunnel-reminder': 'true' },
+      });
       if (queueResponse.ok) {
         const queueData = await queueResponse.json();
         
@@ -62,7 +67,9 @@ export async function GET(request, { params }) {
     let generatedImage = null;
     if (comfyStatus === 'completed') {
       try {
-        const outputResponse = await fetch('http://127.0.0.1:8188/history');
+        const outputResponse = await fetch(`${comfyUrl}/history/${promptId}`, {
+          headers: { 'bypass-tunnel-reminder': 'true' },
+        });
         if (outputResponse.ok) {
           const historyData = await outputResponse.json();
           const jobHistory = historyData[promptId];

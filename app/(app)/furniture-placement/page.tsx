@@ -255,7 +255,7 @@ export default function FurniturePlacementPage() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div className="container mx-auto p-6 max-w-5xl">
+    <div className="container mx-auto p-3 md:p-6 max-w-5xl">
 
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mb-8 text-center">
@@ -263,7 +263,7 @@ export default function FurniturePlacementPage() {
           <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-600/30">
             <Sofa className="w-6 h-6 text-white" />
           </div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Furniture Placer
           </h1>
         </div>
@@ -300,7 +300,7 @@ export default function FurniturePlacementPage() {
               <div
                 data-tour="fp-upload-room"
                 onClick={() => fileRoomRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 group ${
+                className={`border-2 border-dashed rounded-2xl p-6 min-h-[120px] text-center cursor-pointer transition-all duration-200 group flex flex-col items-center justify-center ${
                   roomPreview
                     ? roomUpload === 'done'
                       ? 'border-green-400 bg-green-50/30'
@@ -345,7 +345,7 @@ export default function FurniturePlacementPage() {
               <div
                 data-tour="fp-upload-furniture"
                 onClick={() => fileFurnitureRef.current?.click()}
-                className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-200 group ${
+                className={`border-2 border-dashed rounded-2xl p-6 min-h-[120px] text-center cursor-pointer transition-all duration-200 group flex flex-col items-center justify-center ${
                   furniturePreview
                     ? bgState === 'done'
                       ? 'border-green-400 bg-green-50/30'

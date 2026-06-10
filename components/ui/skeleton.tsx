@@ -1,4 +1,4 @@
-﻿import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "circular" | "rectangular"
@@ -137,4 +137,29 @@ export {
   SkeletonTable,
   SkeletonRenderGrid,
   SkeletonEditor 
+}
+
+// ── AI-specific skeleton components ─────────────────────────────────────────
+
+export function AIResultSkeleton() {
+  return (
+    <div className="space-y-3 w-full">
+      <Skeleton className="h-[300px] w-full rounded-xl" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    </div>
+  )
+}
+
+export function AIToolCardSkeleton() {
+  return (
+    <div className="space-y-3 p-4 border rounded-xl border-white/10">
+      <Skeleton className="h-[160px] w-full rounded-lg" />
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="h-4 w-1/2" />
+      <Skeleton className="h-9 w-full rounded-md" />
+    </div>
+  )
 }

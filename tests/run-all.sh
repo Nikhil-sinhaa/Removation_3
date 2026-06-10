@@ -92,6 +92,9 @@ run_feature "15" "Admin Dashboards"      "tests/features/15-admin-dashboards.tes
 run_feature "16" "Security Checks"       "tests/features/16-security-checks.test.ts"
 run_feature "17" "Credit Safety"         "tests/features/17-credit-safety.test.ts"
 run_feature "18" "Payments Security"     "tests/features/18-payments-security.test.ts"
+run_feature "19" "Auth Routes"           "tests/features/19-auth-routes.test.ts"
+run_feature "20" "AI Routes Auth"        "tests/features/20-ai-routes-auth.test.ts"
+run_feature "21" "Payment Flows"         "tests/features/21-payment-flows.test.ts"
 
 # ── Cleanup test data ──────────────────────────────────────────────────────────
 echo ""
@@ -120,7 +123,7 @@ fi
 echo ""
 
 if [[ ${#FAILED[@]} -eq 0 ]]; then
-  echo "  🎉 All ${#PASSED[@]}/18 features passing!"
+  echo "  🎉 All ${#PASSED[@]}/21 features passing!"
 else
   echo "  ⚠  ${#FAILED[@]} feature(s) failed"
   exit 1

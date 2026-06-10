@@ -26,9 +26,11 @@ import {
   Undo2,
   Trash2,
   SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
 import { AIResultPanel } from '@/components/ai/AIResultPanel';
+import { useIsMobile } from '@/hooks/useMobile';
 
 interface ProgressState {
   stage: number;
@@ -121,6 +123,13 @@ async function exportMaskAsWhiteOnBlack(
 
 export default function FurnitureRemoverPage() {
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+  const isMobile = useIsMobile();
+  const [paramsOpen, setParamsOpen] = useState(true);
+
+  useEffect(() => {
+    setParamsOpen(!isMobile);
+  }, [isMobile]);
+
   // ── Mode & Core State ──────────────────────────────────────────────────────
   const [activeTab, setActiveTab]       = useState<'auto' | 'manual'>('auto');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -515,11 +524,11 @@ export default function FurnitureRemoverPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="container mx-auto p-3 md:p-6 max-w-6xl">
       {/* Title Header */}
       <div className="mb-8">
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-          <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-red-500 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-4xl font-bold mb-3 bg-gradient-to-r from-red-500 via-pink-600 to-indigo-600 bg-clip-text text-transparent">
             Furniture Remover
           </h1>
           <p className="text-lg text-gray-600 mb-4">
@@ -554,7 +563,7 @@ export default function FurnitureRemoverPage() {
               />
               {!previewUrl ? (
                 <div
-                  className="border-2 border-dashed border-gray-200 hover:border-red-400 hover:bg-red-50/20 rounded-xl p-8 text-center cursor-pointer transition-all duration-200"
+                  className="border-2 border-dashed border-gray-200 hover:border-red-400 hover:bg-red-50/20 rounded-xl p-6 min-h-[120px] text-center cursor-pointer transition-all duration-200 flex flex-col items-center justify-center"
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={e => e.preventDefault()}
@@ -658,12 +667,19 @@ export default function FurnitureRemoverPage() {
 
           {/* Card 3: Tabs details panels */}
           <Card className="shadow-sm border-gray-100">
-            <CardHeader className="pb-3">
+            <CardHeader
+              className="pb-3 cursor-pointer select-none"
+              onClick={() => isMobile && setParamsOpen(o => !o)}
+            >
               <CardTitle className="flex items-center gap-2 text-base font-semibold">
                 <SlidersHorizontal className="w-4 h-4 text-gray-500" />
                 Parameters
+                {isMobile && (
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${paramsOpen ? 'rotate-180' : ''}`} />
+                )}
               </CardTitle>
             </CardHeader>
+            {(!isMobile || paramsOpen) && (
             <CardContent className="space-y-4">
               <AnimatePresence mode="wait">
                 {activeTab === 'auto' ? (
@@ -808,6 +824,7 @@ export default function FurnitureRemoverPage() {
                 </div>
               </div>
             </CardContent>
+            )}
           </Card>
 
           {/* Trigger Button */}

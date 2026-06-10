@@ -176,7 +176,7 @@ test.describe('Feature 13: Style Transfer', () => {
 
     const fs = await import('fs');
     const path = await import('path');
-    const imgPath = path.resolve(__dirname, '../../test-assets/living-room.jpg');
+    const imgPath = path.resolve(process.cwd(), 'test-assets/living-room.jpg');
     const imgBytes = fs.readFileSync(imgPath);
 
     const res = await request.post(`${BASE_URL}/api/ai/style-transfer`, {

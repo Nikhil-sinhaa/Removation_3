@@ -233,7 +233,7 @@ function GPUModePanel() {
         {/* Mode selector — 3 cards */}
         <div>
           <p className="text-sm font-medium mb-3">Select GPU Source</p>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {([
               { id: 'local', label: 'Local Only', sub: 'RTX 4060 8GB', icon: Cpu, color: 'purple' },
               { id: 'auto',  label: 'Auto',       sub: 'Cloud → Local', icon: Cloud, color: 'blue' },
@@ -275,7 +275,7 @@ function GPUModePanel() {
               value={cloudUrl}
               onChange={e => setCloudUrl(e.target.value)}
               placeholder="https://abc123.trycloudflare.com"
-              className="w-full rounded-lg border bg-muted px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full rounded-lg border bg-muted px-4 py-2.5 text-base font-mono min-h-[44px] focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-xs text-muted-foreground">
               Run your Colab notebook → copy the Cloudflare tunnel URL → paste here.
@@ -701,7 +701,37 @@ export default function SettingsPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Navigation */}
           <aside className="lg:w-64 flex-shrink-0">
-            <nav className="space-y-1 sticky top-28">
+            {/* Mobile: horizontal scrollable tab strip */}
+            <nav className="flex lg:hidden overflow-x-auto gap-2 pb-2 mb-4 scrollbar-hide snap-x snap-mandatory">
+              {settingsSections.map((section) => (
+                <button
+                  key={section.id}
+                  onClick={() => {
+                    setSectionRenderKey(prev => prev + 1);
+                    setActiveSection(section.id);
+                  }}
+                  className={cn(
+                    "flex-shrink-0 snap-start flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all whitespace-nowrap min-h-[44px]",
+                    activeSection === section.id
+                      ? "bg-primary text-primary-foreground shadow-md"
+                      : "bg-accent text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <section.icon className="h-4 w-4 flex-shrink-0" />
+                  {language === "hi" ? section.labelHi : section.label}
+                </button>
+              ))}
+              <button
+                onClick={() => logout()}
+                className="flex-shrink-0 snap-start flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium min-h-[44px] text-red-500 bg-red-50 dark:bg-red-950/20 whitespace-nowrap"
+              >
+                <LogOut className="h-4 w-4 flex-shrink-0" />
+                {language === "hi" ? "साइन आउट" : "Sign Out"}
+              </button>
+            </nav>
+
+            {/* Desktop: vertical sticky nav */}
+            <nav className="hidden lg:flex flex-col space-y-1 sticky top-28">
               {settingsSections.map((section) => (
                 <button
                   key={section.id}
@@ -725,10 +755,7 @@ export default function SettingsPage() {
                   )}
                 </button>
               ))}
-
               <Separator className="my-4" />
-
-              {/* Sign Out Button */}
               <button
                 onClick={() => logout()}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all"
@@ -1117,7 +1144,7 @@ export default function SettingsPage() {
                             setPreferences({ ...preferences, theme: value });
                             setNextTheme(value);
                           }}
-                          className="grid grid-cols-3 gap-4"
+                          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
                         >
                           {themeOptions.map((theme) => (
                             <div key={theme.value}>

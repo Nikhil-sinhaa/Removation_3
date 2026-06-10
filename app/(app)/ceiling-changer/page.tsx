@@ -22,9 +22,11 @@ import {
   Download,
   RefreshCw,
   BookmarkCheck,
+  ChevronDown,
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
 import { AIResultPanel } from '@/components/ai/AIResultPanel';
+import { useIsMobile } from '@/hooks/useMobile';
 
 interface ProgressState {
   stage: number; // 1 = ceiling detection, 2 = repainting
@@ -47,6 +49,13 @@ interface FeedbackState {
 
 export default function CeilingChangerPage() {
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
+  const isMobile = useIsMobile();
+  const [settingsOpen, setSettingsOpen] = useState(true);
+
+  useEffect(() => {
+    setSettingsOpen(!isMobile);
+  }, [isMobile]);
+
   // ── Core state ─────────────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl]     = useState<string | null>(null);
@@ -268,11 +277,11 @@ export default function CeilingChangerPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
+    <div className="container mx-auto p-3 md:p-6 max-w-6xl">
       {/* Header */}
       <div className="mb-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Ceiling Changer
           </h1>
           <p className="text-lg text-gray-600 mb-3">
@@ -306,7 +315,7 @@ export default function CeilingChangerPage() {
               />
               {!previewUrl ? (
                 <div
-                  className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors"
+                  className="border-2 border-dashed border-gray-300 rounded-xl p-6 min-h-[120px] text-center cursor-pointer hover:border-violet-400 hover:bg-violet-50 transition-colors flex flex-col items-center justify-center"
                   onClick={() => fileInputRef.current?.click()}
                   onDrop={handleDrop}
                   onDragOver={e => e.preventDefault()}
@@ -336,14 +345,22 @@ export default function CeilingChangerPage() {
 
           {/* Color Selection */}
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader
+              className="pb-3 cursor-pointer select-none"
+              onClick={() => isMobile && setSettingsOpen(o => !o)}
+            >
               <CardTitle className="flex items-center gap-2 text-base">
                 <Layers className="w-4 h-4" />Choose Ceiling Color
+                {isMobile && (
+                  <ChevronDown className={`w-4 h-4 ml-auto transition-transform ${settingsOpen ? 'rotate-180' : ''}`} />
+                )}
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <CeilingColorPicker value={color} onChange={setColor} disabled={isGenerating} />
-            </CardContent>
+            {(!isMobile || settingsOpen) && (
+              <CardContent>
+                <CeilingColorPicker value={color} onChange={setColor} disabled={isGenerating} />
+              </CardContent>
+            )}
           </Card>
 
           {/* Generate Button */}

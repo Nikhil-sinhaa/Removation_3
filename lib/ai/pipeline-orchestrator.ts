@@ -3,6 +3,8 @@
 // Chains all stages sequentially with VRAM flush between each
 
 import axios from 'axios';
+import { getGPUMode, getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
+import { copyOutputsToRemoteInput } from '@/lib/ai/cloud-comfy-adapter';
 import type {
   Stage1Input, Stage1Output,
   Stage2Input, Stage2Output,
@@ -97,11 +99,9 @@ const CONFIG = {
 // ─── Pipeline Orchestrator ───────────────────────────────────────────
 
 export class PipelineOrchestrator {
-  private baseUrl: string;
   private onProgress?: PipelineProgressCallback;
 
   constructor(onProgress?: PipelineProgressCallback) {
-    this.baseUrl = CONFIG.comfyUrl;
     this.onProgress = onProgress;
   }
 
@@ -167,6 +167,15 @@ export class PipelineOrchestrator {
         this.emitProgress(1, 'completed', `Done in ${timings.stage1}ms — ${Object.keys(stage1Result).filter(k => stage1Result[k]).length} outputs`);
 
         await this.flushVRAM();
+
+        // Cloud mode: copy stage 1 outputs to remote ComfyUI input
+        if (getGPUMode() === 'cloud') {
+          try {
+            await copyOutputsToRemoteInput(stageOutputs.stage1, getActiveComfyBaseUrl());
+          } catch (err: any) {
+            console.warn(`⚠️ Cloud inter-stage copy failed after Stage 1: ${err.message}`);
+          }
+        }
       } else {
         this.emitProgress(1, 'skipped');
         stage1Result = stageOutputs.stage1 || {
@@ -208,6 +217,15 @@ export class PipelineOrchestrator {
         this.emitProgress(2, 'completed', `Done in ${timings.stage2}ms`);
 
         await this.flushVRAM();
+
+        // Cloud mode: copy stage 2 outputs to remote ComfyUI input
+        if (getGPUMode() === 'cloud') {
+          try {
+            await copyOutputsToRemoteInput(stageOutputs.stage2, getActiveComfyBaseUrl());
+          } catch (err: any) {
+            console.warn(`⚠️ Cloud inter-stage copy failed after Stage 2: ${err.message}`);
+          }
+        }
       } else {
         this.emitProgress(2, 'skipped');
         stage2Result = stageOutputs.stage2 || { baseRedesignedImage: '' };
@@ -253,6 +271,15 @@ export class PipelineOrchestrator {
         this.emitProgress(3, 'completed', `${request.furnitureItems.length} items placed in ${timings.stage3}ms`);
 
         await this.flushVRAM();
+
+        // Cloud mode: copy stage 3 outputs to remote ComfyUI input
+        if (getGPUMode() === 'cloud') {
+          try {
+            await copyOutputsToRemoteInput(stageOutputs.stage3, getActiveComfyBaseUrl());
+          } catch (err: any) {
+            console.warn(`⚠️ Cloud inter-stage copy failed after Stage 3: ${err.message}`);
+          }
+        }
       } else {
         this.emitProgress(3, 'skipped', 'No furniture items to place');
         stage3Result = { roomWithFurniture: currentImage };
@@ -280,6 +307,15 @@ export class PipelineOrchestrator {
         this.emitProgress(4, 'completed', `Done in ${timings.stage4}ms`);
 
         await this.flushVRAM();
+
+        // Cloud mode: copy stage 4 outputs to remote ComfyUI input
+        if (getGPUMode() === 'cloud') {
+          try {
+            await copyOutputsToRemoteInput(stageOutputs.stage4, getActiveComfyBaseUrl());
+          } catch (err: any) {
+            console.warn(`⚠️ Cloud inter-stage copy failed after Stage 4: ${err.message}`);
+          }
+        }
       } else {
         this.emitProgress(4, 'skipped');
         stage4Result = { litRoomImage: stage3Result.roomWithFurniture };
@@ -307,6 +343,15 @@ export class PipelineOrchestrator {
         this.emitProgress(5, 'completed', `Done in ${timings.stage5}ms`);
 
         await this.flushVRAM();
+
+        // Cloud mode: copy stage 5 outputs to remote ComfyUI input
+        if (getGPUMode() === 'cloud') {
+          try {
+            await copyOutputsToRemoteInput(stageOutputs.stage5, getActiveComfyBaseUrl());
+          } catch (err: any) {
+            console.warn(`⚠️ Cloud inter-stage copy failed after Stage 5: ${err.message}`);
+          }
+        }
       } else {
         this.emitProgress(5, 'skipped');
         stage5Result = { upscaledImage: stage4Result.litRoomImage };
@@ -374,8 +419,9 @@ export class PipelineOrchestrator {
   private async submitAndWait(
     workflow: { prompt: Record<string, any> }
   ): Promise<Record<string, any>> {
+    const comfyUrl = getActiveComfyBaseUrl();
     // Submit
-    const response = await axios.post(`${this.baseUrl}/prompt`, workflow);
+    const response = await axios.post(`${comfyUrl}/prompt`, workflow);
     const promptId: string = response.data.prompt_id;
     console.log(`📤 Submitted prompt: ${promptId}`);
 
@@ -386,7 +432,7 @@ export class PipelineOrchestrator {
       await this.sleep(CONFIG.pollIntervalMs);
 
       try {
-        const historyRes = await axios.get(`${this.baseUrl}/history/${promptId}`);
+        const historyRes = await axios.get(`${comfyUrl}/history/${promptId}`);
         const promptHistory = historyRes.data[promptId];
 
         if (!promptHistory) continue;
@@ -417,8 +463,9 @@ export class PipelineOrchestrator {
    * Critical for staying under 8 GB on RTX 4060.
    */
   private async flushVRAM(): Promise<void> {
+    const comfyUrl = getActiveComfyBaseUrl();
     try {
-      await axios.post(`${this.baseUrl}/free`, CONFIG.freePayload);
+      await axios.post(`${comfyUrl}/free`, CONFIG.freePayload);
       console.log('🧹 VRAM flushed via POST /free');
       await this.sleep(CONFIG.flushDelayMs);
     } catch (error: any) {

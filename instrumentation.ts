@@ -24,5 +24,9 @@ export async function register() {
 
     const { seedDefaultAnnouncement } = await import('./lib/announcements/seedAnnouncement');
     await seedDefaultAnnouncement().catch(console.error);
+
+    // Restore GPU mode + cloud URL from MongoDB (survives PM2 restart)
+    const { initGPUModeFromDB } = await import('./lib/ai/gpu-mode-router');
+    await initGPUModeFromDB().catch(console.error);
   }
 }
