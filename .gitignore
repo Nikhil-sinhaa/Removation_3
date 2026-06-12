@@ -71,6 +71,11 @@ pids
 
 # Generated AI render outputs
 /public/renders/
+/public/generated/
+
+# Test assets (local test images, not for git)
+test-assets/
+test_images/
 
 # Claude / AI tooling state (local only)
 .claude-flow/
