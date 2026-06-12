@@ -372,7 +372,7 @@ ${recommendations.length > 0 ? recommendations.map(r => `- [${r.severity}] ${r.i
         ruleEvaluations,
         positiveAspects,
         autoFixAvailable,
-        detectedElements: features || [],
+        detectedElements: params.detectedElements || features || [],
     };
 }
 
