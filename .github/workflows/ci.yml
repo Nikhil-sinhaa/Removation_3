@@ -1,0 +1,155 @@
+# CI — lint / type-check / build / feature tests
+#
+# This is a CI-only pipeline. It does NOT deploy anything.
+# Deployment is local PM2 + Cloudflare tunnel because ComfyUI requires a
+# physical GPU (RTX 4060) and cannot run in GitHub Actions runners.
+#
+# Job layout:
+#   lint-and-typecheck  ──┬──> build          (blocking — saves minutes on broken PRs)
+#                         └──> feature-tests  (advisory — continue-on-error: true,
+#                                              runs in parallel with build)
+#
+# The feature-tests job is advisory pending validation that the 21-test suite
+# is stable in the GitHub Actions environment (service container timing, etc.).
+# Once stable, flip continue-on-error to false to make it blocking.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 1 — Lint & Type-check
+# ─────────────────────────────────────────────────────────────────────────────
+jobs:
+  lint-and-typecheck:
+    name: Lint & Type-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type-check
+        run: npm run type-check
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 2 — Build
+# ─────────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          JWT_SECRET: ci_dummy_secret_not_for_production
+          MONGODB_URI: mongodb://localhost:27017/ci_dummy
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Job 3 — Feature Tests (advisory)
+# ─────────────────────────────────────────────────────────────────────────────
+  feature-tests:
+    name: Feature Tests (advisory)
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    # Advisory: failure here does NOT block PR merge.
+    # Flip to false once the suite is confirmed stable in GHA.
+    continue-on-error: true
+
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    env:
+      JWT_SECRET: ci_dummy_secret_not_for_production
+      MONGODB_URI: mongodb://localhost:27017/ci_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      TEST_SECRET: ci_secret
+      SKIP_AUTH: true
+      # Prevent run-all.sh from auto-committing on test pass
+      COMMIT_ON_PASS: false
+      COMFYUI_AVAILABLE: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers (Chromium only)
+        # Two feature tests (09-schema-seo, 10-notification-system) use page.*
+        # browser automation; the rest use request-only. We install Chromium
+        # only (matches playwright.features.config.ts: devices['Desktop Chrome']).
+        run: npx playwright install --with-deps chromium
+
+      - name: Start dev server in background
+        run: SKIP_AUTH=true PORT=3000 npm run dev &
+
+      - name: Wait for dev server to be ready
+        run: |
+          echo "Polling http://localhost:3000 (up to 60s)..."
+          for i in $(seq 1 30); do
+            if curl -sf --max-time 3 http://localhost:3000 > /dev/null 2>&1; then
+              echo "Server is up (attempt $i)"
+              exit 0
+            fi
+            echo "  attempt $i/30 — waiting 2s..."
+            sleep 2
+          done
+          echo "ERROR: Server did not start within 60s"
+          exit 1
+
+      - name: Run feature test suite
+        run: bash tests/run-all.sh
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: feature-test-results
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
