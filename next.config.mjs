@@ -9,6 +9,7 @@ const nextConfig = {
         './public/uploads/**',
         './public/renders/**',
         './public/style-references/**',
+        './.graphify/**',
       ],
     },
   },

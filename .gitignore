@@ -131,3 +131,11 @@ scripts/test-stage1-quick.mjs
 public/uploads/
 public/renders/
 public/style-references/
+
+# Non-production scratch and test artifact files
+test_log.txt
+test-results.json
+scratch-token.js
+scratch/
+redesign.json
+test_drive_upload.js
