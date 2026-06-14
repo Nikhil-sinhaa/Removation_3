@@ -126,3 +126,11 @@ scripts/diagnose-room-changer.js
 scripts/diagnostics/
 scripts/test-stable-stage1.js
 scripts/test-stage1-quick.mjs
+
+# All generated/uploaded media - DO NOT commit
+public/uploads/
+public/renders/
+public/style-references/
+public/images/gallery/
+public/images/rooms/
+public/images/blog/
