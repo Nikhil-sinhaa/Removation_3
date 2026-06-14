@@ -4,6 +4,13 @@ const nextConfig = {
 
   // Enable instrumentation.ts — starts the memory watchdog on server boot
   experimental: {
+    outputFileTracingExcludes: {
+      '*': [
+        './public/uploads/**',
+        './public/renders/**',
+        './public/style-references/**',
+      ],
+    },
   },
 
   // Keep heavy server-only packages out of the client bundle
