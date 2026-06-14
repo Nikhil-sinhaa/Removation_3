@@ -222,7 +222,7 @@ export default function RoomChangerPage() {
 
     socketRef.current = socket;
     return () => { socket.disconnect(); stopPolling(); };
-  }, [stopPolling]);
+  }, [stopPolling, t]);
 
   // ── Crop modal state ───────────────────────────────────────────────────────
   const [cropOpen,    setCropOpen]    = useState(false);

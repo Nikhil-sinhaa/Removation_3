@@ -442,6 +442,53 @@ export default function ProjectEditorPage() {
     return () => window.removeEventListener('project-restored', onRestored as EventListener);
   }, [projectId]);
 
+  const handleSave = useCallback(async () => {
+    if (!project) return;
+    setIsSaving(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...project,
+          renders: project.renders,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to save');
+      setHasUnsavedChanges(false);
+      toast({
+        title: 'Project saved',
+        description: 'All changes have been saved',
+      });
+    } catch (error) {
+      toast({
+        title: 'Save failed',
+        description: 'Please try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [project, projectId, toast]);
+
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0) return;
+    const lastState = undoStack[undoStack.length - 1];
+    setRedoStack((prev) => [...prev, { /* current state */ }]);
+    setUndoStack((prev) => prev.slice(0, -1));
+    // Apply lastState
+    toast({ title: 'Undone' });
+  }, [undoStack, toast]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+    const nextState = redoStack[redoStack.length - 1];
+    setUndoStack((prev) => [...prev, { /* current state */ }]);
+    setRedoStack((prev) => prev.slice(0, -1));
+    // Apply nextState
+    toast({ title: 'Redone' });
+  }, [redoStack, toast]);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -489,7 +536,7 @@ export default function ProjectEditorPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [handleSave, handleUndo, handleRedo]);
 
   // Upload handling
   const { startUpload, isUploading: uploadingFile } = useUploadThing('imageUploader', {
@@ -545,53 +592,6 @@ export default function ProjectEditorPage() {
     },
     [startUpload]
   );
-
-  const handleSave = async () => {
-    if (!project) return;
-    setIsSaving(true);
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...project,
-          renders: project.renders,
-        }),
-      });
-      if (!response.ok) throw new Error('Failed to save');
-      setHasUnsavedChanges(false);
-      toast({
-        title: 'Project saved',
-        description: 'All changes have been saved',
-      });
-    } catch (error) {
-      toast({
-        title: 'Save failed',
-        description: 'Please try again',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleUndo = () => {
-    if (undoStack.length === 0) return;
-    const lastState = undoStack[undoStack.length - 1];
-    setRedoStack((prev) => [...prev, { /* current state */ }]);
-    setUndoStack((prev) => prev.slice(0, -1));
-    // Apply lastState
-    toast({ title: 'Undone' });
-  };
-
-  const handleRedo = () => {
-    if (redoStack.length === 0) return;
-    const nextState = redoStack[redoStack.length - 1];
-    setUndoStack((prev) => [...prev, { /* current state */ }]);
-    setRedoStack((prev) => prev.slice(0, -1));
-    // Apply nextState
-    toast({ title: 'Redone' });
-  };
 
   const handleGenerate = async () => {
     if (!originalImage) {

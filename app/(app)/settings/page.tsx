@@ -448,7 +448,7 @@ export default function SettingsPage() {
       .catch(() => {
         // Non-fatal — keep default state
       });
-  }, [user?.id]); // ✅ stable string ID — avoids infinite re-renders from object reference inequality
+  }, [user]);
 
   // Handle profile update
   const handleProfileUpdate = async () => {

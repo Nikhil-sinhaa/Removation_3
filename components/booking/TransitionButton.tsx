@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +34,7 @@ export function TransitionButtons({ bookingId, onSuccess }: TransitionButtonsPro
   const [rating,           setRating]           = useState(0);
   const [error,            setError]            = useState('');
 
-  const fetchTransitions = async () => {
+  const fetchTransitions = useCallback(async () => {
     try {
       const res  = await fetch(`/api/bookings/${bookingId}/transition`);
       const data = await res.json();
@@ -42,9 +42,9 @@ export function TransitionButtons({ bookingId, onSuccess }: TransitionButtonsPro
     } catch { /* ignore */ } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId]);
 
-  useEffect(() => { fetchTransitions(); }, [bookingId]);
+  useEffect(() => { fetchTransitions(); }, [fetchTransitions]);
 
   const handleTransition = async () => {
     if (!activeTransition) return;

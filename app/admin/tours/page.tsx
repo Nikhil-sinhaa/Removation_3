@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   HelpCircle,
@@ -110,7 +110,7 @@ export default function ToursAdminPage() {
     steps: [],
   });
 
-  const fetchTours = async () => {
+  const fetchTours = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/admin/tours');
@@ -127,11 +127,11 @@ export default function ToursAdminPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchTours();
-  }, []);
+  }, [fetchTours]);
 
   // Compute metrics summaries
   const globalStats = useMemo(() => {

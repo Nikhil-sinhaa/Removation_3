@@ -235,7 +235,7 @@ export default function RedirectsPage() {
     }
   }, [tab, page, search]);
 
-  useEffect(() => { load(); }, [tab, page]);
+  useEffect(() => { load(); }, [tab, page, load]);
 
   // Debounced search
   useEffect(() => {

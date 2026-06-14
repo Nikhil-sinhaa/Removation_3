@@ -1,7 +1,7 @@
 // components/landing/VideoDemo.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import {
   Play,
@@ -170,7 +170,7 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
   };
 
   // Handle play/pause
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (videoRef.current) {
       if (isPlaying) {
         videoRef.current.pause();
@@ -179,15 +179,15 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
       }
       setIsPlaying(!isPlaying);
     }
-  };
+  }, [isPlaying]);
 
   // Handle mute/unmute
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (videoRef.current) {
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
-  };
+  }, [isMuted]);
 
   // Handle volume change
   const handleVolumeChange = (value: number[]) => {
@@ -200,7 +200,7 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
   };
 
   // Handle fullscreen
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
 
     if (!isFullscreen) {
@@ -213,7 +213,7 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
       }
     }
     setIsFullscreen(!isFullscreen);
-  };
+  }, [isFullscreen]);
 
   // Handle progress click
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -235,7 +235,7 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
   };
 
   // Handle skip
-  const handleSkip = (seconds: number) => {
+  const handleSkip = useCallback((seconds: number) => {
     if (videoRef.current) {
       const newTime = Math.max(
         0,
@@ -244,7 +244,7 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
       videoRef.current.currentTime = newTime;
       setCurrentTime(newTime);
     }
-  };
+  }, [duration, currentTime]);
 
   // Handle playback speed
   const handleSpeedChange = (speed: number) => {
@@ -302,7 +302,7 @@ export function VideoDemo({ className, lang = "en" }: VideoDemoProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isModalOpen, isPlaying, isMuted, isFullscreen]);
+  }, [isModalOpen, isPlaying, isMuted, isFullscreen, handleSkip, toggleFullscreen, toggleMute, togglePlay]);
 
   // Handle fullscreen change
   useEffect(() => {

@@ -91,7 +91,7 @@ export function VastuAnalyzer({ onAnalysisComplete, className }: VastuAnalyzerPr
 
   useEffect(() => {
     if (analysis) onAnalysisComplete?.(analysis);
-  }, [analysis]);
+  }, [analysis, onAnalysisComplete]);
 
   const handleImageUpload = useCallback((url: string) => {
     setImageUrl(url);

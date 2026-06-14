@@ -590,7 +590,7 @@ export default function HistoryPage() {
       });
 
     return () => controller.abort();
-  }, [buildQueryParams]); // buildQueryParams is stable per filter combination
+  }, [buildQueryParams, language]);
 
   // Load next page and append
   const loadMore = useCallback(() => {
@@ -616,7 +616,7 @@ export default function HistoryPage() {
         setIsLoadingMore(false);
         fetchInFlightRef.current = false;
       });
-  }, [buildQueryParams]); // safe: reads pageRef/hasMoreRef, not state
+  }, [buildQueryParams, language]);
 
   // IntersectionObserver — fires loadMore when sentinel scrolls into view
   useEffect(() => {

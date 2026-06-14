@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
@@ -182,7 +182,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
   };
 
   // Get base cost for current city and room type
-  const getBaseCostForCity = (cityId: string, quality: 'standard' = 'standard') => {
+  const getBaseCostForCity = useCallback((cityId: string, quality: 'standard' = 'standard') => {
     const roomKey = getRoomTypeKey(roomType);
     const cityMultiplier = getCityMultiplier(cityId);
 
@@ -196,7 +196,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
     const costRange = roomCosts[quality];
     const avgCost = (costRange.min + costRange.max) / 2;
     return avgCost * areaInSqFt * cityMultiplier;
-  };
+  }, [roomType, areaInSqFt]);
 
   // Calculate comparison data for all cities
   const comparisonData = useMemo<ComparisonCity[]>(() => {
@@ -222,7 +222,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
         };
       })
       .sort((a, b) => a.estimatedCost - b.estimatedCost);
-  }, [costData.grandTotal, currentCity, areaInSqFt, roomType]);
+  }, [costData.grandTotal, currentCity, areaInSqFt, getBaseCostForCity]);
 
   // Get cheapest and most expensive
   const cheapestCity = comparisonData[0];
@@ -234,7 +234,7 @@ const CostComparison: React.FC<CostComparisonProps> = ({
     const allCityCosts = CITY_LIST.map(city => getBaseCostForCity(city.id, 'standard'));
     const total = allCityCosts.reduce((sum, cost) => sum + cost, 0);
     return total / allCityCosts.length;
-  }, [areaInSqFt, roomType]);
+  }, [getBaseCostForCity]);
 
   // Calculate percentile rank
   const percentileRank = useMemo(() => {

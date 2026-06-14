@@ -33,28 +33,8 @@ export function ObjectRemovalSidebar({ imageUrl, onImageUpdate }: {
   const { gpuStatus, checkGPUStatus } = useGPUStatus();
   const [isInQueue, setIsInQueue] = useState(false);
 
-  // Handle canvas click for object selection
-  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!canvasRef.current || !imageRef.current || gpuStatus.status !== 'idle') return;
-
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = imageRef.current.naturalWidth / canvas.width;
-    const scaleY = imageRef.current.naturalHeight / canvas.height;
-
-    const x = (event.clientX - rect.left) * scaleX;
-    const y = (event.clientY - rect.top) * scaleY;
-
-    setSelectedPoint({ x, y });
-    setMaskPreview(null);
-    setCurrentStep('segmenting');
-    
-    // Trigger SAM 2 segmentation
-    triggerSegmentation(x, y);
-  }, [gpuStatus.status]);
-
   // Trigger SAM 2 segmentation
-  const triggerSegmentation = async (x: number, y: number) => {
+  const triggerSegmentation = useCallback(async (x: number, y: number) => {
     try {
       setIsGenerating(true);
       setProgress(10);
@@ -83,7 +63,27 @@ export function ObjectRemovalSidebar({ imageUrl, onImageUpdate }: {
     } finally {
       setIsGenerating(false);
     }
-  };
+  }, [imageUrl]);
+
+  // Handle canvas click for object selection
+  const handleCanvasClick = useCallback((event: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!canvasRef.current || !imageRef.current || gpuStatus.status !== 'idle') return;
+
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = imageRef.current.naturalWidth / canvas.width;
+    const scaleY = imageRef.current.naturalHeight / canvas.height;
+
+    const x = (event.clientX - rect.left) * scaleX;
+    const y = (event.clientY - rect.top) * scaleY;
+
+    setSelectedPoint({ x, y });
+    setMaskPreview(null);
+    setCurrentStep('segmenting');
+
+    // Trigger SAM 2 segmentation
+    triggerSegmentation(x, y);
+  }, [gpuStatus.status, triggerSegmentation]);
 
   // Confirm object removal
   const confirmRemoval = async () => {

@@ -39,9 +39,9 @@ export function InpaintBrush({ className }: InpaintBrushProps) {
     setBrushSize(Math.max(5, Math.min(200, brushSize + delta)));
   }, [brushSize, setBrushSize]);
 
-  const handleBrushModeChange = (isEraser: boolean) => {
+  const handleBrushModeChange = useCallback((isEraser: boolean) => {
     setBrushSettings({ isEraser });
-  };
+  }, [setBrushSettings]);
 
   const toggleShowMask = () => {
     setBrushSettings({ opacity: brushSettings.opacity > 0 ? 0 : 1 });

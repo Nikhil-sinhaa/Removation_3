@@ -1,7 +1,7 @@
 // app/admin/analytics/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -432,7 +432,7 @@ export default function AdminAnalyticsPage() {
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>(mockRecentActivity);
   const [featureUsage, setFeatureUsage] = useState<ChartData[]>(mockFeatureUsage);
 
-  async function fetchAnalytics() {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch(`/api/admin/analytics?range=${timeRange}`);
@@ -454,11 +454,11 @@ export default function AdminAnalyticsPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [timeRange]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [timeRange]);
+  }, [fetchAnalytics]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);

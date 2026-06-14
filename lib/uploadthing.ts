@@ -264,7 +264,7 @@ export async function isValidImage(file: File): Promise<boolean> {
   }
 }
 
-export default {
+const uploadthingUtils = {
   useUploadThing,
   uploadFiles,
   UploadButton,
@@ -283,3 +283,5 @@ export default {
   getImageDimensions,
   isValidImage,
 };
+
+export default uploadthingUtils;

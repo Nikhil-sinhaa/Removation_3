@@ -529,6 +529,28 @@ export function ImagePreview({
 
   const { toast } = useToast();
 
+  // Handlers
+  const handleZoom = useCallback(
+    (direction: "in" | "out") => {
+      setTransform((prev) => {
+        const newZoom =
+          direction === "in"
+            ? Math.min(prev.zoom + zoomStep, maxZoom)
+            : Math.max(prev.zoom - zoomStep, minZoom);
+
+        onZoomChange?.(newZoom);
+        return { ...prev, zoom: newZoom };
+      });
+    },
+    [zoomStep, maxZoom, minZoom, onZoomChange]
+  );
+
+  const handleResetTransform = useCallback(() => {
+    setTransform({ ...DEFAULT_TRANSFORM, zoom: initialZoom });
+    onZoomChange?.(initialZoom);
+    onRotateChange?.(0);
+  }, [initialZoom, onZoomChange, onRotateChange]);
+
   // Effects
   useEffect(() => {
     if (enableKeyboardNav) {
@@ -571,23 +593,7 @@ export function ImagePreview({
       window.addEventListener("keydown", handleKeyDown);
       return () => window.removeEventListener("keydown", handleKeyDown);
     }
-  }, [isFullscreen, galleryImages, currentIndex, onNavigate, originalSrc, enableKeyboardNav]);
-
-  // Handlers
-  const handleZoom = useCallback(
-    (direction: "in" | "out") => {
-      setTransform((prev) => {
-        const newZoom =
-          direction === "in"
-            ? Math.min(prev.zoom + zoomStep, maxZoom)
-            : Math.max(prev.zoom - zoomStep, minZoom);
-
-        onZoomChange?.(newZoom);
-        return { ...prev, zoom: newZoom };
-      });
-    },
-    [zoomStep, maxZoom, minZoom, onZoomChange]
-  );
+  }, [isFullscreen, galleryImages, currentIndex, onNavigate, originalSrc, enableKeyboardNav, handleZoom, handleResetTransform]);
 
   const handleZoomSlider = useCallback(
     (value: number[]) => {
@@ -616,12 +622,6 @@ export function ImagePreview({
       flipY: axis === "y" ? !prev.flipY : prev.flipY,
     }));
   }, []);
-
-  const handleResetTransform = useCallback(() => {
-    setTransform({ ...DEFAULT_TRANSFORM, zoom: initialZoom });
-    onZoomChange?.(initialZoom);
-    onRotateChange?.(0);
-  }, [initialZoom, onZoomChange, onRotateChange]);
 
   const handleFullscreen = useCallback(() => {
     const newFullscreen = !isFullscreen;

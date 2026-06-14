@@ -2,7 +2,7 @@
 import type { CostMaterialEntry } from "@/types/cost";
 import type { TooltipProps } from "recharts";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 
 import { 
@@ -97,7 +97,7 @@ const CostChart: React.FC<CostChartProps> = ({
     }
   }, []);
 
-  const t = (en: string, hi: string) => language === "hi" ? hi : en;
+  const t = useCallback((en: string, hi: string) => language === "hi" ? hi : en, [language]);
 
   const formatCurrency = (value: number) => {
     if (currency === "INR") {

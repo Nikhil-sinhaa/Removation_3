@@ -54,6 +54,22 @@ export function LiveFeedbackSidebar({
 
   // Initialize WebSocket connection
   useEffect(() => {
+    const attemptReconnect = (sock: ReturnType<typeof io>) => {
+      if (reconnectAttempts.current < maxReconnectAttempts) {
+        reconnectAttempts.current++;
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
+
+        console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})`);
+
+        setTimeout(() => {
+          sock.connect();
+        }, delay);
+      } else {
+        console.error('❌ Max reconnection attempts reached');
+        setError('Unable to connect to backend. Please refresh the page.');
+      }
+    };
+
     const newSocket = io('http://localhost:3000', {
       transports: ['websocket'],
       upgrade: false,
@@ -70,13 +86,13 @@ export function LiveFeedbackSidebar({
     newSocket.on('disconnect', () => {
       console.log('🔌 Disconnected from backend WebSocket');
       setIsConnected(false);
-      attemptReconnect();
+      attemptReconnect(newSocket);
     });
 
     newSocket.on('comfy_progress', (data: LiveProgress) => {
       console.log('📊 Progress update:', data);
       setCurrentProgress(data);
-      
+
       // Auto-update UI based on stage
       if (data.stage === 'complete') {
         setIsProcessing(false);
@@ -89,7 +105,7 @@ export function LiveFeedbackSidebar({
       setCurrentProgress(null);
       setIsProcessing(false);
       setError(null);
-      
+
       // Auto-update the image in the main editor
       if (data.success && data.imageUrl) {
         onImageUpdate(data.imageUrl);
@@ -106,7 +122,7 @@ export function LiveFeedbackSidebar({
     newSocket.on('connect_error', (error: any) => {
       console.error('❌ Connection error:', error);
       setError(`Connection failed: ${error.message || 'Unknown error'}`);
-      attemptReconnect();
+      attemptReconnect(newSocket);
     });
 
     setSocket(newSocket);
@@ -114,23 +130,7 @@ export function LiveFeedbackSidebar({
     return () => {
       newSocket.disconnect();
     };
-  }, []);
-
-  const attemptReconnect = () => {
-    if (reconnectAttempts.current < maxReconnectAttempts) {
-      reconnectAttempts.current++;
-      const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 10000);
-      
-      console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current})`);
-      
-      setTimeout(() => {
-        socket?.connect();
-      }, delay);
-    } else {
-      console.error('❌ Max reconnection attempts reached');
-      setError('Unable to connect to backend. Please refresh the page.');
-    }
-  };
+  }, [onImageUpdate, onProcessComplete]);
 
   const handleProcessStart = () => {
     if (!isConnected || isProcessing) return;

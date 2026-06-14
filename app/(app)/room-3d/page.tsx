@@ -151,7 +151,7 @@ export default function Room3DPage() {
     }, 4000);
   }, [stopPolling]);
 
-  useEffect(() => () => { stopPolling(); previews.forEach(URL.revokeObjectURL); }, []);
+  useEffect(() => () => { stopPolling(); previews.forEach(URL.revokeObjectURL); }, [stopPolling, previews]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

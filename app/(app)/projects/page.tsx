@@ -1038,43 +1038,6 @@ export default function ProjectsPage() {
     fetchProjects();
   }, []);
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Focus search on Cmd/Ctrl + K
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-
-      // New project on N
-      if (e.key === 'n' && !e.metaKey && !e.ctrlKey && document.activeElement?.tagName !== 'INPUT') {
-        e.preventDefault();
-        setShowNewProjectModal(true);
-      }
-
-      // Toggle view on V
-      if (e.key === 'v' && document.activeElement?.tagName !== 'INPUT') {
-        setViewMode((prev) => (prev === 'grid' ? 'list' : 'grid'));
-      }
-
-      // Clear selection on Escape
-      if (e.key === 'Escape') {
-        setSelectedProjects(new Set());
-        setSearchQuery('');
-      }
-
-      // Select all on Cmd/Ctrl + A
-      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && selectedProjects.size > 0) {
-        e.preventDefault();
-        setSelectedProjects(new Set(filteredProjects.map((p) => p.id)));
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedProjects.size]);
-
   // Filter and sort projects
   const filteredProjects = useMemo(() => {
     return projects
@@ -1121,6 +1084,43 @@ export default function ProjectsPage() {
         return sortOrder === 'desc' ? -comparison : comparison;
       });
   }, [projects, debouncedSearch, selectedRoomType, tabFilter, sortBy, sortOrder, tagFilteredIds]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Focus search on Cmd/Ctrl + K
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+
+      // New project on N
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault();
+        setShowNewProjectModal(true);
+      }
+
+      // Toggle view on V
+      if (e.key === 'v' && document.activeElement?.tagName !== 'INPUT') {
+        setViewMode((prev) => (prev === 'grid' ? 'list' : 'grid'));
+      }
+
+      // Clear selection on Escape
+      if (e.key === 'Escape') {
+        setSelectedProjects(new Set());
+        setSearchQuery('');
+      }
+
+      // Select all on Cmd/Ctrl + A
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && selectedProjects.size > 0) {
+        e.preventDefault();
+        setSelectedProjects(new Set(filteredProjects.map((p) => p.id)));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedProjects.size, filteredProjects]);
 
   // Toggle selection
   const toggleSelection = useCallback((id: string) => {

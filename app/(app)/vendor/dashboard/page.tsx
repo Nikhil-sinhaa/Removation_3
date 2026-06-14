@@ -1,7 +1,7 @@
 // app/(app)/vendor/dashboard/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -165,6 +165,21 @@ export default function VendorDashboardPage() {
   const [replyText, setReplyText] = useState('');
   const [submittingReply, setSubmittingReply] = useState(false);
 
+  const loadInquiries = useCallback(async () => {
+    setFetchingInquiries(true);
+    try {
+      const res = await fetch('/api/vendor/inquiries');
+      if (res.ok) {
+        const data = await res.json();
+        setInquiries(data.inquiries || []);
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to load inquiries.', variant: 'destructive' });
+    } finally {
+      setFetchingInquiries(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (isLoading) return;
     if (!user) { router.replace('/login'); return; }
@@ -187,22 +202,7 @@ export default function VendorDashboardPage() {
         setFetchingProfile(false);
       }
     })();
-  }, [user, isLoading, router]);
-
-  async function loadInquiries() {
-    setFetchingInquiries(true);
-    try {
-      const res = await fetch('/api/vendor/inquiries');
-      if (res.ok) {
-        const data = await res.json();
-        setInquiries(data.inquiries || []);
-      }
-    } catch {
-      toast({ title: 'Error', description: 'Failed to load inquiries.', variant: 'destructive' });
-    } finally {
-      setFetchingInquiries(false);
-    }
-  }
+  }, [user, isLoading, router, loadInquiries, toast]);
 
   async function submitReply(e: React.FormEvent) {
     e.preventDefault();
