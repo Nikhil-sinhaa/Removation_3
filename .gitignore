@@ -131,6 +131,3 @@ scripts/test-stage1-quick.mjs
 public/uploads/
 public/renders/
 public/style-references/
-public/images/gallery/
-public/images/rooms/
-public/images/blog/
