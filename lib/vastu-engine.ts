@@ -15,6 +15,30 @@ interface VastuAnalysisParams {
 
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+const DIR_TO_COMPASS: Record<string, string> = {
+    north: 'NORTH', northeast: 'NORTHEAST', east: 'EAST', southeast: 'SOUTHEAST',
+    south: 'SOUTH', southwest: 'SOUTHWEST', west: 'WEST', northwest: 'NORTHWEST',
+};
+
+// Maps constants/vastu-rules.ts category names → types/vastu.ts VastuCategory names
+const CATEGORY_NAME_MAP: Record<string, string> = {
+    color: 'colors',
+    placement: 'furniture',
+    pooja: 'puja',
+    mirror: 'mirrors',
+    general: 'elements',
+    staircase: 'storage',
+    element: 'elements',
+};
+
+// Maps violation type strings → VastuSuggestionType values
+const SUGGESTION_TYPE_MAP: Record<string, string> = {
+    direction: 'reorient',
+    placement: 'relocate',
+    color: 'color-change',
+    element: 'add',
+};
+
 export interface VastuRecommendation {
     category: string;
     severity: 'critical' | 'moderate' | 'minor';
@@ -40,6 +64,8 @@ export interface VastuViolation {
     impact: string;
     remedy: string;
     id?: string;
+    // How this violation was triggered
+    source?: 'direction' | 'detection';
 }
 
 export interface VastuCompliance {
@@ -70,7 +96,7 @@ export interface DirectionalAnalysis {
 export interface VastuAnalysisResult {
     overallScore: {
         value: number;
-        grade: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+        grade: 'excellent' | 'good' | 'average' | 'poor' | 'critical';
         label: string;
         labelHi: string;
         description: string;
@@ -126,9 +152,14 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
 
     let totalApplicablePoints = 0;
     let deductedPoints = 0;
+    let positivePoints = 0;
+    let positiveMatches = 0;
 
     for (const rule of applicableRules) {
-        totalApplicablePoints += rule.points;
+        // Positive rules never contribute to the penalty budget
+        if (!rule.isPositive) {
+            totalApplicablePoints += rule.points;
+        }
         const evaluation: any = {
             ruleId: rule.id,
             title: language === 'hi' ? rule.titleHi : rule.title,
@@ -140,6 +171,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
         };
 
         let violated = false;
+        let violationSource: 'direction' | 'detection' | undefined = undefined;
 
         // Direction-based rules: check if the room direction violates
         if (rule.direction && normalizedDirection) {
@@ -149,12 +181,14 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
                 rule.title.toLowerCase().includes('should face')) {
                 if (normalizedDirection !== ruleDir) {
                     violated = true;
+                    violationSource = 'direction';
                     evaluation.reason = `Room is in ${direction}, but should be in ${ruleDir}`;
                 }
             }
             // Rules that say "avoid X direction" — violated if room IS in that direction
             if (rule.title.toLowerCase().includes('avoid') && normalizedDirection === ruleDir) {
                 violated = true;
+                violationSource = 'direction';
                 evaluation.reason = `Room is in ${direction}, which should be avoided`;
             }
         }
@@ -164,16 +198,34 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
             const negativeKeywords = ['avoid', 'no ', 'not ', 'never'];
             const isNegativeRule = negativeKeywords.some(kw => rule.title.toLowerCase().includes(kw));
 
-            for (const keyword of rule.keywords) {
-                if (featureSet.has(keyword.toLowerCase())) {
-                    if (isNegativeRule) {
-                        violated = true;
-                        evaluation.reason = `Detected "${keyword}" which violates: ${rule.title}`;
-                    } else {
-                        // Feature matches a positive rule — compliance
-                        evaluation.passed = true;
+            if (rule.requireAllKeywords) {
+                // AND logic: every keyword must be present in featureSet before the rule fires.
+                // Rules with unreachable keywords (beam, alignment, adjacent, above/below) will
+                // correctly stay silent until a detection pass that produces those keywords exists.
+                const allPresent = rule.keywords.every(kw => featureSet.has(kw.toLowerCase()));
+                if (allPresent && isNegativeRule) {
+                    violated = true;
+                    violationSource = 'detection';
+                    evaluation.reason = `Detected all of [${rule.keywords.join(', ')}] which violates: ${rule.title}`;
+                }
+            } else {
+                // OR logic (default): any single keyword match triggers the rule.
+                for (const keyword of rule.keywords) {
+                    if (featureSet.has(keyword.toLowerCase())) {
+                        if (isNegativeRule) {
+                            violated = true;
+                            violationSource = 'detection';
+                            evaluation.reason = `Detected "${keyword}" which violates: ${rule.title}`;
+                        } else {
+                            evaluation.passed = true;
+                            if (rule.isPositive) {
+                                positivePoints += rule.points;
+                                positiveMatches++;
+                                positiveAspects.push(language === 'hi' ? rule.titleHi : rule.title);
+                            }
+                        }
+                        break;
                     }
-                    break;
                 }
             }
         }
@@ -183,6 +235,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
 
         if (violated) {
             evaluation.passed = false;
+            evaluation.source = violationSource;
             deductedPoints += rule.points;
 
             violations.push({
@@ -192,6 +245,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
                 impact: language === 'hi' ? rule.descriptionHi : rule.description,
                 remedy: language === 'hi' ? rule.remedyHi : rule.remedy,
                 id: generateId('viol'),
+                source: violationSource,
             });
 
             recommendations.push({
@@ -201,13 +255,11 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
                 recommendation: language === 'hi' ? rule.remedyHi : rule.remedy,
                 priority: rule.severity === 'critical' ? 1 : rule.severity === 'major' ? 2 : 3,
             });
-        } else if (rule.points > 0) {
-            positiveAspects.push({
-                ruleId: rule.id,
-                title: language === 'hi' ? rule.titleHi : rule.title,
-                category: rule.category,
-                description: language === 'hi' ? rule.descriptionHi : rule.description,
-            });
+        } else if (rule.points > 0 && !rule.isPositive) {
+            // Standard non-violated rule: track as positive aspect and direction compliance.
+            // Positive rules (isPositive: true) are handled in the keyword match branch above —
+            // they only add to positiveAspects when the keyword is actually detected.
+            positiveAspects.push(language === 'hi' ? rule.titleHi : rule.title);
 
             if (rule.direction && normalizedDirection === rule.direction) {
                 compliances.push({
@@ -218,12 +270,21 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
             }
         }
 
+        evaluation.status = evaluation.passed ? 'passed' : 'failed';
         ruleEvaluations.push(evaluation);
     }
 
     // ─── Compute real scores from rule evaluations ─────────────────
     const maxPoints = Math.max(totalApplicablePoints, 1); // prevent div by 0
-    const ruleBasedScore = Math.round(((maxPoints - deductedPoints) / maxPoints) * 100);
+
+    // Capped fill-back: positive detections can only offset existing deductions,
+    // not push above the no-violation ceiling of 100.
+    // For zero-violation rooms cappedPositive is always 0 by definition — this is
+    // expected; the uncapped positiveBonus below handles that case.
+    const cappedPositive = Math.min(positivePoints, deductedPoints);
+    const ruleBasedScore = Math.min(100, Math.round(
+        ((maxPoints - deductedPoints + cappedPositive) / maxPoints) * 100
+    ));
 
     // Direction score (legacy compatibility)
     const idealDirections: Record<string, string[]> = {
@@ -255,6 +316,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
                 impact: 'May affect energy flow and harmony',
                 remedy: `Ideal directions for ${roomType}: ${ideal.join(', ')}. Use colors and elements to balance.`,
                 id: generateId('viol'),
+                source: 'direction' as const,
             });
         }
     }
@@ -262,14 +324,19 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
     // Weighted overall: 40% rule-based + 30% direction + 15% placement + 15% energy
     const placementScore = compliances.length > 0 ? 80 : 65;
     const energyScore = violations.filter(v => v.severity === 'critical').length === 0 ? 80 : 50;
-    const overall = Math.round(
+    const baseOverall = Math.round(
         ruleBasedScore * 0.40 + directionScore * 0.30 + placementScore * 0.15 + energyScore * 0.15
     );
+    // Uncapped bonus: +3 per positive element detected, max +8 total.
+    // This creates a visible delta even in zero-violation rooms where cappedPositive = 0.
+    // A room with a detected plant scores 3 pts higher than an identical unanalyzed room.
+    const positiveBonus = Math.min(8, positiveMatches * 3);
+    const overall = Math.min(100, baseOverall + positiveBonus);
 
-    let rating: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+    let rating: 'excellent' | 'good' | 'average' | 'poor' | 'critical';
     if (overall >= 85) rating = 'excellent';
     else if (overall >= 70) rating = 'good';
-    else if (overall >= 50) rating = 'fair';
+    else if (overall >= 50) rating = 'average';
     else if (overall >= 30) rating = 'poor';
     else rating = 'critical';
 
@@ -295,6 +362,30 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
         };
     }
 
+    // ─── Build compass from VASTU_DIRECTIONS + directional scores ─
+    const compassDir = direction ? direction.toUpperCase() : 'NORTH';
+    const compass = {
+        propertyFacing: compassDir,
+        entranceFacing: compassDir,
+        zones: VASTU_DIRECTIONS.filter(d => d.direction !== 'center').map(d => {
+            const da = (directionalAnalysis as any)[d.direction];
+            const score: number = da?.score ?? 65;
+            const zoneStatus = score >= 70 ? 'compliant' : score >= 40 ? 'partial' : 'non-compliant';
+            return {
+                direction: DIR_TO_COMPASS[d.direction],
+                name: d.name,
+                nameHi: d.nameHi,
+                deity: d.deity,
+                deityHi: d.deityHi,
+                element: d.element,
+                idealFor: d.suitable,
+                avoidFor: d.avoid,
+                colors: d.color,
+                status: zoneStatus,
+            };
+        }),
+    };
+
     // ─── Auto-fix availability ─────────────────────────────────────
     const autoFixAvailable = violations.some(v =>
         v.type === 'color' || v.type === 'lighting' || v.type === 'plants'
@@ -303,7 +394,7 @@ export function analyzeVastu(params: any): VastuAnalysisResult {
     // ─── Generate suggestions from actual violations ───────────────
     const suggestions = violations.slice(0, 5).map((v, i) => ({
         id: generateId('sug'),
-        type: v.type,
+        type: SUGGESTION_TYPE_MAP[v.type] ?? 'remedy',
         priority: v.severity === 'critical' ? 'critical' as const : v.severity === 'moderate' ? 'high' as const : 'medium' as const,
         title: v.description.slice(0, 60),
         description: v.remedy,
@@ -340,21 +431,53 @@ Recommendations:
 ${recommendations.length > 0 ? recommendations.map(r => `- [${r.severity}] ${r.issue}\n  → ${r.recommendation}`).join('\n') : 'Continue maintaining the current setup.'}
     `.trim();
 
-    // ─── Categorize violations by type ─────────────────────────────
-    const categoryMap = new Map<string, { name: string; count: number; severity: string }>();
-    for (const v of violations) {
-        const existing = categoryMap.get(v.type);
-        if (existing) existing.count++;
-        else categoryMap.set(v.type, { name: v.type, count: 1, severity: v.severity });
+    // ─── Build per-category analysis from ruleEvaluations ─────────
+    const catDataMap = new Map<string, {
+        totalPoints: number; earnedPoints: number;
+        findings: string[]; findingsHi: string[]; worstSeverity: string;
+    }>();
+    for (const ev of ruleEvaluations) {
+        const cat = CATEGORY_NAME_MAP[ev.category] || ev.category || 'elements';
+        if (!catDataMap.has(cat)) {
+            catDataMap.set(cat, { totalPoints: 0, earnedPoints: 0, findings: [], findingsHi: [], worstSeverity: '' });
+        }
+        const d = catDataMap.get(cat)!;
+        d.totalPoints += ev.points || 0;
+        if (ev.passed) {
+            d.earnedPoints += ev.points || 0;
+        } else {
+            if (ev.reason) d.findings.push(ev.reason);
+            const sev = ev.severity;
+            if (!d.worstSeverity || sev === 'critical' || (sev === 'major' && d.worstSeverity !== 'critical')) {
+                d.worstSeverity = sev;
+            }
+        }
     }
-    const categories = Array.from(categoryMap.values());
+    type CatData = { totalPoints: number; earnedPoints: number; findings: string[]; findingsHi: string[]; worstSeverity: string };
+    const categories = Array.from(catDataMap.entries()).map(([catName, d]: [string, CatData]) => {
+        const maxScore = d.totalPoints > 0 ? d.totalPoints : 100;
+        const score = d.totalPoints > 0 ? d.earnedPoints : 100;
+        const percentage = Math.round((score / maxScore) * 100);
+        const sev = d.worstSeverity;
+        const status = (sev === 'critical' || sev === 'major') ? 'non-compliant' :
+            sev === 'moderate' ? 'partial' : 'compliant';
+        return {
+            category: catName,
+            score,
+            maxScore,
+            percentage,
+            status,
+            findings: d.findings,
+            findingsHi: d.findingsHi,
+        };
+    });
 
     return {
         overallScore: {
             value: overall,
             grade: rating,
             label: rating.charAt(0).toUpperCase() + rating.slice(1),
-            labelHi: rating === 'excellent' ? 'उत्कृष्ट' : rating === 'good' ? 'अच्छा' : rating === 'fair' ? 'सामान्य' : rating === 'poor' ? 'खराब' : 'गंभीर',
+            labelHi: rating === 'excellent' ? 'उत्कृष्ट' : rating === 'good' ? 'अच्छा' : rating === 'average' ? 'सामान्य' : rating === 'poor' ? 'खराब' : 'गंभीर',
             description: `Based on ${ruleEvaluations.length} Vastu rules evaluated for ${roomType}`,
             descriptionHi: `${roomType} के लिए ${ruleEvaluations.length} वास्तु नियमों के मूल्यांकन पर आधारित`,
         },
@@ -373,6 +496,7 @@ ${recommendations.length > 0 ? recommendations.map(r => `- [${r.severity}] ${r.i
         positiveAspects,
         autoFixAvailable,
         detectedElements: params.detectedElements || features || [],
+        compass,
     };
 }
 

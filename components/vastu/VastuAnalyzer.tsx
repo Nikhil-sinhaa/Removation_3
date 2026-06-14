@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Upload,
@@ -86,7 +86,12 @@ export function VastuAnalyzer({ onAnalysisComplete, className }: VastuAnalyzerPr
     roomType,
     projectId: "standalone-analyzer",
     direction: facingDirection,
+    language: 'en',
   });
+
+  useEffect(() => {
+    if (analysis) onAnalysisComplete?.(analysis);
+  }, [analysis]);
 
   const handleImageUpload = useCallback((url: string) => {
     setImageUrl(url);
@@ -94,13 +99,8 @@ export function VastuAnalyzer({ onAnalysisComplete, className }: VastuAnalyzerPr
 
   const handleAnalyze = async () => {
     if (!imageUrl) return;
-    
     await analyze();
-    
-    if (analysis) {
-      onAnalysisComplete?.(analysis);
-      setIsPanelOpen(true);
-    }
+    setIsPanelOpen(true);
   };
 
   const handleViewDetails = () => {
@@ -289,6 +289,9 @@ export function VastuAnalyzer({ onAnalysisComplete, className }: VastuAnalyzerPr
         imageUrl={imageUrl}
         roomType={roomType}
         projectId="standalone-analyzer"
+        analysis={analysis}
+        isLoading={isAnalyzing}
+        error={error}
       />
     </>
   );

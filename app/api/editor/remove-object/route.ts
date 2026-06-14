@@ -90,14 +90,14 @@ export async function POST(req: NextRequest) {
     const timestamp = Date.now();
     const imageFilename = `obj_remove_img_${timestamp}.png`;
     const maskFilename = `obj_remove_mask_${timestamp}.png`;
-    
+
     const imagePath = path.join(comfyUIInputDir, imageFilename);
     const maskPath = path.join(comfyUIInputDir, maskFilename);
 
     // Decode and save base64 images
     const imageBuffer = Buffer.from(imageBase64.split(',')[1] || imageBase64, 'base64');
     const maskBuffer = Buffer.from(maskBase64.split(',')[1] || maskBase64, 'base64');
-    
+
     await writeFile(imagePath, imageBuffer);
     await writeFile(maskPath, maskBuffer);
 
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     // Create and submit workflow
     const workflow = createObjectRemovalWorkflow(imageFilename, maskFilename);
-    
+
     const response = await axios.post(`${COMFYUI_URL}/prompt`, {
       prompt: workflow
     }, {
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
     });
 
     const promptId = response.data.prompt_id;
-    
+
     if (!promptId) {
       return NextResponse.json(
         { error: "Failed to start ComfyUI workflow" },
@@ -125,27 +125,27 @@ export async function POST(req: NextRequest) {
 
     // Poll for completion
     const result = await waitForCompletion(promptId);
-    
+
     if (result.success && result.filename) {
       // Copy result to public directory
       const outputDir = "/home/nikhil/Documents/Remo2/ComfyUI/output";
       const publicDir = path.join(process.cwd(), "public", "generated");
-      
+
       await mkdir(publicDir, { recursive: true });
-      
+
       const sourcePath = path.join(outputDir, result.filename);
       const publicFilename = `removed_${timestamp}_${result.filename}`;
       const publicPath = path.join(publicDir, publicFilename);
-      
+
       // Wait a moment for file to be written
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       if (fs.existsSync(sourcePath)) {
         const imageData = await readFile(sourcePath);
         await writeFile(publicPath, imageData);
-        
+
         const imageUrl = `/generated/${publicFilename}`;
-        
+
         return NextResponse.json({
           success: true,
           imageUrl,
@@ -176,16 +176,16 @@ export async function POST(req: NextRequest) {
 async function waitForCompletion(promptId: string): Promise<{ success: boolean; filename?: string; error?: string }> {
   const maxAttempts = 60; // 2 minutes max
   const checkInterval = 2000; // 2 seconds
-  
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       const response = await axios.get(`${COMFYUI_URL}/history/${promptId}`, {
         timeout: 5000
       });
-      
+
       const history = response.data;
       const promptHistory = history[promptId];
-      
+
       if (promptHistory) {
         if (promptHistory.status?.str === 'success') {
           // Find output image
@@ -207,13 +207,13 @@ async function waitForCompletion(promptId: string): Promise<{ success: boolean; 
           };
         }
       }
-      
+
       await new Promise(resolve => setTimeout(resolve, checkInterval));
     } catch (error) {
       console.error(`Status check error (attempt ${attempt + 1}):`, error);
       await new Promise(resolve => setTimeout(resolve, checkInterval));
     }
   }
-  
+
   return { success: false, error: "Object removal timed out" };
 }

@@ -21,7 +21,8 @@
     "test:features": "playwright test --config=playwright.features.config.ts",
     "test:features:watch": "playwright test --config=playwright.features.config.ts --reporter=list",
     "test:all": "bash tests/run-all.sh",
-    "test:stage1": "node scripts/test-stable-stage1.js"
+    "test:stage1": "node scripts/test-stable-stage1.js",
+    "worker:vastu": "node --env-file=.env.local scripts/comfy-worker.mjs"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

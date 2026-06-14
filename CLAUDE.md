@@ -483,10 +483,18 @@ don't regress it.
 Threshold 0.4 is too strict. Use 0.25 for ceiling detection.
 Coverage guard: throw error if mask covers <8% of image.
 
-### 7. SAMLoader name conflict
-ComfyUI-SAM2 and ComfyUI-Impact-Pack both register `SAMLoader`.
-Keep `ComfyUI-SAM2` disabled (rename folder to `.disabled`)
-unless explicitly needed for a specific feature.
+### 7. ComfyUI-SAM2 is enabled — no SAMLoader conflict
+The original concern was a `SAMLoader` name collision between ComfyUI-SAM2 and
+Impact Pack. Investigation (June 2026) found this no longer applies:
+ComfyUI-SAM2's `__init__.py` registers nodes as `'SAM2ModelLoader (segment anything2)'`,
+`'GroundingDinoModelLoader (segment anything2)'`, `'GroundingDinoSAM2Segment (segment anything2)'`,
+and `'InvertMask (segment anything)'` — none of which collide with Impact Pack's `SAMLoader`.
+The only true duplicate is `IsMaskEmpty` (also in `comfyui_segment_anything`) — benign,
+identical implementations, last-load-wins.
+
+**ComfyUI-SAM2 is now ENABLED** (folder: `custom_nodes/ComfyUI-SAM2`) and is required
+for the Vastu element detection pipeline (`vastuDetectionOrchestrator.js`).
+Do not disable it again unless a real conflict is confirmed in startup logs.
 
 ### 8. ControlNet Aux depth model path
 `depth_anything_v2_vits.pth` must be at:
@@ -575,7 +583,9 @@ Location: `~/Documents/Remo2/ComfyUI/custom_nodes/`
 - `comfyui-lama-remover` (Layer-norm) — LaMa inpainting
 - `ComfyUI-RMBG` v3.0.0 — INSPYRENET, RMBG-2.0, BEN
 - `ComfyUI-MiniMax-Remover` — diffusion-based object removal
-- `ComfyUI-SAM2` — DISABLED (SAMLoader name conflict with Impact Pack)
+- `ComfyUI-SAM2` — ENABLED — SAM2ModelLoader, GroundingDinoModelLoader, GroundingDinoSAM2Segment
+  (all registered with `(segment anything2)` suffix — no collision with Impact Pack's SAMLoader).
+  Required for `vastuDetectionOrchestrator.js`.
 
 ## Known Working Models
 

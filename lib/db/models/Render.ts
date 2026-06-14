@@ -6,6 +6,15 @@ import { FEEDBACK_TAGS, FeedbackTag } from '@/lib/constants/feedbackTags';
 export { FEEDBACK_TAGS };
 export type { FeedbackTag };
 
+// ── Admin feedback thread ─────────────────────────────────────────────────────
+export interface IAdminNote {
+    _id: Types.ObjectId;
+    authorId: Types.ObjectId;   // ref: 'User'
+    authorName: string;          // denormalised display name
+    text: string;
+    createdAt: Date;
+}
+
 // ── Queue job state machine ──────────────────────────────────────────────────
 
 export const JOB_STATUSES = {
@@ -72,6 +81,9 @@ export interface IRender {
     processingStartedAt?: Date | null;
     estimatedWaitSeconds?: number | null;
     queuedAt?: Date | null;
+
+    // Admin-internal notes thread (staff-only, never shown to customers)
+    adminNotes?: IAdminNote[];
 }
 
 const RenderSchema = new Schema<IRender>({
@@ -136,6 +148,17 @@ const RenderSchema = new Schema<IRender>({
     processingStartedAt: { type: Date, default: null },
     estimatedWaitSeconds: { type: Number, default: null },
     queuedAt: { type: Date, default: null },
+
+    // Admin-internal notes thread
+    adminNotes: {
+        type: [{
+            authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+            authorName: { type: String, required: true },
+            text: { type: String, required: true, maxlength: 2000 },
+            createdAt: { type: Date, default: Date.now },
+        }],
+        default: [],
+    },
 });
 
 // Update the updatedAt timestamp on save

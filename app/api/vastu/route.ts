@@ -42,6 +42,9 @@ import { saveImageForComfy } from '@/lib/ai/save-image-for-comfy';
 import { connectDB } from '@/lib/db/mongodb';
 import { analyzeVastu } from '@/lib/vastu-engine';
 import { detectVastuElements } from '@/src/services/vastuDetectionOrchestrator.js';
+import VASTU_RULES from '@/constants/vastu-rules';
+import { getSetting } from '@/src/lib/appSettings';
+import { createVastuJob } from '@/lib/ai/createVastuJob';
 
 export const runtime = 'nodejs';
 
@@ -171,10 +174,72 @@ export async function POST(request: Request) {
       );
     }
 
+    // ── Mode toggle ─────────────────────────────────────────────────────────
+    // Priority: env var → AppSettings key → default 'local'.
+    // Valid values: 'local' | 'drive'.
+    const rawMode =
+      process.env.VASTU_PROCESSING_MODE ||
+      (await getSetting('VASTU_PROCESSING_MODE')) ||
+      'local';
+    const processingMode: 'local' | 'drive' =
+      rawMode === 'drive' ? 'drive' : 'local';
+
+    // ── Drive mode: delegate to async pipeline ───────────────────────────────
+    if (processingMode === 'drive') {
+      try {
+        const { jobId } = await createVastuJob({
+          imageUrl: imageUrl ?? undefined,
+          imageFilename: bodyImageFilename ?? undefined,
+          roomType,
+          direction: direction ?? undefined,
+          language,
+          userId,
+        });
+        return NextResponse.json({
+          success: true,
+          mode: 'drive',
+          jobId,
+          status: 'pending',
+          pollUrl: `/api/ai/jobs/${jobId}/status`,
+        });
+      } catch (driveErr: any) {
+        console.error('❌ /api/vastu drive-mode error:', driveErr.message);
+        return NextResponse.json(
+          { error: driveErr.message || 'Failed to enqueue async Vastu job' },
+          { status: 503 }
+        );
+      }
+    }
+
+    // ── Local (synchronous) mode continues below ─────────────────────────────
+
     // ── Detection pipeline ──────────────────────────────────────────────────
     // detectVastuElements returns [] on any ComfyUI or extraction failure;
     // we always proceed to analyzeVastu so the request doesn't fail entirely.
     const detectedElements = await detectVastuElements(imageFilename, { roomType });
+
+    // ── Pass-saturation guard ────────────────────────────────────────────────
+    // Count how many of the 8 detection passes produced at least one element.
+    // A pass "fired" if any element of its corresponding types appears in
+    // detectedElements. When ≥6 passes fire, the model is likely detecting noise
+    // (e.g. bathrooms confuse all 8 pass prompts). This is purely informational —
+    // the full analysis still runs and is returned unchanged.
+    const PASS_ELEMENT_TYPES: string[][] = [
+      ['bed'],
+      ['stove', 'sink'],
+      ['mirror'],
+      ['door'],
+      ['toilet'],
+      ['idol', 'temple'],
+      ['plant'],
+      ['aquarium', 'fountain'],
+    ];
+    const detectedTypeSet = new Set((detectedElements as any[]).map((e: any) => e.type));
+    const detectedPassCount = PASS_ELEMENT_TYPES.filter(
+      passTypes => passTypes.some(t => detectedTypeSet.has(t))
+    ).length;
+    const detectionConfidence: 'normal' | 'low' | 'failed' =
+      detectedPassCount === 0 ? 'failed' : detectedPassCount >= 6 ? 'low' : 'normal';
 
     // Build features array from detected element types using keyword expansion.
     // This populates vastu-engine.ts's featureSet for keyword-based rule evaluation.
@@ -194,6 +259,42 @@ export async function POST(request: Request) {
       features: expandedKeywords,
       detectedElements,       // passes through to result.detectedElements via the engine edit
       language,
+    });
+
+    // ── Set vastuCompliance on each detected element ─────────────────────────
+    // Rules that fired as detection-triggered violations → 'non-compliant'
+    // Positive rules whose keywords are present via detected elements → 'compliant'
+    // Neither → 'not-applicable'
+    const violationKeywords = new Set<string>();
+    for (const ev of (engineResult.ruleEvaluations ?? []) as any[]) {
+      if (!ev.passed && ev.source === 'detection') {
+        const rule = (VASTU_RULES as any[]).find((r: any) => r.id === ev.ruleId);
+        if (rule) (rule.keywords as string[]).forEach(k => violationKeywords.add(k.toLowerCase()));
+      }
+    }
+
+    const NEGATIVE_TITLE_WORDS = ['avoid', 'no ', 'not ', 'never'];
+    const complianceKeywords = new Set<string>();
+    for (const rule of VASTU_RULES as any[]) {
+      const isNegative = NEGATIVE_TITLE_WORDS.some(nk => (rule.title as string).toLowerCase().includes(nk));
+      if (!isNegative && rule.severity !== 'suggestion') {
+        for (const kw of rule.keywords as string[]) {
+          if (expandedKeywords.includes(kw) || expandedKeywords.includes(kw.toLowerCase())) {
+            complianceKeywords.add(kw.toLowerCase());
+          }
+        }
+      }
+    }
+
+    const elementsWithCompliance = (detectedElements as any[]).map(el => {
+      const elKeywords = (ELEMENT_KEYWORD_EXPANSION[el.type] ?? [el.type]).map((k: string) => k.toLowerCase());
+      let vastuCompliance: 'non-compliant' | 'compliant' | 'not-applicable' = 'not-applicable';
+      if (elKeywords.some(k => violationKeywords.has(k))) {
+        vastuCompliance = 'non-compliant';
+      } else if (elKeywords.some(k => complianceKeywords.has(k))) {
+        vastuCompliance = 'compliant';
+      }
+      return { ...el, vastuCompliance };
     });
 
     // ── Response shape ──────────────────────────────────────────────────────
@@ -218,10 +319,16 @@ export async function POST(request: Request) {
       score: overallScore,
       issues: engineResult.violations ?? [],
       suggestions: engineResult.suggestions ?? [],
-      detectedElements,
+      detectedElements: elementsWithCompliance,
+      // Pass-saturation metadata — annotation only; does not alter analysis logic.
+      detectionConfidence,
+      detectedPassCount,
       analysis: {
         score: overallScore,     // flat number; editor-store reads `a.score ?? 75`
         ...engineResult,
+        detectedElements: elementsWithCompliance,
+        detectionConfidence,
+        detectedPassCount,
       },
     });
 

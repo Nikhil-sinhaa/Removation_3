@@ -78,7 +78,7 @@ export const VASTU_PASS_DEFINITIONS = [
     passName: 'stove_sink',
     elementTypes: ['stove', 'sink'],
     prompt: 'gas stove . cooktop . kitchen stove . hob . stovetop . cook stove . kitchen sink . sink . wash basin . tap',
-    threshold: 0.25,
+    threshold: 0.35,
   },
   {
     nodeId: '12',
@@ -99,16 +99,22 @@ export const VASTU_PASS_DEFINITIONS = [
     passName: 'toilet',
     elementTypes: ['toilet'],
     prompt: 'toilet . commode . toilet seat . western toilet . WC . toilet bowl . lavatory . Indian toilet . squat toilet',
-    threshold: 0.28,
+    threshold: 0.40,
   },
   {
     // NOTE: Both idol and temple indicate a puja area. All pooja-category rules
     // evaluate the zone direction, not the specific object type.
+    //
+    // THRESHOLD CALIBRATION NOTE: No pooja/temple test image available in project as of 2026-06-12.
+    // Threshold 0.38 reduces bedroom false positives from 4→1 but is UNVALIDATED against true
+    // positives. If users report pooja-room Vastu scores feel inaccurate, first check whether
+    // idol/mandir detection is firing at all (likely false negative at 0.38) before assuming
+    // a scoring logic bug. Re-calibrate when a real pooja room test image becomes available.
     nodeId: '15',
     passName: 'idol_temple',
     elementTypes: ['idol', 'temple'],
     prompt: 'idol . statue . deity . god statue . brass idol . marble idol . mandir . temple . pooja stand . altar . puja shelf . shrine',
-    threshold: 0.22,
+    threshold: 0.38,
   },
   {
     nodeId: '16',
@@ -123,7 +129,7 @@ export const VASTU_PASS_DEFINITIONS = [
     passName: 'aquarium_fountain',
     elementTypes: ['aquarium', 'fountain'],
     prompt: 'aquarium . fish tank . fish bowl . water fountain . indoor fountain . tabletop fountain . water feature',
-    threshold: 0.22,
+    threshold: 0.38,
   },
 ];
 

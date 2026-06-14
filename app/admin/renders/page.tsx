@@ -111,6 +111,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { RenderFeedbackThread } from "@/components/admin/RenderFeedbackThread";
 
 // Types
 interface Render {
@@ -836,6 +837,9 @@ const RenderDetailsModal = ({
             )}
           </div>
         </div>
+
+        {/* Admin-internal notes — staff-only, never shown to customers */}
+        <RenderFeedbackThread renderId={render.id} />
 
         <DialogFooter className="border-t border-neutral-800 pt-4">
           <Button variant="outline" onClick={onClose}>

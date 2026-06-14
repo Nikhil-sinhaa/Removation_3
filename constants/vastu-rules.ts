@@ -53,6 +53,12 @@ export interface VastuRule {
   remedyHi: string;
   scientificReason?: string;
   keywords: string[];
+  // When true, ALL keywords must appear in featureSet for the rule to fire (AND logic).
+  // Default (undefined/false) uses OR logic: any single keyword match triggers the rule.
+  requireAllKeywords?: boolean;
+  // When true, detecting these keywords AWARDS bonus points rather than deducting them.
+  // Positive rules never count as violations.
+  isPositive?: boolean;
 }
 
 export interface VastuDirectionInfo {
@@ -301,21 +307,28 @@ export const VASTU_RULES: VastuRule[] = [
     remedyHi: 'बीम को फॉल्स सीलिंग से ढकें या दो बांस की बांसुरी लटकाएं',
     scientificReason: 'Beams create psychological pressure and may have EMF from electrical wiring',
     keywords: ['bed', 'beam', 'ceiling'],
+    // 'beam' and 'ceiling' cannot appear in featureSet from current detection passes,
+    // so requireAllKeywords: true silences this rule until a structural-element pass exists.
+    requireAllKeywords: true,
   },
   {
     id: 'bedroom-004',
     category: 'bedroom',
     title: 'No mirror facing the bed',
     titleHi: 'बिस्तर के सामने कोई दर्पण नहीं',
-    description: 'Mirrors reflecting the bed disturb sleep and can cause relationship issues',
-    descriptionHi: 'बिस्तर को प्रतिबिंबित करने वाले दर्पण नींद में खलल डालते हैं',
+    description: 'If a mirror in this room directly faces the bed, it can disturb sleep',
+    descriptionHi: 'यदि इस कमरे में कोई दर्पण सीधे बिस्तर की ओर है, तो यह नींद में खलल डाल सकता है',
     severity: 'major',
     points: 8,
     roomTypes: ['bedroom'],
-    remedy: 'Cover mirror at night or relocate it so it does not reflect the bed',
-    remedyHi: 'रात में दर्पण को ढकें या इसे स्थानांतरित करें ताकि यह बिस्तर को प्रतिबिंबित न करे',
+    remedy: 'If your mirror faces the bed, consider covering it at night or relocating it',
+    remedyHi: 'यदि आपका दर्पण बिस्तर की ओर है, तो रात में इसे ढकने या स्थानांतरित करने पर विचार करें',
     scientificReason: 'Movement in mirrors can disturb sleep and startle during night',
-    keywords: ['mirror', 'bed', 'reflection'],
+    keywords: ['mirror', 'bed'],
+    // 'reflection' removed: never produced by any detection pass (dead keyword).
+    // requireAllKeywords: true ensures BOTH mirror AND bed must be detected before firing —
+    // 'bed' alone (very common in bedroom scans) no longer triggers this rule.
+    requireAllKeywords: true,
   },
   {
     id: 'bedroom-005',
@@ -360,6 +373,9 @@ export const VASTU_RULES: VastuRule[] = [
     remedy: 'Keep toilet door closed always and place a curtain between',
     remedyHi: 'शौचालय का दरवाजा हमेशा बंद रखें और बीच में पर्दा लगाएं',
     keywords: ['bedroom', 'toilet', 'door', 'alignment'],
+    // 'alignment' is never produced by current detection; requireAllKeywords silences this
+    // rule until a spatial-relationship/alignment detection pass exists.
+    requireAllKeywords: true,
   },
 
   // KITCHEN RULES (36-55)
@@ -423,6 +439,9 @@ export const VASTU_RULES: VastuRule[] = [
     remedy: 'Place sea salt in copper bowl in kitchen, use Vastu pyramids',
     remedyHi: 'रसोई में तांबे के कटोरे में समुद्री नमक रखें, वास्तु पिरामिड का उपयोग करें',
     keywords: ['kitchen', 'toilet', 'above', 'below'],
+    // 'above' and 'below' describe vertical stacking relationships that no detection pass
+    // produces; requireAllKeywords silences this until a floor-plan/multi-floor pass exists.
+    requireAllKeywords: true,
   },
   {
     id: 'kitchen-005',
@@ -602,6 +621,9 @@ export const VASTU_RULES: VastuRule[] = [
     remedy: 'Relocate either room, use Vastu remedies like salt and pyramids',
     remedyHi: 'किसी भी कमरे को स्थानांतरित करें, नमक और पिरामिड जैसे वास्तु उपाय करें',
     keywords: ['pooja', 'toilet', 'adjacent'],
+    // 'adjacent' describes a spatial proximity relationship that no detection pass produces;
+    // requireAllKeywords silences this until a room-adjacency analysis pass exists.
+    requireAllKeywords: true,
   },
   {
     id: 'pooja-006',
@@ -782,7 +804,10 @@ export const VASTU_RULES: VastuRule[] = [
     roomTypes: ['living-room', 'bedroom', 'bathroom'],
     remedy: 'Replace damaged mirrors immediately',
     remedyHi: 'क्षतिग्रस्त दर्पणों को तुरंत बदलें',
-    keywords: ['mirror', 'broken', 'damaged'],
+    // 'mirror' intentionally removed: no damage-assessment pass exists, so detecting any
+    // mirror presence must NOT trigger a "broken/cracked" violation.
+    // Re-add 'mirror' ONLY when a mirror-damage-detection pass is implemented.
+    keywords: ['broken', 'damaged'],
   },
   {
     id: 'plant-001',
@@ -811,7 +836,10 @@ export const VASTU_RULES: VastuRule[] = [
     roomTypes: ['living-room', 'bedroom', 'balcony'],
     remedy: 'Replace with money plant, peace lily, or bamboo',
     remedyHi: 'मनी प्लांट, पीस लिली या बांस से बदलें',
-    keywords: ['plants', 'cactus', 'thorny', 'avoid'],
+    // 'plants'/'plant' and 'avoid' removed: current plant detection cannot distinguish
+    // species (cactus vs tulsi vs money-plant), so generic plant presence must NOT fire.
+    // Re-add 'plant'/'plants' ONLY when plant species classification is implemented.
+    keywords: ['cactus', 'thorny'],
   },
   {
     id: 'water-001',
@@ -889,6 +917,38 @@ export const VASTU_RULES: VastuRule[] = [
     scientificReason: 'Natural light provides Vitamin D, fresh air removes indoor pollutants',
     keywords: ['ventilation', 'light', 'natural', 'air'],
   },
+
+  // POSITIVE RULES — detecting these keywords AWARDS bonus points (never deducts)
+  {
+    id: 'plant-003',
+    category: 'plants',
+    title: 'Indoor plants bring positive Vastu energy',
+    titleHi: 'इनडोर पौधे सकारात्मक वास्तु ऊर्जा लाते हैं',
+    description: 'Green plants purify air and bring positive Vastu energy to any room',
+    descriptionHi: 'हरे पौधे हवा को शुद्ध करते हैं और किसी भी कमरे में सकारात्मक वास्तु ऊर्जा लाते हैं',
+    severity: 'minor',
+    points: 5,
+    roomTypes: ['living-room', 'study', 'bedroom'],
+    remedy: 'Maintain healthy indoor plants — money plant, peace lily, or bamboo are ideal',
+    remedyHi: 'स्वस्थ इनडोर पौधे बनाए रखें — मनी प्लांट, पीस लिली या बांस आदर्श हैं',
+    keywords: ['plant', 'plants', 'tulsi'],
+    isPositive: true,
+  },
+  {
+    id: 'pooja-007',
+    category: 'pooja',
+    title: 'Presence of idol or prayer space is auspicious',
+    titleHi: 'मूर्ति या पूजा स्थान की उपस्थिति शुभ है',
+    description: 'Having a prayer space or idol in the home brings divine blessings and positive energy',
+    descriptionHi: 'घर में पूजा स्थान या मूर्ति होने से दिव्य आशीर्वाद और सकारात्मक ऊर्जा मिलती है',
+    severity: 'minor',
+    points: 8,
+    roomTypes: ['pooja-room', 'living-room'],
+    remedy: 'Keep the prayer space clean and well-lit for maximum Vastu benefit',
+    remedyHi: 'अधिकतम वास्तु लाभ के लिए पूजा स्थान को साफ और अच्छी तरह से रोशन रखें',
+    keywords: ['idol', 'idols', 'pooja'],
+    isPositive: true,
+  },
 ];
 
 // Helper functions
@@ -913,7 +973,7 @@ export const getDirectionInfo = (direction: VastuDirection): VastuDirectionInfo 
 };
 
 export const calculateMaxVastuScore = (): number => {
-  return VASTU_RULES.reduce((sum, rule) => sum + rule.points, 0);
+  return VASTU_RULES.filter(r => !r.isPositive).reduce((sum, rule) => sum + rule.points, 0);
 };
 
 export const searchRules = (query: string): VastuRule[] => {

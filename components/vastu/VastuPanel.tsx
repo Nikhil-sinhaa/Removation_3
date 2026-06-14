@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -36,11 +36,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
-import { VastuScore } from "./VastuScore";
 import { VastuSuggestions } from "./VastuSuggestions";
 import { VastuGrid } from "./VastuGrid";
 import { VastuCompass } from "./VastuCompass";
-import { VastuReport } from "./VastuReport";
 import { cn } from "@/lib/utils";
 import type { VastuAnalysis, CompassDirection, VastuCategory } from "@/types/vastu";
 
@@ -50,6 +48,9 @@ interface VastuPanelProps {
   imageUrl: string | null;
   roomType: string;
   projectId: string;
+  analysis?: VastuAnalysis | null;
+  isLoading?: boolean;
+  error?: string | null;
   onApplySuggestion?: (suggestionId: string) => void;
   onExport?: (format: "pdf" | "json" | "image") => void;
 }
@@ -69,6 +70,7 @@ const translations = {
     exportReport: "Export Report",
     share: "Share Analysis",
     noImage: "Upload an image to analyze Vastu",
+    noAnalysis: "Run analysis to see Vastu insights",
     score: "Vastu Score",
     issues: "Issues Found",
     positive: "Positive Aspects",
@@ -103,6 +105,7 @@ const translations = {
     exportReport: "रिपोर्ट डाउनलोड करें",
     share: "विश्लेषण साझा करें",
     noImage: "वास्तु विश्लेषण के लिए छवि अपलोड करें",
+    noAnalysis: "वास्तु अंतर्दृष्टि देखने के लिए विश्लेषण चलाएं",
     score: "वास्तु स्कोर",
     issues: "समस्याएं मिलीं",
     positive: "सकारात्मक पहलू",
@@ -141,7 +144,7 @@ const categoryIcons: Record<VastuCategory, React.ReactNode> = {
   mirrors: <Sparkles className="w-5 h-5" />,
   water: <Droplets className="w-5 h-5" />,
   storage: <Home className="w-5 h-5" />,
-  study: <Brain className="w-5 h-5" />, // Added missing category
+  study: <Brain className="w-5 h-5" />,
 };
 
 const categoryColors: Record<VastuCategory, string> = {
@@ -160,7 +163,7 @@ const categoryColors: Record<VastuCategory, string> = {
   mirrors: "bg-violet-500/20 text-violet-600",
   water: "bg-sky-500/20 text-sky-600",
   storage: "bg-gray-500/20 text-gray-600",
-  study: "bg-teal-500/20 text-teal-600", // Added missing category
+  study: "bg-teal-500/20 text-teal-600",
 };
 
 export function VastuPanel({
@@ -169,191 +172,18 @@ export function VastuPanel({
   imageUrl,
   roomType,
   projectId,
+  analysis = null,
+  isLoading = false,
+  error,
   onApplySuggestion,
   onExport,
 }: VastuPanelProps) {
   const [showHindi, setShowHindi] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedDirection, setSelectedDirection] = useState<CompassDirection>("NORTH");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<VastuAnalysis | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const language = showHindi ? "hi" : "en";
   const t = translations[language];
-
-  // Mock analysis for demonstration
-  const mockAnalysis: VastuAnalysis = {
-    id: "vastu-123",
-    renderId: "render-456",
-    projectId,
-    roomId: "room-789",
-    overallScore: {
-      value: 72,
-      grade: "good",
-      label: "Good",
-      labelHi: "अच्छा",
-      color: "#10B981",
-      description: "Your space has good Vastu compliance with some areas for improvement.",
-      descriptionHi: "आपका स्थान वास्तु अनुपालन में अच्छा है, कुछ सुधार के क्षेत्र हैं।",
-    },
-    categories: [
-      {
-        category: "entrance",
-        score: 85,
-        maxScore: 100,
-        percentage: 85,
-        status: "compliant",
-        findings: ["Main door direction is correct", "No obstacles near entrance"],
-        findingsHi: ["मुख्य दरवाजे की दिशा सही है", "प्रवेश द्वार के पास कोई बाधा नहीं"],
-      },
-      {
-        category: "bedroom",
-        score: 65,
-        maxScore: 100,
-        percentage: 65,
-        status: "partial",
-        findings: ["Bed position needs adjustment", "Good natural light"],
-        findingsHi: ["बिस्तर की स्थिति में समायोजन की आवश्यकता है", "अच्छी प्राकृतिक रोशनी"],
-      },
-      {
-        category: "kitchen",
-        score: 90,
-        maxScore: 100,
-        percentage: 90,
-        status: "compliant",
-        findings: ["Stove placement is correct", "Good ventilation"],
-        findingsHi: ["स्टोव की स्थिति सही है", "अच्छा वेंटिलेशन"],
-      },
-    ],
-    ruleEvaluations: [
-      {
-        ruleId: "rule-001",
-        ruleCode: "VR-001",
-        ruleTitle: "Main Entrance Obstruction",
-        ruleTitleHi: "मुख्य प्रवेश बाधा",
-        status: "passed",
-        score: 10,
-        maxScore: 10,
-        details: "No obstruction found near main entrance",
-        detailsHi: "मुख्य प्रवेश द्वार के पास कोई बाधा नहीं मिली",
-        affectedElements: ["door-1"],
-        suggestedRemedyIds: [],
-        confidence: 0.95,
-      },
-      {
-        ruleId: "rule-002",
-        ruleCode: "VR-002",
-        ruleTitle: "Bed Head Position",
-        ruleTitleHi: "बिस्तर का सिरा स्थान",
-        status: "failed",
-        score: 0,
-        maxScore: 10,
-        details: "Bed should face east or south, currently facing west",
-        detailsHi: "बिस्तर पूर्व या दक्षिण की ओर होना चाहिए, वर्तमान में पश्चिम की ओर है",
-        affectedElements: ["bed-1"],
-        suggestedRemedyIds: ["rem-001"],
-        confidence: 0.88,
-      },
-    ],
-    detectedElements: [
-      {
-        id: "bed-1",
-        type: "bed",
-        name: "Queen Bed",
-        nameHi: "क्वीन बेड",
-        boundingBox: { x: 0.3, y: 0.4, width: 0.4, height: 0.3 },
-        position: "southwest",
-        direction: "WEST",
-        color: "brown",
-        material: "wood",
-        vastuCompliance: "non-compliant",
-        issues: ["Facing wrong direction"],
-        issuesHi: ["गलत दिशा में है"],
-        confidence: 0.92,
-      },
-      {
-        id: "window-1",
-        type: "window",
-        name: "Window",
-        nameHi: "खिड़की",
-        boundingBox: { x: 0.7, y: 0.2, width: 0.2, height: 0.4 },
-        position: "east",
-        direction: "EAST",
-        vastuCompliance: "compliant",
-        issues: [],
-        issuesHi: [],
-        confidence: 0.96,
-      },
-    ],
-    suggestions: [
-      {
-        id: "sug-1",
-        type: "relocate",
-        priority: "medium",
-        title: "Relocate Bed Position",
-        titleHi: "बिस्तर की स्थिति बदलें",
-        description: "Move bed to northeast corner for better sleep quality.",
-        descriptionHi: "बेहतर नींद की गुणवत्ता के लिए बिस्तर को उत्तर-पूर्व कोने में ले जाएं।",
-        affectedElement: "Bed",
-        currentState: "Located in southwest corner",
-        suggestedState: "Move to northeast corner",
-        scoreImpact: 15,
-        difficulty: "moderate",
-        canAutoFix: true,
-        relatedRuleIds: ["rule-123"],
-      },
-    ],
-    autoFixAvailable: true,
-    positiveAspects: ["Good ventilation", "Adequate natural light", "Well-organized space"], // Added missing property
-    compass: { // Added missing property
-      propertyFacing: "NORTH",
-      entranceFacing: "EAST",
-      zones: [
-        {
-          direction: "NORTH",
-          name: "Wealth Zone",
-          nameHi: "धन क्षेत्र",
-          deity: "Kubera",
-          deityHi: "कुबेर",
-          element: "earth",
-          idealFor: ["Treasury", "Safe"],
-          avoidFor: ["Toilet", "Kitchen"],
-          colors: ["Green", "Blue"],
-          status: "compliant"
-        }
-      ]
-    },
-    roomDirection: "NORTH",
-    roomType: "bedroom",
-    analysisVersion: "1.0.0",
-    confidence: 85,
-    processingTime: 3.5,
-    createdAt: new Date(),
-  };
-
-  useEffect(() => {
-    if (isOpen && imageUrl && !analysis) {
-      setIsAnalyzing(true);
-      setError(null);
-      // Simulate API call
-      setTimeout(() => {
-        setAnalysis(mockAnalysis);
-        setIsAnalyzing(false);
-      }, 1500);
-    }
-  }, [isOpen, imageUrl, analysis]);
-
-  const handleAnalyze = () => {
-    if (imageUrl) {
-      setIsAnalyzing(true);
-      setError(null);
-      setTimeout(() => {
-        setAnalysis(mockAnalysis);
-        setIsAnalyzing(false);
-      }, 1500);
-    }
-  };
 
   const handleApplyAutoFix = () => {
     if (analysis?.suggestions && onApplySuggestion) {
@@ -471,7 +301,7 @@ export function VastuPanel({
                 </div>
                 <p className="text-muted-foreground">{t.noImage}</p>
               </div>
-            ) : isAnalyzing ? (
+            ) : isLoading ? (
               <div className="flex flex-col items-center justify-center h-64 text-center p-6">
                 <div className="relative">
                   <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/20 animate-pulse" />
@@ -502,9 +332,6 @@ export function VastuPanel({
                 </div>
                 <p className="text-red-500 font-medium">Analysis Failed</p>
                 <p className="text-sm text-muted-foreground mt-1">{error}</p>
-                <Button onClick={handleAnalyze} className="mt-4" variant="outline">
-                  Try Again
-                </Button>
               </div>
             ) : analysis ? (
               <div className="p-4 space-y-6">
@@ -630,10 +457,10 @@ export function VastuPanel({
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className={cn("text-xl font-bold", getScoreColor(category.score))}>
-                                  {category.score}
+                                <div className={cn("text-xl font-bold", getScoreColor(category.percentage))}>
+                                  {category.percentage}
                                 </div>
-                                <div className="text-xs text-muted-foreground">/100</div>
+                                <div className="text-xs text-muted-foreground">%</div>
                               </div>
                             </div>
                             <Progress value={category.percentage} className="h-2" />
@@ -655,6 +482,28 @@ export function VastuPanel({
                         Analysis processed in {analysis.processingTime}s
                       </p>
                     </div>
+
+                    {/* Detection quality notices */}
+                    {analysis.detectionConfidence === 'failed' && (
+                      <div className="flex items-start gap-2 p-3 rounded-xl border border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-orange-600 dark:text-orange-400" />
+                        <p className="text-xs text-orange-800 dark:text-orange-200">
+                          {language === "hi"
+                            ? "इस छवि के लिए तत्व पहचान नहीं हुई — स्कोर केवल कमरे के प्रकार पर आधारित है। दोबारा विश्लेषण करने का प्रयास करें।"
+                            : "Element detection did not run for this image — score reflects room type rules only. Try analyzing again."}
+                        </p>
+                      </div>
+                    )}
+                    {analysis.detectionConfidence === 'low' && (
+                      <div className="flex items-start gap-2 p-3 rounded-xl border border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20">
+                        <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-yellow-600 dark:text-yellow-400" />
+                        <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                          {language === "hi"
+                            ? "पहचान विश्वास कम है — कुछ तत्व सटीक नहीं हो सकते। परिणाम नीचे दर्शाए गए हैं।"
+                            : "Detection confidence is lower than usual — some detected items may not be accurate. Results are still shown below."}
+                        </p>
+                      </div>
+                    )}
                   </TabsContent>
 
                   <TabsContent value="suggestions" className="mt-4">
@@ -666,27 +515,33 @@ export function VastuPanel({
                   </TabsContent>
 
                   <TabsContent value="grid" className="mt-4">
-                    {/* VastuGrid component would go here */}
-                    <div className="flex items-center justify-center h-64 text-center">
-                      <div className="text-muted-foreground">
-                        <Compass className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                        <p>Vastu Grid Visualization</p>
-                      </div>
-                    </div>
+                    <VastuGrid analysis={analysis} />
                   </TabsContent>
 
                   <TabsContent value="compass" className="mt-4">
-                    {/* VastuCompass component would go here */}
-                    <div className="flex items-center justify-center h-64 text-center">
-                      <div className="text-muted-foreground">
-                        <Compass className="w-12 h-12 mx-auto mb-2 animate-spin" />
-                        <p>Compass Directions</p>
-                      </div>
+                    <div className="flex flex-col items-center gap-6 py-4">
+                      <VastuCompass
+                        direction={analysis.roomDirection ?? undefined}
+                        size="lg"
+                        showLabels
+                      />
+                      {!analysis.roomDirection && (
+                        <p className="text-sm text-muted-foreground text-center">
+                          No direction detected — specify a room direction for compass alignment.
+                        </p>
+                      )}
                     </div>
                   </TabsContent>
                 </Tabs>
               </div>
-            ) : null}
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Compass className="w-8 h-8 text-muted-foreground opacity-50" />
+                </div>
+                <p className="text-muted-foreground text-sm">{t.noAnalysis}</p>
+              </div>
+            )}
           </ScrollArea>
 
           {/* Footer Actions */}
@@ -699,7 +554,8 @@ export function VastuPanel({
               <Button
                 className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
                 onClick={handleApplyAutoFix}
-                disabled={!analysis.autoFixAvailable}
+                disabled={!analysis.autoFixAvailable || !onApplySuggestion}
+                title={!onApplySuggestion ? "AI auto-fix coming soon" : undefined}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 {t.autoFix}
@@ -712,6 +568,8 @@ export function VastuPanel({
                   variant="outline"
                   className="flex-1"
                   onClick={() => handleExport("pdf")}
+                  disabled={!onExport}
+                  title={!onExport ? "Export coming soon" : undefined}
                 >
                   <Download className="w-4 h-4 mr-2" />
                   {t.exportReport}
@@ -720,6 +578,8 @@ export function VastuPanel({
                   variant="outline"
                   size="icon"
                   onClick={() => handleExport("image")}
+                  disabled={!onExport}
+                  title={!onExport ? "Share coming soon" : undefined}
                 >
                   <Share2 className="w-4 h-4" />
                 </Button>

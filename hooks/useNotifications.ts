@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { toast } from '@/components/ui/use-toast';
+import { useUserStore } from '@/stores/user-store';
 
 export interface Notification {
   _id: string;
@@ -39,12 +41,59 @@ interface UseNotificationsReturn {
 
 const POLL_INTERVAL_MS = 30_000;
 
+function playNotificationSound() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
+    
+    const now = ctx.currentTime;
+    
+    // First note: D5 (587.33 Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(587.33, now);
+    gain1.gain.setValueAtTime(0, now);
+    gain1.gain.linearRampToValueAtTime(0.12, now + 0.03);
+    gain1.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    
+    // Second note: A5 (880.00 Hz) slightly delayed for chime effect
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(880.00, now + 0.08);
+    gain2.gain.setValueAtTime(0, now + 0.08);
+    gain2.gain.linearRampToValueAtTime(0.12, now + 0.11);
+    gain2.gain.exponentialRampToValueAtTime(0.0001, now + 0.7);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    
+    osc1.start(now);
+    osc1.stop(now + 0.5);
+    
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.7);
+  } catch (e) {
+    console.warn('Notification sound failed to play:', e);
+  }
+}
+
 export function useNotifications(): UseNotificationsReturn {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount]     = useState(0);
   const [isLoading, setIsLoading]         = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isFirstFetchRef = useRef(true);
+  const prevNotificationsRef = useRef<Notification[]>([]);
 
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
@@ -52,8 +101,60 @@ export function useNotifications(): UseNotificationsReturn {
       const res = await fetch('/api/notifications');
       if (!res.ok) return;
       const data = await res.json();
-      setNotifications(data.notifications ?? []);
-      setUnreadCount(data.unreadCount ?? 0);
+      const newNotifications: Notification[] = data.notifications ?? [];
+      const newUnreadCount = data.unreadCount ?? 0;
+
+      // Identify new unread notifications that were not in the previous list
+      if (!isFirstFetchRef.current && prevNotificationsRef.current.length > 0) {
+        const prevIds = prevNotificationsRef.current.map(n => n._id);
+        const newlyAddedUnread = newNotifications.filter(n => !n.read && !prevIds.includes(n._id));
+        
+        if (newlyAddedUnread.length > 0) {
+          const prefs = useUserStore.getState().preferences;
+          const soundEnabled = prefs.soundEnabled ?? true;
+          const browserEnabled = prefs.browserNotificationsEnabled ?? false;
+          
+          newlyAddedUnread.forEach(notif => {
+            // Check if we already played this notification in another tab
+            const lastPlayedId = localStorage.getItem('last_played_notification_id');
+            if (lastPlayedId !== notif._id) {
+              localStorage.setItem('last_played_notification_id', notif._id);
+              
+              // 1. Play sound
+              if (soundEnabled) {
+                playNotificationSound();
+              }
+              
+              // 2. Trigger browser desktop notification
+              if (browserEnabled && typeof window !== 'undefined' && 'Notification' in window && window.Notification.permission === 'granted') {
+                try {
+                  new window.Notification(notif.title, {
+                    body: notif.body,
+                    icon: '/favicon.ico',
+                  });
+                } catch (e) {
+                  console.warn('Native notification failed:', e);
+                }
+              }
+              
+              // 3. Show inside-app toast
+              toast({
+                title: notif.title,
+                description: notif.body,
+                variant: notif.type === 'render_failed' ? 'destructive' : 'default',
+              });
+            }
+          });
+        }
+      }
+
+      if (isFirstFetchRef.current) {
+        isFirstFetchRef.current = false;
+      }
+      
+      prevNotificationsRef.current = newNotifications;
+      setNotifications(newNotifications);
+      setUnreadCount(newUnreadCount);
     } catch {
       // swallow — polling must never crash the app
     }
@@ -65,6 +166,8 @@ export function useNotifications(): UseNotificationsReturn {
     if (!user) {
       setNotifications([]);
       setUnreadCount(0);
+      isFirstFetchRef.current = true;
+      prevNotificationsRef.current = [];
       return;
     }
 

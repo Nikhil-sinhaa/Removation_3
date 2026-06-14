@@ -240,7 +240,7 @@ export function ImageUploader({
             className={cn(
               "relative rounded-xl overflow-hidden",
               "border-2 border-zinc-200 dark:border-zinc-800",
-              aspectRatioClasses[aspectRatio]
+              className?.includes("h-") ? "h-full w-full" : aspectRatioClasses[aspectRatio]
             )}
           >
             <Image
@@ -274,12 +274,13 @@ export function ImageUploader({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
+            className={cn(className?.includes("h-") && "h-full w-full")}
           >
             <div
               {...getRootProps()}
               className={cn(
                 "relative rounded-xl border-2 border-dashed transition-all duration-300",
-                aspectRatioClasses[aspectRatio],
+                className?.includes("h-") ? "h-full w-full" : aspectRatioClasses[aspectRatio],
                 "flex flex-col items-center justify-center p-6 text-center cursor-pointer",
                 isDragActive && !isDragReject
                   ? "border-violet-500 bg-violet-50 dark:bg-violet-500/10"

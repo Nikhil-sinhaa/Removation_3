@@ -11,6 +11,7 @@ export type NotificationType =
   | 'credits_low'
   | 'credits_purchased'
   | 'subscription_expiring'
+  | 'badge_unlocked'
   | 'system';
 
 export interface INotification extends Document {
@@ -35,6 +36,7 @@ const NotificationSchema = new Schema<INotification>({
       'booking_cancelled', 'booking_message',
       'credits_low', 'credits_purchased',
       'subscription_expiring',
+      'badge_unlocked',
       'system',
     ],
     required: true,

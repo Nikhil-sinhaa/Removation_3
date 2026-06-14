@@ -131,6 +131,22 @@ export class QueueWorker {
 
       await completeJob(job.jobId, true);
       console.log(`[QueueWorker] Job ${job.jobId} completed`);
+
+      // Fire-and-forget badge evaluation — never await, must not block the queue
+      if (job.userId) {
+        Promise.resolve().then(async () => {
+          try {
+            const { evaluateUserBadges } = await import('@/lib/badges/evaluateBadges');
+            const { notifyBadgeUnlocked } = await import('@/lib/notifications/send');
+            const { newlyUnlocked } = await evaluateUserBadges(job.userId);
+            for (const badge of newlyUnlocked) {
+              await notifyBadgeUnlocked(job.userId, badge.name).catch(() => {});
+            }
+          } catch {
+            // Swallow — badge evaluation is non-critical
+          }
+        });
+      }
     } catch (err: any) {
       console.error(`[QueueWorker] Job ${job.jobId} failed:`, err.message);
 

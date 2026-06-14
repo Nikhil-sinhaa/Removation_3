@@ -64,6 +64,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import ActivityHeatmap from '@/components/dashboard/ActivityHeatmap';
+import BadgeGrid from '@/components/dashboard/BadgeGrid';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -370,17 +372,6 @@ const recentActivities: Activity[] = [
     time: '1 hour ago',
     icon: Compass,
     color: 'text-orange-500 bg-orange-100',
-  },
-  {
-    id: '3',
-    type: 'achievement',
-    message: 'Unlocked "Design Pro" achievement',
-    messageKey: 'db_recent_activity_achievement',
-    timeKey: 'db_time_2_hours_ago',
-    params: { achievement: 'Design Pro' },
-    time: '2 hours ago',
-    icon: Award,
-    color: 'text-yellow-500 bg-yellow-100',
   },
   {
     id: '4',
@@ -758,6 +749,18 @@ export default function DashboardPage() {
               </motion.div>
             </>
           )}
+        </motion.div>
+
+        {/* Activity Heatmap */}
+        <motion.div variants={itemVariants}>
+          <ActivityHeatmap />
+        </motion.div>
+
+        {/* Achievements */}
+        <motion.div variants={itemVariants}>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <BadgeGrid />
+          </div>
         </motion.div>
 
         {/* Quick Actions */}

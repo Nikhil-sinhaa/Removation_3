@@ -372,6 +372,8 @@ export default function SettingsPage() {
     pushRenders: true,
     pushUpdates: false,
     smsAlerts: false,
+    soundEnabled: true,
+    browserNotificationsEnabled: false,
   });
 
   // Load preferences from Zustand store on mount
@@ -392,6 +394,8 @@ export default function SettingsPage() {
         pushRenders: true,
         pushUpdates: false,
         smsAlerts: false,
+        soundEnabled: userStore.preferences.soundEnabled ?? true,
+        browserNotificationsEnabled: userStore.preferences.browserNotificationsEnabled ?? false,
       });
     }
   }, [userStore.preferences]);
@@ -494,6 +498,8 @@ export default function SettingsPage() {
         emailNotifications: notifications.emailRenders,
         marketingEmails: notifications.emailNewsletter,
         showTips: notifications.emailTips,
+        soundEnabled: notifications.soundEnabled,
+        browserNotificationsEnabled: notifications.browserNotificationsEnabled,
       });
 
       const response = await fetch("/api/user/preferences", {
@@ -1028,27 +1034,77 @@ export default function SettingsPage() {
 
                       <Separator />
 
-                      {/* Push Notifications */}
+                      {/* Push & Sound Notifications */}
                       <div>
                         <h3 className="font-semibold mb-4">
-                          {language === "hi" ? "पुश सूचनाएं" : "Push Notifications"}
+                          {language === "hi" ? "पुश और ध्वनि सूचनाएं" : "Push & Sound Notifications"}
                         </h3>
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "रेंडर अलर्ट" : "Render Alerts"}
+                                {language === "hi" ? "रेंडर अलर्ट (इन-ऐप)" : "Render Alerts (In-App)"}
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {language === "hi"
-                                  ? "ब्राउज़र में सूचना"
-                                  : "Browser notifications"}
+                                  ? "इन-ऐप टोस्ट और घंटी सूचनाएं"
+                                  : "In-app toast and bell notifications"}
                               </p>
                             </div>
                             <Switch
                               checked={notifications.pushRenders}
                               onCheckedChange={(checked) =>
                                 setNotifications({ ...notifications, pushRenders: checked })
+                              }
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">
+                                {language === "hi" ? "डेस्कटॉप पुश सूचनाएं" : "Desktop Push Notifications"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {language === "hi"
+                                  ? "ब्राउज़र के माध्यम से सिस्टम अलर्ट"
+                                  : "System notifications via browser"}
+                              </p>
+                            </div>
+                            <Switch
+                              checked={notifications.browserNotificationsEnabled}
+                              onCheckedChange={async (checked) => {
+                                if (checked && typeof window !== 'undefined' && 'Notification' in window) {
+                                  const permission = await window.Notification.requestPermission();
+                                  if (permission !== 'granted') {
+                                    toast({
+                                      title: language === "hi" ? "अनुमति अस्वीकृत" : "Permission Denied",
+                                      description: language === "hi"
+                                        ? "डेस्कटॉप सूचनाओं के लिए ब्राउज़र अनुमति आवश्यक है।"
+                                        : "Browser permission is required for desktop notifications.",
+                                      variant: "destructive"
+                                    });
+                                    setNotifications({ ...notifications, browserNotificationsEnabled: false });
+                                    return;
+                                  }
+                                }
+                                setNotifications({ ...notifications, browserNotificationsEnabled: checked });
+                              }}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">
+                                {language === "hi" ? "सूचना ध्वनि" : "Notification Sound"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {language === "hi"
+                                  ? "नई सूचना आने पर ध्वनि संकेत बजाएं"
+                                  : "Play a sound alert when a new notification is received"}
+                              </p>
+                            </div>
+                            <Switch
+                              checked={notifications.soundEnabled}
+                              onCheckedChange={(checked) =>
+                                setNotifications({ ...notifications, soundEnabled: checked })
                               }
                             />
                           </div>

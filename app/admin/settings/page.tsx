@@ -131,6 +131,11 @@ export default function SettingsAdminPage() {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Vastu processing mode toggle
+  const [vastuMode, setVastuMode] = useState<'local' | 'drive'>('local');
+  const [vastuModeSaving, setVastuModeSaving] = useState(false);
+  const [vastuModeStatus, setVastuModeStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   const toggleSecret = (key: string) =>
     setShowSecrets((s) => ({ ...s, [key]: !s[key] }));
 
@@ -138,9 +143,12 @@ export default function SettingsAdminPage() {
   useEffect(() => {
     async function loadConfig() {
       try {
-        const res = await fetch('/api/admin/config');
-        if (res.ok) {
-          const data = await res.json();
+        const [configRes, vastuRes] = await Promise.all([
+          fetch('/api/admin/config'),
+          fetch('/api/admin/settings/vastu-mode'),
+        ]);
+        if (configRes.ok) {
+          const data = await configRes.json();
           setConfig({
             app_mode: data.app_mode || 'development',
             free_credits_on_signup: typeof data.free_credits_on_signup === 'number' ? data.free_credits_on_signup : 10,
@@ -151,6 +159,10 @@ export default function SettingsAdminPage() {
             }
           });
         }
+        if (vastuRes.ok) {
+          const vd = await vastuRes.json();
+          setVastuMode(vd.mode === 'drive' ? 'drive' : 'local');
+        }
       } catch (err) {
         console.error('Failed to load admin config', err);
       } finally {
@@ -159,6 +171,30 @@ export default function SettingsAdminPage() {
     }
     loadConfig();
   }, []);
+
+  async function handleVastuModeSave(newMode: 'local' | 'drive') {
+    setVastuModeSaving(true);
+    setVastuModeStatus(null);
+    try {
+      const res = await fetch('/api/admin/settings/vastu-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: newMode }),
+      });
+      if (res.ok) {
+        setVastuMode(newMode);
+        setVastuModeStatus({ type: 'success', message: `Vastu mode switched to '${newMode}'.` });
+      } else {
+        const e = await res.json();
+        setVastuModeStatus({ type: 'error', message: e.message || 'Failed to update Vastu mode.' });
+      }
+    } catch {
+      setVastuModeStatus({ type: 'error', message: 'Network error saving Vastu mode.' });
+    } finally {
+      setVastuModeSaving(false);
+      setTimeout(() => setVastuModeStatus(null), 4000);
+    }
+  }
 
   // Save configs to database
   const handleSave = async (e: React.FormEvent) => {
@@ -443,6 +479,50 @@ export default function SettingsAdminPage() {
                           />
                         </div>
                       </div>
+                    </div>
+
+                    {/* Section 4: Vastu Processing Mode */}
+                    <div className="border-t border-neutral-800/80 pt-6 space-y-3">
+                      <label className="text-sm font-medium text-neutral-200 flex items-center gap-2">
+                        <Cpu className="w-4 h-4 text-neutral-400" />
+                        Vastu Processing Mode
+                      </label>
+                      <p className="text-xs text-neutral-400">
+                        Controls how POST /api/vastu executes. <code className="text-neutral-300 bg-neutral-800 px-1 rounded">local</code> runs ComfyUI in-process (instant). <code className="text-neutral-300 bg-neutral-800 px-1 rounded">drive</code> enqueues an async GPU job via Google Drive (requires <code className="text-neutral-300 bg-neutral-800 px-1 rounded">npm run worker:vastu</code>).
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="grid grid-cols-2 gap-3 flex-1 max-w-xs">
+                          {(['local', 'drive'] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              disabled={vastuModeSaving}
+                              onClick={() => handleVastuModeSave(m)}
+                              className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-150 capitalize ${
+                                vastuMode === m
+                                  ? 'border-indigo-500/60 bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/30'
+                                  : 'border-neutral-800 bg-neutral-950/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {m === 'local' ? '🖥 Local' : '☁️ Drive'}
+                            </button>
+                          ))}
+                        </div>
+                        {vastuModeSaving && <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />}
+                      </div>
+                      {vastuModeStatus && (
+                        <p className={`text-xs ${
+                          vastuModeStatus.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                        }`}>
+                          {vastuModeStatus.type === 'success' ? '✓' : '⚠'} {vastuModeStatus.message}
+                        </p>
+                      )}
+                      {vastuMode === 'drive' && (
+                        <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-300">
+                          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                          <p><strong>Worker required:</strong> Drive mode needs <code className="text-amber-200">npm run worker:vastu</code> running locally. Without it, jobs will queue but never complete.</p>
+                        </div>
+                      )}
                     </div>
 
                     {/* Submit Bar */}

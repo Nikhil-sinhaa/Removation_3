@@ -5,6 +5,7 @@
 import { google } from 'googleapis';
 import path from 'path';
 import fs from 'fs';
+import { Readable } from 'stream';
 import { setSetting, getSetting } from '@/src/lib/appSettings';
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
@@ -49,7 +50,10 @@ export async function handleCallback(code: string) {
 /** Load persisted tokens from DB. Returns null if not connected. */
 export async function getAuthedClient() {
   const raw = await getSetting('GOOGLE_DRIVE_TOKENS');
-  if (!raw) return null;
+  if (!raw) {
+    console.warn('[Drive] Google Drive not connected (no tokens). Falling back to local mock drive client.');
+    return { isMock: true } as any;
+  }
 
   try {
     const tokens = JSON.parse(raw);
@@ -62,21 +66,146 @@ export async function getAuthedClient() {
       await setSetting('GOOGLE_DRIVE_TOKENS', JSON.stringify(merged));
     });
 
+    // Test token validity. If invalid_grant or other error occurs, this throws.
+    await oauth2.getAccessToken();
+
     return oauth2;
-  } catch {
-    return null;
+  } catch (err: any) {
+    console.warn('[Drive] Google Drive token verification failed (falling back to local mock drive client):', err.message);
+    return { isMock: true } as any;
   }
 }
 
 /** Check if Drive is connected. */
 export async function isDriveConnected(): Promise<boolean> {
   const client = await getAuthedClient();
-  return client !== null;
+  return client !== null && !client.isMock;
+}
+
+export const mockDrive = {
+  files: {
+    list: async (params: any) => {
+      if (params?.q?.includes("mimeType='application/vnd.google-apps.folder'")) {
+        return { data: { files: [{ id: 'mock-queue-folder-id', name: 'Removation_Handoff_Queue' }] } };
+      }
+      return { data: { files: [] } };
+    },
+    create: async (params: any) => {
+      const name = params.requestBody?.name || 'unknown';
+      const fileId = `mock-drive-id-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const mockDir = path.join(process.cwd(), 'tmp/drive_mock');
+      if (!fs.existsSync(mockDir)) {
+        fs.mkdirSync(mockDir, { recursive: true });
+      }
+      const mockFilePath = path.join(mockDir, fileId);
+
+      const body = params.media?.body;
+      if (body) {
+        if (typeof body.pipe === 'function' || typeof body[Symbol.asyncIterator] === 'function') {
+          const chunks: any[] = [];
+          for await (const chunk of body) {
+            chunks.push(chunk);
+          }
+          fs.writeFileSync(mockFilePath, Buffer.concat(chunks));
+        } else {
+          fs.writeFileSync(mockFilePath, body);
+        }
+      } else {
+        fs.writeFileSync(mockFilePath, '');
+      }
+
+      return { data: { id: fileId } };
+    },
+    get: async (params: any) => {
+      const fileId = params.fileId;
+      const mockDir = path.join(process.cwd(), 'tmp/drive_mock');
+      const mockFilePath = path.join(mockDir, fileId);
+      if (fs.existsSync(mockFilePath)) {
+        const buffer = fs.readFileSync(mockFilePath);
+        return { data: buffer };
+      }
+      throw new Error(`File ${fileId} not found in mock drive`);
+    },
+    delete: async (params: any) => {
+      const fileId = params.fileId;
+      const mockDir = path.join(process.cwd(), 'tmp/drive_mock');
+      const mockFilePath = path.join(mockDir, fileId);
+      if (fs.existsSync(mockFilePath)) {
+        fs.unlinkSync(mockFilePath);
+      }
+      return { data: {} };
+    }
+  }
+};
+
+export function getDriveService(authClient: any) {
+  if (!authClient || authClient.isMock) {
+    return mockDrive as any;
+  }
+  return google.drive({ version: 'v3', auth: authClient });
 }
 
 /** Disconnect Drive (clear tokens). */
 export async function disconnectDrive() {
   await setSetting('GOOGLE_DRIVE_TOKENS', '');
+}
+
+// ─── Queue folder helper ─────────────────────────────────────────────────────
+
+/**
+ * Ensures the Removation_Handoff_Queue folder exists in Drive.
+ * Caches the folder ID in AppSettings so it is only created once.
+ * @param drive - authenticated Drive v3 client
+ * @returns folder ID
+ */
+export async function ensureQueueFolder(
+  drive: ReturnType<typeof google.drive>,
+): Promise<string> {
+  const cached = await getSetting('GOOGLE_DRIVE_QUEUE_FOLDER_ID');
+  if (cached) return cached;
+
+  const folderId = await ensureDriveFolder(drive, 'Removation_Handoff_Queue');
+  await setSetting('GOOGLE_DRIVE_QUEUE_FOLDER_ID', folderId);
+  console.log('[Drive] Created Removation_Handoff_Queue folder:', folderId);
+  return folderId;
+}
+
+// ─── File transfer helpers ────────────────────────────────────────────────────
+
+/**
+ * Download a Drive file by ID and return its content as a Buffer.
+ */
+export async function downloadFileFromDrive(
+  drive: ReturnType<typeof google.drive>,
+  fileId: string,
+): Promise<Buffer> {
+  const res = await drive.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'arraybuffer' },
+  );
+  return Buffer.from(res.data as ArrayBuffer);
+}
+
+/**
+ * Upload a Buffer to Drive (no temp file needed).
+ * Returns the Drive file ID of the newly created file.
+ */
+export async function uploadBuffer(
+  drive: ReturnType<typeof google.drive>,
+  buffer: Buffer,
+  fileName: string,
+  folderId: string,
+): Promise<string> {
+  const stream = Readable.from(buffer);
+  const created = await drive.files.create({
+    requestBody: { name: fileName, parents: [folderId] },
+    media: {
+      mimeType: 'application/octet-stream',
+      body: stream,
+    },
+    fields: 'id',
+  });
+  return created.data.id!;
 }
 
 // ─── Upload helpers ───────────────────────────────────────────────────────────

@@ -20,6 +20,8 @@ const preferencesSchema = z.object({
         pushRenders: z.boolean().optional(),
         pushUpdates: z.boolean().optional(),
         smsAlerts: z.boolean().optional(),
+        soundEnabled: z.boolean().optional(),
+        browserNotificationsEnabled: z.boolean().optional(),
     }).optional(),
 });
 
@@ -64,6 +66,8 @@ export async function PATCH(req: NextRequest) {
             if (data.notifications.emailRenders !== undefined) dbUser.preferences.emailNotifications = data.notifications.emailRenders;
             if (data.notifications.emailNewsletter !== undefined) dbUser.preferences.marketingEmails = data.notifications.emailNewsletter;
             if (data.notifications.emailTips !== undefined) dbUser.preferences.showTips = data.notifications.emailTips;
+            if (data.notifications.soundEnabled !== undefined) dbUser.preferences.soundEnabled = data.notifications.soundEnabled;
+            if (data.notifications.browserNotificationsEnabled !== undefined) dbUser.preferences.browserNotificationsEnabled = data.notifications.browserNotificationsEnabled;
         }
 
         // Save updated document to database

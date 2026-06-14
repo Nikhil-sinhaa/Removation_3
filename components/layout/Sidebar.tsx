@@ -70,6 +70,12 @@ const toolsNavItems = [
     badge: "New",
   },
   {
+    title: "Vastu Score",
+    href: "/vastu",
+    icon: Compass,
+    badge: "New",
+  },
+  {
     title: "Cost Calculator",
     href: "/editor?mode=cost",
     icon: Calculator,

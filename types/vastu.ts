@@ -47,7 +47,15 @@ export interface VastuAnalysis {
   analysisVersion: string;
   confidence: number;
   processingTime: number;
-  
+
+  // Pass-saturation guard — set by the API route after detection.
+  // 'low'    — ≥6 of the 8 passes fired; model may be detecting noise.
+  // 'failed' — 0 passes fired; detection did not run (blank image, ComfyUI error,
+  //             or non-room photo). Score reflects room-type rules only.
+  detectionConfidence?: 'normal' | 'low' | 'failed';
+  // How many of the 8 detection passes produced non-empty masks.
+  detectedPassCount?: number;
+
   createdAt: Date;
 }
 
@@ -169,18 +177,21 @@ export interface VastuRuleEvaluation {
   ruleCode: string;
   ruleTitle: string;
   ruleTitleHi: string;
-  
+
   status: 'passed' | 'failed' | 'warning' | 'not-applicable';
   score: number;
   maxScore: number;
-  
+
   details: string;
   detailsHi: string;
-  
+
   affectedElements: string[];
   suggestedRemedyIds: string[];
-  
+
   confidence: number;
+
+  // How this violation was triggered: user-provided direction input vs AI image detection
+  source?: 'direction' | 'detection';
 }
 
 // ============================================

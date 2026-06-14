@@ -95,6 +95,7 @@ export async function checkAndDeductCredits(
             'recolor': 1,
             'segment': 1,
             'remove-object': 1,
+            'vastu-analysis': 1,
             'lineart': 1,
             'postprocess': 1,
             'view-extend': 1,

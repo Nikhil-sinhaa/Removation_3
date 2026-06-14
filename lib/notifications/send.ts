@@ -162,6 +162,19 @@ export async function notifyGenerationComplete(
   });
 }
 
+export async function notifyBadgeUnlocked(
+  userId: string,
+  badgeName: string,
+): Promise<void> {
+  return sendNotification({
+    userId,
+    type:  'badge_unlocked',
+    title: `Badge unlocked: ${badgeName}!`,
+    body:  `Congratulations! You've earned the "${badgeName}" badge.`,
+    link:  '/dashboard',
+  });
+}
+
 // TODO: plug in Slack/email alert when low ratings arrive
 export async function notifyAdminLowRating(render: { _id: unknown; rating?: number | null }): Promise<void> {
   console.error(

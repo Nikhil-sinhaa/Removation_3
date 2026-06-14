@@ -595,6 +595,7 @@ export default function EditorSidebar({
       {showVastu && activeTab === 'vastu' && (
         <VastuPanel
           roomType={selectedRoomType || 'living-room'}
+          imageUrl={currentImageUrl}
           className="flex-1 overflow-hidden"
         />
       )}

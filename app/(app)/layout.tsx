@@ -48,6 +48,7 @@ import {
   LucideIcon,
   Store,
   Palette,
+  Compass,
 } from 'lucide-react';
 
 interface AppLayoutProps {
@@ -90,6 +91,7 @@ const sidebarNavigation: NavSection[] = [
       { name: 'AI Lighting Studio', href: '/lighting', icon: Lightbulb },
       { name: '3D Room View', href: '/room-3d', icon: Box },
       { name: 'Style Transfer', href: '/style-transfer', icon: Palette },
+      { name: 'Vastu Score', href: '/vastu', icon: Compass },
     ],
   },
   {

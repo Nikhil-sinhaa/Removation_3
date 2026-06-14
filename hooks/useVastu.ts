@@ -1,524 +1,231 @@
-// types/vastu.ts
-// Vastu Shastra analysis types
+import { useState, useCallback, useRef } from 'react';
+import type {
+  VastuAnalysis,
+  VastuCategoryAnalysis,
+  VastuRuleEvaluation,
+  DetectedElement,
+  VastuSuggestion,
+  CompassDirection,
+} from '@/types/vastu';
 
-// ============================================
-// COMPASS DIRECTIONS
-// ============================================
-
-export type CompassDirection =
-  | 'NORTH'
-  | 'NORTHEAST'
-  | 'EAST'
-  | 'SOUTHEAST'
-  | 'SOUTH'
-  | 'SOUTHWEST'
-  | 'WEST'
-  | 'NORTHWEST';
-
-// ============================================
-// VASTU ANALYSIS
-// ============================================
-
-export interface VastuAnalysis {
-  id: string;
-  renderId: string;
+interface UseVastuParams {
+  imageUrl?: string | null;
+  roomType?: string;
+  direction?: string | null;
+  language?: string;
   projectId?: string;
-  roomId?: string;
-
-  // Overall score
-  overallScore: VastuScore;
-
-  // Category-wise analysis
-  categories: VastuCategoryAnalysis[];
-
-  // Individual rule evaluations
-  ruleEvaluations: VastuRuleEvaluation[];
-
-  // Detected elements
-  detectedElements: DetectedElement[];
-
-  // Suggestions
-  suggestions: VastuSuggestion[];
-  autoFixAvailable: boolean;
-  positiveAspects?: any[];
-  compass?: any;
-
-  // Room details
-  roomDirection: CompassDirection | null;
-  roomType: string;
-
-  // Metadata
-  analysisVersion: string;
-  confidence: number;
-  processingTime: number;
-
-  createdAt: Date;
 }
 
-export interface VastuScore {
-  value: number; // 0-100
-  grade: VastuGrade;
-  label: string;
-  labelHi: string;
-  color: string;
-  description: string;
-  descriptionHi: string;
+/** 3 minutes before we give up polling */
+const POLL_TIMEOUT_MS = 3 * 60 * 1000;
+const POLL_INTERVAL_MS = 3000;
+
+function deriveColor(value: number): string {
+  if (value >= 80) return 'text-green-500';
+  if (value >= 60) return 'text-yellow-500';
+  if (value >= 40) return 'text-orange-500';
+  return 'text-red-500';
 }
 
-export type VastuGrade = 'excellent' | 'good' | 'average' | 'poor' | 'critical';
+/** Map a raw API response body (local-mode `analysis` shape) to VastuAnalysis. */
+function mapResponseToAnalysis(data: any, projectId?: string, direction?: string | null, roomType?: string): VastuAnalysis {
+  const a = data.analysis;
+  const scoreValue: number = a?.overallScore?.value ?? data.score ?? 0;
 
-// ============================================
-// VASTU CATEGORIES
-// ============================================
-
-export interface VastuCategoryAnalysis {
-  category: VastuCategory;
-  score: number;
-  maxScore: number;
-  percentage: number;
-  status: VastuStatus;
-  findings: string[];
-  findingsHi: string[];
-}
-
-export type VastuCategory =
-  | 'entrance'        // Main entrance & doors
-  | 'bedroom'         // Bedroom placement & bed direction
-  | 'kitchen'         // Kitchen location & stove placement
-  | 'bathroom'        // Bathroom & toilet location
-  | 'puja'            // Puja room / prayer area
-  | 'living'          // Living room arrangement
-  | 'direction'       // Overall directional compliance
-  | 'elements'        // Five elements balance
-  | 'colors'          // Color scheme compliance
-  | 'furniture'       // Furniture placement
-  | 'lighting'        // Natural & artificial lighting
-  | 'plants'          // Indoor plants placement
-  | 'mirrors'         // Mirror placement
-  | 'water'           // Water elements (aquarium, fountain)
-  | 'storage';        // Storage & clutter
-
-export type VastuStatus = 'compliant' | 'partial' | 'non-compliant' | 'not-applicable';
-
-// ============================================
-// VASTU RULES
-// ============================================
-
-export interface VastuRule {
-  id: string;
-  code: string; // e.g., "VR-001"
-
-  // Rule details
-  title: string;
-  titleHi: string;
-  description: string;
-  descriptionHi: string;
-
-  // Category & priority
-  category: VastuCategory;
-  priority: VastuPriority;
-  weight: number; // Impact on overall score (1-10)
-
-  // Application
-  applicableRoomTypes: string[];
-  applicablePropertyTypes: string[];
-
-  // Conditions
-  conditions: VastuCondition[];
-
-  // Remedies
-  remedies: VastuRemedy[];
-
-  // Reference
-  source: string; // Vastu text reference
-  isTraditional: boolean;
-  isModernAdaptation: boolean;
-}
-
-export type VastuPriority = 'critical' | 'high' | 'medium' | 'low' | 'informational';
-
-export interface VastuCondition {
-  type: 'element_position' | 'element_direction' | 'element_color' | 'element_material' | 'room_direction' | 'element_presence' | 'element_absence';
-  element?: string;
-  direction?: CompassDirection | CompassDirection[];
-  position?: VastuPosition;
-  color?: string | string[];
-  material?: string | string[];
-  operator: 'equals' | 'not_equals' | 'in' | 'not_in' | 'exists' | 'not_exists';
-}
-
-export type VastuPosition =
-  | 'center'
-  | 'north'
-  | 'northeast'
-  | 'east'
-  | 'southeast'
-  | 'south'
-  | 'southwest'
-  | 'west'
-  | 'northwest'
-  | 'corner'
-  | 'wall'
-  | 'near-entrance'
-  | 'near-window';
-
-// ============================================
-// RULE EVALUATION
-// ============================================
-
-export interface VastuRuleEvaluation {
-  ruleId: string;
-  ruleCode: string;
-  ruleTitle: string;
-  ruleTitleHi: string;
-
-  status: 'passed' | 'failed' | 'warning' | 'not-applicable';
-  score: number;
-  maxScore: number;
-
-  details: string;
-  detailsHi: string;
-
-  affectedElements: string[];
-  suggestedRemedyIds: string[];
-
-  confidence: number;
-}
-
-// ============================================
-// DETECTED ELEMENTS
-// ============================================
-
-export interface DetectedElement {
-  id: string;
-  type: VastuElementType;
-  name: string;
-  nameHi: string;
-
-  // Position in image
-  boundingBox: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+  return {
+    id: `vastu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    renderId: `render-${Date.now()}`,
+    projectId,
+    overallScore: {
+      value: scoreValue,
+      grade: a?.overallScore?.grade ?? 'average',
+      label: a?.overallScore?.label ?? '',
+      labelHi: a?.overallScore?.labelHi ?? '',
+      color: deriveColor(scoreValue),
+      description: a?.overallScore?.description ?? '',
+      descriptionHi: a?.overallScore?.descriptionHi ?? '',
+    },
+    categories: (a?.categories ?? []).map((cat: any): VastuCategoryAnalysis => ({
+      category: cat.category ?? 'furniture',
+      score: cat.score ?? 100,
+      maxScore: cat.maxScore ?? 100,
+      percentage: cat.percentage ?? 100,
+      status: cat.status ?? 'compliant',
+      findings: cat.findings ?? [],
+      findingsHi: cat.findingsHi ?? [],
+    })),
+    ruleEvaluations: (a?.ruleEvaluations ?? []).map((rule: any): VastuRuleEvaluation => ({
+      ruleId: rule.ruleId ?? rule.id ?? '',
+      ruleCode: rule.ruleCode ?? rule.ruleId ?? '',
+      ruleTitle: rule.ruleTitle ?? rule.title ?? '',
+      ruleTitleHi: rule.ruleTitleHi ?? rule.titleHi ?? '',
+      status: rule.status ?? (rule.passed ? 'passed' : 'failed'),
+      score: rule.score ?? (rule.passed ? rule.points : 0) ?? 0,
+      maxScore: rule.maxScore ?? rule.points ?? 100,
+      details: rule.details ?? rule.reason ?? '',
+      detailsHi: rule.detailsHi ?? '',
+      affectedElements: rule.affectedElements ?? [],
+      suggestedRemedyIds: rule.suggestedRemedyIds ?? [],
+      confidence: rule.confidence ?? 1.0,
+    })),
+    detectedElements: (data.detectedElements ?? a?.detectedElements ?? []).map(
+      (elem: any, idx: number): DetectedElement => ({
+        id: elem.id ?? `elem-${idx}`,
+        type: elem.type ?? 'other',
+        name: elem.name ?? '',
+        nameHi: elem.nameHi ?? '',
+        boundingBox: elem.boundingBox ?? { x: 0, y: 0, width: 0, height: 0 },
+        position: elem.position ?? 'center',
+        vastuCompliance: elem.vastuCompliance ?? 'compliant',
+        issues: elem.issues ?? [],
+        issuesHi: elem.issuesHi ?? [],
+        confidence: elem.confidence ?? 1.0,
+      })
+    ),
+    suggestions: (a?.suggestions ?? data.suggestions ?? []).map((sug: any): VastuSuggestion => ({
+      id: sug.id ?? `sug-${Math.random().toString(36).substr(2, 9)}`,
+      type: sug.type ?? 'remedy',
+      priority: sug.priority ?? 'medium',
+      title: sug.title ?? '',
+      titleHi: sug.titleHi ?? sug.title ?? '',
+      description: sug.description ?? '',
+      descriptionHi: sug.descriptionHi ?? sug.description ?? '',
+      currentState: sug.currentState ?? '',
+      suggestedState: sug.suggestedState ?? '',
+      scoreImpact: sug.scoreImpact ?? 0,
+      difficulty: sug.difficulty ?? 'moderate',
+      canAutoFix: sug.canAutoFix ?? false,
+      relatedRuleIds: sug.relatedRuleIds ?? [],
+    })),
+    autoFixAvailable: a?.autoFixAvailable ?? false,
+    positiveAspects: (a?.positiveAspects ?? []).map((p: any) =>
+      typeof p === 'string' ? p : p?.text ?? p?.description ?? String(p)
+    ),
+    compass: a?.compass,
+    roomDirection: (direction?.toUpperCase() as CompassDirection) || null,
+    roomType: roomType ?? 'general',
+    analysisVersion: '2.0',
+    confidence: a?.confidence ?? 1.0,
+    processingTime: a?.processingTime ?? 0,
+    detectionConfidence: (data.detectionConfidence ?? a?.detectionConfidence) as 'normal' | 'low' | 'failed' | undefined,
+    detectedPassCount: data.detectedPassCount ?? a?.detectedPassCount,
+    createdAt: new Date(),
   };
-
-  // Vastu properties
-  position: VastuPosition;
-  direction?: CompassDirection;
-  color?: string;
-  material?: string;
-
-  // Analysis
-  vastuCompliance: VastuStatus;
-  issues: string[];
-  issuesHi: string[];
-
-  confidence: number;
 }
 
-export type VastuElementType =
-  | 'bed'
-  | 'sofa'
-  | 'dining-table'
-  | 'stove'
-  | 'sink'
-  | 'toilet'
-  | 'mirror'
-  | 'window'
-  | 'door'
-  | 'plant'
-  | 'aquarium'
-  | 'fountain'
-  | 'temple'
-  | 'idol'
-  | 'clock'
-  | 'painting'
-  | 'bookshelf'
-  | 'wardrobe'
-  | 'tv'
-  | 'desk'
-  | 'chair'
-  | 'lamp'
-  | 'chandelier'
-  | 'rug'
-  | 'curtain'
-  | 'stairs'
-  | 'pillar'
-  | 'beam'
-  | 'other';
-
-// ============================================
-// VASTU SUGGESTIONS
-// ============================================
-
-export interface VastuSuggestion {
-  id: string;
-  type: VastuSuggestionType;
-  priority: VastuPriority;
-
-  title: string;
-  titleHi: string;
-  description: string;
-  descriptionHi: string;
-
-  // What needs to change
-  affectedElement?: string;
-  currentState: string;
-  suggestedState: string;
-
-  // Impact
-  scoreImpact: number; // How many points this fix adds
-
-  // Implementation
-  difficulty: 'easy' | 'moderate' | 'difficult';
-  estimatedCost?: {
-    INR: { min: number; max: number };
-    USD: { min: number; max: number };
-  };
-
-  // AI Auto-fix
-  canAutoFix: boolean;
-  autoFixPrompt?: string;
-
-  // Reference
-  relatedRuleIds: string[];
-}
-
-export type VastuSuggestionType =
-  | 'relocate'      // Move element to different position
-  | 'reorient'      // Change direction/orientation
-  | 'add'           // Add new element
-  | 'remove'        // Remove element
-  | 'replace'       // Replace with different element
-  | 'color-change'  // Change color
-  | 'material-change' // Change material
-  | 'remedy';       // Apply Vastu remedy (plants, crystals, etc.)
-
-// ============================================
-// VASTU REMEDIES
-// ============================================
-
-export interface VastuRemedy {
-  id: string;
-  name: string;
-  nameHi: string;
-  description: string;
-  descriptionHi: string;
-
-  type: VastuRemedyType;
-  category: VastuCategory;
-
-  // Where to apply
-  placement: VastuPosition[];
-  direction?: CompassDirection[];
-
-  // What it fixes
-  fixesIssues: string[];
-
-  // Implementation
-  items: VastuRemedyItem[];
-  instructions: string[];
-  instructionsHi: string[];
-
-  // Cost
-  estimatedCost: {
-    INR: { min: number; max: number };
-    USD: { min: number; max: number };
-  };
-
-  // Effectiveness
-  effectiveness: 'high' | 'medium' | 'low';
-
-  isTraditional: boolean;
-  isModernAlternative: boolean;
-}
-
-export type VastuRemedyType =
-  | 'placement'     // Strategic placement of items
-  | 'color'         // Color-based remedy
-  | 'element'       // Five elements balance
-  | 'yantra'        // Vastu yantras
-  | 'crystal'       // Crystals and gemstones
-  | 'plant'         // Specific plants
-  | 'metal'         // Metal objects
-  | 'mirror'        // Mirror placement
-  | 'light'         // Lighting adjustment
-  | 'water'         // Water features
-  | 'salt'          // Salt remedy
-  | 'camphor';      // Camphor/incense
-
-export interface VastuRemedyItem {
-  name: string;
-  nameHi: string;
-  quantity: number;
-  specifications?: string;
-  whereToGet?: string;
-}
-
-// ============================================
-// VASTU COMPASS
-// ============================================
-
-export interface VastuCompass {
-  propertyFacing: CompassDirection;
-  entranceFacing: CompassDirection;
-  zones: VastuZone[];
-}
-
-export interface VastuZone {
-  direction: CompassDirection;
-  name: string;
-  nameHi: string;
-  deity: string;
-  deityHi: string;
-  element: VastuElement;
-  idealFor: string[];
-  avoidFor: string[];
-  colors: string[];
-  status: VastuStatus;
-}
-
-export type VastuElement = 'earth' | 'water' | 'fire' | 'air' | 'space';
-
-// ============================================
-// VASTU REPORT
-// ============================================
-
-export interface VastuReport {
-  id: string;
-  projectId: string;
-
-  // Summary
-  title: string;
-  generatedAt: Date;
-  overallScore: VastuScore;
-
-  // Room-wise analysis
-  roomAnalyses: {
-    roomId: string;
-    roomName: string;
-    roomType: string;
-    analysis: VastuAnalysis;
-  }[];
-
-  // Top issues
-  topIssues: VastuRuleEvaluation[];
-
-  // Priority suggestions
-  prioritySuggestions: VastuSuggestion[];
-
-  // Compass analysis
-  compass: VastuCompass;
-
-  // Export info
-  format: 'pdf' | 'html';
-  downloadUrl?: string;
-}
-
-
-
-import { useState, useCallback } from 'react';
-import { analyzeVastu, type VastuAnalysisResult } from '@/lib/vastu-engine';
-
-export function useVastu(initialParams?: any) {
+export function useVastu(initialParams?: UseVastuParams) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<VastuAnalysis | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollDeadlineRef = useRef<number>(0);
 
-  const analyze = useCallback((params?: any) => {
+  /** Cancel any in-flight polling. */
+  const cancelPoll = useCallback(() => {
+    if (pollTimerRef.current !== null) {
+      clearTimeout(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Poll GET pollUrl every POLL_INTERVAL_MS until status === 'completed' |
+   * 'failed', or the 3-minute timeout fires.
+   */
+  const startPolling = useCallback(
+    (pollUrl: string, direction?: string | null, roomType?: string, projectId?: string) => {
+      pollDeadlineRef.current = Date.now() + POLL_TIMEOUT_MS;
+
+      const tick = async () => {
+        if (Date.now() > pollDeadlineRef.current) {
+          setError('Analysis is taking longer than expected. Please try again.');
+          setIsAnalyzing(false);
+          return;
+        }
+
+        try {
+          const res = await fetch(pollUrl);
+          const data = await res.json();
+
+          if (!res.ok) {
+            setError(data.message || data.error || `Polling failed (${res.status})`);
+            setIsAnalyzing(false);
+            return;
+          }
+
+          const status: string = data.status ?? 'pending';
+
+          if (status === 'completed') {
+            // The /status route returns the scored result inside data.result
+            const resultPayload = data.result ?? data;
+            setAnalysis(mapResponseToAnalysis(resultPayload, projectId, direction, roomType));
+            setIsAnalyzing(false);
+            return;
+          }
+
+          if (status === 'failed') {
+            setError(data.error || data.message || 'Vastu analysis failed on worker.');
+            setIsAnalyzing(false);
+            return;
+          }
+
+          // Still pending / running — schedule next tick
+          pollTimerRef.current = setTimeout(tick, POLL_INTERVAL_MS);
+        } catch (err: any) {
+          setError(err.message || 'Network error while polling for result.');
+          setIsAnalyzing(false);
+        }
+      };
+
+      pollTimerRef.current = setTimeout(tick, POLL_INTERVAL_MS);
+    },
+    [],
+  );
+
+  const analyze = useCallback(async (params?: UseVastuParams) => {
+    const merged = { ...initialParams, ...params };
+    cancelPoll();
     setIsAnalyzing(true);
     setError(null);
+
     try {
-      // Simulate delay
-      setTimeout(() => {
-        const result = analyzeVastu(params || initialParams);
-        const mappedResult: VastuAnalysis = {
-          id: `vastu-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          renderId: `render-${Date.now()}`,
-          projectId: params?.projectId || initialParams?.projectId,
-          overallScore: {
-            value: result.overallScore.value,
-            grade: result.overallScore.grade === 'fair' ? 'average' : result.overallScore.grade as any,
-            label: result.overallScore.label,
-            labelHi: result.overallScore.labelHi,
-            color: result.overallScore.value >= 80 ? 'text-green-500' : result.overallScore.value >= 60 ? 'text-yellow-500' : result.overallScore.value >= 40 ? 'text-orange-500' : 'text-red-500',
-            description: result.overallScore.description,
-            descriptionHi: result.overallScore.descriptionHi
-          },
-          categories: (result.categories || []).map((cat: any) => ({
-            category: cat.category || 'general',
-            score: cat.score || 100,
-            maxScore: cat.maxScore || 100,
-            percentage: cat.percentage || 100,
-            status: cat.status || 'compliant',
-            findings: cat.findings || [],
-            findingsHi: cat.findingsHi || []
-          })),
-          ruleEvaluations: (result.ruleEvaluations || []).map((rule: any) => ({
-            ruleId: rule.ruleId,
-            ruleCode: rule.ruleCode || rule.ruleId,
-            ruleTitle: rule.ruleTitle || rule.title || '',
-            ruleTitleHi: rule.ruleTitleHi || rule.titleHi || '',
-            status: rule.status || (rule.passed ? 'passed' : 'failed'),
-            score: rule.score || (rule.passed ? rule.points : 0),
-            maxScore: rule.maxScore || rule.points || 100,
-            details: rule.details || rule.reason || '',
-            detailsHi: rule.detailsHi || '',
-            affectedElements: rule.affectedElements || [],
-            suggestedRemedyIds: rule.suggestedRemedyIds || [],
-            confidence: rule.confidence || 1.0
-          })),
-          detectedElements: (result.detectedElements || []).map((elem: any, idx: number) => ({
-            id: elem.id || `elem-${idx}`,
-            type: elem.type || 'other',
-            name: elem.name || elem.toString(),
-            nameHi: elem.nameHi || elem.toString(),
-            boundingBox: elem.boundingBox || { x: 0, y: 0, width: 0, height: 0 },
-            position: elem.position || 'center',
-            vastuCompliance: elem.vastuCompliance || 'compliant',
-            issues: elem.issues || [],
-            issuesHi: elem.issuesHi || [],
-            confidence: elem.confidence || 1.0
-          })),
-          suggestions: (result.suggestions || []).map((sug: any) => ({
-            id: sug.id,
-            type: sug.type,
-            priority: sug.priority === 'high' ? 'high' : sug.priority === 'medium' ? 'medium' : 'low',
-            title: sug.title,
-            titleHi: sug.titleHi || sug.title,
-            description: sug.description,
-            descriptionHi: sug.descriptionHi || sug.description,
-            currentState: sug.currentState,
-            suggestedState: sug.suggestedState,
-            scoreImpact: sug.scoreImpact,
-            difficulty: sug.difficulty,
-            canAutoFix: sug.canAutoFix,
-            relatedRuleIds: sug.relatedRuleIds || []
-          })),
-          autoFixAvailable: result.autoFixAvailable,
-          positiveAspects: result.positiveAspects,
-          compass: result.compass,
-          roomDirection: (params?.direction || initialParams?.direction || null) as any,
-          roomType: params?.roomType || initialParams?.roomType || 'general',
-          analysisVersion: '2.0',
-          confidence: result.confidence,
-          processingTime: result.processingTime,
-          createdAt: new Date()
-        };
-        setAnalysis(mappedResult);
+      const res = await fetch('/api/vastu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: merged.imageUrl ?? undefined,
+          roomType: merged.roomType,
+          direction: merged.direction ?? undefined,
+          language: merged.language ?? 'en',
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.message || data.error || `Request failed (${res.status})`);
         setIsAnalyzing(false);
-      }, 500);
+        return;
+      }
+
+      // ── Drive (async) mode ─────────────────────────────────────────────────
+      // Response shape: { success, mode: 'drive', jobId, status: 'pending', pollUrl }
+      if (data.mode === 'drive' && data.pollUrl) {
+        // isAnalyzing stays true while we poll — the loading UI remains active.
+        startPolling(data.pollUrl, merged.direction, merged.roomType, merged.projectId);
+        return;
+      }
+
+      // ── Local (synchronous) mode ───────────────────────────────────────────
+      // Response shape: { success, analysis, score, issues, suggestions, detectedElements }
+      setAnalysis(mapResponseToAnalysis(data, merged.projectId, merged.direction, merged.roomType));
+      setIsAnalyzing(false);
+
     } catch (err: any) {
       setError(err.message || 'Analysis failed');
       setIsAnalyzing(false);
     }
-  }, [initialParams]);
+  }, [initialParams, cancelPoll, startPolling]);
 
-  return {
-    analyze,
-    analysis,
-    isAnalyzing,
-    error
-  };
+  return { analyze, analysis, isAnalyzing, error };
 }

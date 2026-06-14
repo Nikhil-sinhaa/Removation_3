@@ -1,7 +1,7 @@
 // app/(app)/history/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -96,7 +96,7 @@ import { toast } from "@/components/ui/use-toast";
 import CompareSlider from "@/components/editor/CompareSlider";
 import { useLanguage } from "@/hooks/useLanguage";
 import { cn } from "@/lib/utils";
-import { format, subDays, isWithinInterval, startOfDay, endOfDay } from "date-fns";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { RenderFeedback } from "@/components/shared/RenderFeedback";
 import { StarDisplay } from "@/components/shared/StarDisplay";
 
@@ -141,7 +141,7 @@ const datePresets = [
   { label: "All time", labelHi: "सभी समय", days: -1 },
 ];
 
-// Extend mock data type to support rating
+// Shape returned by /api/ai/history — matches MockRender field names
 type MockRender = {
   id: string;
   projectId: string;
@@ -151,7 +151,7 @@ type MockRender = {
   type: string;
   style: string;
   roomType: string;
-  createdAt: string;
+  createdAt: string; // ISO 8601 string
   isFavorite: boolean;
   hasVastu: boolean;
   vastuScore: number | null;
@@ -159,147 +159,9 @@ type MockRender = {
   estimatedCost: number | null;
   status: string;
   rating?: number | null;
+  processingType?: string;
+  description?: string;
 };
-
-// Mock render history data
-const mockRenders: MockRender[] = [
-  {
-    id: "render-1",
-    projectId: "proj-1",
-    projectName: "Modern Living Room",
-    originalImage: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800",
-    type: "redesign",
-    style: "Modern Minimalist",
-    roomType: "living-room",
-    createdAt: new Date().toISOString(),
-    isFavorite: true,
-    hasVastu: true,
-    vastuScore: 85,
-    hasCost: true,
-    estimatedCost: 450000,
-    status: "completed",
-  },
-  {
-    id: "render-2",
-    projectId: "proj-1",
-    projectName: "Modern Living Room",
-    originalImage: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=800",
-    type: "redesign",
-    style: "Scandinavian",
-    roomType: "living-room",
-    createdAt: subDays(new Date(), 1).toISOString(),
-    isFavorite: false,
-    hasVastu: true,
-    vastuScore: 72,
-    hasCost: true,
-    estimatedCost: 380000,
-    status: "completed",
-  },
-  {
-    id: "render-3",
-    projectId: "proj-2",
-    projectName: "Master Bedroom",
-    originalImage: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800",
-    type: "fill-room",
-    style: "Contemporary",
-    roomType: "bedroom",
-    createdAt: subDays(new Date(), 2).toISOString(),
-    isFavorite: true,
-    hasVastu: true,
-    vastuScore: 91,
-    hasCost: true,
-    estimatedCost: 520000,
-    status: "completed",
-  },
-  {
-    id: "render-4",
-    projectId: "proj-3",
-    projectName: "Kitchen Renovation",
-    originalImage: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1556909172-54557c7e4fb7?w=800",
-    type: "redesign",
-    style: "Industrial",
-    roomType: "kitchen",
-    createdAt: subDays(new Date(), 5).toISOString(),
-    isFavorite: false,
-    hasVastu: false,
-    vastuScore: null,
-    hasCost: true,
-    estimatedCost: 680000,
-    status: "completed",
-  },
-  {
-    id: "render-5",
-    projectId: "proj-4",
-    projectName: "Bathroom Update",
-    originalImage: "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?w=800",
-    type: "enhance",
-    style: "Luxury Spa",
-    roomType: "bathroom",
-    createdAt: subDays(new Date(), 7).toISOString(),
-    isFavorite: false,
-    hasVastu: true,
-    vastuScore: 78,
-    hasCost: true,
-    estimatedCost: 290000,
-    status: "completed",
-  },
-  {
-    id: "render-6",
-    projectId: "proj-5",
-    projectName: "Garden Design",
-    originalImage: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=800",
-    type: "outdoor",
-    style: "Tropical Paradise",
-    roomType: "outdoor",
-    createdAt: subDays(new Date(), 14).toISOString(),
-    isFavorite: true,
-    hasVastu: true,
-    vastuScore: 95,
-    hasCost: true,
-    estimatedCost: 850000,
-    status: "completed",
-  },
-  {
-    id: "render-7",
-    projectId: "proj-6",
-    projectName: "Office Space",
-    originalImage: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=800",
-    type: "inpaint",
-    style: "Modern Office",
-    roomType: "office",
-    createdAt: subDays(new Date(), 21).toISOString(),
-    isFavorite: false,
-    hasVastu: false,
-    vastuScore: null,
-    hasCost: false,
-    estimatedCost: null,
-    status: "completed",
-  },
-  {
-    id: "render-8",
-    projectId: "proj-7",
-    projectName: "Night View",
-    originalImage: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800",
-    renderedImage: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800",
-    type: "day-to-night",
-    style: "Ambient Lighting",
-    roomType: "living-room",
-    createdAt: subDays(new Date(), 30).toISOString(),
-    isFavorite: false,
-    hasVastu: true,
-    vastuScore: 82,
-    hasCost: true,
-    estimatedCost: 195000,
-    status: "completed",
-  },
-];
 
 // Render card component
 interface RenderCardProps {
@@ -650,7 +512,11 @@ export default function HistoryPage() {
 
   // State
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [renders, setRenders] = useState<MockRender[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRenderType, setSelectedRenderType] = useState("all");
@@ -666,72 +532,103 @@ export default function HistoryPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
-  // Load renders
+  // Refs for infinite scroll (avoid stale closures in the IntersectionObserver)
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const fetchInFlightRef = useRef(false);
+  const currentPageRef = useRef(1);
+  const hasMoreRef = useRef(false);
+
+  // Build query params from current filter state
+  const buildQueryParams = useCallback((page: number) => {
+    const params = new URLSearchParams();
+    params.set('page', page.toString());
+    params.set('limit', '20');
+    params.set('sortBy', sortBy);
+    if (searchQuery) params.set('search', searchQuery);
+    if (selectedRenderType !== 'all') params.set('type', selectedRenderType);
+    if (selectedRoomType !== 'all') params.set('roomType', selectedRoomType);
+    if (dateRange.from) {
+      params.set('dateFrom', startOfDay(dateRange.from).toISOString());
+      if (dateRange.to) params.set('dateTo', endOfDay(dateRange.to).toISOString());
+    } else if (selectedPreset >= 0) {
+      const from = selectedPreset === 0
+        ? startOfDay(new Date())
+        : subDays(new Date(), selectedPreset);
+      params.set('dateFrom', from.toISOString());
+    }
+    return params;
+  }, [searchQuery, selectedRenderType, selectedRoomType, sortBy, dateRange, selectedPreset]);
+
+  // Reset and fetch page 1 whenever filters change
   useEffect(() => {
-    const loadRenders = async () => {
-      setIsLoading(true);
-      setRenders(mockRenders);
-      setIsLoading(false);
-    };
-    loadRenders();
-  }, []);
+    const controller = new AbortController();
+    fetchInFlightRef.current = true;
+    setIsLoading(true);
+    setRenders([]);
+    setCurrentPage(1);
+    currentPageRef.current = 1;
+    setHasMore(false);
+    hasMoreRef.current = false;
+    setTotalCount(0);
 
-  // Filter and sort renders
-  const filteredRenders = useMemo(() => {
-    let result = [...renders];
+    fetch(`/api/ai/history?${buildQueryParams(1)}`, { signal: controller.signal })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('fetch'))))
+      .then(({ projects, pagination }) => {
+        setRenders(projects);
+        setHasMore(pagination.hasMore);
+        hasMoreRef.current = pagination.hasMore;
+        setTotalCount(pagination.total);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') {
+          toast({ title: language === 'hi' ? 'त्रुटि' : 'Error', description: language === 'hi' ? 'हिस्ट्री लोड नहीं हुई।' : 'Failed to load history.', variant: 'destructive' });
+        }
+      })
+      .finally(() => {
+        setIsLoading(false);
+        fetchInFlightRef.current = false;
+      });
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (r) =>
-          r.projectName.toLowerCase().includes(query) ||
-          r.style.toLowerCase().includes(query)
-      );
-    }
+    return () => controller.abort();
+  }, [buildQueryParams]); // buildQueryParams is stable per filter combination
 
-    // Type filter
-    if (selectedRenderType !== "all") {
-      result = result.filter((r) => r.type === selectedRenderType);
-    }
+  // Load next page and append
+  const loadMore = useCallback(() => {
+    if (fetchInFlightRef.current || !hasMoreRef.current) return;
+    fetchInFlightRef.current = true;
+    setIsLoadingMore(true);
 
-    // Room filter
-    if (selectedRoomType !== "all") {
-      result = result.filter((r) => r.roomType === selectedRoomType);
-    }
+    const nextPage = currentPageRef.current + 1;
 
-    // Date filter
-    if (dateRange.from || selectedPreset >= 0) {
-      const from = dateRange.from || (selectedPreset >= 0 ? subDays(new Date(), selectedPreset) : undefined);
-      const to = dateRange.to || new Date();
+    fetch(`/api/ai/history?${buildQueryParams(nextPage)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('fetch'))))
+      .then(({ projects, pagination }) => {
+        setRenders((prev) => [...prev, ...projects]);
+        setCurrentPage(nextPage);
+        currentPageRef.current = nextPage;
+        setHasMore(pagination.hasMore);
+        hasMoreRef.current = pagination.hasMore;
+      })
+      .catch(() => {
+        toast({ title: language === 'hi' ? 'त्रुटि' : 'Error', description: language === 'hi' ? 'और रेंडर लोड नहीं हुए।' : 'Failed to load more renders.', variant: 'destructive' });
+      })
+      .finally(() => {
+        setIsLoadingMore(false);
+        fetchInFlightRef.current = false;
+      });
+  }, [buildQueryParams]); // safe: reads pageRef/hasMoreRef, not state
 
-      if (from) {
-        result = result.filter((r) =>
-          isWithinInterval(new Date(r.createdAt), {
-            start: startOfDay(from),
-            end: endOfDay(to),
-          })
-        );
-      }
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case "oldest":
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case "name":
-          return a.projectName.localeCompare(b.projectName);
-        case "style":
-          return a.style.localeCompare(b.style);
-        case "newest":
-        default:
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      }
-    });
-
-    return result;
-  }, [renders, searchQuery, selectedRenderType, selectedRoomType, sortBy, dateRange, selectedPreset]);
+  // IntersectionObserver — fires loadMore when sentinel scrolls into view
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) loadMore(); },
+      { threshold: 0.1 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   // Handlers
   const handleSelectRender = (id: string) => {
@@ -741,10 +638,10 @@ export default function HistoryPage() {
   };
 
   const handleSelectAll = () => {
-    if (selectedRenders.length === filteredRenders.length) {
+    if (selectedRenders.length === renders.length) {
       setSelectedRenders([]);
     } else {
-      setSelectedRenders(filteredRenders.map((r) => r.id));
+      setSelectedRenders(renders.map((r) => r.id));
     }
   };
 
@@ -754,16 +651,18 @@ export default function HistoryPage() {
     );
   };
 
-  const handleFavorite = (id: string) => {
-    setRenders((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, isFavorite: !r.isFavorite } : r
-      )
-    );
-    toast({
-      title: language === "hi" ? "अपडेट किया गया" : "Updated",
-      description: language === "hi" ? "फेवरेट अपडेट हो गया।" : "Favorite updated.",
-    });
+  const handleFavorite = async (id: string) => {
+    // Optimistic update
+    setRenders((prev) => prev.map((r) => r.id === id ? { ...r, isFavorite: !r.isFavorite } : r));
+    try {
+      const res = await fetch(`/api/ai/history/${id}/favorite`, { method: 'PATCH' });
+      if (!res.ok) throw new Error('failed');
+      toast({ title: language === "hi" ? "अपडेट किया गया" : "Updated", description: language === "hi" ? "फेवरेट अपडेट हो गया।" : "Favorite updated." });
+    } catch {
+      // Revert on failure
+      setRenders((prev) => prev.map((r) => r.id === id ? { ...r, isFavorite: !r.isFavorite } : r));
+      toast({ title: language === "hi" ? "त्रुटि" : "Error", description: language === "hi" ? "फेवरेट अपडेट नहीं हुआ।" : "Failed to update favorite.", variant: "destructive" });
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -825,8 +724,8 @@ export default function HistoryPage() {
               </h1>
               <p className="text-muted-foreground mt-1">
                 {language === "hi"
-                  ? `${filteredRenders.length} रेंडर${selectedRenders.length > 0 ? ` • ${selectedRenders.length} चुने गए` : ""}`
-                  : `${filteredRenders.length} renders${selectedRenders.length > 0 ? ` • ${selectedRenders.length} selected` : ""}`}
+                  ? `${totalCount > 0 ? totalCount : renders.length} रेंडर${selectedRenders.length > 0 ? ` • ${selectedRenders.length} चुने गए` : ""}`
+                  : `${totalCount > 0 ? totalCount : renders.length} renders${selectedRenders.length > 0 ? ` • ${selectedRenders.length} selected` : ""}`}
               </p>
             </div>
 
@@ -991,7 +890,7 @@ export default function HistoryPage() {
               className="flex flex-wrap items-center gap-3 p-4 mb-6 bg-primary/10 border border-primary/20 rounded-lg"
             >
               <Checkbox
-                checked={selectedRenders.length === filteredRenders.length}
+                checked={renders.length > 0 && selectedRenders.length === renders.length}
                 onCheckedChange={handleSelectAll}
               />
               <span className="font-medium">
@@ -1040,7 +939,7 @@ export default function HistoryPage() {
               />
             ))}
           </div>
-        ) : filteredRenders.length === 0 ? (
+        ) : renders.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1080,30 +979,42 @@ export default function HistoryPage() {
             )}
           </motion.div>
         ) : (
-          <div
-            className={cn(
-              viewMode === "grid"
-                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                : "space-y-4"
+          <>
+            <div
+              className={cn(
+                viewMode === "grid"
+                  ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+                  : "space-y-4"
+              )}
+            >
+              <AnimatePresence mode="popLayout">
+                {renders.map((render) => (
+                  <RenderCard
+                    key={render.id}
+                    render={render}
+                    isSelected={selectedRenders.includes(render.id)}
+                    onSelect={handleSelectRender}
+                    onView={setViewingRender}
+                    onFavorite={handleFavorite}
+                    onDelete={(id) => setDeleteConfirm(id)}
+                    onRatingUpdate={handleRatingUpdate}
+                    viewMode={viewMode}
+                    language={language}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-4" />
+
+            {/* Loading more spinner */}
+            {isLoadingMore && (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
             )}
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredRenders.map((render) => (
-                <RenderCard
-                  key={render.id}
-                  render={render}
-                  isSelected={selectedRenders.includes(render.id)}
-                  onSelect={handleSelectRender}
-                  onView={setViewingRender}
-                  onFavorite={handleFavorite}
-                  onDelete={(id) => setDeleteConfirm(id)}
-                  onRatingUpdate={handleRatingUpdate}
-                  viewMode={viewMode}
-                  language={language}
-                />
-              ))}
-            </AnimatePresence>
-          </div>
+          </>
         )}
       </div>
 

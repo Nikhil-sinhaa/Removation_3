@@ -33,6 +33,7 @@ export interface BoundingBox {
 export async function extractBoundingBoxesFromMask(
   maskImageBuffer: Buffer,
   minAreaPercent = 0.5,
+  maxAreaPercent = 30,
 ): Promise<BoundingBox[]> {
   const { data, info } = await sharp(maskImageBuffer)
     // Convert to grayscale (1 channel) so the foreground check is simply value > 0.
@@ -45,6 +46,11 @@ export async function extractBoundingBoxesFromMask(
   const { width, height } = info;
   const totalPixels = width * height;
   const minArea = (minAreaPercent / 100) * totalPixels;
+  // Components occupying more than maxAreaPercent of the image are almost certainly
+  // false positives (GroundingDINO hallucinating the entire room surface as an element).
+  // No real room element (idol, aquarium, toilet, stove) can fill >30% of a typical
+  // room photo; the cap is intentionally generous to never suppress genuine detections.
+  const maxArea = (maxAreaPercent / 100) * totalPixels;
 
   // 1 = foreground (any brightness > 0), 0 = background
   const fg = new Uint8Array(totalPixels);
@@ -123,8 +129,8 @@ export async function extractBoundingBoxesFromMask(
   for (const { minX, minY, maxX, maxY, count } of boxes.values()) {
     const w = maxX - minX + 1;
     const h = maxY - minY + 1;
-    // Filter by pixel count (not bbox area) to avoid noise from scattered pixels
-    if (count >= minArea) {
+    // Filter by pixel count (not bbox area) to avoid noise and full-room FP blobs
+    if (count >= minArea && count <= maxArea) {
       result.push({ x: minX, y: minY, width: w, height: h });
     }
   }

@@ -49,6 +49,8 @@ export interface Preferences {
   defaultRoomType: string | null;
   vastuEnabled: boolean;
   costPanelEnabled: boolean;
+  soundEnabled: boolean;
+  browserNotificationsEnabled: boolean;
 }
 
 // ============================================
@@ -167,6 +169,8 @@ const defaultPreferences: Preferences = {
   defaultRoomType: null,
   vastuEnabled: true,
   costPanelEnabled: true,
+  soundEnabled: true,
+  browserNotificationsEnabled: false,
 };
 
 // ============================================

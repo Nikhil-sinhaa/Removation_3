@@ -70,6 +70,8 @@ export interface IUser {
         emailNotifications?: boolean;
         marketingEmails?: boolean;
         showTips?: boolean;
+        soundEnabled?: boolean;
+        browserNotificationsEnabled?: boolean;
     };
 
     // Onboarding
@@ -81,6 +83,12 @@ export interface IUser {
 
     // Admin-managed account status (separate from subscription.status)
     accountStatus?: 'active' | 'banned' | 'suspended';
+
+    // Badges / gamification
+    unlockedBadges: Array<{
+        badgeId: string;
+        unlockedAt: Date;
+    }>;
 
     // Metadata
     lastRenderAt?: Date;
@@ -151,6 +159,8 @@ const UserSchema = new Schema<IUser>({
         emailNotifications: { type: Boolean, default: true },
         marketingEmails: { type: Boolean, default: false },
         showTips: { type: Boolean, default: true },
+        soundEnabled: { type: Boolean, default: true },
+        browserNotificationsEnabled: { type: Boolean, default: false },
     },
 
     onboardingCompleted: { type: Boolean, default: false },
@@ -159,6 +169,14 @@ const UserSchema = new Schema<IUser>({
     completedTours: { type: [String], default: [] },
 
     accountStatus: { type: String, enum: ['active', 'banned', 'suspended'], default: 'active' },
+
+    unlockedBadges: {
+        type: [{
+            badgeId: { type: String, required: true },
+            unlockedAt: { type: Date, default: Date.now },
+        }],
+        default: [],
+    },
 
     lastRenderAt: Date,
     createdAt: { type: Date, default: Date.now },

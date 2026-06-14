@@ -29,6 +29,9 @@ const PUBLIC_PREFIXES = [
   '/api/vendors',
   '/api/test',
   '/api/internal',
+  // Worker-facing job routes — authenticated by x-worker-secret header, not JWT.
+  // POST /api/ai/jobs/vastu still calls getCurrentUser() internally.
+  '/api/ai/jobs',
 ];
 
 function isPublicPath(pathname: string): boolean {
