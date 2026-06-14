@@ -75,6 +75,7 @@ pids
 
 # Test assets (local test images, not for git)
 test-assets/
+public/test-assets/
 test_images/
 
 # Claude / AI tooling state (local only)
@@ -83,6 +84,7 @@ test_images/
 .mcp.json
 
 # Graphify cache and output (auto-generated)
+.graphify/
 graphify-out/
 project_report/
 project_report.zip
