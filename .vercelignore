@@ -1,10 +1,4 @@
+public/uploads
 public/renders
-node_modules
-.next
-tmp
-.venv-graphify
-.venv
-venv
-scripts/rclone
-.env*.local
-*.ipynb
+public/style-references
+.graphify
