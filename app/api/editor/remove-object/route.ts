@@ -6,9 +6,8 @@ import fs from "fs";
 import { connectDB } from '@/lib/db/mongodb';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
-
-// ComfyUI base URL
-const COMFYUI_URL = process.env.COMFYUI_URL || "http://127.0.0.1:8188";
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
+import { saveGeneratedImage } from '@/lib/storage/storageService';
 
 interface ComfyUIWorkflow {
   [key: string]: {
@@ -86,7 +85,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Save images to ComfyUI input directory
-    const comfyUIInputDir = "/home/nikhil/Documents/Remo2/ComfyUI/input";
+    const comfyUIInputDir = process.env.COMFY_INPUT || "/home/nikhil/Documents/Remo2/ComfyUI/input";
     const timestamp = Date.now();
     const imageFilename = `obj_remove_img_${timestamp}.png`;
     const maskFilename = `obj_remove_mask_${timestamp}.png`;
@@ -106,6 +105,7 @@ export async function POST(req: NextRequest) {
     // Create and submit workflow
     const workflow = createObjectRemovalWorkflow(imageFilename, maskFilename);
 
+    const COMFYUI_URL = getActiveComfyBaseUrl();
     const response = await axios.post(`${COMFYUI_URL}/prompt`, {
       prompt: workflow
     }, {
@@ -127,24 +127,17 @@ export async function POST(req: NextRequest) {
     const result = await waitForCompletion(promptId);
 
     if (result.success && result.filename) {
-      // Copy result to public directory
-      const outputDir = "/home/nikhil/Documents/Remo2/ComfyUI/output";
-      const publicDir = path.join(process.cwd(), "public", "generated");
-
-      await mkdir(publicDir, { recursive: true });
-
+      // Read result from ComfyUI output and save via StorageService
+      const outputDir = process.env.COMFY_OUTPUT || "/home/nikhil/Documents/Remo2/ComfyUI/output";
       const sourcePath = path.join(outputDir, result.filename);
       const publicFilename = `removed_${timestamp}_${result.filename}`;
-      const publicPath = path.join(publicDir, publicFilename);
 
       // Wait a moment for file to be written
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       if (fs.existsSync(sourcePath)) {
         const imageData = await readFile(sourcePath);
-        await writeFile(publicPath, imageData);
-
-        const imageUrl = `/generated/${publicFilename}`;
+        const imageUrl = await saveGeneratedImage(imageData, publicFilename);
 
         return NextResponse.json({
           success: true,
@@ -179,6 +172,7 @@ async function waitForCompletion(promptId: string): Promise<{ success: boolean; 
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
+      const COMFYUI_URL = getActiveComfyBaseUrl();
       const response = await axios.get(`${COMFYUI_URL}/history/${promptId}`, {
         timeout: 5000
       });

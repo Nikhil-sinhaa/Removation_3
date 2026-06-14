@@ -314,3 +314,76 @@ export async function listQueuedJobIds(): Promise<string[]> {
   const redis = getRedisClient();
   return redis.lrange(KEYS.jobs, 0, 49); // max 50
 }
+
+// ─── Async job tracking (Vercel-compatible) ───────────────────────────────────
+//
+// These functions use a separate key namespace (ai:job:{jobId}) from the queue
+// list above (ai_queue:*). They track the full lifecycle including resultUrl and
+// error so the frontend can poll without hitting MongoDB on every request.
+
+export interface AIJob {
+  jobId: string;
+  status: 'queued' | 'processing' | 'done' | 'failed';
+  feature: string;
+  userId: string;
+  createdAt: number;
+  updatedAt: number;
+  resultUrl?: string;
+  error?: string;
+  renderId?: string;
+}
+
+const AI_JOB_KEY  = (id: string) => `ai:job:${id}`;
+const AI_JOB_TTL  = 24 * 60 * 60; // 24 h
+
+/** Create a new async job record in Redis. */
+export async function createJob(
+  data: Omit<AIJob, 'createdAt' | 'updatedAt'>,
+): Promise<AIJob> {
+  const redis = getRedisClient();
+  const now = Date.now();
+  const job: AIJob = { ...data, createdAt: now, updatedAt: now };
+
+  const pipe = redis.pipeline();
+  const key = AI_JOB_KEY(job.jobId);
+  for (const [k, v] of Object.entries(job)) {
+    if (v !== undefined && v !== null) pipe.hset(key, k, String(v));
+  }
+  pipe.expire(key, AI_JOB_TTL);
+  await pipe.exec();
+
+  return job;
+}
+
+/** Update fields on an existing async job record. */
+export async function updateJob(
+  jobId: string,
+  update: Partial<AIJob>,
+): Promise<void> {
+  const redis = getRedisClient();
+  const key = AI_JOB_KEY(jobId);
+  const patch = { ...update, updatedAt: Date.now() };
+  const pipe = redis.pipeline();
+  for (const [k, v] of Object.entries(patch)) {
+    if (v !== undefined && v !== null) pipe.hset(key, k, String(v));
+  }
+  await pipe.exec();
+}
+
+/** Retrieve an async job record. Returns null if not found or expired. */
+export async function getJob(jobId: string): Promise<AIJob | null> {
+  const redis = getRedisClient();
+  const raw = await redis.hgetall(AI_JOB_KEY(jobId));
+  if (!raw || !raw.jobId) return null;
+  return {
+    jobId:     raw.jobId,
+    status:    raw.status as AIJob['status'],
+    feature:   raw.feature,
+    userId:    raw.userId,
+    createdAt: parseInt(raw.createdAt, 10),
+    updatedAt: parseInt(raw.updatedAt, 10),
+    resultUrl: raw.resultUrl || undefined,
+    error:     raw.error     || undefined,
+    renderId:  raw.renderId  || undefined,
+  };
+}

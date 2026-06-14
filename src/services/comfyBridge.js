@@ -306,7 +306,8 @@ class ComfyBridgeService {
 
       // 2. Copy to public/renders (local or cloud)
       const fs = await import('fs/promises');
-      const publicRendersDir = '/home/nikhil/Documents/Remo2/Removation_3/public/renders';
+      const publicRendersDir = process.env.RENDERS_DIR ||
+        require('path').join(process.cwd(), 'public', 'renders');
       const dest = `${publicRendersDir}/${filename}`;
       await fs.mkdir(publicRendersDir, { recursive: true });
 
@@ -491,7 +492,8 @@ class ComfyBridgeService {
   async copyAllOutputsToPublic(outputs) {
     const fs = await import('fs/promises');
     const pathMod = await import('path');
-    const publicRendersDir = '/home/nikhil/Documents/Remo2/Removation_3/public/renders';
+    const publicRendersDir = process.env.RENDERS_DIR ||
+      require('path').join(process.cwd(), 'public', 'renders');
     await fs.mkdir(publicRendersDir, { recursive: true });
 
     // Use the shared getGPURouter() helper (handles resolution failures gracefully)
@@ -1120,9 +1122,11 @@ class ComfyBridgeService {
         } catch { /* try next */ }
       }
 
+      const publicRendersDir = process.env.RENDERS_DIR ||
+        require('path').join(process.cwd(), 'public', 'renders');
       const safeName = finalFilename.replace(/\//g, '_');
-      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${safeName}`;
-      await fs.mkdir('/home/nikhil/Documents/Remo2/Removation_3/public/renders', { recursive: true });
+      const dest = require('path').join(publicRendersDir, safeName);
+      await fs.mkdir(publicRendersDir, { recursive: true });
 
       try {
         if (srcPath) {
@@ -1331,9 +1335,11 @@ class ComfyBridgeService {
         } catch { /* try next */ }
       }
 
+      const publicRendersDir = process.env.RENDERS_DIR ||
+        require('path').join(process.cwd(), 'public', 'renders');
       const safeName = (finalFilename || `${tab}_result_${Date.now()}.png`).replace(/\//g, '_');
-      const dest = `/home/nikhil/Documents/Remo2/Removation_3/public/renders/${safeName}`;
-      await fs.mkdir('/home/nikhil/Documents/Remo2/Removation_3/public/renders', { recursive: true });
+      const dest = require('path').join(publicRendersDir, safeName);
+      await fs.mkdir(publicRendersDir, { recursive: true });
 
       if (srcPath) {
         await fs.copyFile(srcPath, dest);

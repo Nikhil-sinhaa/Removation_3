@@ -166,10 +166,54 @@ export async function POST(request: Request) {
 
     const projId = project._id.toString();
 
-    // ── Run synchronously ─────────────────────────────────────────────────────
     const creditResult = await checkAndDeductCredits(finalUserId, 'style-transfer');
     if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
 
+    const IS_VERCEL = process.env.VERCEL === '1' || process.env.DEPLOYMENT_TARGET === 'vercel';
+
+    if (IS_VERCEL) {
+      // Async path — return jobId immediately; generation runs in background.
+      // Frontend polls GET /api/ai/job/[jobId] for result.
+      const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const { createJob, updateJob } = await import('@/lib/redis/aiQueue');
+
+      await createJob({
+        jobId,
+        status: 'queued',
+        feature: 'style-transfer',
+        userId: finalUserId,
+        renderId: projId,
+      });
+
+      // Fire and forget
+      (async () => {
+        await updateJob(jobId, { status: 'processing', updatedAt: Date.now() });
+        try {
+          const output = await runStyleTransfer({
+            roomImageFilename: roomFn,
+            styleImageFilename: styleFn || roomFn,
+            inputImageUrl: `/uploads/${roomFn}`,
+            styleImageUrl: styleFn ? `/uploads/${styleFn}` : `/uploads/${roomFn}`,
+            stylePresetId: presetId,
+            positivePrompt,
+            negativePrompt,
+            projectId: projId,
+            userId: finalUserId,
+          });
+          await updateJob(jobId, {
+            status: 'done',
+            resultUrl: (output as any)?.imageUrl ?? null,
+            updatedAt: Date.now(),
+          });
+        } catch (err: any) {
+          await updateJob(jobId, { status: 'failed', error: err.message, updatedAt: Date.now() });
+        }
+      })().catch((e: Error) => console.error('❌ Style transfer background job error:', e.message));
+
+      return NextResponse.json({ success: true, projectId: project._id, jobId, status: 'queued' });
+    }
+
+    // Synchronous path — local dev only
     const output = await runStyleTransfer({
       roomImageFilename: roomFn,
       styleImageFilename: styleFn || roomFn,

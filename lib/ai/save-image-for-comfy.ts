@@ -14,6 +14,7 @@ import sharp from 'sharp';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
 import { getGPUMode, getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
+import { savePreviewImage } from '@/lib/storage/storageService';
 import { uploadImageToRemoteComfy } from '@/lib/ai/cloud-comfy-adapter';
 
 const TARGET_LONGEST = 1024;
@@ -87,15 +88,12 @@ export async function saveImageForComfy(
 }
 
 /**
- * Also save a preview copy to public/uploads/ for the app UI.
- * This is always local since it's served by our Next.js static folder.
+ * Also save a preview copy for the app UI.
+ * Uses STORAGE_MODE: local → public/uploads/, drive → Google Drive.
  */
 export async function saveUploadPreview(
   buffer: Buffer,
   filename: string,
 ): Promise<string> {
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-  await mkdir(uploadsDir, { recursive: true });
-  await writeFile(path.join(uploadsDir, filename), buffer);
-  return `/uploads/${filename}`;
+  return await savePreviewImage(buffer, filename);
 }

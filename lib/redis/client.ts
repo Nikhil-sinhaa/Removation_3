@@ -1,36 +1,47 @@
 import Redis, { RedisOptions } from 'ioredis';
 
-const redisOptions: RedisOptions = {
-  host: process.env.REDIS_HOST || '127.0.0.1',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  password: process.env.REDIS_PASSWORD || undefined,
-  username: process.env.REDIS_USERNAME || undefined,
-  tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+function buildRedisOptions(): RedisOptions {
+  const base: RedisOptions = {
+    connectTimeout: 10000,
+    commandTimeout: 5000,
+    keepAlive: 30000,
+    disconnectTimeout: 2000,
+    maxRetriesPerRequest: 3,
+    enableReadyCheck: true,
+    lazyConnect: true,
 
-  connectTimeout: 10000,
-  commandTimeout: 5000,
-  keepAlive: 30000,
-  disconnectTimeout: 2000,
+    retryStrategy(times: number) {
+      if (times > 10) {
+        console.error('[Redis] Max reconnection attempts reached. Giving up.');
+        return null;
+      }
+      const delay = Math.min(times * 100, 3000);
+      console.warn(`[Redis] Reconnecting... attempt ${times}, delay ${delay}ms`);
+      return delay;
+    },
 
-  maxRetriesPerRequest: 3,
-  enableReadyCheck: true,
-  lazyConnect: true,
+    reconnectOnError(err: Error) {
+      const targetErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT'];
+      return targetErrors.some(e => err.message.includes(e));
+    },
+  };
 
-  retryStrategy(times: number) {
-    if (times > 10) {
-      console.error('[Redis] Max reconnection attempts reached. Giving up.');
-      return null;
-    }
-    const delay = Math.min(times * 100, 3000);
-    console.warn(`[Redis] Reconnecting... attempt ${times}, delay ${delay}ms`);
-    return delay;
-  },
+  // REDIS_URL takes priority (Upstash / Vercel). Individual vars are for local dev.
+  if (process.env.REDIS_URL) {
+    return { ...base, lazyConnect: true };
+  }
 
-  reconnectOnError(err: Error) {
-    const targetErrors = ['READONLY', 'ECONNRESET', 'ETIMEDOUT'];
-    return targetErrors.some(e => err.message.includes(e));
-  },
-};
+  return {
+    ...base,
+    host: process.env.REDIS_HOST || '127.0.0.1',
+    port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || undefined,
+    username: process.env.REDIS_USERNAME || undefined,
+    tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+  };
+}
+
+const redisOptions = buildRedisOptions();
 
 declare global {
   var _redisClient: Redis | undefined;
@@ -38,7 +49,9 @@ declare global {
 }
 
 function createRedisClient(): Redis {
-  const client = new Redis(redisOptions);
+  const client = process.env.REDIS_URL
+    ? new Redis(process.env.REDIS_URL, redisOptions)
+    : new Redis(redisOptions);
 
   client.on('connect', () => {
     console.log('[Redis] ✅ Connected');

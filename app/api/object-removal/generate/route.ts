@@ -7,6 +7,7 @@ import { createOptimizedObjectRemovalWorkflow, ObjectRemovalRequest } from "@/li
 import { connectDB } from '@/lib/db/mongodb';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -57,9 +58,9 @@ export async function POST(req: NextRequest) {
     const bytes = await imageFile.arrayBuffer();
     const buffer = Buffer.from(bytes);
     
-    const comfyUIInputDir = '/home/nikhil/Documents/Remo2/ComfyUI/input';
+    const comfyUIInputDir = process.env.COMFY_INPUT || '/home/nikhil/Documents/Remo2/ComfyUI/input';
     await mkdir(comfyUIInputDir, { recursive: true });
-    
+
     const filename = `object_removal_${Date.now()}_${imageFile.name}`;
     const filepath = path.join(comfyUIInputDir, filename);
     await writeFile(filepath, buffer);
@@ -98,7 +99,7 @@ export async function POST(req: NextRequest) {
 
     console.log("🚀 Submitting object removal workflow to ComfyUI...");
 
-    const comfyUrl = process.env.COMFYUI_URL || 'http://127.0.0.1:8188';
+    const comfyUrl = getActiveComfyBaseUrl();
     const response = await axios.post(`${comfyUrl}/prompt`, {
       prompt: workflow.prompt
     }, {

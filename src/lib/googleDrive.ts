@@ -339,6 +339,75 @@ function collectFiles(dir: string): { full: string; relative: string }[] {
  * Start uploading ComfyUI models to Google Drive in the background.
  * Progress is tracked in globalThis.__driveUploadProgress.
  */
+/**
+ * Returns an authenticated Drive v3 client.
+ *
+ * Priority:
+ * 1. Service account (for Vercel / server-side) — uses GOOGLE_SERVICE_ACCOUNT_JSON env var.
+ *    No browser interaction required; works in any serverless environment.
+ * 2. OAuth2 (for local dev) — falls back to existing getAuthedClient() + getDriveService().
+ */
+export async function getServerDriveClient() {
+  const serviceAccountJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
+
+  if (serviceAccountJson) {
+    // Service account path — works on Vercel, no browser needed
+    const credentials = JSON.parse(serviceAccountJson);
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/drive.file'],
+    });
+    return google.drive({ version: 'v3', auth });
+  }
+
+  // Fall back to existing OAuth2 flow for local dev
+  const client = await getAuthedClient();
+  return getDriveService(client);
+}
+
+/**
+ * Upload a Buffer to Google Drive, make it publicly readable,
+ * and return a direct image URL usable in <img src="">.
+ *
+ * Uses service account auth if GOOGLE_SERVICE_ACCOUNT_JSON is set (Vercel),
+ * otherwise falls back to OAuth2 (local dev).
+ */
+export async function uploadImageAndGetPublicUrl(
+  buffer: Buffer,
+  fileName: string,
+  mimeType: string = 'image/png',
+  folderId?: string,
+): Promise<string> {
+  const drive = await getServerDriveClient();
+
+  // Upload the file
+  const uploaded = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: folderId ? [folderId] : undefined,
+    },
+    media: {
+      mimeType,
+      body: Readable.from(buffer),
+    },
+    fields: 'id',
+  });
+
+  const fileId = uploaded.data.id!;
+
+  // Make it publicly readable
+  await drive.permissions.create({
+    fileId,
+    requestBody: {
+      role: 'reader',
+      type: 'anyone',
+    },
+  });
+
+  // Return direct image URL
+  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+}
+
 export async function startModelUpload() {
   if (globalThis.__driveUploadRunning) {
     throw new Error('Upload already in progress');

@@ -4,6 +4,7 @@ import path from 'path';
 import axios from 'axios';
 import { getActiveComfyBaseUrl, isCloudMode } from './gpu-mode-router';
 import { uploadImageToRemoteComfy, downloadOutputFromRemoteComfy } from './cloud-comfy-adapter';
+import { saveGeneratedImage } from '@/lib/storage/storageService';
 
 export interface GenerationRequest {
   image: string; // File path or base64
@@ -211,6 +212,14 @@ class ComfyUIBridge {
   }
 
   private async waitForCompletion(promptId: string): Promise<{ success: boolean; outputImage?: string; error?: string }> {
+    // TODO: VERCEL-TIMEOUT — This polling loop runs up to 6 minutes (180 × 2s).
+    // When DEPLOYMENT_TARGET=vercel, this must be replaced with an async job pattern:
+    // 1. Submit job to ComfyUI → get prompt_id → return immediately
+    // 2. Frontend polls /api/ai/status/[jobId] (already exists in Redis queue)
+    // 3. GPU machine POSTs result back to /api/ai/callback/[jobId] when done
+    // OR: Vercel polls the GPU machine's /status endpoint on a shorter interval
+    // See Phase 4 of the architecture plan.
+    // Ticket: implement-vercel-async-jobs
     const maxAttempts = 180; // 6 minutes max (was 2 minutes)
     const checkInterval = 2000; // 2 seconds
 
@@ -271,13 +280,82 @@ class ComfyUIBridge {
       }
 
       const publicFilename = `${userId}_${Date.now()}_${filename}`;
-      const publicPath = path.join(this.publicDir, publicFilename);
-      fs.writeFileSync(publicPath, imageBuffer);
-      console.log(`🖼️ Image copied to public: ${publicFilename}`);
-      return `/renders/${publicFilename}`;
+      const publicUrl = await saveGeneratedImage(imageBuffer, publicFilename);
+      console.log(`🖼️ Image saved: ${publicFilename}`);
+      return publicUrl;
     } catch (error) {
       console.error('Failed to download generated image:', error);
       throw new Error('Failed to download generated image');
+    }
+  }
+
+  /**
+   * Async variant of generate() for Vercel deployment.
+   *
+   * Returns a jobId immediately (< 2 s). The actual ComfyUI polling runs in
+   * the background via submitAndTrack(), which writes the resultUrl to Redis
+   * when done. The frontend polls GET /api/ai/job/[jobId] to pick it up.
+   *
+   * Falls back to direct generate() when DEPLOYMENT_TARGET !== 'vercel'
+   * and VERCEL env is not set.
+   */
+  async generateAsync(
+    request: GenerationRequest,
+    jobId: string,
+    feature: string,
+  ): Promise<{ jobId: string; status: 'queued' }> {
+    const { createJob, updateJob } = await import('@/lib/redis/aiQueue');
+
+    await createJob({
+      jobId,
+      status: 'queued',
+      feature,
+      userId: request.userId,
+    });
+
+    // Fire and forget — submitAndTrack runs the full pipeline in background
+    this.submitAndTrack(request, jobId).catch(async (err: Error) => {
+      await updateJob(jobId, {
+        status: 'failed',
+        error: err.message,
+        updatedAt: Date.now(),
+      });
+    });
+
+    return { jobId, status: 'queued' };
+  }
+
+  /** Internal: runs the full generate() pipeline and writes result to Redis. */
+  private async submitAndTrack(
+    request: GenerationRequest,
+    jobId: string,
+  ): Promise<void> {
+    const { updateJob } = await import('@/lib/redis/aiQueue');
+
+    await updateJob(jobId, { status: 'processing', updatedAt: Date.now() });
+
+    try {
+      const result = await this.generate(request);
+      if (result.success && result.generatedImage) {
+        await updateJob(jobId, {
+          status: 'done',
+          resultUrl: result.generatedImage,
+          updatedAt: Date.now(),
+        });
+      } else {
+        await updateJob(jobId, {
+          status: 'failed',
+          error: result.error ?? 'Generation produced no output',
+          updatedAt: Date.now(),
+        });
+      }
+    } catch (err: any) {
+      await updateJob(jobId, {
+        status: 'failed',
+        error: err.message,
+        updatedAt: Date.now(),
+      });
+      throw err;
     }
   }
 

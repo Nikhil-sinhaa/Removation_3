@@ -1,4 +1,16 @@
 {
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "functions": {
+    "app/api/ai/**": {
+      "maxDuration": 60
+    },
+    "app/api/admin/**": {
+      "maxDuration": 30
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/run",

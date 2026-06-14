@@ -6,8 +6,27 @@ const nextConfig = {
   experimental: {
   },
 
+  // Keep heavy server-only packages out of the client bundle
+  serverExternalPackages: [
+    'googleapis',
+    'mongoose',
+    'ioredis',
+    'sharp',
+  ],
+
   images: {
     remotePatterns: [
+      // Google Drive — used when STORAGE_MODE=drive
+      {
+        protocol: 'https',
+        hostname: 'drive.google.com',
+        pathname: '/uc**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
       {
         protocol: 'https',
         hostname: 'utfs.io',

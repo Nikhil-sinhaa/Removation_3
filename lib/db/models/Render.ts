@@ -92,8 +92,14 @@ const RenderSchema = new Schema<IRender>({
     projectId: { type: String, index: true },
 
     inputImage: { type: String, required: true },
-    outputImage: String,
-    resultUrl: String,
+    outputImage: {
+      type: String,
+      // Can be: '/renders/filename.png' (local) or 'https://drive.google.com/uc?...' (Drive)
+    },
+    resultUrl: {
+      type: String,
+      // Full URL — either relative local path or absolute Drive URL
+    },
     outputUrls: [String],
     maskImage: String,
     

@@ -136,6 +136,11 @@ export default function SettingsAdminPage() {
   const [vastuModeSaving, setVastuModeSaving] = useState(false);
   const [vastuModeStatus, setVastuModeStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Storage mode toggle
+  const [storageMode, setStorageMode] = useState<'local' | 'drive'>('local');
+  const [storageModeSaving, setStorageModeSaving] = useState(false);
+  const [storageModeStatus, setStorageModeStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
   const toggleSecret = (key: string) =>
     setShowSecrets((s) => ({ ...s, [key]: !s[key] }));
 
@@ -143,9 +148,10 @@ export default function SettingsAdminPage() {
   useEffect(() => {
     async function loadConfig() {
       try {
-        const [configRes, vastuRes] = await Promise.all([
+        const [configRes, vastuRes, storageModeRes] = await Promise.all([
           fetch('/api/admin/config'),
           fetch('/api/admin/settings/vastu-mode'),
+          fetch('/api/admin/settings/storage-mode'),
         ]);
         if (configRes.ok) {
           const data = await configRes.json();
@@ -162,6 +168,10 @@ export default function SettingsAdminPage() {
         if (vastuRes.ok) {
           const vd = await vastuRes.json();
           setVastuMode(vd.mode === 'drive' ? 'drive' : 'local');
+        }
+        if (storageModeRes.ok) {
+          const sd = await storageModeRes.json();
+          setStorageMode(sd.mode === 'drive' ? 'drive' : 'local');
         }
       } catch (err) {
         console.error('Failed to load admin config', err);
@@ -193,6 +203,30 @@ export default function SettingsAdminPage() {
     } finally {
       setVastuModeSaving(false);
       setTimeout(() => setVastuModeStatus(null), 4000);
+    }
+  }
+
+  async function handleStorageModeSave(newMode: 'local' | 'drive') {
+    setStorageModeSaving(true);
+    setStorageModeStatus(null);
+    try {
+      const res = await fetch('/api/admin/settings/storage-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: newMode }),
+      });
+      if (res.ok) {
+        setStorageMode(newMode);
+        setStorageModeStatus({ type: 'success', message: `Storage mode switched to '${newMode}'.` });
+      } else {
+        const e = await res.json();
+        setStorageModeStatus({ type: 'error', message: e.message || 'Failed to update storage mode.' });
+      }
+    } catch {
+      setStorageModeStatus({ type: 'error', message: 'Network error saving storage mode.' });
+    } finally {
+      setStorageModeSaving(false);
+      setTimeout(() => setStorageModeStatus(null), 4000);
     }
   }
 
@@ -521,6 +555,50 @@ export default function SettingsAdminPage() {
                         <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-300">
                           <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
                           <p><strong>Worker required:</strong> Drive mode needs <code className="text-amber-200">npm run worker:vastu</code> running locally. Without it, jobs will queue but never complete.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section 5: Storage Mode */}
+                    <div className="border-t border-neutral-800/80 pt-6 space-y-3">
+                      <label className="text-sm font-medium text-neutral-200 flex items-center gap-2">
+                        <Database className="w-4 h-4 text-neutral-400" />
+                        Image Storage Mode
+                      </label>
+                      <p className="text-xs text-neutral-400">
+                        Controls where generated images are saved. <code className="text-neutral-300 bg-neutral-800 px-1 rounded">local</code> writes to <code className="text-neutral-300 bg-neutral-800 px-1 rounded">public/renders/</code> on disk (local dev only). <code className="text-neutral-300 bg-neutral-800 px-1 rounded">drive</code> uploads to Google Drive (required for Vercel — needs <code className="text-neutral-300 bg-neutral-800 px-1 rounded">GOOGLE_SERVICE_ACCOUNT_JSON</code>).
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="grid grid-cols-2 gap-3 flex-1 max-w-xs">
+                          {(['local', 'drive'] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              disabled={storageModeSaving}
+                              onClick={() => handleStorageModeSave(m)}
+                              className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-150 capitalize ${
+                                storageMode === m
+                                  ? 'border-indigo-500/60 bg-indigo-500/10 text-indigo-300 ring-1 ring-indigo-500/30'
+                                  : 'border-neutral-800 bg-neutral-950/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                              {m === 'local' ? '💾 Local' : '☁️ Drive'}
+                            </button>
+                          ))}
+                        </div>
+                        {storageModeSaving && <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />}
+                      </div>
+                      {storageModeStatus && (
+                        <p className={`text-xs ${
+                          storageModeStatus.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                        }`}>
+                          {storageModeStatus.type === 'success' ? '✓' : '⚠'} {storageModeStatus.message}
+                        </p>
+                      )}
+                      {storageMode === 'drive' && (
+                        <div className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3 text-xs text-amber-300">
+                          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                          <p><strong>Service account required:</strong> Drive mode needs <code className="text-amber-200">GOOGLE_SERVICE_ACCOUNT_JSON</code> set in your environment. Without it, uploads will silently fall back to a mock client.</p>
                         </div>
                       )}
                     </div>
