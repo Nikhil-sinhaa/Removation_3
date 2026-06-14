@@ -1,4 +1,4 @@
-public/uploads
-public/renders
-public/style-references
-.graphify
+public/uploads/**
+public/renders/**
+public/style-references/**
+.graphify/**
