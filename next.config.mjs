@@ -2,16 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
 
-  // Enable instrumentation.ts — starts the memory watchdog on server boot
-  experimental: {
-    outputFileTracingExcludes: {
-      '*': [
-        './public/uploads/**',
-        './public/renders/**',
-        './public/style-references/**',
-        './.graphify/**',
-      ],
-    },
+  outputFileTracingExcludes: {
+    '*': [
+      './public/uploads/**',
+      './public/renders/**',
+      './public/style-references/**',
+      './.graphify/**',
+    ],
   },
 
   // Keep heavy server-only packages out of the client bundle
