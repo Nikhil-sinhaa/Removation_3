@@ -142,12 +142,6 @@
     "uuid": "^10.0.0",
     "vaul": "^1.0.0",
     "ws": "^8.19.0",
-    "zod": "^3.23.8",
-    "zundo": "^2.3.0",
-    "zustand": "^4.5.7"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.58.2",
     "@types/busboy": "^1.5.4",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/jszip": "^3.4.1",
@@ -161,10 +155,16 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "15.0.0",
     "eslint-plugin-tailwindcss": "^3.17.4",
+    "typescript": "^5.6.2",
+    "zod": "^3.23.8",
+    "zundo": "^2.3.0",
+    "zustand": "^4.5.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "postcss-nesting": "^13.0.2",
     "prettier": "^3.3.3",
-    "prettier-plugin-tailwindcss": "^0.6.6",
-    "typescript": "^5.6.2"
+    "prettier-plugin-tailwindcss": "^0.6.6"
   },
   "engines": {
     "node": ">=18.17.0"
