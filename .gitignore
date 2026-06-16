@@ -76,6 +76,9 @@ pids
 
 # Test assets (local test images, not for git)
 test-assets/
+
+# Local env backup files (contain secrets)
+leftenv
 public/test-assets/
 test_images/
 

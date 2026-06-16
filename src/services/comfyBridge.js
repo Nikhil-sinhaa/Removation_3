@@ -40,7 +40,7 @@ async function getGPURouter() {
 
 // Detect if we are running in a Next.js compilation or dev worker phase
 const isNextJS = typeof process !== 'undefined' && (process.env.NEXT_PHASE !== undefined || process.env.NEXT_RUNTIME !== undefined);
-const isCompilation = isNextJS && (process.env.NEXT_RUNTIME !== 'nodejs' || process.env.NEXT_PRIVATE_WORKER === 'true' || process.env.PHASE === 'phase-production-build');
+const isCompilation = isNextJS && (process.env.NEXT_PHASE === 'phase-production-build' || process.env.NEXT_RUNTIME !== 'nodejs' || process.env.NEXT_PRIVATE_WORKER === 'true');
 
 // ── Startup: apply persisted settings from MongoDB to runtime ─────────────────
 // Runs once on first load so the in-process router reflects the DB state.

@@ -2,3 +2,9 @@ public/uploads/**
 public/renders/**
 public/style-references/**
 .graphify/**
+.next/**
+tsconfig.tsbuildinfo
+leftenv
+scripts/RemovationColab_Fixed.ipynb
+scripts/RemovationColab.ipynb
+.claude-flow/**
