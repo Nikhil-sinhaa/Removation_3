@@ -141,6 +141,12 @@ class ComfyBridgeService {
       return;
     }
     this._initialized = true;
+
+    if (process.env.COMFYUI_ENABLED === 'false') {
+      console.log('ℹ️ ComfyUI disabled (COMFYUI_ENABLED=false) — skipping WebSocket connection');
+      return;
+    }
+
     console.log('🚀 Initializing ComfyUI Bridge Service...');
     this.connectToComfyUI();
     this.startBackendServer();
@@ -840,6 +846,7 @@ class ComfyBridgeService {
    * Attempt to reconnect to ComfyUI
    */
   attemptReconnect() {
+    if (process.env.COMFYUI_ENABLED === 'false') return;
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
