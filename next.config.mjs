@@ -1,3 +1,9 @@
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -113,6 +119,13 @@ const nextConfig = {
       'utf-8-validate': 'commonjs utf-8-validate',
       bufferutil: 'commonjs bufferutil',
     });
+
+    // Explicit @/ alias — required because "type":"module" in package.json
+    // causes Next.js 15 to unreliably read tsconfig paths on fresh Vercel installs.
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': path.resolve(__dirname),
+    };
     
     // Fix SourceMap error with unsupported URL field
     // Use 'cheap-module-source-map' for dev to avoid Turbopack issues
