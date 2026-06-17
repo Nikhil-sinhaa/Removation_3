@@ -34,6 +34,10 @@ export async function POST(request: Request) {
     }
     const finalUserId = authUser.id;
 
+    if (process.env.COMFYUI_ENABLED === 'false') {
+      return NextResponse.json({ error: 'ComfyUI features are not available in this deployment.' }, { status: 503 });
+    }
+
     const formData = await request.formData();
 
     // ── Room image (required) ────────────────────────────────────────────────

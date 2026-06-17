@@ -17,6 +17,10 @@ export async function POST(req) {
   }
   const userId = authUser.id;
 
+  if (process.env.COMFYUI_ENABLED === 'false') {
+    return NextResponse.json({ error: 'Floor plan features are not available in this deployment.' }, { status: 503 });
+  }
+
   await connectDB();
   
   try {
