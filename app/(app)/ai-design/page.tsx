@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useLanguage } from "@/hooks/useLanguage";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,6 +68,7 @@ const defaultStylePresets = [
 
 export default function AIDesignPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
 
   usePageTour({
@@ -278,23 +280,23 @@ export default function AIDesignPage() {
           className="text-center"
         >
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            AI Interior Design Studio
+            {t('ad_title')}
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Transform your space with AI-powered design. Upload a photo and watch our RTX 4060 create stunning room redesigns in seconds.
+            {t('ad_subtitle')}
           </p>
           <div className="flex items-center justify-center gap-4 mt-4">
             <Badge variant="secondary" className="text-green-600">
               <Zap className="w-3 h-3 mr-1" />
-              Zero Cost
+              {t('ad_zero_cost')}
             </Badge>
             <Badge variant="secondary">
               <Clock className="w-3 h-3 mr-1" />
-              ~25 seconds
+              {t('ad_time')}
             </Badge>
             <Badge variant="secondary">
               <Star className="w-3 h-3 mr-1" />
-              Professional Quality
+              {t('ad_pro_quality')}
             </Badge>
           </div>
         </motion.div>
@@ -314,7 +316,7 @@ export default function AIDesignPage() {
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Upload className="w-5 h-5" />
-                  <span>Upload Room Photo</span>
+                  <span>{t('ad_upload_title')}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -332,11 +334,11 @@ export default function AIDesignPage() {
                   disabled={isGenerating}
                 >
                   <ImageIcon className="w-4 h-4 mr-2" />
-                  {selectedFile ? selectedFile.name : "Choose Room Image"}
+                  {selectedFile ? selectedFile.name : t('ad_choose_image')}
                 </Button>
                 {selectedFile && (
                   <div className="mt-2 text-sm text-green-600">
-                    ✓ Ready for AI processing
+                    {t('ad_ready_processing')}
                   </div>
                 )}
               </CardContent>
@@ -352,7 +354,7 @@ export default function AIDesignPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Room Type</CardTitle>
+                <CardTitle>{t('ad_room_type')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-2">
@@ -382,7 +384,7 @@ export default function AIDesignPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Design Mode</CardTitle>
+                <CardTitle>{t('ad_mode_title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
@@ -429,7 +431,7 @@ export default function AIDesignPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Advanced Settings</CardTitle>
+                <CardTitle>{t('ad_settings_title')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
@@ -507,12 +509,12 @@ export default function AIDesignPage() {
               {isGenerating ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
+                  {t('ad_generating')}
                 </>
               ) : (
                 <>
                   <Wand2 className="w-4 h-4 mr-2" />
-                  Generate AI Design
+                  {t('ad_generate_btn')}
                 </>
               )}
             </Button>
@@ -531,16 +533,16 @@ export default function AIDesignPage() {
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span>Design Complete!</span>
+                      <span>{t('ad_result_title')}</span>
                     </div>
                     <div className="flex space-x-2">
                       <Button variant="outline" size="sm">
                         <Download className="w-4 h-4 mr-1" />
-                        Download
+                        {t('ad_download')}
                       </Button>
                       <Button variant="outline" size="sm">
                         <Eye className="w-4 h-4 mr-1" />
-                        View Fullscreen
+                        {t('ad_view_fullscreen')}
                       </Button>
                     </div>
                   </CardTitle>
@@ -603,22 +605,22 @@ export default function AIDesignPage() {
                     <div className="mx-auto w-24 h-24 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mb-4">
                       <ImageIcon className="w-12 h-12 text-blue-600" />
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">Ready to Transform Your Space?</h3>
+                    <h3 className="text-xl font-semibold mb-2">{t('ad_empty_title')}</h3>
                     <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                      Upload a room photo and let our AI create stunning redesigns. Powered by your local RTX 4060 for zero-cost generation.
+                      {t('ad_empty_desc')}
                     </p>
                     <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
                       <div className="flex items-center">
                         <Zap className="w-4 h-4 mr-1" />
-                        <span>RTX 4060 Powered</span>
+                        <span>{t('ad_rtx_powered')}</span>
                       </div>
                       <div className="flex items-center">
                         <Clock className="w-4 h-4 mr-1" />
-                        <span>~25 seconds</span>
+                        <span>{t('ad_time')}</span>
                       </div>
                       <div className="flex items-center">
                         <Star className="w-4 h-4 mr-1" />
-                        <span>Professional Quality</span>
+                        <span>{t('ad_pro_quality')}</span>
                       </div>
                     </div>
                   </div>
@@ -641,7 +643,7 @@ export default function AIDesignPage() {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          <span className="font-medium">AI Processing...</span>
+                          <span className="font-medium">{t('ad_ai_processing')}</span>
                         </div>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -699,7 +701,7 @@ export default function AIDesignPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>AI Design Features</CardTitle>
+                <CardTitle>{t('ad_features_title')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">

@@ -15,6 +15,7 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { runRoomChanger } from '../../../../../src/services/roomChangerOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 
 export const runtime = 'nodejs';
 
@@ -119,6 +120,11 @@ export async function POST(request) {
     const projId = String(project._id);
 
     // ── Run synchronously ────────────────────────────────────────────────────
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'room-changer', 180000);
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
+
     const creditResult = await checkAndDeductCredits(finalUserId, 'room-changer', { source });
     if (!creditResult.success) throw new Error(`insufficient_credits: ${creditResult.reason}`);
 

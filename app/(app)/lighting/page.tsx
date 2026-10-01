@@ -32,6 +32,7 @@ import {
 import { useUserStore } from '@/stores/user-store';
 import { RenderFeedback } from '@/components/shared/RenderFeedback';
 import { useIsMobile } from '@/hooks/useMobile';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface ResultImage {
   label: string;
@@ -197,6 +198,7 @@ const LIGHTING_PRESETS: Record<string, {
 };
 
 export default function LightingPage() {
+  const { t } = useLanguage();
   const { toast } = useToast();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const isMobile = useIsMobile();
@@ -511,7 +513,7 @@ export default function LightingPage() {
               ✨ ADVANCED STUDIO INTERFACE
             </Badge>
             <h1 className="text-2xl lg:text-4xl xl:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-amber-600 via-orange-500 to-amber-500 bg-clip-text text-transparent mb-2">
-              AI Lighting Studio
+              {t('light_title')}
             </h1>
             <p className="text-base text-slate-500 max-w-3xl">
               Place custom light sources, tweak soft cast shadows, and configure hyper-realistic lighting presets.

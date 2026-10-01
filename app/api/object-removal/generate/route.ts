@@ -7,6 +7,7 @@ import { createOptimizedObjectRemovalWorkflow, ObjectRemovalRequest } from "@/li
 import { connectDB } from '@/lib/db/mongodb';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { getActiveComfyBaseUrl } from '@/lib/ai/gpu-mode-router';
 
 export async function POST(req: NextRequest) {
@@ -17,6 +18,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const finalUserId = authUser.id;
+
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'remove-object');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
 
     const deductResult = await checkAndDeductCredits(finalUserId, 'remove-object');
     if (!deductResult.success) {

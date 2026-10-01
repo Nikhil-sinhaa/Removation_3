@@ -11,6 +11,7 @@ import { getCurrentUser } from '@/lib/auth/jwt';
 import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-comfy';
 import { runLightingWorkflow, LIGHTING_PRESETS } from '@/src/services/lightingOrchestrator';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +57,11 @@ export async function POST(request: Request) {
     const clerkId = authUser?.id;
     if (!clerkId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const renderLock = await tryAcquireRenderLock(clerkId, 'lighting', 180000);
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
     }
     const user = await User.findOne({ clerkId });
     if (!user) {

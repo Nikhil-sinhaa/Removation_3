@@ -9,6 +9,7 @@ import { checkNodeAvailable } from '@/lib/ai/preflight';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
 import { getQueueDepth } from '@/lib/redis/aiQueue';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +32,11 @@ export async function POST(request: Request) {
         { error: 'Server is busy. Please try again in a few minutes.' },
         { status: 503 }
       );
+    }
+
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'empty-room');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
     }
 
     const deductResult = await checkAndDeductCredits(finalUserId, 'empty-room');

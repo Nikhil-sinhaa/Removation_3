@@ -420,23 +420,15 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
   'alert_saved': { en: 'Saved successfully!', hi: 'सफलतापूर्वक सेव हो गया!' },
   'alert_error': { en: 'Something went wrong. Please try again.', hi: 'कुछ गड़बड़ हो गई। कृपया फिर से कोशिश करें।' },
   'alert_success': { en: 'Action completed successfully!', hi: 'काम सफलतापूर्वक पूरा हुआ!' },
-  'style_modern': { en: 'Modern', hi: 'मॉडर्न' },
   'style_modern_minimalist': { en: 'Modern Minimalist', hi: 'मॉडर्न मिनिमलिस्ट' },
   'style_traditional': { en: 'Traditional', hi: 'पारंपरिक' },
   'style_traditional_indian': { en: 'Traditional Indian', hi: 'पारंपरिक भारतीय' },
-  'style_scandinavian': { en: 'Scandinavian', hi: 'स्कैंडिनेवियन' },
-  'style_industrial': { en: 'Industrial', hi: 'इंडस्ट्रियल' },
-  'style_bohemian': { en: 'Bohemian', hi: 'बोहेमियन' },
   'style_minimalist': { en: 'Minimalist', hi: 'मिनिमलिस्ट' },
   'style_rustic': { en: 'Rustic', hi: 'रस्टिक' },
   'style_midcentury': { en: 'Mid-Century', hi: 'मिड-सेंचुरी' },
   'style_artdeco': { en: 'Art Deco', hi: 'आर्ट डेको' },
   'style_coastal': { en: 'Coastal', hi: 'कोस्टल' },
   'style_contemporary': { en: 'Contemporary', hi: 'समकालीन (कंटेम्परेरी)' },
-  'room_living_room': { en: 'Living Room', hi: 'लिविंग रूम' },
-  'room_bedroom': { en: 'Bedroom', hi: 'बेडरूम' },
-  'room_kitchen': { en: 'Kitchen', hi: 'किचन' },
-  'room_bathroom': { en: 'Bathroom', hi: 'बाथरूम' },
   'room_dining_room': { en: 'Dining Room', hi: 'डाइनिंग रूम' },
   'room_study_room': { en: 'Study Room', hi: 'स्टडी रूम' },
   'room_pooja_room': { en: 'Pooja Room', hi: 'पूजा रूम' },
@@ -897,14 +889,6 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
   'ro_original': { en: 'Original (With Object)', hi: 'असली (ऑब्जेक्ट के साथ)' },
   'ro_removed': { en: 'Object Removed', hi: 'ऑब्जेक्ट हटाया गया' },
   'ro_success_title': { en: '🎊 Object Removal Success!', hi: '🎊 ऑब्जेक्ट हटाना सफल!' },
-  'db_welcome_title': {
-    en: 'Welcome to Removation.ai! 🎉',
-    hi: 'Removation.ai में आपका स्वागत है! 🎉'
-  },
-  'db_welcome_desc': {
-    en: "You have 10 free credits to start designing. Let's create something amazing!",
-    hi: 'डिजाइनिंग शुरू करने के लिए आपके पास 10 फ्री क्रेडिट हैं। आइए कुछ शानदार बनाएं!'
-  },
   'db_greeting_morning': {
     en: 'Good morning',
     hi: 'सुप्रभात'
@@ -920,74 +904,6 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
   'db_greeting_night': {
     en: 'Good night',
     hi: 'शुभ रात्रि'
-  },
-  'db_designer': {
-    en: 'Designer',
-    hi: 'डिजाइनर'
-  },
-  'db_day_streak': {
-    en: '{{count}} day streak',
-    hi: '{{count}} दिनों का सिलसिला'
-  },
-  'db_streak_tooltip': {
-    en: "You've been designing for {{count}} days in a row!",
-    hi: 'आप लगातार {{count}} दिनों से डिजाइन कर रहे हैं!'
-  },
-  'db_ready_desc': {
-    en: "Ready to transform your space? Let's create something beautiful.",
-    hi: 'अपने कमरे को बदलने के लिए तैयार हैं? आइए कुछ खूबसूरत बनाएं।'
-  },
-  'db_search_tooltip': {
-    en: 'Quick search & commands',
-    hi: 'क्विक सर्च और कमांड्स'
-  },
-  'db_search_hint': {
-    en: '+ K to search',
-    hi: '+ K सर्च करने के लिए'
-  },
-  'db_new_design': {
-    en: 'New Design',
-    hi: 'नया डिजाइन'
-  },
-  'db_total_projects': {
-    en: 'Total Projects',
-    hi: 'कुल प्रोजेक्ट्स'
-  },
-  'db_stats_week_projects': {
-    en: '+3 this week',
-    hi: 'इस हफ्ते +3'
-  },
-  'db_ai_renders': {
-    en: 'AI Renders',
-    hi: 'AI रेंडर'
-  },
-  'db_stats_week_renders': {
-    en: '+12 this week',
-    hi: 'इस हफ्ते +12'
-  },
-  'db_credits_left': {
-    en: 'Credits Left',
-    hi: 'बचे हुए क्रेडिट'
-  },
-  'db_credits_of_total': {
-    en: 'of {{total}} total',
-    hi: 'कुल {{total}} में से'
-  },
-  'db_saved_designs': {
-    en: 'Saved Designs',
-    hi: 'सुरक्षित डिज़ाइन'
-  },
-  'db_in_favorites': {
-    en: 'In favorites',
-    hi: 'पसंदीदा में'
-  },
-  'db_quick_actions': {
-    en: 'Quick Actions',
-    hi: 'त्वरित विकल्प'
-  },
-  'db_zero_cost': {
-    en: 'Zero Cost',
-    hi: 'मुफ़्त'
   },
   'db_popular': {
     en: 'Popular',
@@ -1008,10 +924,6 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
   'db_qa_studio_title': {
     en: 'AI Design Studio',
     hi: 'AI डिजाइन स्टूडियो'
-  },
-  'db_qa_studio_desc': {
-    en: 'Transform rooms with RTX 4060',
-    hi: 'RTX 4060 के साथ कमरे बदलें'
   },
   'db_qa_redesign_title': {
     en: 'Redesign Room',
@@ -1053,106 +965,6 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
     en: 'Cast professional shadows and lights',
     hi: 'प्रोफेशनल लाइट और शैडो इफ़ेक्ट दें'
   },
-  'db_studio_title': {
-    en: 'AI Design Studio',
-    hi: 'AI डिजाइन स्टूडियो'
-  },
-  'db_studio_subtitle': {
-    en: 'Transform your rooms with AI powered by your RTX 4060',
-    hi: 'अपने RTX 4060 द्वारा संचालित AI के साथ कमरे बदलें'
-  },
-  'db_studio_launch': {
-    en: 'Launch Studio',
-    hi: 'स्टूडियो शुरू करें'
-  },
-  'db_studio_time': {
-    en: '25 Seconds',
-    hi: '25 सेकंड'
-  },
-  'db_studio_time_desc': {
-    en: 'Instant AI generation',
-    hi: 'तुरंत AI जनरेशन'
-  },
-  'db_studio_prof': {
-    en: 'Professional',
-    hi: 'प्रोफेशनल'
-  },
-  'db_studio_prof_desc': {
-    en: 'SDXL quality results',
-    hi: 'SDXL क्वालिटी परिणाम'
-  },
-  'db_recent_projects': {
-    en: 'Recent Projects',
-    hi: 'हाल के प्रोजेक्ट्स'
-  },
-  'db_view_all': {
-    en: 'View all',
-    hi: 'सभी देखें'
-  },
-  'db_project_renders_count': {
-    en: '{{count}} renders',
-    hi: '{{count}} रेंडर्स'
-  },
-  'db_project_view': {
-    en: 'View',
-    hi: 'देखें'
-  },
-  'db_project_share': {
-    en: 'Share',
-    hi: 'शेयर करें'
-  },
-  'db_project_download': {
-    en: 'Download',
-    hi: 'डाउनलोड'
-  },
-  'db_no_projects': {
-    en: 'No projects yet',
-    hi: 'अभी कोई प्रोजेक्ट नहीं है'
-  },
-  'db_no_projects_desc': {
-    en: 'Create your first project and start transforming spaces with AI',
-    hi: 'अपना पहला प्रोजेक्ट बनाएं और AI के साथ कमरों को बदलना शुरू करें'
-  },
-  'db_create_first_proj': {
-    en: 'Create Your First Project',
-    hi: 'अपना पहला प्रोजेक्ट बनाएं'
-  },
-  'db_launch': {
-    en: 'Launch',
-    hi: 'लॉन्च करें'
-  },
-  'db_rtx_ready': {
-    en: 'RTX 4060 Ready',
-    hi: 'RTX 4060 रेडी'
-  },
-  'db_per_design': {
-    en: 'per design',
-    hi: 'प्रति डिजाइन'
-  },
-  'db_generation': {
-    en: 'generation',
-    hi: 'जनरेशन'
-  },
-  'db_quick_design': {
-    en: 'Quick Design',
-    hi: 'त्वरित डिजाइन'
-  },
-  'db_browse_styles': {
-    en: 'Browse Styles',
-    hi: 'स्टाइल ब्राउज़ करें'
-  },
-  'db_ai_designs': {
-    en: 'AI Designs',
-    hi: 'AI डिज़ाइन'
-  },
-  'db_recent_activity': {
-    en: 'Recent Activity',
-    hi: 'हाल की गतिविधि'
-  },
-  'db_pro_tips': {
-    en: 'Pro Tips',
-    hi: 'खास टिप्स'
-  },
   'db_tip_staging_title': {
     en: 'Try Virtual Staging',
     hi: 'वर्चुअल स्टेजिंग आज़माएं'
@@ -1189,38 +1001,6 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
     en: 'Upgrade',
     hi: 'अपग्रेड करें'
   },
-  'db_design_by_room': {
-    en: 'Design by Room',
-    hi: 'कमरे के अनुसार डिजाइन'
-  },
-  'db_popular_styles': {
-    en: 'Popular Design Styles',
-    hi: 'लोकप्रिय डिजाइन स्टाइल'
-  },
-  'db_popular_styles_desc': {
-    en: 'Explore 400+ curated interior design styles',
-    hi: '400+ चुनिंदा इंटीरियर डिजाइन स्टाइल देखें'
-  },
-  'db_explore_styles': {
-    en: 'Explore all styles',
-    hi: 'सभी स्टाइल देखें'
-  },
-  'db_style_designs_count': {
-    en: '{{count}} designs',
-    hi: '{{count}} डिज़ाइन'
-  },
-  'db_upgrade_limited': {
-    en: 'Limited Time: 50% Off Pro Plan',
-    hi: 'सीमित समय: प्रो प्लान पर 50% छूट'
-  },
-  'db_upgrade_title': {
-    en: 'Upgrade to Pro & Unlock Everything',
-    hi: 'प्रो पर अपग्रेड करें और सब कुछ अनलॉक करें'
-  },
-  'db_upgrade_desc': {
-    en: 'Get unlimited AI renders, priority processing, 4K exports, advanced Vastu analysis, and detailed cost breakdowns.',
-    hi: 'असीमित AI रेंडर, प्राथमिकता प्रोसेसिंग, 4K एक्सपोर्ट, उन्नत वास्तु विश्लेषण और विस्तृत लागत विवरण प्राप्त करें।'
-  },
   'db_up_unlimited': {
     en: 'Unlimited renders',
     hi: 'असीमित रेंडर'
@@ -1240,34 +1020,6 @@ export const commonTranslations: Record<string, Record<Language, string>> = {
   'db_up_estimates': {
     en: 'Cost estimates',
     hi: 'लागत अनुमान'
-  },
-  'db_upgrade_now': {
-    en: 'Upgrade Now',
-    hi: 'अभी अपग्रेड करें'
-  },
-  'db_view_plans': {
-    en: 'View all plans →',
-    hi: 'सभी प्लान देखें →'
-  },
-  'db_shortcut_search': {
-    en: 'Quick search',
-    hi: 'क्विक सर्च'
-  },
-  'db_shortcut_new': {
-    en: 'New design',
-    hi: 'नया डिजाइन'
-  },
-  'db_shortcut_all': {
-    en: 'Shortcuts',
-    hi: 'शॉर्टकट'
-  },
-  'db_ai_design_btn': {
-    en: 'AI Design',
-    hi: 'AI डिजाइन'
-  },
-  'db_create_design': {
-    en: 'Create Your Design',
-    hi: 'अपना डिज़ाइन बनाएं'
   },
   'db_recent_activity_render': {
     en: 'AI generated "{{message}}" design',

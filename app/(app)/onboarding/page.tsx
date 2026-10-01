@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Upload, ChevronRight, ChevronLeft, Sparkles, X, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

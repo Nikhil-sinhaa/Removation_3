@@ -27,6 +27,7 @@ import {
 import { useUserStore } from '@/stores/user-store';
 import { AIResultPanel } from '@/components/ai/AIResultPanel';
 import { useIsMobile } from '@/hooks/useMobile';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface ProgressState {
   stage: number; // 1 = ceiling detection, 2 = repainting
@@ -48,6 +49,7 @@ interface FeedbackState {
 }
 
 export default function CeilingChangerPage() {
+  const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const isMobile = useIsMobile();
   const [settingsOpen, setSettingsOpen] = useState(true);
@@ -282,7 +284,7 @@ export default function CeilingChangerPage() {
       <div className="mb-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
           <h1 className="text-2xl md:text-4xl font-bold mb-4 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Ceiling Changer
+            {t('ceil_title')}
           </h1>
           <p className="text-lg text-gray-600 mb-3">
             Repaint your ceiling in any color — walls and floor stay untouched

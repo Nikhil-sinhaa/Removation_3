@@ -1,10 +1,35 @@
 public/uploads/**
 public/renders/**
 public/style-references/**
+public/floor-plan-photos/**
+public/floor-plan-output/**
 .graphify/**
 .next/**
 tsconfig.tsbuildinfo
+tsconfig.test.tsbuildinfo
 leftenv
-scripts/RemovationColab_Fixed.ipynb
+
+# Large local-only dirs
+tmp/**
+graphify-out/**
+logs/**
+artifacts/**
+canvas/**
+notebooks/**
+test-results/**
+test-results.json
+playwright-report/**
+scratch/**
+chrome-extension/**
+
+# Scripts with binaries / notebooks
+scripts/rclone
 scripts/RemovationColab.ipynb
+scripts/RemovationColab_Fixed.ipynb
+
+# Dev tooling
 .claude-flow/**
+.claude/**
+ecosystem.config.cjs
+comfyui.log
+comfyui_manual.log

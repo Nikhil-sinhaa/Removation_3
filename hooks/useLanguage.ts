@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { allTranslations } from './i18n/index';
+// NOTE: Do NOT import useUserStore here — would create a circular dependency.
+// Zustand language sync is done via a useEffect that reads localStorage.
 
 export type Language = 'en' | 'hi';
 
@@ -26,6 +28,7 @@ export function LanguageProvider({
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
+    // Priority: localStorage > browser language
     const savedLang = localStorage.getItem('language') as Language;
     if (savedLang && (savedLang === 'en' || savedLang === 'hi')) {
       setLanguageState(savedLang);
@@ -34,6 +37,7 @@ export function LanguageProvider({
       const browserLang = navigator.language.split('-')[0];
       const initialLang = browserLang === 'hi' ? 'hi' : 'en';
       setLanguageState(initialLang);
+      localStorage.setItem('language', initialLang);
       document.documentElement.lang = initialLang;
     }
   }, []);
@@ -50,7 +54,11 @@ export function LanguageProvider({
   }, [language, setLanguage]);
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
-    let translation = allTranslations[key]?.[language] || key;
+    // Fallback chain: requested language → English → raw key
+    let translation =
+      allTranslations[key]?.[language] ??
+      allTranslations[key]?.['en'] ??
+      key;
 
     if (params) {
       Object.entries(params).forEach(([param, value]) => {
@@ -81,7 +89,15 @@ export function useLanguage(): UseLanguageReturn {
       language: 'en',
       setLanguage: () => {},
       toggleLanguage: () => {},
-      t: (key: string) => allTranslations[key]?.['en'] || key,
+      t: (key: string, params?: Record<string, string | number>) => {
+        let translation = allTranslations[key]?.['en'] ?? key;
+        if (params) {
+          Object.entries(params).forEach(([param, value]) => {
+            translation = translation.replace(`{{${param}}}`, String(value));
+          });
+        }
+        return translation;
+      },
       isHindi: false,
       isEnglish: true,
     };

@@ -33,6 +33,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'exterior-render');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
+
     const { checkAndDeductCredits } = await import('@/lib/ai/deductCredits');
     const deductResult = await checkAndDeductCredits(authUser.id, 'exterior-render');
     if (!deductResult.success) {

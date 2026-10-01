@@ -48,3 +48,32 @@ export async function acquireRenderLock(userId: string, toolName: string): Promi
     60000 // 60s TTL — max expected render duration
   );
 }
+
+let _redlockFast: Redlock | null = null;
+
+function getRedlockFast(): Redlock {
+  if (!_redlockFast) {
+    _redlockFast = new Redlock([getRedisClient()], {
+      retryCount: 0,
+      automaticExtensionThreshold: 500,
+    });
+    _redlockFast.on('error', () => {});
+  }
+  return _redlockFast;
+}
+
+// Fail-fast render lock — returns null immediately if already locked.
+// Use before credit deduction + job submission to prevent duplicate renders
+// when a user rapidly double-submits. TTL: 30s for fire-and-forget routes,
+// 180s for synchronous routes (room-changer, lighting, style-transfer).
+export async function tryAcquireRenderLock(
+  userId: string,
+  toolName: string,
+  ttlMs = 30000
+): Promise<Lock | null> {
+  try {
+    return await getRedlockFast().acquire([`lock:render:${userId}:${toolName}`], ttlMs);
+  } catch {
+    return null;
+  }
+}

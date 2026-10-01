@@ -31,6 +31,7 @@ import {
 import { useUserStore } from '@/stores/user-store';
 import { AIResultPanel } from '@/components/ai/AIResultPanel';
 import { useIsMobile } from '@/hooks/useMobile';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface ProgressState {
   stage: number;
@@ -122,6 +123,7 @@ async function exportMaskAsWhiteOnBlack(
 }
 
 export default function FurnitureRemoverPage() {
+  const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const isMobile = useIsMobile();
   const [paramsOpen, setParamsOpen] = useState(true);

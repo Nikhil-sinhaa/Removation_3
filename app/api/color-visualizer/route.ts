@@ -12,6 +12,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { saveImageForComfy } from '@/lib/ai/save-image-for-comfy';
 
 // comfyBridge is a CommonJS singleton — import via require to preserve the singleton
@@ -97,6 +98,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Credits
+    const renderLock = await tryAcquireRenderLock(authUser.id, 'recolor');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
+
     const credit = await checkAndDeductCredits(authUser.id, 'recolor');
     if (!credit.success) {
       return NextResponse.json(

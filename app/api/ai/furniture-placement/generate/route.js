@@ -15,6 +15,7 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { runFurniturePlacement } from '../../../../../src/services/furniturePlacementOrchestrator.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
@@ -84,6 +85,11 @@ export async function POST(request) {
         { error: 'Server is busy. Please try again in a few minutes.' },
         { status: 503 }
       );
+    }
+
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'furniture-placement');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
     }
 
     const deductResult = await checkAndDeductCredits(finalUserId, 'furniture-placement/generate');

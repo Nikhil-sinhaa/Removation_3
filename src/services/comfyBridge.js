@@ -13,7 +13,7 @@ import AIRun from '../models/AIRun.js';
 
 const LOCAL_HOST = '127.0.0.1';
 const LOCAL_PORT = '8188';
-const LOCAL_URL  = `http://${LOCAL_HOST}:${LOCAL_PORT}`;
+const LOCAL_URL = `http://${LOCAL_HOST}:${LOCAL_PORT}`;
 
 let _gpuRouter = null;
 async function getGPURouter() {
@@ -61,9 +61,10 @@ async function _syncSettingsFromDB() {
   }
 }
 
-if (!isCompilation) {
-  _syncSettingsFromDB();
-} else {
+// NOTE: _syncSettingsFromDB() is intentionally NOT called here at module load.
+// It is called inside init() with await, so the cloud URL is guaranteed to be
+// set in globalThis before connectToComfyUI() constructs the WebSocket URL.
+if (isCompilation) {
   console.log('ℹ️ Next.js compilation context detected: skipping database settings sync');
 }
 
@@ -147,6 +148,10 @@ class ComfyBridgeService {
       return;
     }
 
+    // Await DB sync BEFORE connecting — ensures globalThis.__cloudComfyUrl is
+    // populated when getActiveComfyWsUrl() is called, preventing Invalid URL.
+    await _syncSettingsFromDB();
+
     console.log('🚀 Initializing ComfyUI Bridge Service...');
     this.connectToComfyUI();
     this.startBackendServer();
@@ -176,7 +181,7 @@ class ComfyBridgeService {
       this.comfyUIWebSocket = new WebSocket(wsUrl, {
         headers: { 'bypass-tunnel-reminder': 'true' }
       });
-      
+
       this.comfyUIWebSocket.on('open', () => {
         console.log('✅ Connected to ComfyUI WebSocket');
         this.comfyUIConnected = true;
@@ -218,7 +223,7 @@ class ComfyBridgeService {
    */
   handleComfyUIMessage(message) {
     const { type, data } = message;
-    
+
     console.log('📨 ComfyUI message:', type, data);
 
     switch (type) {
@@ -244,7 +249,7 @@ class ComfyBridgeService {
    */
   handleExecutingMessage(data) {
     const { node_id, prompt_id } = data;
-    
+
     if (this.currentProcessing && this.currentProcessing.promptId === prompt_id) {
       this.currentProcessing.nodeId = node_id;
       this.currentProcessing.stage = this.getNodeName(node_id);
@@ -259,7 +264,7 @@ class ComfyBridgeService {
 
   handleProgressMessage(data) {
     const { node_id, value, max } = data;
-    
+
     if (this._activeProgressCallback) {
       try {
         this._activeProgressCallback({ value, max });
@@ -271,7 +276,7 @@ class ComfyBridgeService {
     if (!this.currentProcessing) return;
 
     const progress = max > 0 ? (value / max) * 100 : 0;
-    
+
     this.notifyFrontend('comfy:progress', {
       progress: Math.round(progress),
       nodeId: node_id,
@@ -284,10 +289,10 @@ class ComfyBridgeService {
    */
   async handleExecutedMessage(data) {
     const { prompt_id } = data;
-    
+
     console.log('🔍 Execution handler called with prompt_id:', prompt_id);
     console.log('🔍 Current processing:', this.currentProcessing);
-    
+
     if (!this.currentProcessing || this.currentProcessing.promptId !== prompt_id) {
       console.log('❌ No matching current processing for prompt_id:', prompt_id);
       return;
@@ -329,7 +334,7 @@ class ComfyBridgeService {
       }
 
       // 3. Update MongoDB
-      const imageUrl = `/renders/${filename}` 
+      const imageUrl = `/renders/${filename}`
       await AIRun.findByIdAndUpdate(this.currentProcessing.projectId, {
         resultImage: imageUrl,
         status: 'completed',
@@ -343,11 +348,11 @@ class ComfyBridgeService {
         filename
       })
       console.log(`? Generation complete: ${filename}`)
-        
+
     } catch (error) {
       console.error('❌ Failed to process executed message:', error);
       await this.updateProjectResult(this.currentProcessing.projectId, null, 'failed');
-      this.notifyFrontend('comfy:error', { 
+      this.notifyFrontend('comfy:error', {
         message: `Generation failed: ${error.message}`,
         projectId: this.currentProcessing.projectId
       });
@@ -439,12 +444,12 @@ class ComfyBridgeService {
    */
   async handleExecutionError(data) {
     const { prompt_id, error } = data;
-    
+
     console.error('❌ ComfyUI execution error:', error);
-    
+
     if (this.currentProcessing && this.currentProcessing.promptId === prompt_id) {
       await this.updateProjectResult(this.currentProcessing.projectId, null, 'failed');
-      this.notifyFrontend('comfy:error', { 
+      this.notifyFrontend('comfy:error', {
         message: `Execution error: ${error}`,
         projectId: this.currentProcessing.projectId
       });
@@ -605,7 +610,7 @@ class ComfyBridgeService {
     const nodeMap = {
       '1': 'Loading Checkpoint',
       '2': 'Encoding Prompt',
-      '3': 'Encoding Negative Prompt', 
+      '3': 'Encoding Negative Prompt',
       '4': 'Sampling',
       '5': 'Saving Image',
       '6': 'Loading Input Image',
@@ -616,7 +621,7 @@ class ComfyBridgeService {
       '11': 'Inpainting',
       '12': 'Mask Processing'
     };
-    
+
     return nodeMap[nodeId] || `Processing Node ${nodeId}`;
   }
 
@@ -671,10 +676,10 @@ class ComfyBridgeService {
     io.on('connection', (socket) => {
       console.log('🔗 Frontend client connected:', socket.id);
       this.frontendClients.set(socket.id, socket);
-      
+
       // Send initial connection status
-      socket.emit('comfy:status', { 
-        status: this.comfyUIConnected ? 'connected' : 'disconnected' 
+      socket.emit('comfy:status', {
+        status: this.comfyUIConnected ? 'connected' : 'disconnected'
       });
 
       // FIX: disconnect must be on the individual socket, not on io.
@@ -715,7 +720,7 @@ class ComfyBridgeService {
 
       this.queue.push(job);
       console.log(`📝 Job queued: ${job.id} (queue length: ${this.queue.length})`);
-      
+
       this.processQueue();
     });
   }
@@ -736,7 +741,7 @@ class ComfyBridgeService {
 
     this.isProcessingQueue = true;
     const job = this.queue.shift();
-    
+
     console.log(`🚀 Processing job: ${job.id}`);
     this.currentProcessing = {
       projectId: job.projectId,
@@ -769,7 +774,7 @@ class ComfyBridgeService {
         if (!cloud) {
           await fetch(`${activeUrl}/free`, {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'bypass-tunnel-reminder': 'true'
             },
@@ -785,7 +790,7 @@ class ComfyBridgeService {
 
       // Update project status to processing
       await this.updateProjectResult(job.projectId, null, 'processing');
-      
+
       // Submit workflow to ComfyUI REST API directly
       // (Do NOT wait for WebSocket — polling handles completion)
       const response = await fetch(`${activeUrl}/prompt`, {
@@ -804,7 +809,7 @@ class ComfyBridgeService {
       }
 
       const result = await response.json();
-      
+
       if (!result.prompt_id) {
         throw new Error('No prompt_id returned from ComfyUI');
       }
@@ -814,10 +819,10 @@ class ComfyBridgeService {
 
       // Resolve immediately — continuous polling will mark it complete
       job.resolve({ promptId: result.prompt_id, projectId: job.projectId });
-      
+
       // Start continuous polling as the primary completion mechanism
       this.pollForCompletion();
-      
+
     } catch (error) {
       console.error(`❌ Job submission failed: ${job.id}`, error);
       await this.updateProjectResult(job.projectId, null, 'failed');
@@ -836,7 +841,7 @@ class ComfyBridgeService {
    */
   notifyFrontend(event, data) {
     console.log(`📤 Broadcasting to frontend: ${event}`, data);
-    
+
     this.frontendClients.forEach((socket) => {
       socket.emit(event, data);
     });
@@ -850,16 +855,16 @@ class ComfyBridgeService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 10000);
-      
+
       console.log(`🔄 Reconnecting to ComfyUI in ${delay}ms (attempt ${this.reconnectAttempts})`);
-      
+
       this._reconnectTimer = setTimeout(() => {
         this.connectToComfyUI();
       }, delay);
     } else {
       console.error('❌ Max reconnection attempts reached');
-      this.notifyFrontend('comfy:error', { 
-        message: 'Unable to connect to ComfyUI. Please check the server.' 
+      this.notifyFrontend('comfy:error', {
+        message: 'Unable to connect to ComfyUI. Please check the server.'
       });
     }
   }
@@ -907,17 +912,17 @@ class ComfyBridgeService {
         signal: controller.signal
       });
       clearTimeout(timer);
-      
+
       if (response.ok) {
         return { status: 'online', data: await response.json() };
       } else {
         return { status: 'error', message: `HTTP ${response.status}` };
       }
     } catch (error) {
-      return { 
-        status: 'offline', 
-        error: 'GPU Offline', 
-        fix: 'Run: python3 main.py --listen' 
+      return {
+        status: 'offline',
+        error: 'GPU Offline',
+        fix: 'Run: python3 main.py --listen'
       };
     }
   }
@@ -967,7 +972,7 @@ class ComfyBridgeService {
     const stageOutputs = {};      // { stage1: { wall_mask: 'wall_mask_00001_.png', ... } }
     const timings = {};
     // Count active stages: 1(scene) + 2(geom) + 3(inpaint) + optional 4(furniture) + optional 5(refine) + optional 6(upscale)
-    const TOTAL_STAGES = [1,2,3,4,5,6].filter(s => !skip.has(s)).length;
+    const TOTAL_STAGES = [1, 2, 3, 4, 5, 6].filter(s => !skip.has(s)).length;
 
     // Update project to processing
     await this.updateProjectResult(projectId, null, 'processing');
@@ -1028,7 +1033,7 @@ class ComfyBridgeService {
         this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 3, name: 'Regional Inpainting', status: 'running' });
 
         const redesigned = stageOutputs.stage2?.redesigned || 'redesigned_00001_.png';
-        const wallMask   = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
+        const wallMask = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
         const objectMask = stageOutputs.stage1?.object_mask || 'object_mask_00001_.png';
 
         const workflow3 = buildStage3(redesigned, wallMask, objectMask, { wallPrompt, furniturePrompt, masterToggles });
@@ -1070,7 +1075,7 @@ class ComfyBridgeService {
         const t0 = Date.now();
         this.notifyFrontend('comfy:ultrapro:stage', { projectId, stage: 5, name: 'Detail Refinement', status: 'running' });
 
-        const wallMask   = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
+        const wallMask = stageOutputs.stage1?.wall_mask || 'wall_mask_00001_.png';
         const objectMask = stageOutputs.stage1?.object_mask || 'object_mask_00001_.png';
 
         const workflow5 = buildStage5(prevImage, wallMask, objectMask);
@@ -1206,7 +1211,7 @@ class ComfyBridgeService {
       const pollInterval = 3_000; // 3 seconds
       let waited = 0;
       while (this._ultraProRunning && waited < maxWait) {
-        console.log(`⏳ Tab ${tab} waiting for mutex (${Math.round(waited/1000)}s)...`);
+        console.log(`⏳ Tab ${tab} waiting for mutex (${Math.round(waited / 1000)}s)...`);
         await new Promise(r => setTimeout(r, pollInterval));
         waited += pollInterval;
       }
@@ -1434,7 +1439,7 @@ class ComfyBridgeService {
     const pollInterval = 3_000;
     let waited = 0;
     while (this._ultraProRunning && waited < maxWait) {
-      console.log(`⏳ SmartTab ${tab} waiting for mutex (${Math.round(waited/1000)}s)...`);
+      console.log(`⏳ SmartTab ${tab} waiting for mutex (${Math.round(waited / 1000)}s)...`);
       await new Promise(r => setTimeout(r, pollInterval));
       waited += pollInterval;
     }
@@ -1463,7 +1468,7 @@ class ComfyBridgeService {
       const sceneMasks = this._extractFilenames(sceneOutputs, 'stage1/');
       const sceneMs = Date.now() - t0;
 
-      console.log(`🔍 Scene analysis complete (${(sceneMs/1000).toFixed(1)}s):`, Object.keys(sceneMasks));
+      console.log(`🔍 Scene analysis complete (${(sceneMs / 1000).toFixed(1)}s):`, Object.keys(sceneMasks));
       this.notifyFrontend('comfy:tab:scene_done', {
         projectId, tab, ms: sceneMs,
         masks: Object.keys(sceneMasks),
@@ -1537,7 +1542,7 @@ class ComfyBridgeService {
     const comfyUrl = await this.getComfyRestUrl();
     const res = await fetch(`${comfyUrl}/prompt`, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'bypass-tunnel-reminder': 'true'
       },
@@ -1628,7 +1633,7 @@ class ComfyBridgeService {
       const comfyUrl = await this.getComfyRestUrl();
       await fetch(`${comfyUrl}/free`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'bypass-tunnel-reminder': 'true'
         },
@@ -1873,7 +1878,7 @@ export async function ensureInputFile({
 
   console.log(`${logPrefix} Uploading local source ${foundPath} to cloud ComfyUI`);
   const imageBuffer = fs.readFileSync(foundPath);
-  
+
   const formData = new FormData();
   const blob = new Blob([imageBuffer], { type: 'image/png' });
   formData.append('image', blob, filename);

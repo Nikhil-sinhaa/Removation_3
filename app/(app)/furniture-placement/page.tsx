@@ -14,11 +14,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { useUserStore } from '@/stores/user-store';
 import { useAuth } from '@/hooks/useAuth';
 import { usePageTour } from '@/hooks/usePageTour';
+import { useLanguage } from '@/hooks/useLanguage';
 
 type Stage      = 'upload' | 'place' | 'done';
 type AsyncState = 'idle' | 'loading' | 'done' | 'error';
 
 export default function FurniturePlacementPage() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const { toast } = useToast();
@@ -264,7 +266,7 @@ export default function FurniturePlacementPage() {
             <Sofa className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Furniture Placer
+            {t('furn_place_title')}
           </h1>
         </div>
         <p className="text-gray-500 text-lg max-w-2xl mx-auto">

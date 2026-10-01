@@ -7,10 +7,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLanguage } from '@/hooks/useLanguage';
 import { isSafeRedirectPath } from '@/lib/auth/safeRedirect';
 import { useAuth } from '@/hooks/useAuth';
 
 function SignInForm() {
+  const { t } = useLanguage();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -67,8 +69,8 @@ function SignInForm() {
   return (
     <>
       <div className="text-center mb-8">
-        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">Sign in to your account</h2>
-        <p className="text-gray-600 dark:text-gray-400">Welcome back! Please enter your details.</p>
+        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">{t('signin_title')}</h2>
+        <p className="text-gray-600 dark:text-gray-400">{t('signin_subtitle')}</p>
       </div>
 
       {/* OAuth Google Sign In */}
@@ -104,7 +106,7 @@ function SignInForm() {
               d="M12 23c3.24 0 5.97-1.07 7.96-2.92l-3.73-2.89c-1.04.7-2.38 1.11-4.23 1.11-3.42 0-5.94-2.14-6.84-4.44l-3.77 3.04C3.37 20.32 7.35 23 12 23z"
             />
           </svg>
-          Continue with Google
+          {t('signin_google')}
         </Button>
       </div>
 
@@ -113,7 +115,7 @@ function SignInForm() {
           <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="bg-white dark:bg-gray-900 px-3 text-gray-500 dark:text-gray-400">or continue with email</span>
+          <span className="bg-white dark:bg-gray-900 px-3 text-gray-500 dark:text-gray-400">{t('signin_or')}</span>
         </div>
       </div>
 
@@ -123,11 +125,11 @@ function SignInForm() {
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t('signin_email')}</Label>
           <Input
             id="email"
             type="email"
-            placeholder="you@example.com"
+            placeholder={t('signin_email_placeholder')}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -138,9 +140,9 @@ function SignInForm() {
         
         <div className="space-y-2">
           <div className="flex justify-between items-center">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t('signin_password')}</Label>
             <Link href="/forgot-password" className="text-sm font-medium text-violet-600 hover:text-violet-500">
-              Forgot password?
+              {t('signin_forgot_password')}
             </Link>
           </div>
           <Input
@@ -155,14 +157,14 @@ function SignInForm() {
         </div>
 
         <Button type="submit" className="w-full bg-violet-600 hover:bg-violet-700 text-white" disabled={isLoading}>
-          {isLoading ? 'Signing in...' : 'Sign in'}
+          {isLoading ? t('signin_signing_in') : t('signin_btn')}
         </Button>
       </form>
 
       <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-        Don&apos;t have an account?{' '}
+        {t('signin_no_account')}{' '}
         <Link href="/sign-up" className="font-semibold text-violet-600 hover:text-violet-500">
-          Sign up for free
+          {t('signin_signup_link')}
         </Link>
       </p>
     </>

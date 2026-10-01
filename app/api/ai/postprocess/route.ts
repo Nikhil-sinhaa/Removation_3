@@ -11,6 +11,7 @@ import { NextResponse } from 'next/server';
 import sharp from 'sharp';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 
 export const runtime = 'nodejs';
 
@@ -22,6 +23,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const finalUserId = authUser.id;
+
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'postprocess');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
 
     const deductResult = await checkAndDeductCredits(finalUserId, 'postprocess');
     if (!deductResult.success) {

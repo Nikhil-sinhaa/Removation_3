@@ -20,6 +20,7 @@ import sharp from 'sharp';
 import { checkIPAdapterModels, IPADAPTER_MISSING_ERROR } from '@/lib/ai/preflight';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { getPresetById, getReferenceById, getVariantById } from '@/config/style-presets';
 import { getStyleReferenceImage } from '@/lib/utils/styleReferences';
 
@@ -33,6 +34,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const finalUserId = authUser.id;
+
+    const renderLock = await tryAcquireRenderLock(finalUserId, 'style-transfer', 180000);
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
 
     if (process.env.COMFYUI_ENABLED === 'false') {
       return NextResponse.json({ error: 'ComfyUI features are not available in this deployment.' }, { status: 503 });

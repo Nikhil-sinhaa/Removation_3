@@ -35,6 +35,7 @@ import { saveImageForComfy, saveUploadPreview } from '@/lib/ai/save-image-for-co
 import { getGPUMode } from '@/lib/ai/gpu-mode-router';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export const runtime = 'nodejs';
@@ -173,6 +174,10 @@ export async function POST(request) {
 
     // ── Credit check (PAY-02) ────────────────────────────────────────────────
     if (finalUserId) {
+      const renderLock = await tryAcquireRenderLock(finalUserId, 'ultra-pro');
+      if (!renderLock) {
+        return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+      }
       const creditResult = await checkAndDeductCredits(finalUserId, 'ultra-pro');
       if (!creditResult.success) {
         return NextResponse.json(

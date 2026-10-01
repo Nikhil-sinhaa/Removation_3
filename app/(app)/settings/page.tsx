@@ -96,22 +96,22 @@ import { useUserStore } from "@/stores/user-store";
 
 // Settings sections for navigation
 const settingsSections = [
-  { id: "profile", label: "Profile", labelHi: "प्रोफ़ाइल", icon: User },
-  { id: "notifications", label: "Notifications", labelHi: "सूचनाएं", icon: Bell },
-  { id: "appearance", label: "Appearance", labelHi: "दिखावट", icon: Palette },
-  { id: "language", label: "Language & Region", labelHi: "भाषा और क्षेत्र", icon: Globe },
-  { id: "billing", label: "Billing & Plans", labelHi: "बिलिंग और प्लान", icon: CreditCard },
-  { id: "security", label: "Security", labelHi: "सुरक्षा", icon: Shield },
-  { id: "api", label: "API Access", labelHi: "API एक्सेस", icon: Key },
-  { id: "data", label: "Data & Privacy", labelHi: "डेटा और गोपनीयता", icon: Download },
-  { id: "gpu", label: "GPU Mode", labelHi: "GPU मोड", icon: Cpu },
+  { id: "profile", icon: User },
+  { id: "notifications", icon: Bell },
+  { id: "appearance", icon: Palette },
+  { id: "language", icon: Globe },
+  { id: "billing", icon: CreditCard },
+  { id: "security", icon: Shield },
+  { id: "api", icon: Key },
+  { id: "data", icon: Download },
+  { id: "gpu", icon: Cpu },
 ];
 
 // Theme options
 const themeOptions = [
-  { value: "light", label: "Light", labelHi: "लाइट", icon: Sun },
-  { value: "dark", label: "Dark", labelHi: "डार्क", icon: Moon },
-  { value: "system", label: "System", labelHi: "सिस्टम", icon: Monitor },
+  { value: "light", labelKey: "set_app_theme_light", icon: Sun },
+  { value: "dark", labelKey: "set_app_theme_dark", icon: Moon },
+  { value: "system", labelKey: "set_app_theme_system", icon: Monitor },
 ];
 
 // Currency options
@@ -152,7 +152,7 @@ const plans = [
   },
 ];
 
-// ── GPU Mode Panel ─────────────────────────────────────────────────────────────
+// ── t('gpu_title') Panel ─────────────────────────────────────────────────────────────
 type GPUModeType = 'local' | 'auto' | 'cloud';
 interface GPUStatus {
   mode: GPUModeType;
@@ -166,6 +166,7 @@ interface GPUStatus {
 }
 
 function GPUModePanel() {
+  const { t } = useLanguage();
   const [mode, setMode]         = useState<GPUModeType>('local');
   const [cloudUrl, setCloudUrl] = useState('');
   const [gpuStatus, setGPUStatus] = useState<GPUStatus | null>(null);
@@ -214,17 +215,17 @@ function GPUModePanel() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Cpu className="h-5 w-5" />
-          GPU Mode
+          t('gpu_title')
         </CardTitle>
         <CardDescription>
-          Switch between your local RTX 4060 and Google Colab T4 cloud GPU.
+          t('gpu_desc')
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
 
         {/* Live status banner */}
         <div className={`rounded-lg px-4 py-3 border text-sm flex items-center justify-between ${bannerColor}`}>
-          <span>{checking ? '⏳ Checking…' : (gpuStatus?.statusMessage ?? 'Unknown')}</span>
+          <span>{checking ? t('gpu_check_status') : (gpuStatus?.statusMessage ?? 'Unknown')}</span>
           <button onClick={checkStatus} disabled={checking} className="opacity-70 hover:opacity-100 ml-2">
             <RefreshCw size={14} className={checking ? 'animate-spin' : ''} />
           </button>
@@ -232,12 +233,12 @@ function GPUModePanel() {
 
         {/* Mode selector — 3 cards */}
         <div>
-          <p className="text-sm font-medium mb-3">Select GPU Source</p>
+          <p className="text-sm font-medium mb-3">t('gpu_select_source')</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {([
-              { id: 'local', label: 'Local Only', sub: 'RTX 4060 8GB', icon: Cpu, color: 'purple' },
-              { id: 'auto',  label: 'Auto',       sub: 'Cloud → Local', icon: Cloud, color: 'blue' },
-              { id: 'cloud', label: 'Cloud Only', sub: 'Colab T4 15GB', icon: Cloud, color: 'blue' },
+              { id: 'local', labelKey: 'gpu_local_only', subKey: 'gpu_local_sub', icon: Cpu, color: 'purple' },
+              { id: 'auto',  labelKey: 'gpu_auto', subKey: 'gpu_auto_sub', icon: Cloud, color: 'blue' },
+              { id: 'cloud', labelKey: 'gpu_cloud_only', subKey: 'gpu_cloud_sub', icon: Cloud, color: 'blue' },
             ] as const).map(opt => {
               const active = mode === opt.id;
               const border = active
@@ -249,17 +250,17 @@ function GPUModePanel() {
                 <button key={opt.id} onClick={() => setMode(opt.id)}
                   className={`p-4 rounded-xl border-2 text-left transition-all ${border}`}>
                   <opt.icon size={18} className={active ? (opt.color === 'purple' ? 'text-purple-400' : 'text-blue-400') : 'text-muted-foreground'} />
-                  <div className="text-sm font-semibold mt-1">{opt.label}</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{opt.sub}</div>
+                  <div className="text-sm font-semibold mt-1">{t(opt.labelKey)}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">{t(opt.subKey)}</div>
                   {stat !== undefined && (
                     <div className={`text-xs mt-1 flex items-center gap-1 ${stat ? 'text-green-400' : 'text-red-400'}`}>
                       {stat ? <CheckCircle size={10} /> : <XCircle size={10} />}
-                      {stat ? 'Online' : 'Offline'}
+                      {stat ? t('gpu_online') : t('gpu_offline')}
                       {opt.id === 'local' && stat && gpuStatus?.localVramFree ? ` · ${gpuStatus.localVramFree}MB` : ''}
                       {opt.id === 'cloud' && stat && gpuStatus?.cloudVramFree ? ` · ${gpuStatus.cloudVramFree}MB` : ''}
                     </div>
                   )}
-                  {opt.id === 'auto' && <div className="text-xs text-blue-400 mt-1">✨ Recommended</div>}
+                  {opt.id === 'auto' && <div className="text-xs text-blue-400 mt-1">t('gpu_recommended')</div>}
                 </button>
               );
             })}
@@ -269,7 +270,7 @@ function GPUModePanel() {
         {/* Cloud URL input */}
         {needsUrl && (
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">Colab Tunnel URL</label>
+            <label className="text-sm font-medium">t('gpu_colab_url')</label>
             <input
               type="text"
               value={cloudUrl}
@@ -278,11 +279,11 @@ function GPUModePanel() {
               className="w-full rounded-lg border bg-muted px-4 py-2.5 text-base font-mono min-h-[44px] focus:outline-none focus:ring-2 focus:ring-ring"
             />
             <p className="text-xs text-muted-foreground">
-              Run your Colab notebook → copy the Cloudflare tunnel URL → paste here.
+              t('gpu_colab_help')
             </p>
             {mode === 'cloud' && cloudUrl && !gpuStatus?.cloudAlive && (
               <p className="text-xs text-red-400 flex items-center gap-1 mt-1">
-                <XCircle size={12} /> Cloud URL not reachable — start your Colab notebook first.
+                <XCircle size={12} /> t('gpu_colab_unreachable')
               </p>
             )}
           </div>
@@ -290,31 +291,31 @@ function GPUModePanel() {
 
         {/* Description */}
         <div className="rounded-lg bg-muted/50 px-4 py-3 text-xs text-muted-foreground">
-          {mode === 'local' && 'All AI uses your RTX 4060 (8GB VRAM). ComfyUI must be running at localhost:8188.'}
-          {mode === 'auto'  && 'Every job pings Colab first (3s timeout). Cloud if alive → 15GB. Otherwise → RTX 4060 automatically.'}
-          {mode === 'cloud' && 'All AI uses Google Colab T4 (15GB VRAM). Jobs fail if Colab is not running. Start your notebook first.'}
+          {mode === 'local' && t('gpu_desc_local')}
+          {mode === 'auto' && t('gpu_desc_auto')}
+          {mode === 'cloud' && t('gpu_desc_cloud')}
         </div>
 
         {/* Connection details */}
         {gpuStatus && (
           <div className="space-y-2 rounded-lg border p-4 text-sm">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Connection Details</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">t('gpu_connection_details')</p>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Local GPU</span>
+              <span className="text-muted-foreground">t('gpu_local_gpu')</span>
               <span className={gpuStatus.localAlive ? 'text-green-400' : 'text-red-400'}>
-                {gpuStatus.localAlive ? `🟢 localhost:8188${gpuStatus.localVramFree ? ` · ${gpuStatus.localVramFree}MB` : ''}` : '🔴 Not running'}
+                {gpuStatus.localAlive ? `🟢 localhost:8188${gpuStatus.localVramFree ? ` · ${gpuStatus.localVramFree}MB` : ''}` : t('gpu_not_running')}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Cloud GPU</span>
+              <span className="text-muted-foreground">t('gpu_cloud_gpu')</span>
               <span className={gpuStatus.cloudAlive ? 'text-green-400' : gpuStatus.cloudUrl ? 'text-red-400' : 'text-muted-foreground'}>
-                {gpuStatus.cloudAlive ? `🟢 Colab T4${gpuStatus.cloudVramFree ? ` · ${gpuStatus.cloudVramFree}MB` : ''}` : gpuStatus.cloudUrl ? '🔴 Not reachable' : '⚪ No URL set'}
+                {gpuStatus.cloudAlive ? `🟢 Colab T4${gpuStatus.cloudVramFree ? ` · ${gpuStatus.cloudVramFree}MB` : ''}` : gpuStatus.cloudUrl ? t('gpu_not_reachable') : t('gpu_no_url_set')}
               </span>
             </div>
             <div className="flex justify-between border-t pt-2 mt-1">
-              <span className="text-muted-foreground">Currently routing to</span>
+              <span className="text-muted-foreground">t('gpu_currently_routing')</span>
               <span className="font-medium">
-                {gpuStatus.activeSource === 'cloud' ? '☁️ Cloud (T4 15GB)' : gpuStatus.activeSource === 'local' ? '💻 Local (RTX 4060)' : '❌ None'}
+                {gpuStatus.activeSource === 'cloud' ? t('gpu_cloud_t4') : gpuStatus.activeSource === 'local' ? t('gpu_local_rtx') : t('gpu_none')}
               </span>
             </div>
           </div>
@@ -322,9 +323,9 @@ function GPUModePanel() {
       </CardContent>
       <CardFooter>
         <Button onClick={handleSave} disabled={saving}>
-          {saving  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving…</> :
-           saved   ? <><Check className="h-4 w-4 mr-2" /> Saved!</> :
-                     <><Check className="h-4 w-4 mr-2" /> Save GPU Settings</>}
+          {saving  ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> t('gpu_saving')</> :
+           saved   ? <><Check className="h-4 w-4 mr-2" /> t('gpu_saved')</> :
+                     <><Check className="h-4 w-4 mr-2" /> t('gpu_save_btn')</>}
         </Button>
       </CardFooter>
     </Card>
@@ -466,17 +467,13 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error("Failed to update profile");
 
       toast({
-        title: language === "hi" ? "प्रोफ़ाइल अपडेट हो गई" : "Profile Updated",
-        description: language === "hi"
-          ? "आपकी प्रोफ़ाइल सफलतापूर्वक अपडेट हो गई है।"
-          : "Your profile has been updated successfully.",
+        title: t('set_prof_updated_title'),
+        description: t('set_prof_updated_desc'),
       });
     } catch (error) {
       toast({
-        title: language === "hi" ? "त्रुटि" : "Error",
-        description: language === "hi"
-          ? "प्रोफ़ाइल अपडेट करने में विफल।"
-          : "Failed to update profile.",
+        title: t('set_prof_error_title'),
+        description: t('set_prof_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -511,15 +508,13 @@ export default function SettingsPage() {
       if (!response.ok) throw new Error("Failed to save preferences");
 
       toast({
-        title: language === "hi" ? "प्राथमिकताएं सहेजी गईं" : "Preferences Saved",
-        description: language === "hi"
-          ? "आपकी प्राथमिकताएं अपडेट हो गई हैं।"
-          : "Your preferences have been updated.",
+        title: t('set_notif_saved_title'),
+        description: t('set_notif_saved_desc'),
       });
     } catch (error) {
       toast({
-        title: language === "hi" ? "त्रुटि" : "Error",
-        description: language === "hi" ? "सहेजने में विफल।" : "Failed to save preferences.",
+        title: t('set_prof_error_title'),
+        description: t('set_notif_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -537,10 +532,8 @@ export default function SettingsPage() {
       setApiKey(data.key);
 
       toast({
-        title: language === "hi" ? "नई API कुंजी" : "New API Key Generated",
-        description: language === "hi"
-          ? "आपकी नई API कुंजी तैयार है। पुरानी कुंजी अब काम नहीं करेगी।"
-          : "Your new API key is ready. The old key will no longer work.",
+        title: t('set_api_regen_title'),
+        description: t('set_api_regen_desc'),
       });
     } catch {
       toast({
@@ -557,8 +550,8 @@ export default function SettingsPage() {
   const handleCopyApiKey = () => {
     navigator.clipboard.writeText(apiKey);
     toast({
-      title: language === "hi" ? "कॉपी किया गया" : "Copied",
-      description: language === "hi" ? "API कुंजी कॉपी हो गई।" : "API key copied to clipboard.",
+      title: t('set_api_copied_title'),
+      description: t('set_api_copied_desc'),
     });
   };
 
@@ -596,10 +589,8 @@ export default function SettingsPage() {
 
       setExportStatus({ completedAt: new Date().toISOString() });
       toast({
-        title: language === "hi" ? "डेटा निर्यात" : "Data Exported",
-        description: language === "hi"
-          ? "JSON और HTML रिपोर्ट डाउनलोड हो रहे हैं।"
-          : "JSON and HTML report downloads have started.",
+        title: t('set_data_toast_title'),
+        description: t('set_data_toast_desc'),
       });
     } catch {
       toast({
@@ -645,10 +636,8 @@ export default function SettingsPage() {
       setDeletionDialogOpen(false);
       setDeletionReason("");
       toast({
-        title: language === "hi" ? "अनुरोध सबमिट किया गया" : "Deletion Request Submitted",
-        description: language === "hi"
-          ? "आपका अनुरोध 30 दिनों के भीतर समीक्षा किया जाएगा।"
-          : "Your request will be reviewed within 30 days.",
+        title: t('set_del_toast_title'),
+        description: t('set_del_toast_desc'),
       });
     } catch (err: unknown) {
       toast({
@@ -666,8 +655,8 @@ export default function SettingsPage() {
       await fetch('/api/user/delete-request', { method: 'DELETE' });
       setPendingDeletion(null);
       toast({
-        title: language === "hi" ? "अनुरोध रद्द किया गया" : "Request Cancelled",
-        description: language === "hi" ? "आपका खाता हटाने का अनुरोध रद्द हो गया।" : "Your account deletion request has been cancelled.",
+        title: t('set_del_cancel_title'),
+        description: t('set_del_cancel_desc'),
       });
     } catch {
       toast({ title: "Error", description: "Failed to cancel request.", variant: "destructive" });
@@ -690,12 +679,10 @@ export default function SettingsPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">
-                {language === "hi" ? "सेटिंग्स" : "Settings"}
+                {t('set_title')}
               </h1>
               <p className="text-muted-foreground mt-1">
-                {language === "hi"
-                  ? "अपने खाते और प्राथमिकताओं को प्रबंधित करें"
-                  : "Manage your account and preferences"}
+                {t('set_desc')}
               </p>
             </div>
             <CreditBalance />
@@ -724,7 +711,7 @@ export default function SettingsPage() {
                   )}
                 >
                   <section.icon className="h-4 w-4 flex-shrink-0" />
-                  {language === "hi" ? section.labelHi : section.label}
+                  {t('set_sect_' + section.id)}
                 </button>
               ))}
               <button
@@ -732,7 +719,7 @@ export default function SettingsPage() {
                 className="flex-shrink-0 snap-start flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium min-h-[44px] text-red-500 bg-red-50 dark:bg-red-950/20 whitespace-nowrap"
               >
                 <LogOut className="h-4 w-4 flex-shrink-0" />
-                {language === "hi" ? "साइन आउट" : "Sign Out"}
+                {t('set_signout')}
               </button>
             </nav>
 
@@ -754,7 +741,7 @@ export default function SettingsPage() {
                 >
                   <section.icon className="h-5 w-5" />
                   <span className="font-medium">
-                    {language === "hi" ? section.labelHi : section.label}
+                    {t('set_sect_' + section.id)}
                   </span>
                   {activeSection === section.id && (
                     <ChevronRight className="h-4 w-4 ml-auto" />
@@ -768,7 +755,7 @@ export default function SettingsPage() {
               >
                 <LogOut className="h-5 w-5" />
                 <span className="font-medium">
-                  {language === "hi" ? "साइन आउट" : "Sign Out"}
+                  {t('set_signout')}
                 </span>
               </button>
             </nav>
@@ -790,12 +777,10 @@ export default function SettingsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <User className="h-5 w-5" />
-                        {language === "hi" ? "प्रोफ़ाइल जानकारी" : "Profile Information"}
+                        {t('set_prof_title')}
                       </CardTitle>
                       <CardDescription>
-                        {language === "hi"
-                          ? "अपनी व्यक्तिगत जानकारी अपडेट करें"
-                          : "Update your personal information"}
+                        {t('set_prof_desc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -810,12 +795,10 @@ export default function SettingsPage() {
                         <div>
                           <Button variant="outline" size="sm">
                             <Camera className="h-4 w-4 mr-2" />
-                            {language === "hi" ? "फोटो बदलें" : "Change Photo"}
+                            {t('set_prof_change_photo')}
                           </Button>
                           <p className="text-xs text-muted-foreground mt-2">
-                            {language === "hi"
-                              ? "JPG, PNG या GIF. अधिकतम 5MB।"
-                              : "JPG, PNG or GIF. Max 5MB."}
+                            {t('set_prof_photo_limit')}
                           </p>
                         </div>
                       </div>
@@ -826,7 +809,7 @@ export default function SettingsPage() {
                       <div className="grid gap-6 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label htmlFor="firstName">
-                            {language === "hi" ? "पहला नाम" : "First Name"}
+                            {t('set_prof_fname')}
                           </Label>
                           <Input
                             id="firstName"
@@ -838,7 +821,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="lastName">
-                            {language === "hi" ? "अंतिम नाम" : "Last Name"}
+                            {t('set_prof_lname')}
                           </Label>
                           <Input
                             id="lastName"
@@ -853,7 +836,7 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <Label htmlFor="email">
                           <Mail className="h-4 w-4 inline mr-2" />
-                          {language === "hi" ? "ईमेल" : "Email"}
+                          {t('set_prof_email')}
                         </Label>
                         <Input
                           id="email"
@@ -864,16 +847,14 @@ export default function SettingsPage() {
                           autoComplete="email"
                         />
                         <p className="text-xs text-muted-foreground">
-                          {language === "hi"
-                            ? "ईमेल बदलने के लिए सपोर्ट से संपर्क करें।"
-                            : "Contact support to change your email."}
+                          {t('set_prof_email_hint')}
                         </p>
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="phone">
                           <Phone className="h-4 w-4 inline mr-2" />
-                          {language === "hi" ? "फोन नंबर" : "Phone Number"}
+                          {t('set_prof_phone')}
                         </Label>
                         <Input
                           id="phone"
@@ -889,7 +870,7 @@ export default function SettingsPage() {
                       <div className="space-y-2">
                         <Label htmlFor="company">
                           <Building className="h-4 w-4 inline mr-2" />
-                          {language === "hi" ? "कंपनी" : "Company"}
+                          {t('set_prof_company')}
                         </Label>
                         <Input
                           id="company"
@@ -897,7 +878,7 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setProfile({ ...profile, company: e.target.value })
                           }
-                          placeholder={language === "hi" ? "वैकल्पिक" : "Optional"}
+                          placeholder={t('set_prof_optional')}
                         />
                       </div>
 
@@ -905,7 +886,7 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                           <Label htmlFor="city">
                             <MapPin className="h-4 w-4 inline mr-2" />
-                            {language === "hi" ? "शहर" : "City"}
+                            {t('set_prof_city')}
                           </Label>
                           <Input
                             id="city"
@@ -918,7 +899,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="country">
-                            {language === "hi" ? "देश" : "Country"}
+                            {t('set_prof_country')}
                           </Label>
                           <Select
                             value={profile.country}
@@ -948,7 +929,7 @@ export default function SettingsPage() {
                         ) : (
                           <Check className="h-4 w-4 mr-2" />
                         )}
-                        {language === "hi" ? "बदलाव सहेजें" : "Save Changes"}
+                        {t('set_prof_save')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -960,30 +941,26 @@ export default function SettingsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Bell className="h-5 w-5" />
-                        {language === "hi" ? "सूचना प्राथमिकताएं" : "Notification Preferences"}
+                        {t('set_notif_title')}
                       </CardTitle>
                       <CardDescription>
-                        {language === "hi"
-                          ? "चुनें कि आप कैसे सूचित होना चाहते हैं"
-                          : "Choose how you want to be notified"}
+                        {t('set_notif_desc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Email Notifications */}
                       <div>
                         <h3 className="font-semibold mb-4">
-                          {language === "hi" ? "ईमेल सूचनाएं" : "Email Notifications"}
+                          {t('set_notif_email')}
                         </h3>
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "रेंडर पूर्ण" : "Render Complete"}
+                                {t('set_notif_render_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "जब आपका डिज़ाइन तैयार हो जाए"
-                                  : "When your design is ready"}
+                                {t('set_notif_render_desc')}
                               </p>
                             </div>
                             <Switch
@@ -996,12 +973,10 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "टिप्स और ट्रिक्स" : "Tips & Tricks"}
+                                {t('set_notif_tips_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "बेहतर डिज़ाइन के लिए सुझाव"
-                                  : "Suggestions for better designs"}
+                                {t('set_notif_tips_desc')}
                               </p>
                             </div>
                             <Switch
@@ -1014,12 +989,10 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "न्यूज़लेटर" : "Newsletter"}
+                                {t('set_notif_newsletter_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "नई सुविधाएं और अपडेट"
-                                  : "New features and updates"}
+                                {t('set_notif_newsletter_desc')}
                               </p>
                             </div>
                             <Switch
@@ -1037,18 +1010,16 @@ export default function SettingsPage() {
                       {/* Push & Sound Notifications */}
                       <div>
                         <h3 className="font-semibold mb-4">
-                          {language === "hi" ? "पुश और ध्वनि सूचनाएं" : "Push & Sound Notifications"}
+                          {t('set_notif_push_sound')}
                         </h3>
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "रेंडर अलर्ट (इन-ऐप)" : "Render Alerts (In-App)"}
+                                {t('set_notif_push_render_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "इन-ऐप टोस्ट और घंटी सूचनाएं"
-                                  : "In-app toast and bell notifications"}
+                                {t('set_notif_push_render_desc')}
                               </p>
                             </div>
                             <Switch
@@ -1061,12 +1032,10 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "डेस्कटॉप पुश सूचनाएं" : "Desktop Push Notifications"}
+                                {t('set_notif_desktop_push_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "ब्राउज़र के माध्यम से सिस्टम अलर्ट"
-                                  : "System notifications via browser"}
+                                {t('set_notif_desktop_push_desc')}
                               </p>
                             </div>
                             <Switch
@@ -1076,10 +1045,8 @@ export default function SettingsPage() {
                                   const permission = await window.Notification.requestPermission();
                                   if (permission !== 'granted') {
                                     toast({
-                                      title: language === "hi" ? "अनुमति अस्वीकृत" : "Permission Denied",
-                                      description: language === "hi"
-                                        ? "डेस्कटॉप सूचनाओं के लिए ब्राउज़र अनुमति आवश्यक है।"
-                                        : "Browser permission is required for desktop notifications.",
+                                      title: t('set_notif_perm_denied_title'),
+                                      description: t('set_notif_perm_denied_desc'),
                                       variant: "destructive"
                                     });
                                     setNotifications({ ...notifications, browserNotificationsEnabled: false });
@@ -1093,12 +1060,10 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "सूचना ध्वनि" : "Notification Sound"}
+                                {t('set_notif_sound_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "नई सूचना आने पर ध्वनि संकेत बजाएं"
-                                  : "Play a sound alert when a new notification is received"}
+                                {t('set_notif_sound_desc')}
                               </p>
                             </div>
                             <Switch
@@ -1111,12 +1076,10 @@ export default function SettingsPage() {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium">
-                                {language === "hi" ? "प्रोडक्ट अपडेट" : "Product Updates"}
+                                {t('set_notif_updates_title')}
                               </p>
                               <p className="text-sm text-muted-foreground">
-                                {language === "hi"
-                                  ? "नई सुविधाओं की जानकारी"
-                                  : "New feature announcements"}
+                                {t('set_notif_updates_desc')}
                               </p>
                             </div>
                             <Switch
@@ -1134,17 +1097,15 @@ export default function SettingsPage() {
                       {/* SMS Notifications */}
                       <div>
                         <h3 className="font-semibold mb-4">
-                          {language === "hi" ? "SMS सूचनाएं" : "SMS Notifications"}
+                          {t('set_notif_sms')}
                         </h3>
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="font-medium">
-                              {language === "hi" ? "महत्वपूर्ण अलर्ट" : "Critical Alerts"}
+                              {t('set_notif_sms_critical_title')}
                             </p>
                             <p className="text-sm text-muted-foreground">
-                              {language === "hi"
-                                ? "बिलिंग और सुरक्षा संबंधी"
-                                : "Billing and security related"}
+                              {t('set_notif_sms_critical_desc')}
                             </p>
                           </div>
                           <Switch
@@ -1163,7 +1124,7 @@ export default function SettingsPage() {
                         ) : (
                           <Check className="h-4 w-4 mr-2" />
                         )}
-                        {language === "hi" ? "प्राथमिकताएं सहेजें" : "Save Preferences"}
+                        {t('set_notif_save')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -1175,24 +1136,20 @@ export default function SettingsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Palette className="h-5 w-5" />
-                        {language === "hi" ? "दिखावट" : "Appearance"}
+                        {t('set_app_title')}
                       </CardTitle>
                       <CardDescription>
-                        {language === "hi"
-                          ? "ऐप का लुक और फील कस्टमाइज़ करें"
-                          : "Customize the look and feel of the app"}
+                        {t('set_app_desc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Theme Selection */}
                       <div>
                         <Label className="text-base font-semibold">
-                          {language === "hi" ? "थीम" : "Theme"}
+                          {t('set_app_theme')}
                         </Label>
                         <p className="text-sm text-muted-foreground mb-4">
-                          {language === "hi"
-                            ? "अपनी पसंदीदा थीम चुनें"
-                            : "Select your preferred theme"}
+                          {t('set_app_theme_desc')}
                         </p>
                         <RadioGroup
                           value={preferences.theme}
@@ -1214,7 +1171,7 @@ export default function SettingsPage() {
                                 className="flex flex-col items-center justify-between rounded-lg border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                               >
                                 <theme.icon className="mb-3 h-6 w-6" />
-                                {language === "hi" ? theme.labelHi : theme.label}
+                                {t(theme.labelKey)}
                               </Label>
                             </div>
                           ))}
@@ -1226,7 +1183,7 @@ export default function SettingsPage() {
                       {/* Default Style */}
                       <div className="space-y-2">
                         <Label>
-                          {language === "hi" ? "डिफ़ॉल्ट डिज़ाइन स्टाइल" : "Default Design Style"}
+                          {t('set_app_style')}
                         </Label>
                         <Select
                           value={preferences.defaultStyle}
@@ -1252,12 +1209,10 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">
-                            {language === "hi" ? "ऑटो वास्तु स्कोर" : "Auto Vastu Score"}
+                            {t('set_app_vastu')}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {language === "hi"
-                              ? "हर रेंडर के साथ वास्तु विश्लेषण"
-                              : "Vastu analysis with every render"}
+                            {t('set_app_vastu_desc')}
                           </p>
                         </div>
                         <Switch
@@ -1272,12 +1227,10 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">
-                            {language === "hi" ? "ऑटो कॉस्ट एस्टीमेट" : "Auto Cost Estimate"}
+                            {t('set_app_cost')}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {language === "hi"
-                              ? "हर रेंडर के साथ लागत अनुमान"
-                              : "Cost estimation with every render"}
+                            {t('set_app_cost_desc')}
                           </p>
                         </div>
                         <Switch
@@ -1295,7 +1248,7 @@ export default function SettingsPage() {
                         ) : (
                           <Check className="h-4 w-4 mr-2" />
                         )}
-                        {language === "hi" ? "बदलाव सहेजें" : "Save Changes"}
+                        {t('set_prof_save')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -1307,18 +1260,16 @@ export default function SettingsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Globe className="h-5 w-5" />
-                        {language === "hi" ? "भाषा और क्षेत्र" : "Language & Region"}
+                        {t('set_lang_title')}
                       </CardTitle>
                       <CardDescription>
-                        {language === "hi"
-                          ? "अपनी भाषा और क्षेत्रीय प्राथमिकताएं सेट करें"
-                          : "Set your language and regional preferences"}
+                        {t('set_lang_desc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                       {/* Language */}
                       <div className="space-y-2">
-                        <Label>{language === "hi" ? "भाषा" : "Language"}</Label>
+                        <Label>{t('set_lang_label')}</Label>
                         <div className="grid grid-cols-2 gap-4">
                           <button
                             onClick={() => setLanguage("en")}
@@ -1371,7 +1322,7 @@ export default function SettingsPage() {
 
                       {/* Currency */}
                       <div className="space-y-2">
-                        <Label>{language === "hi" ? "मुद्रा" : "Currency"}</Label>
+                        <Label>{t('set_lang_currency')}</Label>
                         <RadioGroup
                           value={preferences.currency}
                           onValueChange={(value) =>
@@ -1403,7 +1354,7 @@ export default function SettingsPage() {
                       {/* Measurement Unit */}
                       <div className="space-y-2">
                         <Label>
-                          {language === "hi" ? "माप इकाई" : "Measurement Unit"}
+                          {t('set_lang_unit')}
                         </Label>
                         <Select
                           value={preferences.measurementUnit}
@@ -1428,7 +1379,7 @@ export default function SettingsPage() {
                         ) : (
                           <Check className="h-4 w-4 mr-2" />
                         )}
-                        {language === "hi" ? "बदलाव सहेजें" : "Save Changes"}
+                        {t('set_prof_save')}
                       </Button>
                     </CardFooter>
                   </Card>
@@ -1442,7 +1393,7 @@ export default function SettingsPage() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <CreditCard className="h-5 w-5" />
-                          {language === "hi" ? "वर्तमान प्लान" : "Current Plan"}
+                          {t('set_bill_title')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-6">
@@ -1454,21 +1405,19 @@ export default function SettingsPage() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <h3 className="text-xl font-bold">
-                                  {plans.find(p => p.id === subscription.plan)?.name}
+                                  {t('plan_' + subscription.plan)}
                                 </h3>
                                 <Badge variant="default" className="bg-primary">
-                                  {language === "hi" ? "सक्रिय" : "Active"}
+                                  {t('set_bill_active')}
                                 </Badge>
                               </div>
                               <p className="text-muted-foreground">
-                                {language === "hi"
-                                  ? `₹${plans.find(p => p.id === subscription.plan)?.priceINR}/माह`
-                                  : `$${plans.find(p => p.id === subscription.plan)?.price}/month`}
+                                {language === "hi" ? `₹${plans.find(p => p.id === subscription.plan)?.priceINR}/माह` : `$${plans.find(p => p.id === subscription.plan)?.price}/month`}
                               </p>
                             </div>
                           </div>
                           <Button variant="outline">
-                            {language === "hi" ? "प्लान बदलें" : "Change Plan"}
+                            {t('set_bill_change_plan')}
                           </Button>
                         </div>
 
@@ -1476,7 +1425,7 @@ export default function SettingsPage() {
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <span className="font-medium">
-                              {language === "hi" ? "क्रेडिट उपयोग" : "Credits Usage"}
+                              {t('set_bill_usage')}
                             </span>
                             <span className="text-muted-foreground">
                               {subscription.credits} / {subscription.creditsTotal}
@@ -1487,19 +1436,17 @@ export default function SettingsPage() {
                             className="h-2"
                           />
                           <p className="text-sm text-muted-foreground mt-2">
-                            {language === "hi"
-                              ? `रिन्यूअल: ${new Date(subscription.renewalDate).toLocaleDateString('hi-IN')}`
-                              : `Renews on ${new Date(subscription.renewalDate).toLocaleDateString()}`}
+                            {`${t('set_bill_renews')}${new Date(subscription.renewalDate).toLocaleDateString(language === "hi" ? "hi-IN" : "en-US")}`}
                           </p>
                         </div>
 
                         <div className="flex gap-3">
                           <Button variant="outline">
                             <Zap className="h-4 w-4 mr-2" />
-                            {language === "hi" ? "क्रेडिट खरीदें" : "Buy Credits"}
+                            {t('set_bill_buy_credits')}
                           </Button>
                           <Button variant="ghost" className="text-muted-foreground">
-                            {language === "hi" ? "बिलिंग हिस्ट्री" : "Billing History"}
+                            {t('set_bill_history')}
                           </Button>
                         </div>
                       </CardContent>
@@ -1509,7 +1456,7 @@ export default function SettingsPage() {
                     <Card>
                       <CardHeader>
                         <CardTitle>
-                          {language === "hi" ? "भुगतान विधियां" : "Payment Methods"}
+                          {t('set_bill_methods')}
                         </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -1525,11 +1472,11 @@ export default function SettingsPage() {
                               </p>
                             </div>
                           </div>
-                          <Badge>{language === "hi" ? "डिफ़ॉल्ट" : "Default"}</Badge>
+                          <Badge>{t('set_bill_default')}</Badge>
                         </div>
 
                         <Button variant="outline" className="w-full">
-                          {language === "hi" ? "+ नई विधि जोड़ें" : "+ Add Payment Method"}
+                          {t('set_bill_add_method')}
                         </Button>
                       </CardContent>
                     </Card>
@@ -1542,12 +1489,10 @@ export default function SettingsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Shield className="h-5 w-5" />
-                        {language === "hi" ? "सुरक्षा" : "Security"}
+                        {t('set_sec_title')}
                       </CardTitle>
                       <CardDescription>
-                        {language === "hi"
-                          ? "अपने खाते की सुरक्षा प्रबंधित करें"
-                          : "Manage your account security"}
+                        {t('set_sec_desc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -1555,16 +1500,14 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">
-                            {language === "hi" ? "पासवर्ड" : "Password"}
+                            {t('set_sec_pwd')}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {language === "hi"
-                              ? "अंतिम बदलाव 30 दिन पहले"
-                              : "Last changed 30 days ago"}
+                            {t('set_sec_pwd_changed')}
                           </p>
                         </div>
                         <Button variant="outline">
-                          {language === "hi" ? "बदलें" : "Change"}
+                          {t('set_sec_change')}
                         </Button>
                       </div>
 
@@ -1574,12 +1517,10 @@ export default function SettingsPage() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">
-                            {language === "hi" ? "दो-चरण प्रमाणीकरण" : "Two-Factor Authentication"}
+                            {t('set_sec_2fa')}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {language === "hi"
-                              ? "अतिरिक्त सुरक्षा के लिए सक्षम करें"
-                              : "Enable for extra security"}
+                            {t('set_sec_2fa_desc')}
                           </p>
                         </div>
                         <Switch />
@@ -1591,10 +1532,10 @@ export default function SettingsPage() {
                       <div>
                         <div className="flex items-center justify-between mb-4">
                           <p className="font-medium">
-                            {language === "hi" ? "सक्रिय सत्र" : "Active Sessions"}
+                            {t('set_sec_sessions')}
                           </p>
                           <Button variant="ghost" size="sm" className="text-red-500">
-                            {language === "hi" ? "सभी लॉगआउट करें" : "Log out all"}
+                            {t('set_sec_logout_all')}
                           </Button>
                         </div>
                         <div className="space-y-3">
@@ -1604,12 +1545,12 @@ export default function SettingsPage() {
                               <div>
                                 <p className="font-medium">Chrome on Windows</p>
                                 <p className="text-xs text-muted-foreground">
-                                  Mumbai, India • {language === "hi" ? "अभी सक्रिय" : "Active now"}
+                                  Mumbai, India • {t('set_sec_active_now')}
                                 </p>
                               </div>
                             </div>
                             <Badge variant="outline" className="text-green-500 border-green-500">
-                              {language === "hi" ? "वर्तमान" : "Current"}
+                              {t('set_sec_current')}
                             </Badge>
                           </div>
                         </div>
@@ -1624,12 +1565,10 @@ export default function SettingsPage() {
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
                         <Key className="h-5 w-5" />
-                        {language === "hi" ? "API एक्सेस" : "API Access"}
+                        {t('set_api_title')}
                       </CardTitle>
                       <CardDescription>
-                        {language === "hi"
-                          ? "अपनी API कुंजियां प्रबंधित करें"
-                          : "Manage your API keys"}
+                        {t('set_api_desc')}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
@@ -1638,19 +1577,17 @@ export default function SettingsPage() {
                           <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
                           <div>
                             <p className="font-medium text-amber-800 dark:text-amber-200">
-                              {language === "hi" ? "API कुंजी को सुरक्षित रखें" : "Keep your API key secure"}
+                              {t('set_api_secure_title')}
                             </p>
                             <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
-                              {language === "hi"
-                                ? "इसे किसी के साथ साझा न करें और सार्वजनिक कोड में न डालें।"
-                                : "Never share it or commit it to public code."}
+                              {t('set_api_secure_desc')}
                             </p>
                           </div>
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label>{language === "hi" ? "आपकी API कुंजी" : "Your API Key"}</Label>
+                        <Label>{t('set_api_key_label')}</Label>
                         <div className="flex gap-2">
                           <div className="relative flex-1">
                             <Input
@@ -1681,26 +1618,24 @@ export default function SettingsPage() {
                           <AlertDialogTrigger asChild>
                             <Button variant="outline">
                               <RefreshCw className="h-4 w-4 mr-2" />
-                              {language === "hi" ? "नई कुंजी बनाएं" : "Regenerate Key"}
+                              {t('set_api_regenerate')}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                {language === "hi" ? "क्या आप सुनिश्चित हैं?" : "Are you sure?"}
+                                {t('set_api_confirm_title')}
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                {language === "hi"
-                                  ? "पुरानी API कुंजी तुरंत बंद हो जाएगी।"
-                                  : "Your old API key will stop working immediately."}
+                                {t('set_api_confirm_desc')}
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>
-                                {language === "hi" ? "रद्द करें" : "Cancel"}
+                                {t('set_api_cancel')}
                               </AlertDialogCancel>
                               <AlertDialogAction onClick={handleRegenerateApiKey}>
-                                {language === "hi" ? "हां, बनाएं" : "Yes, Regenerate"}
+                                {t('set_api_yes_regen')}
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
@@ -1713,7 +1648,7 @@ export default function SettingsPage() {
                             rel="noopener noreferrer"
                           >
                             <ExternalLink className="h-4 w-4 mr-2" />
-                            {language === "hi" ? "API डॉक्स" : "API Docs"}
+                            {t('set_api_docs')}
                           </a>
                         </Button>
                       </div>
@@ -1729,18 +1664,16 @@ export default function SettingsPage() {
                       <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           <Download className="h-5 w-5" />
-                          {language === "hi" ? "डेटा निर्यात" : "Export Your Data"}
+                          {t('set_data_title')}
                         </CardTitle>
                         <CardDescription>
-                          {language === "hi"
-                            ? "अपने सभी डेटा की कॉपी डाउनलोड करें — प्रोजेक्ट्स, रेंडर्स, बुकिंग्स और अकाउंट जानकारी।"
-                            : "Download a copy of all your data — projects, renders, bookings, reviews, and account information."}
+                          {t('set_data_desc')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {exportStatus?.completedAt && (
                           <p className="text-sm text-muted-foreground">
-                            {language === "hi" ? "अंतिम निर्यात:" : "Last exported:"}{" "}
+                            {t('set_data_last_export')}{" "}
                             {new Date(exportStatus.completedAt).toLocaleDateString()}
                           </p>
                         )}
@@ -1750,12 +1683,10 @@ export default function SettingsPage() {
                           ) : (
                             <Download className="h-4 w-4 mr-2" />
                           )}
-                          {language === "hi" ? "डेटा निर्यात करें" : "Export My Data"}
+                          {t('set_data_btn')}
                         </Button>
                         <p className="text-xs text-muted-foreground">
-                          {language === "hi"
-                            ? "JSON डेटा फ़ाइल और readable HTML रिपोर्ट दोनों डाउनलोड होंगे।"
-                            : "Downloads both a JSON data file and a readable HTML report."}
+                          {t('set_data_format_desc')}
                         </p>
                       </CardContent>
                     </Card>
@@ -1765,12 +1696,10 @@ export default function SettingsPage() {
                       <CardHeader>
                         <CardTitle className="text-red-500 flex items-center gap-2">
                           <AlertTriangle className="h-5 w-5" />
-                          {language === "hi" ? "खाता हटाना" : "Account Deletion"}
+                          {t('set_del_title')}
                         </CardTitle>
                         <CardDescription>
-                          {language === "hi"
-                            ? "खाता हटाने का अनुरोध करें। हमारी टीम 30 दिनों के भीतर समीक्षा करेगी।"
-                            : "Request permanent deletion of your account and all associated data. This cannot be undone."}
+                          {t('set_del_desc')}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -1780,10 +1709,10 @@ export default function SettingsPage() {
                               <Loader2 className="h-5 w-5 text-yellow-600 animate-spin" />
                               <div>
                                 <p className="font-medium text-yellow-800 dark:text-yellow-200">
-                                  {language === "hi" ? "हटाने का अनुरोध लंबित है" : "Deletion request pending"}
+                                  {t('set_del_pending_title')}
                                 </p>
                                 <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                                  {language === "hi" ? "सबमिट किया गया:" : "Submitted:"}{" "}
+                                  {t('set_del_pending_submitted')}{" "}
                                   {new Date(pendingDeletion.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
@@ -1794,7 +1723,7 @@ export default function SettingsPage() {
                               onClick={handleCancelDeletion}
                               className="border-yellow-400 text-yellow-700 hover:bg-yellow-100 dark:text-yellow-300 dark:hover:bg-yellow-950"
                             >
-                              {language === "hi" ? "अनुरोध रद्द करें" : "Cancel Request"}
+                              {t('set_del_cancel_btn')}
                             </Button>
                           </div>
                         ) : (
@@ -1804,34 +1733,32 @@ export default function SettingsPage() {
                               onClick={() => setDeletionDialogOpen(true)}
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
-                              {language === "hi" ? "खाता हटाने का अनुरोध करें" : "Request Account Deletion"}
+                              {t('set_del_btn')}
                             </Button>
                             <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>
-                                  {language === "hi" ? "खाता हटाने का अनुरोध" : "Request Account Deletion"}
+                                  {t('set_del_dialog_title')}
                                 </DialogTitle>
                                 <DialogDescription>
-                                  {language === "hi"
-                                    ? "आपका अनुरोध हमारी टीम 30 दिनों के भीतर समीक्षा करेगी। आप इस अनुरोध को प्रोसेस होने से पहले रद्द कर सकते हैं।"
-                                    : "Your request will be reviewed by our team within 30 days. You can cancel this request before it is processed."}
+                                  {t('set_del_dialog_desc')}
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="space-y-3 py-2">
                                 <Label htmlFor="deletion-reason">
-                                  {language === "hi" ? "आप क्यों जा रहे हैं? (वैकल्पिक)" : "Why are you leaving? (optional)"}
+                                  {t('set_del_reason_label')}
                                 </Label>
                                 <Textarea
                                   id="deletion-reason"
                                   value={deletionReason}
                                   onChange={e => setDeletionReason(e.target.value)}
-                                  placeholder={language === "hi" ? "कारण बताएं..." : "Tell us why..."}
+                                  placeholder={t('set_del_reason_placeholder')}
                                   rows={3}
                                 />
                               </div>
                               <DialogFooter>
                                 <Button variant="outline" onClick={() => setDeletionDialogOpen(false)}>
-                                  {language === "hi" ? "रद्द करें" : "Cancel"}
+                                  {t('set_api_cancel')}
                                 </Button>
                                 <Button
                                   variant="destructive"
@@ -1839,7 +1766,7 @@ export default function SettingsPage() {
                                   disabled={deletionLoading}
                                 >
                                   {deletionLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                                  {language === "hi" ? "अनुरोध सबमिट करें" : "Submit Deletion Request"}
+                                  {t('set_del_submit_btn')}
                                 </Button>
                               </DialogFooter>
                             </DialogContent>
@@ -1850,7 +1777,7 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                {/* GPU Mode Section */}
+                {/* t('gpu_title') Section */}
                 {activeSection === "gpu" && <GPUModePanel />}
 
               </motion.div>

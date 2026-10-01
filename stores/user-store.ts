@@ -361,6 +361,11 @@ export const useUserStore = create<UserStore>()(
         setLanguage: (language) =>
           set((state) => {
             state.preferences.language = language;
+            // Sync to localStorage so LanguageProvider (React Context) picks it up on next mount
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('language', language);
+              document.documentElement.lang = language;
+            }
           }),
 
         // ============================================
@@ -521,7 +526,8 @@ export const selectOnboardingComplete = (state: UserStore) => state.onboardingCo
 // ============================================
 
 export const useTheme = () => useUserStore((state) => state.preferences.theme);
-export const useLanguage = () => useUserStore((state) => state.preferences.language);
+/** @deprecated Use selectLanguage selector or useLanguage from @/hooks/useLanguage instead */
+export const useStoredLanguage = () => useUserStore((state) => state.preferences.language);
 export const useCurrency = () => useUserStore((state) => state.preferences.currency);
 
 export default useUserStore;

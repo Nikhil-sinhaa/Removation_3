@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import type { SearchResponse, SearchResultType } from '@/lib/search/search';
+import { useLanguage } from '@/hooks/useLanguage';
 
 const TYPE_LABELS: Record<SearchResultType, string> = {
   project:  'Projects',

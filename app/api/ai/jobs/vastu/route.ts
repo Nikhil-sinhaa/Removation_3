@@ -20,6 +20,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { connectDB } from '@/lib/db/mongodb';
 import { createVastuJob } from '@/lib/ai/createVastuJob';
 
@@ -35,6 +36,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const userId = authUser.id;
+
+    const renderLock = await tryAcquireRenderLock(userId, 'vastu-analysis');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
+    }
 
     // ── Parse body ────────────────────────────────────────────────────────────
     let body: any;

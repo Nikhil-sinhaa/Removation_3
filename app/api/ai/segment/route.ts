@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 
 // Mock SAM 2 segmentation API
 // In production, this would integrate with the actual SAM 2 model
@@ -9,6 +10,11 @@ export async function POST(request: NextRequest) {
     const authUser = await getCurrentUser();
     if (!authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const renderLock = await tryAcquireRenderLock(authUser.id, 'segment');
+    if (!renderLock) {
+      return NextResponse.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
     }
 
     const deductResult = await checkAndDeductCredits(authUser.id, 'segment');

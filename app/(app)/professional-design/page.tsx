@@ -39,6 +39,7 @@ import {
   Sofa,
 } from "lucide-react";
 import { useUserStore } from '@/stores/user-store';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ─── Stage definitions for progress bar ──────────────────────────────
 const STAGES = [
@@ -60,6 +61,7 @@ const roomTypes = [
 ];
 
 export default function ProfessionalDesignPage() {
+  const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   // ─── Core state ────────────────────────────────────────────────────
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -405,7 +407,7 @@ export default function ProfessionalDesignPage() {
       <div className="mb-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center">
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 bg-clip-text text-transparent">
-            ⚡ Ultra-Pro Design Studio
+            {t('prof_title')}
           </h1>
           <p className="text-xl text-gray-600 mb-2">
             6-Stage AI Pipeline — SDXL + SAM2 + ControlNet + IPAdapter — Optimized for 8GB VRAM

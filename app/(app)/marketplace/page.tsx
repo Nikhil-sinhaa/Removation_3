@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { paiseToRupees } from '@/lib/booking/money';
 import { useDebounce } from '@/hooks/useDebounce';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // ── Specialty configs ────────────────────────────────────────────────────────
 

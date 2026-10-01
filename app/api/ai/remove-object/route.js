@@ -10,6 +10,7 @@ import AIRun from '../../../../src/models/AIRun.js';
 import comfyBridge from '../../../../src/services/comfyBridge.js';
 import { getCurrentUser } from '@/lib/auth/jwt';
 import { checkAndDeductCredits } from '@/lib/ai/deductCredits';
+import { tryAcquireRenderLock } from '@/lib/redis/lock';
 import { getQueueDepth } from '@/lib/redis/aiQueue';
 
 export async function POST(request) {
@@ -26,6 +27,11 @@ export async function POST(request) {
         { error: 'Server is busy. Please try again in a few minutes.' },
         { status: 503 }
       );
+    }
+
+    const renderLock = await tryAcquireRenderLock(authUser.id, 'remove-object');
+    if (!renderLock) {
+      return Response.json({ error: 'render_in_progress', message: 'A render is already in progress for this tool. Please wait a moment.' }, { status: 429 });
     }
 
     const deductResult = await checkAndDeductCredits(authUser.id, 'remove-object');

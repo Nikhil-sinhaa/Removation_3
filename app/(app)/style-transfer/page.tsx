@@ -18,6 +18,7 @@ import {
 } from "@/config/style-presets";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { useLanguage } from '@/hooks/useLanguage';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -34,6 +35,7 @@ interface ResultState {
 }
 
 export default function StyleTransferPage() {
+  const { t } = useLanguage();
   const setInsufficientCreditsModalOpen = useUserStore(s => s.setInsufficientCreditsModalOpen);
   const { toast } = useToast();
 
@@ -285,7 +287,7 @@ export default function StyleTransferPage() {
               <Sparkles className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-white">Style Transfer</h1>
+              <h1 className="text-2xl font-bold text-white">{t('style_tr_title')}</h1>
               <p className="text-xs text-purple-300/70">AI-powered visual style matching</p>
             </div>
           </div>

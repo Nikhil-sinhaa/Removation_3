@@ -27,6 +27,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useLanguage } from '@/hooks/useLanguage';
 import {
   Wand2, Paintbrush, ShoppingBag, SunMedium, ArrowUpCircle,
   Upload, ZoomIn, ZoomOut, RotateCcw, Download, Eye, EyeOff,
